@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// モーニングスター: DistanceJoint2D で鎖長制限。基本は手元に引きずられる挙動。
+/// マウスは「動いた方向」を見て発射。既定は手元から鎖長ぶん先端を伸ばす＋任意でその方向へ初速。
+/// オプションで発射前にプレイヤー位置へ引き寄せてから撃つ。
+/// </summary>
 public class MorningStarLauncher : MonoBehaviour
 {
     [Header("参照")]
@@ -8,71 +13,72 @@ public class MorningStarLauncher : MonoBehaviour
     public LineRenderer lineRenderer;
     [SerializeField] Rigidbody2D playerRigidbody2D;
     [SerializeField] bool usePlayerOnSameObject = true;
+    [SerializeField, Tooltip("未指定なら Camera.main。ScreenToWorld と描画範囲判定に使う")]
+    Camera aimCamera;
+    [SerializeField, Tooltip("オフのとき画面外の座標も使う（非推奨）")]
+    bool restrictPointerToGameView = true;
     [SerializeField] float screenZ = 10f;
 
     [Header("鎖(常時) 手元—先端")]
-    [SerializeField] float maxChainLength = 5f;
-    [SerializeField] float headImpPerFlickSpd = 0.1f;
-    [SerializeField] float headImpMax = 4f;
-    [SerializeField, Tooltip("エイム|ω| rad/s → 接線力(ゲイン)")]
-    float guruguruGain = 0.4f;
-    [SerializeField] float guruguruMinOmega = 0.5f;
-    [SerializeField] float guruguruMaxF = 9f;
+    [SerializeField, Tooltip("手元: この Transform。先端: morningStarRb。ジョイント+クランプの最大距離。")]
+    float maxChainLength = 5f;
+    [SerializeField, Tooltip("手元—先端が鎖長を超えないよう矯正")]
+    bool clampHeadToChainLength = true;
+    [SerializeField, Tooltip("先端の最大速度。0 で無効")]
+    float maxHeadLinearSpeed = 18f;
 
-    [Header("はじき: 引っ張り ＆ ブリンクA")]
-    [SerializeField] float flickEps = 0.2f;
-    [SerializeField] float pullFlickFrom = 0.7f;
-    [SerializeField] float blinkFlickFrom = 7.5f;
-    [SerializeField] float plrPullK = 0.09f;
-    [SerializeField] float blinkDist = 1f;
-    [SerializeField] float blinkCD = 0.35f;
-    [SerializeField, Tooltip("ブリンク同Fixed: 先端弾小")]
-    bool shrinkHeadOnBlink = true;
-    [SerializeField, Range(0.05f, 1f)]
-    float blinkHeadScale = 0.35f;
-    [Header("下向はじき→上")]
-    [SerializeField] float bounceFlick = 0.6f;
-    [SerializeField, Range(0.2f, 0.99f)]
-    float downDotBounce = 0.5f;
-    [SerializeField] float bounceUpImp = 6.5f;
-    [SerializeField] [Tooltip("バウンド扱いで引っ張り/ブリンク止める")]
-    bool bounceBlocksPlr = true;
-    [SerializeField] [Tooltip("先端を下に小さく弾く")]
-    bool headDownOnBounce = true;
-    [SerializeField] float headDownImp = 1.2f;
+    [Header("引きずり（主体）")]
+    [SerializeField, Tooltip("先端に毎フレーム -v×係数 の力。大きいほどプレイヤー追従が強く遅い")]
+    float headFollowDrag = 10f;
 
-    [Header("ガード/攻撃(エイム|ω|)")]
-    [SerializeField] float guardOmega = 2.1f;
-    [SerializeField] float guardSustainStreak = 0.16f;
-    [SerializeField] float attackFlick = 2.4f;
-    [SerializeField] float headAttMult = 1.5f;
-    [SerializeField, Tooltip("攻撃フレーム: 引っ張りを掛けない")]
-    bool noPullOnGuardAtt = true;
+    [Header("マウス＝方向で発射")]
+    [SerializeField, Tooltip("この値より小さいスクリーン移動(px)は無視（ノイズ除去）")]
+    float mouseDeadzonePixels = 3f;
+    [SerializeField, Tooltip("オン: 手元から鎖長ぶんマウス方向へ先端を配置（メイン）。オフ: 下記インパルスのみ")]
+    bool launchUsingChainReach = true;
+    [SerializeField, Tooltip("鎖長延伸後、その方向に付ける速度。0 なら位置だけ（見た目は瞬間伸び）")]
+    float launchReachExitSpeed = 14f;
+    [SerializeField, Tooltip("launchUsingChainReach がオフのときのインパルス")]
+    float aimLaunchImpulse = 5f;
+    [SerializeField, Tooltip("連続発射の最短間隔(秒)。0 で毎FixedUpdate取り得る")]
+    float aimLaunchCooldown = 0f;
 
-    [Header("Linecast(壁: 手元—先端の線分)")]
-    [SerializeField, Tooltip("Project の Walls(レイヤ6)等。0 ならフック無し")]
+    [Header("攻撃: 引き寄せ→発射")]
+    [SerializeField, Tooltip("オン: マウス移動検知時、先にプレイヤーRigidbody位置へ移動してから発射")]
+    bool snapHeadToPlayerBeforeLaunch = true;
+    [SerializeField, Tooltip("引き寄せ時に線速度・角速度を0にする")]
+    bool zeroVelocityOnRecall = true;
+    [SerializeField, Tooltip("引き寄せ完了後、発射までの待ち秒。0 で同フレーム発射")]
+    float launchWindUpDuration = 0.14f;
+
+    [Header("Linecast(壁: 手元—先端)")]
+    [SerializeField, Tooltip("0 ならフック無し")]
     LayerMask wallMask;
-    [SerializeField] float unhookFlickS = 3.2f;
 
-    [HideInInspector] public bool isGuarding;
-    [HideInInspector] public bool attackThisFrame;
-
-    float _angPrevRad;
-    bool _angInited;
-    bool _pInited;
-    Vector2 _pW0;
-    float _grdSustain;
-    float _nextBl;
     DistanceJoint2D _jH;
     DistanceJoint2D _jG;
     Rigidbody2D _hRb;
     GameObject _hGo;
     Rigidbody2D _p;
 
+    Vector2 _lastScreenForAim;
+    Vector2 _lastMouseWorld;
+    bool _aimSampleReady;
+    float _nextAimLaunchTime;
+    bool _launchPending;
+    float _launchExecuteAtTime;
+    Vector2 _pendingLaunchDir;
+
     void Awake()
     {
         if (usePlayerOnSameObject && playerRigidbody2D == null)
             playerRigidbody2D = GetComponent<Rigidbody2D>();
+    }
+
+    void OnValidate()
+    {
+        if (_jH != null)
+            _jH.distance = maxChainLength;
     }
 
     void Start()
@@ -95,15 +101,20 @@ public class MorningStarLauncher : MonoBehaviour
         _jG = gameObject.AddComponent<DistanceJoint2D>();
         _jG.enabled = false;
         _jG.enableCollision = false;
-        _pW0 = (Vector2)_p.position;
-        _pInited = true;
+        _aimSampleReady = false;
     }
 
     void Update()
     {
         if (!lineRenderer || !morningStarRb) return;
-        lineRenderer.SetPosition(0, transform.position);
-        lineRenderer.SetPosition(1, morningStarRb.position);
+        var handW = transform.position;
+        var headW = (Vector3)morningStarRb.position;
+        var off = headW - handW;
+        var maxLen = maxChainLength;
+        if (off.sqrMagnitude > maxLen * maxLen)
+            headW = handW + off.normalized * maxLen;
+        lineRenderer.SetPosition(0, handW);
+        lineRenderer.SetPosition(1, headW);
     }
 
     void FixedUpdate()
@@ -113,77 +124,176 @@ public class MorningStarLauncher : MonoBehaviour
         var dt = Time.fixedDeltaTime;
         if (dt < 1e-5f) return;
 
-        if (!TryGetPointerScreen(out var sc)) return;
-        var w = WorldFromScreen(sc);
-        if (!_pInited) { _pW0 = w; _pInited = true; }
-        var wv = (w - _pW0) / dt;
-        _pW0 = w;
-        var sp = wv.magnitude;
-        if (sp < flickEps) { wv = Vector2.zero; sp = 0f; }
-        var fdir = sp > 0.0001f ? wv / sp : Vector2.right;
-        if (unhookFlickS > 0f && sp > unhookFlickS) Unhook();
-
         var hand = (Vector2)transform.position;
-        var toP = w - hand;
-        if (toP.sqrMagnitude < 1e-4f) toP = Vector2.right;
-        var aNow = Mathf.Atan2(toP.y, toP.x);
-        var prevA = _angPrevRad;
-        float wA = 0f;
-        var dA = 0f;
-        if (_angInited) { dA = DeltaAngleRad(aNow, prevA); wA = Mathf.Abs(dA) / dt; }
-        _angPrevRad = aNow;
-        _angInited = true;
-        _grdSustain = wA >= guardOmega ? _grdSustain + dt : Mathf.Max(0f, _grdSustain - dt * 1.5f);
-        isGuarding = _grdSustain >= guardSustainStreak;
-        var guardAttack = isGuarding && sp >= attackFlick;
-        attackThisFrame = guardAttack;
+        if (_jH != null && !Mathf.Approximately(_jH.distance, maxChainLength))
+            _jH.distance = maxChainLength;
+        if (clampHeadToChainLength)
+            ClampHeadToChain(hand);
 
-        var bounce = sp >= bounceFlick && Vector2.Dot(fdir, Vector2.down) >= downDotBounce;
-        var plrB = GetComponent<Player>();
-        if (bounce && plrB) plrB.ApplyMorningStarBounce(bounceUpImp);
-        if (bounce && headDownOnBounce) morningStarRb.AddForce(Vector2.down * headDownImp, ForceMode2D.Impulse);
+        ApplyHeadFollowDrag();
 
-        var plrFxsBlocked = bounce && bounceBlocksPlr;
-        var didBlink = false;
-        if (!plrFxsBlocked)
+        ProcessPendingLaunch();
+
+        if (!TryGetAimPointerScreen(out var sc))
         {
-            if (sp >= pullFlickFrom && sp < blinkFlickFrom)
-            {
-                if (!(noPullOnGuardAtt && guardAttack))
-                    _p.AddForce(fdir * (sp * plrPullK), ForceMode2D.Impulse);
-            }
-            if (sp >= blinkFlickFrom && Time.time >= _nextBl)
-            {
-                _p.MovePosition((Vector2)_p.position + fdir * blinkDist);
-                _nextBl = Time.time + blinkCD;
-                didBlink = true;
-            }
+            ClearAimPointerState();
+            CancelPendingLaunch();
+            if (maxHeadLinearSpeed > 0f)
+                ClampHeadSpeed();
+            if (clampHeadToChainLength)
+                ClampHeadToChain(hand);
+            return;
         }
 
-        var hMult = guardAttack ? headAttMult : 1f;
-        if (sp > flickEps)
+        var w = WorldFromScreen(sc);
+        if (!_aimSampleReady)
         {
-            var h = Mathf.Min(headImpMax, sp * headImpPerFlickSpd) * hMult;
-            if (didBlink && shrinkHeadOnBlink) h *= blinkHeadScale;
-            morningStarRb.AddForce(fdir * h, ForceMode2D.Impulse);
+            _lastScreenForAim = sc;
+            _lastMouseWorld = w;
+            _aimSampleReady = true;
         }
-        if (_angInited && wA >= guruguruMinOmega)
+        else
         {
-            var r = (Vector2)morningStarRb.position - hand;
-            if (r.sqrMagnitude > 1e-3f)
+            var screenDelta = sc - _lastScreenForAim;
+            _lastScreenForAim = sc;
+            var deltaWorld = w - _lastMouseWorld;
+            _lastMouseWorld = w;
+            if (!_launchPending
+                && screenDelta.sqrMagnitude >= mouseDeadzonePixels * mouseDeadzonePixels
+                && Time.time >= _nextAimLaunchTime
+                && deltaWorld.sqrMagnitude > 1e-12f)
             {
-                var perp = new Vector2(-r.y, r.x).normalized;
-                var wSigned = dA / dt;
-                var fT = Mathf.Clamp(wSigned * guruguruGain, -guruguruMaxF, guruguruMaxF);
-                morningStarRb.AddForce(perp * fT, ForceMode2D.Force);
+                if (snapHeadToPlayerBeforeLaunch)
+                    RecallMorningStarToPlayer(hand);
+                if (launchWindUpDuration > 0f)
+                    QueueDelayedLaunch(deltaWorld);
+                else
+                {
+                    ApplyAimLaunchDirection(deltaWorld);
+                    if (aimLaunchCooldown > 0f)
+                        _nextAimLaunchTime = Time.time + aimLaunchCooldown;
+                }
             }
         }
+
         GHook(hand);
+        if (maxHeadLinearSpeed > 0f)
+            ClampHeadSpeed();
+        if (clampHeadToChainLength)
+            ClampHeadToChain(hand);
     }
 
-    static float DeltaAngleRad(float a, float b)
+    /// <summary> マウス／スティックの移動方向で発射（鎖長延伸 or インパルスは Inspector）。 </summary>
+    public void ApplyAimLaunchDirection(Vector2 worldDirection)
     {
-        return Mathf.Atan2(Mathf.Sin(a - b), Mathf.Cos(a - b));
+        if (morningStarRb == null) return;
+        var d = worldDirection;
+        if (d.sqrMagnitude < 1e-12f) return;
+        var hand = (Vector2)transform.position;
+        if (launchUsingChainReach)
+            LaunchHeadAlongChainReach(d, hand);
+        else
+        {
+            d.Normalize();
+            morningStarRb.AddForce(d * aimLaunchImpulse, ForceMode2D.Impulse);
+        }
+    }
+
+    /// <summary> 手元から鎖長ぶん、指定方向へ先端を伸ばす（ワールド）。その後の物理で軌道が決まる。 </summary>
+    public void LaunchHeadAlongChainReach(Vector2 worldDirection, Vector2 handWorld)
+    {
+        if (morningStarRb == null) return;
+        var d = worldDirection;
+        if (d.sqrMagnitude < 1e-12f) return;
+        d.Normalize();
+        morningStarRb.position = handWorld + d * maxChainLength;
+        morningStarRb.WakeUp();
+        morningStarRb.angularVelocity = 0f;
+        morningStarRb.linearVelocity = launchReachExitSpeed > 0f ? d * launchReachExitSpeed : Vector2.zero;
+    }
+
+    /// <summary> 引き寄せ（プレイヤー位置）→ 方向発射。ゲームパッド用。FixedUpdate 内推奨。 </summary>
+    public void ApplyRecallThenLaunch(Vector2 worldDirection)
+    {
+        if (_p == null || morningStarRb == null) return;
+        var hand = (Vector2)transform.position;
+        if (snapHeadToPlayerBeforeLaunch)
+            RecallMorningStarToPlayer(hand);
+        if (launchWindUpDuration > 0f)
+            QueueDelayedLaunch(worldDirection);
+        else
+        {
+            ApplyAimLaunchDirection(worldDirection);
+            if (aimLaunchCooldown > 0f)
+                _nextAimLaunchTime = Time.time + aimLaunchCooldown;
+        }
+    }
+
+    void QueueDelayedLaunch(Vector2 deltaWorld)
+    {
+        _pendingLaunchDir = deltaWorld;
+        _launchExecuteAtTime = Time.time + launchWindUpDuration;
+        _launchPending = true;
+    }
+
+    void ProcessPendingLaunch()
+    {
+        if (!_launchPending || morningStarRb == null) return;
+        if (Time.time < _launchExecuteAtTime) return;
+        ApplyAimLaunchDirection(_pendingLaunchDir);
+        _launchPending = false;
+        if (aimLaunchCooldown > 0f)
+            _nextAimLaunchTime = Time.time + aimLaunchCooldown;
+    }
+
+    void CancelPendingLaunch()
+    {
+        _launchPending = false;
+    }
+
+    void RecallMorningStarToPlayer(Vector2 handAnchor)
+    {
+        if (morningStarRb == null || _p == null) return;
+        Unhook();
+        morningStarRb.position = _p.position;
+        morningStarRb.WakeUp();
+        if (zeroVelocityOnRecall)
+        {
+            morningStarRb.linearVelocity = Vector2.zero;
+            morningStarRb.angularVelocity = 0f;
+        }
+        if (clampHeadToChainLength)
+            ClampHeadToChain(handAnchor);
+    }
+
+    void ApplyHeadFollowDrag()
+    {
+        if (headFollowDrag <= 0f || morningStarRb == null) return;
+        var v = morningStarRb.linearVelocity;
+        morningStarRb.AddForce(-v * headFollowDrag, ForceMode2D.Force);
+    }
+
+    void ClampHeadToChain(Vector2 handAnchor)
+    {
+        var head = morningStarRb.position;
+        var off = (Vector2)head - handAnchor;
+        var sql = off.sqrMagnitude;
+        var maxSq = maxChainLength * maxChainLength;
+        if (sql <= maxSq || sql < 1e-10f) return;
+        var dir = off.normalized;
+        morningStarRb.position = handAnchor + dir * maxChainLength;
+        var v = morningStarRb.linearVelocity;
+        var radialOut = Vector2.Dot(v, dir);
+        if (radialOut > 0f)
+            morningStarRb.linearVelocity = v - dir * radialOut;
+    }
+
+    void ClampHeadSpeed()
+    {
+        var v = morningStarRb.linearVelocity;
+        var mag = v.magnitude;
+        if (mag > maxHeadLinearSpeed && mag > 1e-5f)
+            morningStarRb.linearVelocity = v * (maxHeadLinearSpeed / mag);
     }
 
     void GHook(Vector2 hand)
@@ -219,18 +329,28 @@ public class MorningStarLauncher : MonoBehaviour
         if (_jG != null) _jG.enabled = false;
     }
 
-    bool TryGetPointerScreen(out Vector2 s)
+    bool TryGetAimPointerScreen(out Vector2 s)
     {
         s = default;
         var m = Mouse.current;
         if (m == null) return false;
         s = m.position.ReadValue();
-        return true;
+        if (!restrictPointerToGameView) return true;
+        var c = GetAimCamera();
+        if (c == null) return true;
+        return c.pixelRect.Contains(s);
     }
+
+    void ClearAimPointerState()
+    {
+        _aimSampleReady = false;
+    }
+
+    Camera GetAimCamera() => aimCamera != null ? aimCamera : Camera.main;
 
     Vector2 WorldFromScreen(Vector2 s)
     {
-        var c = Camera.main;
+        var c = GetAimCamera();
         if (!c) return (Vector2)transform.position;
         return c.ScreenToWorldPoint(new Vector3(s.x, s.y, screenZ));
     }

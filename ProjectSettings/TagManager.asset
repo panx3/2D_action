@@ -6,16 +6,17 @@ TagManager:
   tags:
   - Floor
   - Walls
+  - morningstar
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - player
   - Water
   - UI
   - Walls
-  - 
-  - 
+  - morningstar
+  - chain
   - 
   - 
   - 
