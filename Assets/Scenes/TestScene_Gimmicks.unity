@@ -1882,6 +1882,11 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.5, y: 1}
   m_Direction: 0
+--- !u!1 &935336425 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8371792016868649069, guid: d945cd9c3aeb08d44944c45c82d9869d, type: 3}
+  m_PrefabInstance: {fileID: 7551127169917835944}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &957772505
 GameObject:
   m_ObjectHideFlags: 0
@@ -2779,7 +2784,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6148079211137015895, guid: d945cd9c3aeb08d44944c45c82d9869d, type: 3}
   m_PrefabInstance: {fileID: 7551127169917835944}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 935336425}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 39512efff09e3784d9c62e66f6dee3c9, type: 3}
@@ -3824,6 +3829,30 @@ PrefabInstance:
     - target: {fileID: 3912771595603612620, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
       propertyPath: m_Name
       value: WeightSwitch
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499550312487408545, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
+      propertyPath: onPressed.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499550312487408545, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
+      propertyPath: onReleased.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499550312487408545, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
+      propertyPath: onPressed.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 935336425}
+    - target: {fileID: 4499550312487408545, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
+      propertyPath: onReleased.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 935336425}
+    - target: {fileID: 4499550312487408545, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
+      propertyPath: onPressed.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4499550312487408545, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
+      propertyPath: onReleased.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6465581950011872840, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
       propertyPath: m_LocalScale.x
