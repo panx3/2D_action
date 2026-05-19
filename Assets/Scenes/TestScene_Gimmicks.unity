@@ -167,13 +167,18 @@ MonoBehaviour:
   playerRb: {fileID: 467605175}
   morningStarRb: {fileID: 1296931093}
   maxChainLength: 5
-  slackDistance: 0.05
+  groundSlackDistance: 0.25
+  airSlackDistance: 0.05
+  groundStretchForMaxPull: 0.8
+  airStretchForMaxPull: 0.35
   playerPullForce: 180
-  maxGroundPullSpeed: 8
-  maxAirPullSpeed: 14
-  stretchForMaxPull: 0.8
+  maxGroundPullSpeed: 5
+  maxAirPullSpeed: 22
+  minGroundPullRate: 0.25
+  minGroundHorizontalDistance: 0.15
   limitMorningStarDistance: 1
-  positionCorrectionRate: 0.35
+  positionCorrectionRate: 0.05
+  showDebugLog: 0
 --- !u!1 &94864273
 GameObject:
   m_ObjectHideFlags: 0
