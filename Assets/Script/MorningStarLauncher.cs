@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
@@ -40,6 +41,22 @@ public class MorningStarLauncher : MonoBehaviour
     [Header("レイヤー")]
     [SerializeField] private LayerMask hookableLayers;
     [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private LayerMask breakableLayers;
+
+    [Header("Combat（命中ダメージ・ノックバック・ヒットストップ）")]
+    [SerializeField] private float minCombatHitSpeed = 3f;
+    [SerializeField] private int baseDamage = 1;
+    [SerializeField] private float damagePerSpeed = 0.2f;
+    [SerializeField] private int minDamage = 1;
+    [SerializeField] private int maxDamage = 24;
+    [SerializeField] private float baseKnockback = 2f;
+    [SerializeField] private float knockbackPerSpeed = 0.45f;
+    [SerializeField] private float maxKnockback = 14f;
+    [SerializeField] private float hitStopPerDamage = 0.006f;
+    [SerializeField] private float minCombatHitStop = 0.02f;
+    [SerializeField] private float maxCombatHitStop = 0.1f;
+    [SerializeField] private float hitCooldownPerTarget = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float postHitSpeedRetention = 0.7f;
 
     [Header("紐の長さ（Dragging / Thrown 時の ChainConstraint2D）")]
     [SerializeField] private float maxRopeLength = 4.5f;
@@ -148,6 +165,7 @@ public class MorningStarLauncher : MonoBehaviour
     private float _lastSpeedMultiplier = 1f;
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
+    private readonly Dictionary<int, float> _lastCombatHitTimeByColliderId = new Dictionary<int, float>();
     private Color _defaultLineColor = Color.white;
     private float _defaultLineWidth;
     private bool _lineVisualDefaultsCached;
@@ -194,6 +212,8 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (hookableLayers.value == 0)
             hookableLayers = LayerMask.GetMask("Walls", "Default");
+        if (enemyLayers.value == 0)
+            enemyLayers = LayerMask.GetMask("Enemy");
         SyncRopeLengthToConstraint();
     }
 
@@ -621,11 +641,15 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void OnMorningStarCollision(Collision2D collision)
     {
+        if (morningStarRb == null || collision.collider == null)
+            return;
+
+        if (TryProcessCombatHit(collision))
+            return;
+
         if (_state != MorningStarState.Thrown)
             return;
         if (_rehookLockoutTimer > 0f)
-            return;
-        if (morningStarRb == null)
             return;
 
         if (!IsHookableCollision(collision))
@@ -640,6 +664,115 @@ public class MorningStarLauncher : MonoBehaviour
             hookPoint = morningStarRb.position;
 
         BeginHook(hookPoint);
+    }
+
+    private bool CanStateDealCombatDamage()
+    {
+        return _state == MorningStarState.Thrown || _state == MorningStarState.Dropping;
+    }
+
+    private bool TryProcessCombatHit(Collision2D collision)
+    {
+        if (!CanStateDealCombatDamage())
+            return false;
+
+        Collider2D other = collision.collider;
+        if (other.CompareTag("Player"))
+            return false;
+
+        IMorningStarHitReceiver receiver = other.GetComponentInParent<IMorningStarHitReceiver>();
+        if (receiver == null)
+            return false;
+
+        if (!AllowsCombatHitOnLayer(other.gameObject.layer))
+            return false;
+
+        float impactSpeed = morningStarRb.linearVelocity.magnitude;
+        if (impactSpeed < minCombatHitSpeed)
+            return false;
+
+        int colliderId = other.GetInstanceID();
+        if (_lastCombatHitTimeByColliderId.TryGetValue(colliderId, out float lastHitTime)
+            && Time.time - lastHitTime < hitCooldownPerTarget)
+            return false;
+
+        MorningStarHitContext context = BuildHitContext(collision, impactSpeed);
+        receiver.OnMorningStarHit(context);
+
+        _lastCombatHitTimeByColliderId[colliderId] = Time.time;
+        ApplyPostHitBallResponse(context);
+        PlayCombatHitStop(context.HitStopSeconds);
+
+        return true;
+    }
+
+    private bool AllowsCombatHitOnLayer(int layer)
+    {
+        if (enemyLayers.value == 0 && breakableLayers.value == 0)
+            return true;
+
+        int layerBit = 1 << layer;
+        if (enemyLayers.value != 0 && (enemyLayers.value & layerBit) != 0)
+            return true;
+        return breakableLayers.value != 0 && (breakableLayers.value & layerBit) != 0;
+    }
+
+    private MorningStarHitContext BuildHitContext(Collision2D collision, float impactSpeed)
+    {
+        Vector2 impactDir = morningStarRb.linearVelocity.sqrMagnitude > 1e-6f
+            ? morningStarRb.linearVelocity.normalized
+            : Vector2.right;
+
+        if (collision.contactCount > 0)
+        {
+            Vector2 normal = collision.GetContact(0).normal;
+            if (normal.sqrMagnitude > 1e-6f)
+                impactDir = -normal.normalized;
+        }
+
+        float chargeMult = Mathf.Max(1f, _lastSpeedMultiplier);
+        float scaledSpeed = impactSpeed * chargeMult;
+
+        int damage = Mathf.RoundToInt(baseDamage + scaledSpeed * damagePerSpeed);
+        damage = Mathf.Clamp(damage, minDamage, maxDamage);
+
+        float knockbackMag = Mathf.Clamp(baseKnockback + scaledSpeed * knockbackPerSpeed, 0f, maxKnockback);
+        Vector2 knockback = impactDir * knockbackMag;
+
+        float hitStop = Mathf.Clamp(damage * hitStopPerDamage, minCombatHitStop, maxCombatHitStop);
+        hitStop *= Mathf.Lerp(0.85f, 1.15f, Mathf.InverseLerp(minDamage, maxDamage, damage));
+
+        Vector2 impactPoint = collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : morningStarRb.position;
+
+        return new MorningStarHitContext(
+            damage,
+            knockback,
+            hitStop,
+            impactPoint,
+            impactDir,
+            impactSpeed,
+            chargeMult);
+    }
+
+    private void ApplyPostHitBallResponse(MorningStarHitContext context)
+    {
+        if (postHitSpeedRetention >= 1f || morningStarRb == null)
+            return;
+
+        morningStarRb.linearVelocity *= postHitSpeedRetention;
+    }
+
+    private void PlayCombatHitStop(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        if (_hitStopRoutine != null)
+            StopCoroutine(_hitStopRoutine);
+
+        _hitStopRoutine = StartCoroutine(HitStopRoutine(duration));
     }
 
     private bool IsHookableCollision(Collision2D collision)
@@ -680,22 +813,17 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void PlayHookFeedback()
     {
-        if (hookHitStopTime > 0f)
-        {
-            if (_hitStopRoutine != null)
-                StopCoroutine(_hitStopRoutine);
-            _hitStopRoutine = StartCoroutine(HookHitStopRoutine());
-        }
+        PlayCombatHitStop(hookHitStopTime);
 
         if (hookSparkPrefab != null)
             Instantiate(hookSparkPrefab, _hookPoint, Quaternion.identity);
     }
 
-    private IEnumerator HookHitStopRoutine()
+    private IEnumerator HitStopRoutine(float duration)
     {
         _savedTimeScale = Time.timeScale;
         Time.timeScale = 0f;
-        yield return new WaitForSecondsRealtime(hookHitStopTime);
+        yield return new WaitForSecondsRealtime(duration);
         Time.timeScale = _savedTimeScale;
         _hitStopRoutine = null;
     }
@@ -759,6 +887,7 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.WakeUp();
 
         _thrownElapsed = 0f;
+        _lastSpeedMultiplier = 1f;
         _state = MorningStarState.Thrown;
         SetChainConstraintActive(true);
         SetAnimatorBool(_hashLaunchCharge, false);
@@ -937,6 +1066,7 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         _thrownElapsed = 0f;
+        _lastSpeedMultiplier = _pendingThrowSpeedMultiplier;
         _state = MorningStarState.Thrown;
         SetAnimatorBool(_hashLaunchCharge, false);
         SetAnimatorTrigger(_hashLaunchFire);
