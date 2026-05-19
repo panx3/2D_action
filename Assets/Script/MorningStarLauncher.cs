@@ -165,7 +165,7 @@ public class MorningStarLauncher : MonoBehaviour
     private float _lastSpeedMultiplier = 1f;
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
-    private readonly Dictionary<int, float> _lastCombatHitTimeByColliderId = new Dictionary<int, float>();
+    private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
     private Color _defaultLineColor = Color.white;
     private float _defaultLineWidth;
     private bool _lineVisualDefaultsCached;
@@ -691,7 +691,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (impactSpeed < minCombatHitSpeed)
             return false;
 
-        int colliderId = other.GetInstanceID();
+        EntityId colliderId = other.GetEntityId();
         if (_lastCombatHitTimeByColliderId.TryGetValue(colliderId, out float lastHitTime)
             && Time.time - lastHitTime < hitCooldownPerTarget)
             return false;
