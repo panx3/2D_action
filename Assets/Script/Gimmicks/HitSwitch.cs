@@ -7,26 +7,35 @@ public class HitSwitch : MonoBehaviour
     [Header("Detect Settings")]
     [SerializeField] private string targetTag = "morningstar";
 
+    [Header("Switch Settings")]
+    [SerializeField] private float activeDuration = 3f;
+    [SerializeField] private bool resetTimerOnHit = true;
+
+    [Header("Warning Settings")]
+    [SerializeField] private bool flashBeforeOff = true;
+    [SerializeField] private float warningTime = 1f;
+    [SerializeField] private float flashInterval = 0.15f;
+
     [Header("Visual Settings")]
     [SerializeField] private Color offColor = Color.gray;
     [SerializeField] private Color onColor = Color.yellow;
-
-    [Header("Switch Settings")]
-    [SerializeField] private bool autoOff = true;
-    [SerializeField] private float autoOffDelay = 3f;
+    [SerializeField] private Color warningColor = Color.red;
 
     [Header("Events")]
     [SerializeField] private UnityEvent onHit;
     [SerializeField] private UnityEvent onOff;
 
+    [Header("Debug")]
+    [SerializeField] private bool showDebugLog = false;
+
     private SpriteRenderer spriteRenderer;
     private bool isOn = false;
-    private Coroutine autoOffCoroutine;
+    private Coroutine activeCoroutine;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        UpdateVisual();
+        UpdateVisual(offColor);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -38,26 +47,57 @@ public class HitSwitch : MonoBehaviour
 
     private void Activate()
     {
-        isOn = true;
-        UpdateVisual();
+        if (isOn && !resetTimerOnHit)
+        {
+            return;
+        }
 
-        Debug.Log("HitSwitch ON");
+        isOn = true;
+        UpdateVisual(onColor);
+
+        if (showDebugLog)
+        {
+            Debug.Log("HitSwitch ON");
+        }
+
         onHit?.Invoke();
 
-        if (autoOff)
+        if (activeCoroutine != null)
         {
-            if (autoOffCoroutine != null)
-            {
-                StopCoroutine(autoOffCoroutine);
-            }
-
-            autoOffCoroutine = StartCoroutine(AutoOffRoutine());
+            StopCoroutine(activeCoroutine);
         }
+
+        activeCoroutine = StartCoroutine(ActiveTimerRoutine());
     }
 
-    private IEnumerator AutoOffRoutine()
+    private IEnumerator ActiveTimerRoutine()
     {
-        yield return new WaitForSeconds(autoOffDelay);
+        float normalTime = Mathf.Max(0f, activeDuration - warningTime);
+
+        if (normalTime > 0f)
+        {
+            yield return new WaitForSeconds(normalTime);
+        }
+
+        if (flashBeforeOff && warningTime > 0f)
+        {
+            float elapsed = 0f;
+            bool warningColorEnabled = false;
+
+            while (elapsed < warningTime)
+            {
+                warningColorEnabled = !warningColorEnabled;
+                UpdateVisual(warningColorEnabled ? warningColor : onColor);
+
+                yield return new WaitForSeconds(flashInterval);
+                elapsed += flashInterval;
+            }
+        }
+        else
+        {
+            yield return new WaitForSeconds(warningTime);
+        }
+
         Deactivate();
     }
 
@@ -66,18 +106,22 @@ public class HitSwitch : MonoBehaviour
         if (!isOn) return;
 
         isOn = false;
-        UpdateVisual();
+        UpdateVisual(offColor);
 
-        Debug.Log("HitSwitch OFF");
+        if (showDebugLog)
+        {
+            Debug.Log("HitSwitch OFF");
+        }
+
         onOff?.Invoke();
 
-        autoOffCoroutine = null;
+        activeCoroutine = null;
     }
 
-    private void UpdateVisual()
+    private void UpdateVisual(Color color)
     {
         if (spriteRenderer == null) return;
 
-        spriteRenderer.color = isOn ? onColor : offColor;
+        spriteRenderer.color = color;
     }
 }
