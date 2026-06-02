@@ -31,6 +31,7 @@ public class Checkpoint : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag(playerTag)) return;
+        if (!PlayerColliderUtility.IsPlayerBody(other)) return;
 
         Activate();
     }

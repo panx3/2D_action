@@ -34,6 +34,11 @@ public class ChainLineController : MonoBehaviour
 
     [Header("Visual")]
 
+    [SerializeField, Tooltip("OFF 推奨（ChainLinkVisualController 使用時）。ON 時は lineAlpha で薄く表示")]
+    private bool drawLineRenderer;
+
+    [SerializeField, Range(0f, 1f)] private float lineAlpha = 0.2f;
+
     [SerializeField] private bool useSag;
 
     [SerializeField] private int sagPointCount = 8;
@@ -119,6 +124,18 @@ public class ChainLineController : MonoBehaviour
         if (_line == null)
 
             return;
+
+
+
+        if (!drawLineRenderer)
+
+        {
+
+            _line.enabled = false;
+
+            return;
+
+        }
 
 
 
@@ -210,9 +227,17 @@ public class ChainLineController : MonoBehaviour
 
 
 
-        _line.startColor = hooked ? hookedStart : normalStart;
+        Color start = hooked ? hookedStart : normalStart;
 
-        _line.endColor = hooked ? hookedEnd : normalEnd;
+        Color end = hooked ? hookedEnd : normalEnd;
+
+        start.a *= lineAlpha;
+
+        end.a *= lineAlpha;
+
+        _line.startColor = start;
+
+        _line.endColor = end;
 
         float startW = hooked ? _defaultStartWidth * mult : _defaultStartWidth;
 

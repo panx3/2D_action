@@ -365,11 +365,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 338a1ce36f9a17241bf7515109620056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MorningStarLauncher
-  handAnchor: {fileID: 5302932239320848137}
   morningStarRb: {fileID: 0}
   lineRenderer: {fileID: 0}
+  chainLineController: {fileID: 0}
   aimGuideLineRenderer: {fileID: 0}
   aimMark: {fileID: 0}
+  handAnchor: {fileID: 5302932239320848137}
+  throwSocket: {fileID: 0}
   playerRigidbody2D: {fileID: 1210306506292533905}
   usePlayerOnSameObject: 1
   player: {fileID: 3272722357809851847}
@@ -377,29 +379,126 @@ MonoBehaviour:
   aimCamera: {fileID: 0}
   restrictPointerToGameView: 1
   screenZ: 10
-  maxChainLength: 8
-  clampHeadToChainLength: 1
-  maxHeadLinearSpeed: 18
-  headFollowDrag: 10
-  mouseDeadzonePixels: 3
-  launchUsingChainReach: 1
-  launchReachExitSpeed: 14
-  aimLaunchImpulse: 5
-  aimLaunchCooldown: 0
-  snapHeadToPlayerBeforeLaunch: 1
-  zeroVelocityOnRecall: 1
-  launchWindUpDuration: 0.14
-  launchPlayerPullImpulse: 2.5
-  showAimGuide: 1
-  aimGuideMaxLength: 8
-  wallMask:
+  hookableLayers:
+    serializedVersion: 2
+    m_Bits: 65
+  enemyLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  breakableLayers:
     serializedVersion: 2
     m_Bits: 64
-  autoRecallAtMaxDistance: 1
-  autoRecallDelay: 1.2
-  autoRecallChainFraction: 0.95
-  gamepadStickThreshold: 0.5
-  animator: {fileID: 4018678049465226877}
+  allowFloorHook: 0
+  allowWallHook: 1
+  allowCeilingHook: 1
+  floorNormalThreshold: 0.5
+  minCombatHitSpeed: 3
+  baseDamage: 1
+  damagePerSpeed: 0.2
+  minDamage: 1
+  maxDamage: 24
+  baseKnockback: 2
+  knockbackPerSpeed: 0.45
+  maxKnockback: 14
+  hitStopPerDamage: 0.006
+  minCombatHitStop: 0.02
+  maxCombatHitStop: 0.1
+  hitCooldownPerTarget: 0.2
+  postHitSpeedRetention: 0.7
+  maxRopeLength: 4.5
+  ballMass: 0.35
+  maxBallLinearSpeed: 20
+  throwSpeed: 18
+  minAimDistance: 0.2
+  launchStartOffset: 0.25
+  aimLaunchCooldown: 0
+  fireInputBufferTime: 0.18
+  useVisibleRecallBeforeThrow: 1
+  visibleRecallTime: 0.12
+  recallEasePower: 2
+  recallHoldTime: 0.04
+  recallStartDelay: 0
+  disableChainConstraintDuringRecall: 1
+  chargedRecallTimeMultiplier: 0.6
+  maxThrownTime: 0.45
+  maxThrowDistance: 4.8
+  dropTransitionSpeed: 2
+  dropToDraggingTime: 0.35
+  enableChainConstraintWhileDropping: 1
+  returnSpeed: 21
+  returnFinishDistance: 0.25
+  disableChainConstraintDuringReturn: 1
+  hookMinSpeed: 2
+  releaseBoost: 3
+  disableChainConstraintWhileHooked: 1
+  shortClickRethrowFromHook: 1
+  rehookLockoutTime: 0.15
+  hookStickMinTime: 0.1
+  holdToSwingTime: 0.5
+  releaseFromSwingToThrow: 1
+  swingPullForce: 32
+  swingInputForce: 12
+  swingRadialDamping: 0.9
+  swingTangentKeepRate: 0.95
+  maxSwingSpeed: 16
+  hookedChainWidthMultiplier: 1.25
+  normalChainColor: {r: 1, g: 1, b: 1, a: 1}
+  hookedChainColor: {r: 1, g: 0.9, b: 0.5, a: 1}
+  hookHitStopTime: 0.04
+  hookSparkPrefab: {fileID: 0}
+  enableSpinCharge: 1
+  holdThreshold: 0.28
+  maxChargeTime: 1.2
+  spinRadius: 1
+  spinAngularSpeed: 720
+  minChargedThrowMultiplier: 1.2
+  maxChargedThrowMultiplier: 2.2
+  spinGuardCollider: {fileID: 0}
+  applyThrowRecoilToPlayer: 1
+  groundedThrowRecoilImpulse: 1.4
+  airThrowRecoilImpulse: 3
+  recoilUpwardLimit: 0.18
+  maxPlayerRecoilSpeed: 12
+  throwPullHorizontalBoost: 1.25
+  throwPullMinVisibleImpulse: 0.8
+  enableThrowPullAssist: 1
+  groundedThrowPullDistanceInPlayerWidths: 1.4
+  airThrowPullDistanceInPlayerWidths: 2.8
+  throwPullAssistDuration: 0.2
+  throwPullAssistMaxSpeed: 12
+  throwPullAssistForce: 38
+  throwPullGroundUpwardLimit: 0.02
+  throwPullAirUpwardLimit: 0.35
+  playerWidthFallback: 1
+  playerBodyCollider: {fileID: 0}
+  normalBallGravityScale: 2
+  thrownBallGravityScale: 2
+  droppingBallGravityScale: 2.8
+  spinChargeBallGravityScale: 0
+  hookedBallGravityScale: 0
+  maxBallFallSpeed: 22
+  ballLinearDampingWhileDropping: 0.08
+  postThrowDownwardBias: 0.25
+  enableTensionSnap: 1
+  tensionSnapThreshold: 0.88
+  tensionSnapImpulse: 2.2
+  tensionSnapAirMultiplier: 1.5
+  tensionSnapCooldown: 0.15
+  groundedTensionSnapUpwardLimit: 0.03
+  playerVisualRoot: {fileID: 0}
+  enableThrowPullVisualLean: 1
+  visualLeanAngle: 10
+  visualLeanDuration: 0.1
+  visualLeanReturnDuration: 0.12
+  audioSource: {fileID: 0}
+  tensionSnapClip: {fileID: 0}
+  tensionSnapVolume: 0.35
+  tensionSnapPitchRandomRange: 0.05
+  cameraShake: {fileID: 0}
+  tensionSnapShakeDuration: 0.06
+  tensionSnapShakeStrength: 0.04
+  showAimGuide: 1
+  aimGuideMaxLength: 8
   backwardAimParam: BackwardAim
   launchChargeParam: LaunchCharge
   launchFireTrigger: LaunchFire

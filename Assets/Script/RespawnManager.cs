@@ -28,6 +28,11 @@ public class RespawnManager : MonoBehaviour
 
     private void Awake()
     {
+        if (_player == null)
+            _player = FindAnyObjectByType<Player>(FindObjectsInactive.Exclude);
+        if (_playerHealth == null)
+            _playerHealth = FindAnyObjectByType<PlayerHealth>(FindObjectsInactive.Exclude);
+
         if (_defaultSpawnPoint != null)
         {
             _lastCheckpoint = _defaultSpawnPoint.position;
@@ -95,7 +100,13 @@ public class RespawnManager : MonoBehaviour
         }
 
         if (_playerHealth != null)
-            _playerHealth.ResetHealth();
+        {
+            // HP0 で死亡したリスポーン＝リトライ（満タン復帰）。HP が残っている場合のみ HP 維持。
+            if (_playerHealth.CurrentHp <= 0)
+                _playerHealth.ResetToFullHp();
+            else
+                _playerHealth.ReviveKeepCurrentHp();
+        }
 
         _respawnRoutine = null;
     }

@@ -11,9 +11,13 @@ public class PlayerHealth : MonoBehaviour
 {
     [Header("HP 設定")]
     [SerializeField, Tooltip("プレイヤーの最大 HP。")]
-    private int _maxHp = 3;
+    private int _maxHp = 14;
     [SerializeField, Tooltip("被弾後の無敵時間（秒）。")]
     private float _invincibleDuration = 1.2f;
+
+    [Header("デバッグ")]
+    [SerializeField, Tooltip("H=1ダメージ / R=全回復（テスト用）")]
+    private bool _enableDebugKeys;
 
     [Header("点滅表示")]
     [SerializeField, Tooltip("無敵時間中に点滅させる SpriteRenderer。未設定なら GetComponentInChildren で自動取得。")]
@@ -32,16 +36,39 @@ public class PlayerHealth : MonoBehaviour
 
     public event Action OnDamaged;
     public event Action OnDead;
+    /// <summary>現在 HP と最大 HP（UI 更新用）。</summary>
+    public event Action<int, int> OnHealthChanged;
+
+    /// <summary>OnHealthChanged の別名（SegmentHpBarUI 等向け）。</summary>
+    public event Action<int, int> OnHpChanged
+    {
+        add => OnHealthChanged += value;
+        remove => OnHealthChanged -= value;
+    }
 
     private Coroutine _invincibleRoutine;
+    private bool _initialized;
 
     private void Awake()
     {
         if (_player == null) _player = GetComponent<Player>();
         if (_spriteRenderer == null) _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+        if (_initialized)
+            return;
+
+        _initialized = true;
         CurrentHp = _maxHp;
         IsDead = false;
         IsInvincible = false;
+        NotifyHealthChanged();
+    }
+
+    private void Update()
+    {
+        if (!_enableDebugKeys) return;
+        if (Input.GetKeyDown(KeyCode.H)) TakeDamage(1);
+        if (Input.GetKeyDown(KeyCode.R)) ResetToFullHp();
     }
 
     /// <summary>
@@ -58,6 +85,7 @@ public class PlayerHealth : MonoBehaviour
             _player.ApplyExternalImpulse(knockbackImpulse, ForceMode2D.Impulse);
 
         OnDamaged?.Invoke();
+        NotifyHealthChanged();
 
         if (CurrentHp <= 0)
         {
@@ -73,15 +101,46 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void TakeDamage(int amount) => TakeDamage(amount, Vector2.zero);
 
+    /// <summary>HP を回復する（最大値を超えない）。</summary>
+    public void Heal(int amount)
+    {
+        if (IsDead || amount <= 0) return;
+        CurrentHp = Mathf.Min(_maxHp, CurrentHp + amount);
+        NotifyHealthChanged();
+    }
+
     /// <summary>
-    /// HP を最大まで回復し、死亡状態をリセットする（リスポーン用）。
+    /// ステージ開始・ゴール後・明示リトライ専用。通常戦闘・敵撃破では呼ばない。
     /// </summary>
-    public void ResetHealth()
+    public void ResetToFullHp()
     {
         CurrentHp = _maxHp;
         IsDead = false;
         StopInvincible();
         if (_spriteRenderer != null) _spriteRenderer.enabled = true;
+        NotifyHealthChanged();
+    }
+
+    /// <summary>
+    /// HP を変えずに死亡状態だけ解除（手動リスポーン等）。HP0 のリトライは ResetToFullHp を使う。
+    /// </summary>
+    public void ReviveKeepCurrentHp()
+    {
+        if (CurrentHp <= 0)
+            return;
+
+        IsDead = false;
+        StopInvincible();
+        if (_spriteRenderer != null) _spriteRenderer.enabled = true;
+        NotifyHealthChanged();
+    }
+
+    /// <summary>互換用。新規コードは ResetToFullHp を使う。</summary>
+    public void ResetHealth() => ResetToFullHp();
+
+    private void NotifyHealthChanged()
+    {
+        OnHealthChanged?.Invoke(CurrentHp, _maxHp);
     }
 
     private void Die()
