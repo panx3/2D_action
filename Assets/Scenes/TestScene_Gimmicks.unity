@@ -246,6 +246,7 @@ Transform:
   m_Children:
   - {fileID: 429986599}
   - {fileID: 658964096}
+  - {fileID: 1650382550}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &429986598
@@ -359,7 +360,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RespawnController
   player: {fileID: 467605180}
   playerRigidbody: {fileID: 467605175}
-  initialRespawnPoint: {fileID: 510841897}
+  initialRespawnPoint: {fileID: 1650382550}
   morningstar: {fileID: 1296931098}
   morningstarRigidbody: {fileID: 1296931093}
   morningstarOffset: {x: -1.5, y: 0}
@@ -1290,6 +1291,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8231b7ce7cc5d224a9801c6c3a31958f, type: 3}
+--- !u!1 &1650382549
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1650382550}
+  m_Layer: 0
+  m_Name: InitialRespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1650382550
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650382549}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -41.605263, y: -0.75975, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 315207855}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1693767019
 GameObject:
   m_ObjectHideFlags: 0
