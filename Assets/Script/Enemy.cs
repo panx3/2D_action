@@ -14,7 +14,6 @@ public class Enemy : MonoBehaviour
     private int _contactDamage = 1;
     [SerializeField] private float _contactKnockback = 5f;
     [SerializeField] private float _contactCooldown = 0.7f;
-    [SerializeField] private string _playerTag = "Player";
 
     private Rigidbody2D _rigid;
     private EnemyHealth _health;

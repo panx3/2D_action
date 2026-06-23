@@ -18,6 +18,8 @@ public class PlayerHealth : MonoBehaviour
     [Header("デバッグ")]
     [SerializeField, Tooltip("H=1ダメージ / R=全回復（テスト用）")]
     private bool _enableDebugKeys;
+    [SerializeField, Tooltip("Heal / ResetToFullHp 呼び出し時にログを出す")]
+    private bool _debugLogHeal;
 
     [Header("点滅表示")]
     [SerializeField, Tooltip("無敵時間中に点滅させる SpriteRenderer。未設定なら GetComponentInChildren で自動取得。")]
@@ -102,10 +104,14 @@ public class PlayerHealth : MonoBehaviour
     public void TakeDamage(int amount) => TakeDamage(amount, Vector2.zero);
 
     /// <summary>HP を回復する（最大値を超えない）。</summary>
+    // Reserved for future heal items. Do not call this from enemy death rewards.
     public void Heal(int amount)
     {
         if (IsDead || amount <= 0) return;
+        int before = CurrentHp;
         CurrentHp = Mathf.Min(_maxHp, CurrentHp + amount);
+        if (_debugLogHeal && CurrentHp != before)
+            Debug.Log($"[PlayerHealth] Heal({amount}) {before} -> {CurrentHp} (caller: {GetHealCallerHint()})", this);
         NotifyHealthChanged();
     }
 
@@ -114,10 +120,13 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void ResetToFullHp()
     {
+        int before = CurrentHp;
         CurrentHp = _maxHp;
         IsDead = false;
         StopInvincible();
         if (_spriteRenderer != null) _spriteRenderer.enabled = true;
+        if (_debugLogHeal && before != CurrentHp)
+            Debug.Log($"[PlayerHealth] ResetToFullHp {before} -> {CurrentHp} (caller: {GetHealCallerHint()})", this);
         NotifyHealthChanged();
     }
 
@@ -141,6 +150,21 @@ public class PlayerHealth : MonoBehaviour
     private void NotifyHealthChanged()
     {
         OnHealthChanged?.Invoke(CurrentHp, _maxHp);
+    }
+
+    private static string GetHealCallerHint()
+    {
+        var trace = new System.Diagnostics.StackTrace(2, false);
+        for (int i = 0; i < trace.FrameCount; i++)
+        {
+            var method = trace.GetFrame(i)?.GetMethod();
+            if (method == null)
+                continue;
+            if (method.DeclaringType == typeof(PlayerHealth))
+                continue;
+            return $"{method.DeclaringType?.Name}.{method.Name}";
+        }
+        return "unknown";
     }
 
     private void Die()

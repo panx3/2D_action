@@ -90,6 +90,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     private void HandleDeath()
     {
+        if (debugLog)
+            Debug.Log($"[EnemyHealth] HandleDeath on {name}", this);
+
         if (destroyOnDeath)
         {
             Destroy(gameObject);

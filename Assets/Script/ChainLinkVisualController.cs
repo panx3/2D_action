@@ -15,8 +15,10 @@ public class ChainLinkVisualController : MonoBehaviour
     [Header("Link Pool")]
     [SerializeField] private int maxSegments = 80;
     [SerializeField] private float segmentSpacing = 0.16f;
-    [SerializeField] private float segmentScale = 0.12f;
+    [SerializeField] private float segmentScale = 1.8f;
     [SerializeField] private int sortingOrder = 5;
+    [SerializeField] private string sortingLayerName = "Default";
+    [SerializeField] private bool autoScaleFromSprite = true;
 
     [Header("Sag")]
     [SerializeField] private bool useSag = true;
@@ -40,28 +42,67 @@ public class ChainLinkVisualController : MonoBehaviour
     [Header("Future Wrap Points")]
     [SerializeField] private List<Transform> wrapPoints = new List<Transform>();
 
+    [Header("Debug")]
+    [SerializeField] private bool debugLog;
+
     private readonly List<SpriteRenderer> _links = new List<SpriteRenderer>();
     private readonly List<Vector3> _pathPoints = new List<Vector3>(8);
+    private bool _loggedInit;
+    private bool _loggedLauncherResolve;
+    private int _lastActiveLinkCount;
+
+    public bool IsDisplaying { get; private set; }
+    public bool IsVisualReady =>
+        startPoint != null && endPoint != null && chainLinkSprite != null;
 
     private void Awake()
     {
-        if (launcher == null)
-            launcher = GetComponentInParent<MorningStarLauncher>();
-
+        ResolveLauncher();
+        EnsureSegmentScale();
         BuildPool();
         HideAllLinks();
     }
 
+    private void Start()
+    {
+        ResolveLauncher();
+        EnsureSegmentScale();
+        RefreshLinkSprites();
+        LogInitStateOnce();
+    }
+
+    private void ResolveLauncher()
+    {
+        if (launcher != null)
+            return;
+
+        launcher = GetComponentInParent<MorningStarLauncher>();
+        if (launcher == null)
+            launcher = FindAnyObjectByType<MorningStarLauncher>(FindObjectsInactive.Exclude);
+
+        if (_loggedLauncherResolve)
+            return;
+
+        _loggedLauncherResolve = true;
+        if (launcher != null)
+            Debug.LogWarning("[ChainLinkVisualController] MorningStarLauncher was auto-found. Assign it in Inspector to avoid wrong references.", this);
+        else
+            Debug.LogWarning("[ChainLinkVisualController] MorningStarLauncher is not assigned and could not be found.", this);
+    }
+
     private void LateUpdate()
     {
-        if (startPoint == null || endPoint == null || chainLinkSprite == null)
+        if (!IsVisualReady)
         {
+            IsDisplaying = false;
             HideAllLinks();
+            LogMissingSetupOnce();
             return;
         }
 
         if (launcher != null && !launcher.IsRopeLineVisible)
         {
+            IsDisplaying = false;
             HideAllLinks();
             return;
         }
@@ -81,6 +122,7 @@ public class ChainLinkVisualController : MonoBehaviour
 
             SpriteRenderer renderer = linkObject.AddComponent<SpriteRenderer>();
             renderer.sprite = chainLinkSprite;
+            renderer.sortingLayerName = sortingLayerName;
             renderer.sortingOrder = sortingOrder;
             renderer.color = normalColor;
             linkObject.transform.localScale = Vector3.one * segmentScale;
@@ -93,6 +135,34 @@ public class ChainLinkVisualController : MonoBehaviour
             if (_links[i] != null)
                 _links[i].gameObject.SetActive(false);
         }
+    }
+
+    private void RefreshLinkSprites()
+    {
+        for (int i = 0; i < _links.Count; i++)
+        {
+            if (_links[i] == null)
+                continue;
+
+            _links[i].sprite = chainLinkSprite;
+            _links[i].sortingLayerName = sortingLayerName;
+            _links[i].sortingOrder = sortingOrder;
+        }
+    }
+
+    private void EnsureSegmentScale()
+    {
+        if (!autoScaleFromSprite || chainLinkSprite == null)
+            return;
+
+        float spriteWorldSize = Mathf.Max(chainLinkSprite.bounds.size.x, chainLinkSprite.bounds.size.y);
+        if (spriteWorldSize <= 0.0001f)
+            return;
+
+        float targetSize = segmentSpacing * 0.85f;
+        float currentSize = spriteWorldSize * segmentScale;
+        if (currentSize < targetSize * 0.5f)
+            segmentScale = targetSize / spriteWorldSize;
     }
 
     private void UpdatePathPoints()
@@ -170,12 +240,14 @@ public class ChainLinkVisualController : MonoBehaviour
         float length = GetPathLength();
         if (length <= 0.001f || segmentSpacing <= 0.001f)
         {
+            IsDisplaying = false;
             HideAllLinks();
             return;
         }
 
         int needed = Mathf.Clamp(Mathf.CeilToInt(length / segmentSpacing), 1, _links.Count);
         Color linkColor = launcher != null && launcher.IsHookedState ? hookedColor : normalColor;
+        IsDisplaying = needed > 0;
 
         for (int i = 0; i < _links.Count; i++)
         {
@@ -204,8 +276,15 @@ public class ChainLinkVisualController : MonoBehaviour
             linkTransform.rotation = Quaternion.Euler(0f, 0f, angle);
             linkTransform.localScale = Vector3.one * segmentScale;
             link.sprite = chainLinkSprite;
+            link.sortingLayerName = sortingLayerName;
             link.sortingOrder = sortingOrder;
             link.color = linkColor;
+        }
+
+        if (debugLog && needed != _lastActiveLinkCount)
+        {
+            _lastActiveLinkCount = needed;
+            Debug.Log($"[ChainLinkVisual] activeLinks={needed} length={length:F2} scale={segmentScale:F2}", this);
         }
     }
 
@@ -251,11 +330,38 @@ public class ChainLinkVisualController : MonoBehaviour
         }
     }
 
+    private void LogInitStateOnce()
+    {
+        if (_loggedInit || !debugLog)
+            return;
+
+        _loggedInit = true;
+        Debug.Log(
+            $"[ChainLinkVisual] init ready={IsVisualReady} sprite={(chainLinkSprite != null ? chainLinkSprite.name : "null")} " +
+            $"start={(startPoint != null ? startPoint.name : "null")} end={(endPoint != null ? endPoint.name : "null")} " +
+            $"launcher={(launcher != null ? launcher.name : "null")} scale={segmentScale:F2}",
+            this);
+    }
+
+    private void LogMissingSetupOnce()
+    {
+        if (!debugLog || _loggedInit)
+            return;
+
+        if (chainLinkSprite == null)
+            Debug.LogWarning("[ChainLinkVisual] chainLinkSprite is not assigned.", this);
+        if (startPoint == null)
+            Debug.LogWarning("[ChainLinkVisual] startPoint is not assigned.", this);
+        if (endPoint == null)
+            Debug.LogWarning("[ChainLinkVisual] endPoint is not assigned.", this);
+    }
+
     private void OnValidate()
     {
         maxSegments = Mathf.Max(0, maxSegments);
         segmentSpacing = Mathf.Max(0.001f, segmentSpacing);
         segmentScale = Mathf.Max(0.001f, segmentScale);
         tautDistanceRate = Mathf.Clamp01(tautDistanceRate);
+        EnsureSegmentScale();
     }
 }

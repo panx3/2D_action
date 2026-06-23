@@ -1,12 +1,21 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
+/// <summary>
+/// Playerが通過した復帰地点を登録するCheckpoint。
+/// DeathRespawnManagerには死亡リスポーン用の地点を登録し、
+/// GimmickRespawnControllerにはRespawnZone等の即時復帰用地点を登録する。
+/// </summary>
 public class Checkpoint : MonoBehaviour
 {
     [Header("Detect Settings")]
     [SerializeField] private string playerTag = "Player";
 
     [Header("References")]
-    [SerializeField] private RespawnController respawnController;
+    [FormerlySerializedAs("respawnController")]
+    [SerializeField] private GimmickRespawnController gimmickRespawnController;
+    [FormerlySerializedAs("respawnManager")]
+    [SerializeField] private DeathRespawnManager deathRespawnManager;
     [SerializeField] private Transform respawnPoint;
 
     [Header("Visual Settings")]
@@ -21,8 +30,13 @@ public class Checkpoint : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
 
         if (respawnPoint == null)
-        {
             respawnPoint = transform;
+
+        if (deathRespawnManager == null)
+        {
+            deathRespawnManager = FindAnyObjectByType<DeathRespawnManager>(FindObjectsInactive.Exclude);
+            if (deathRespawnManager != null)
+                Debug.LogWarning("[Checkpoint] DeathRespawnManager was auto-found. Assign it in Inspector to avoid wrong references.", this);
         }
 
         UpdateVisual();
@@ -40,10 +54,11 @@ public class Checkpoint : MonoBehaviour
     {
         isActivated = true;
 
-        if (respawnController != null)
-        {
-            respawnController.SetRespawnPoint(respawnPoint.position);
-        }
+        if (deathRespawnManager != null)
+            deathRespawnManager.RegisterCheckpoint(respawnPoint.position);
+
+        if (gimmickRespawnController != null)
+            gimmickRespawnController.SetRespawnPoint(respawnPoint.position);
 
         UpdateVisual();
     }
