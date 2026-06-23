@@ -16,6 +16,9 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private float maxForce = 3.5f;
     [SerializeField] private float fragmentLifeTime = 2f;
 
+    [Header("Debug")]
+    [SerializeField] private bool showDebugLog = false;
+
     private bool _isBroken;
     private Collider2D _wallCollider;
     private SpriteRenderer _spriteRenderer;
@@ -42,6 +45,9 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
     {
         hitPoint -= damage;
 
+        if (showDebugLog)
+            Debug.Log($"BreakableWall Damage: {damage}, HP: {hitPoint}");
+
         if (hitPoint <= 0)
             Break(hitDirection);
     }
@@ -63,7 +69,12 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
     private void SpawnFragments(Vector2 hitDirection)
     {
         if (fragmentPrefab == null)
+        {
+            if (showDebugLog)
+                Debug.LogWarning("Fragment Prefab is not assigned.");
+
             return;
+        }
 
         for (int i = 0; i < fragmentCount; i++)
         {
