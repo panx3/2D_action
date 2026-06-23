@@ -92,4 +92,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RespawnZone
   playerTag: Player
-  respawnController: {fileID: 0}
+  gimmickRespawnController: {fileID: 0}
