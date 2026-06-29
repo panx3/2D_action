@@ -1,6 +1,11 @@
 using UnityEngine;
 
-public class RespawnController : MonoBehaviour
+/// <summary>
+/// RespawnZoneや場外落下など、ギミックによる即時位置復帰を管理する。
+/// 原則としてHPは回復させず、現在HPを維持したまま指定位置へ戻す。
+/// HP0死亡時の全回復リスポーンは DeathRespawnManager が担当する。
+/// </summary>
+public class GimmickRespawnController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform player;
@@ -36,6 +41,7 @@ public class RespawnController : MonoBehaviour
     {
         if (player == null) return;
 
+        // 位置復帰のみ。HP は変更しない（全回復は DeathRespawnManager / GoalTrigger 専用）。
         player.position = currentRespawnPosition;
 
         if (playerRigidbody != null)

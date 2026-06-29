@@ -2,11 +2,12 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// チェックポイント管理 & リスポーン処理。
-/// PlayerHealth.OnDead を購読し、最終チェックポイントへプレイヤーを戻す。
+/// HP0による死亡リスポーンを管理する。
+/// 最後に通過したCheckpoint位置へPlayerを戻し、死亡時のみHPを全回復する。
+/// RespawnZoneなどのギミック即時復帰は GimmickRespawnController が担当する。
 /// </summary>
 [DisallowMultipleComponent]
-public class RespawnManager : MonoBehaviour
+public class DeathRespawnManager : MonoBehaviour
 {
     [Header("スポーン地点")]
     [SerializeField, Tooltip("ゲーム開始時のスポーン位置。未通過のチェックポイントが無い場合はここに戻る。")]
@@ -28,10 +29,33 @@ public class RespawnManager : MonoBehaviour
 
     private void Awake()
     {
+        ResolvePlayerReferences();
+
         if (_defaultSpawnPoint != null)
         {
             _lastCheckpoint = _defaultSpawnPoint.position;
             _hasCheckpoint = true;
+        }
+    }
+
+    private void ResolvePlayerReferences()
+    {
+        if (_player == null)
+        {
+            _player = FindAnyObjectByType<Player>(FindObjectsInactive.Exclude);
+            if (_player != null)
+                Debug.LogWarning("[DeathRespawnManager] Player was auto-found. Assign it in Inspector to avoid wrong references.", this);
+            else
+                Debug.LogWarning("[DeathRespawnManager] Player is not assigned and could not be found.", this);
+        }
+
+        if (_playerHealth == null)
+        {
+            _playerHealth = FindAnyObjectByType<PlayerHealth>(FindObjectsInactive.Exclude);
+            if (_playerHealth != null)
+                Debug.LogWarning("[DeathRespawnManager] PlayerHealth was auto-found. Assign it in Inspector to avoid wrong references.", this);
+            else
+                Debug.LogWarning("[DeathRespawnManager] PlayerHealth is not assigned and could not be found.", this);
         }
     }
 
@@ -61,7 +85,7 @@ public class RespawnManager : MonoBehaviour
     /// </summary>
     public void Respawn()
     {
-        if (_respawnRoutine != null) return; // 多重実行ガード
+        if (_respawnRoutine != null) return;
         _respawnRoutine = StartCoroutine(RespawnRoutine());
     }
 
@@ -95,7 +119,13 @@ public class RespawnManager : MonoBehaviour
         }
 
         if (_playerHealth != null)
-            _playerHealth.ResetHealth();
+        {
+            // HP0 で死亡したリスポーン＝リトライ（満タン復帰）。HP が残っている場合のみ HP 維持。
+            if (_playerHealth.CurrentHp <= 0)
+                _playerHealth.ResetToFullHp();
+            else
+                _playerHealth.ReviveKeepCurrentHp();
+        }
 
         _respawnRoutine = null;
     }
