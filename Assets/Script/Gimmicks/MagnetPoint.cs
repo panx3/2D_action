@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class MagnetPoint : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private MorningStarLauncher morningStarLauncher;
+
     [Header("Detect Settings")]
     [SerializeField] private string targetTag = "morningstar";
 
@@ -18,20 +21,41 @@ public class MagnetPoint : MonoBehaviour
     [SerializeField] private Color nearColor = Color.magenta;
 
     private readonly List<Rigidbody2D> detectedBodies = new List<Rigidbody2D>();
+
+    // この磁石に近づいた時、脱出用射出を渡した鉄球を記録する
+    private readonly HashSet<Rigidbody2D> escapeThrowGrantedBodies =
+        new HashSet<Rigidbody2D>();
+
     private SpriteRenderer spriteRenderer;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        // Inspector未設定でも、Playerから自動取得を試す
+        if (morningStarLauncher == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+
+            if (playerObject != null)
+            {
+                morningStarLauncher =
+                    playerObject.GetComponent<MorningStarLauncher>();
+            }
+        }
+
         UpdateVisual();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!IsTarget(other)) return;
+        if (!IsTarget(other))
+            return;
 
         Rigidbody2D rb = other.attachedRigidbody;
-        if (rb == null) return;
+
+        if (rb == null)
+            return;
 
         if (!detectedBodies.Contains(rb))
         {
@@ -45,10 +69,13 @@ public class MagnetPoint : MonoBehaviour
     private void OnTriggerExit2D(Collider2D other)
     {
         Rigidbody2D rb = other.attachedRigidbody;
-        if (rb == null) return;
+
+        if (rb == null)
+            return;
 
         if (detectedBodies.Remove(rb))
         {
+            escapeThrowGrantedBodies.Remove(rb);
             Debug.Log("MagnetPoint Release");
         }
 
@@ -64,6 +91,7 @@ public class MagnetPoint : MonoBehaviour
             if (rb == null)
             {
                 detectedBodies.RemoveAt(i);
+                escapeThrowGrantedBodies.Remove(rb);
                 continue;
             }
 
@@ -80,26 +108,58 @@ public class MagnetPoint : MonoBehaviour
         Vector2 direction = magnetPosition - targetPosition;
 
         float distance = direction.magnitude;
-        if (distance <= 0.01f) return;
+
+        if (distance <= 0.01f)
+        {
+            TryGrantMagnetEscapeThrow(rb);
+            return;
+        }
 
         Vector2 forceDirection = direction.normalized;
 
         if (slowNearCenter && distance <= snapDistance)
         {
             rb.linearVelocity *= 0.85f;
-            rb.AddForce(forceDirection * attractionForce * 0.3f, ForceMode2D.Force);
+            rb.AddForce(
+                forceDirection * attractionForce * 0.3f,
+                ForceMode2D.Force
+            );
+
+            // 鉄球が磁石につかまった時だけ、
+            // 脱出用の空中射出を1回回復する
+            TryGrantMagnetEscapeThrow(rb);
         }
         else
         {
-            rb.AddForce(forceDirection * attractionForce * rb.mass, ForceMode2D.Force);
+            rb.AddForce(
+                forceDirection * attractionForce * rb.mass,
+                ForceMode2D.Force
+            );
         }
 
-        rb.linearVelocity = Vector2.ClampMagnitude(rb.linearVelocity, maxAttractSpeed);
+        rb.linearVelocity = Vector2.ClampMagnitude(
+            rb.linearVelocity,
+            maxAttractSpeed
+        );
+    }
+
+    private void TryGrantMagnetEscapeThrow(Rigidbody2D rb)
+    {
+        if (morningStarLauncher == null)
+            return;
+
+        // 同じ磁石につかまっている間は1回だけ
+        if (!escapeThrowGrantedBodies.Add(rb))
+            return;
+
+        morningStarLauncher.GrantMagnetEscapeThrow();
+        Debug.Log("MagnetPoint: Escape throw granted");
     }
 
     private bool IsTarget(Collider2D other)
     {
-        if (other.CompareTag(targetTag)) return true;
+        if (other.CompareTag(targetTag))
+            return true;
 
         if (other.attachedRigidbody != null &&
             other.attachedRigidbody.CompareTag(targetTag))
@@ -112,7 +172,8 @@ public class MagnetPoint : MonoBehaviour
 
     private void UpdateVisual()
     {
-        if (spriteRenderer == null) return;
+        if (spriteRenderer == null)
+            return;
 
         if (HasNearTarget())
         {
@@ -132,13 +193,16 @@ public class MagnetPoint : MonoBehaviour
     {
         foreach (Rigidbody2D rb in detectedBodies)
         {
-            if (rb == null) continue;
+            if (rb == null)
+                continue;
 
-            float distance = Vector2.Distance(transform.position, rb.position);
+            float distance = Vector2.Distance(
+                transform.position,
+                rb.position
+            );
+
             if (distance <= snapDistance)
-            {
                 return true;
-            }
         }
 
         return false;

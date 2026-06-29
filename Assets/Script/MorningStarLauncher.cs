@@ -1486,6 +1486,24 @@ public class MorningStarLauncher : MonoBehaviour
         return true;
     }
 
+    public void GrantMagnetEscapeThrow()
+    {
+        if (!limitAirThrows)
+            return;
+
+        int allowedAirThrows = Mathf.Max(0, maxAirThrows);
+
+        if (allowedAirThrows <= 0)
+            return;
+
+        // maxAirThrows = 1 の場合、
+        // 次の空中射出を1回だけ可能にする。
+        _airThrowsUsed = Mathf.Min(
+            _airThrowsUsed,
+            allowedAirThrows - 1
+        );
+    }
+
     private void BeginRecallBeforeThrow(
         Vector2 launchDir,
         float recallTimeMultiplier = 1f,
