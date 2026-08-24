@@ -88,6 +88,7 @@ public class Player : MonoBehaviour
 
 
     private Vector2 _moveInput;
+    private Vector2 _actionMoveInput;
 
     private Rigidbody2D _rigid;
 
@@ -215,7 +216,7 @@ public class Player : MonoBehaviour
 
     {
 
-        float x = _moveInput.x;
+        float x = _actionMoveInput.x;
 
 
 
@@ -231,7 +232,7 @@ public class Player : MonoBehaviour
 
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) kx += 1f;
 
-            if (Mathf.Abs(kx) > 0.01f)
+            if (Mathf.Abs(kx) > Mathf.Abs(x))
 
                 x = kx;
 
@@ -239,6 +240,23 @@ public class Player : MonoBehaviour
 
 
 
+        Gamepad pad = Gamepad.current;
+
+        if (pad != null)
+
+        {
+
+            Vector2 stick = pad.leftStick.ReadValue();
+
+            if (Mathf.Abs(stick.x) > Mathf.Abs(x))
+
+                x = stick.x;
+
+        }
+
+
+
+        x = Mathf.Clamp(x, -1f, 1f);
         _moveInput = new Vector2(x, 0f);
 
     }
@@ -349,7 +367,7 @@ public class Player : MonoBehaviour
 
         Vector2 v = context.ReadValue<Vector2>();
 
-        _moveInput = new Vector2(v.x, 0f);
+        _actionMoveInput = new Vector2(v.x, 0f);
 
     }
 

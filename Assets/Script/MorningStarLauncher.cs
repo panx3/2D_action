@@ -73,9 +73,12 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float aimLaunchCooldown = 0f;
     [SerializeField] private float fireInputBufferTime = 0.18f;
 
-    [Header("空中射出制限")]
-    [SerializeField] private bool limitAirThrows = true;
-    [SerializeField, Min(0)] private int maxAirThrows = 1;
+    [Header("Gamepad（追加入力）")]
+    [SerializeField] private bool enableGamepadInput = true;
+    [SerializeField, Range(0.05f, 1f)] private float gamepadFireThreshold = 0.70f;
+    [SerializeField, Range(0.05f, 0.7f)] private float gamepadResetThreshold = 0.25f;
+    [SerializeField] private bool useRightStickClickForCharge = true;
+    [SerializeField] private bool useLeftTriggerForSwingHold = true;
 
     [Header("RecallBeforeThrow（発射前の見える引き寄せ）")]
     [SerializeField] private bool useVisibleRecallBeforeThrow = true;
@@ -239,6 +242,9 @@ public class MorningStarLauncher : MonoBehaviour
     private float _spinAngle;
     private Vector2 _pendingAimDirection;
     private Vector2 _lastValidAimDirection;
+    private bool _rightStickReady = true;
+    private Vector2 _lastGamepadAimDirection = Vector2.right;
+    private bool _gamepadFirePressedThisFrame;
     private float _lastCharge01;
     private float _lastSpeedMultiplier = 1f;
     private Coroutine _hitStopRoutine;
@@ -310,6 +316,8 @@ public class MorningStarLauncher : MonoBehaviour
             hookableLayers = LayerMask.GetMask("Walls", "Default");
         if (enemyLayers.value == 0)
             enemyLayers = LayerMask.GetMask("Enemy");
+        if (breakableLayers.value == 0)
+            breakableLayers = LayerMask.GetMask("Walls");
         SyncRopeLengthToConstraint();
     }
 
@@ -369,6 +377,7 @@ public class MorningStarLauncher : MonoBehaviour
         ResetAirThrowsWhenGrounded();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
+        UpdateGamepadInputState();
         ProcessRecoilTrigger();
         UpdateFallbackLineRenderer();
 
@@ -598,10 +607,13 @@ public class MorningStarLauncher : MonoBehaviour
         TryConsumeBufferedFire();
     }
 
-    private static bool WasFirePressedThisFrame()
+    private bool WasFirePressedThisFrame()
     {
         Mouse mouse = Mouse.current;
-        return mouse != null && mouse.leftButton.wasPressedThisFrame;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            return true;
+
+        return _gamepadFirePressedThisFrame;
     }
 
     private static bool WasReleasePressedThisFrame()
@@ -649,23 +661,26 @@ public class MorningStarLauncher : MonoBehaviour
     private void HandleHookedClickInput()
     {
         Mouse mouse = Mouse.current;
-        if (mouse == null)
-            return;
 
         if (_requireReleaseBeforeHookClick)
         {
-            if (!mouse.leftButton.isPressed)
+            if (!((mouse != null && mouse.leftButton.isPressed) || IsGamepadSwingHoldPressed()))
                 _requireReleaseBeforeHookClick = false;
             return;
         }
 
-        if (mouse.leftButton.wasPressedThisFrame)
+        bool holdPressedThisFrame = (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            || WasGamepadSwingHoldPressedThisFrame();
+        bool holdPressed = (mouse != null && mouse.leftButton.isPressed)
+            || IsGamepadSwingHoldPressed();
+
+        if (holdPressedThisFrame)
         {
             _hookClickHolding = true;
             _hookClickHoldTimer = 0f;
         }
 
-        if (_hookClickHolding && mouse.leftButton.isPressed)
+        if (_hookClickHolding && holdPressed)
         {
             _hookClickHoldTimer += Time.deltaTime;
 
@@ -680,7 +695,7 @@ public class MorningStarLauncher : MonoBehaviour
             }
         }
 
-        if (_hookClickHolding && mouse.leftButton.wasReleasedThisFrame)
+        if (_hookClickHolding && ((mouse != null && mouse.leftButton.wasReleasedThisFrame) || WasGamepadSwingHoldReleasedThisFrame()))
         {
             if (_state == MorningStarState.Hooked
                 && _hookClickHoldTimer < holdToSwingTime
@@ -701,17 +716,19 @@ public class MorningStarLauncher : MonoBehaviour
     private void HandleSwingingInput()
     {
         Mouse mouse = Mouse.current;
-        if (mouse == null)
-            return;
+        bool swingHold = (mouse != null && mouse.leftButton.isPressed)
+            || IsGamepadSwingHoldPressed();
 
-        if (mouse.leftButton.isPressed)
+        if (swingHold)
         {
             Vector2 aim = CalculateAimDirection();
             if (aim.sqrMagnitude > 0.001f)
                 _pendingAimDirection = aim;
         }
 
-        if (!mouse.leftButton.wasReleasedThisFrame)
+        bool swingReleased = (mouse != null && mouse.leftButton.wasReleasedThisFrame)
+            || WasGamepadSwingHoldReleasedThisFrame();
+        if (!swingReleased)
             return;
 
         if (releaseFromSwingToThrow)
@@ -731,6 +748,86 @@ public class MorningStarLauncher : MonoBehaviour
     }
 
     private void HandleSpinChargeInput()
+    {
+        if (TryHandleGamepadFireTriggerInput())
+            return;
+
+        if (TryHandleGamepadSpinChargeInput())
+            return;
+
+        HandleMouseSpinChargeInput();
+    }
+
+    private bool TryHandleGamepadFireTriggerInput()
+    {
+        if (!enableGamepadInput || !_gamepadFirePressedThisFrame)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null || pad.rightStickButton.isPressed)
+            return false;
+
+        Vector2 aim = CalculateAimDirection();
+        if (aim.sqrMagnitude <= 0.001f)
+            return false;
+
+        FireImmediate(aim);
+        return true;
+    }
+
+    private bool TryHandleGamepadSpinChargeInput()
+    {
+        if (!enableGamepadInput || !useRightStickClickForCharge)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.rightStickButton.wasPressedThisFrame)
+        {
+            _fireHoldTime = 0f;
+            _isFireHolding = true;
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+            return true;
+        }
+
+        if (pad.rightStickButton.isPressed && _isFireHolding)
+        {
+            _fireHoldTime += Time.deltaTime;
+
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+
+            if (_fireHoldTime >= holdThreshold)
+                BeginSpinCharging();
+
+            return true;
+        }
+
+        if (pad.rightStickButton.wasReleasedThisFrame && _isFireHolding)
+        {
+            _isFireHolding = false;
+
+            if ((_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+                && _fireHoldTime >= 0f
+                && _fireHoldTime < holdThreshold
+                && _pendingAimDirection.sqrMagnitude > 0.001f)
+            {
+                FireImmediate(_pendingAimDirection);
+            }
+
+            _fireHoldTime = -1f;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void HandleMouseSpinChargeInput()
     {
         Mouse mouse = Mouse.current;
         if (mouse == null)
@@ -776,6 +873,9 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandleSimpleFireInput()
     {
+        if (TryHandleGamepadFireTriggerInput())
+            return;
+
         Mouse mouse = Mouse.current;
         if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
             return;
@@ -799,14 +899,23 @@ public class MorningStarLauncher : MonoBehaviour
     private void HandleSpinChargingReleaseInput()
     {
         Mouse mouse = Mouse.current;
-        if (mouse == null)
-            return;
-
         Vector2 aim = CalculateAimDirection();
         if (aim.sqrMagnitude > 0.001f)
             _pendingAimDirection = aim;
 
-        if (mouse.leftButton.wasReleasedThisFrame)
+        bool mouseReleased = mouse != null && mouse.leftButton.wasReleasedThisFrame;
+        bool gamepadReleased = enableGamepadInput
+            && Gamepad.current != null
+            && Gamepad.current.rightStickButton.wasReleasedThisFrame;
+        if (gamepadReleased)
+        {
+            _pendingAimDirection = _lastGamepadAimDirection.sqrMagnitude > 0.001f
+                ? _lastGamepadAimDirection.normalized
+                : Vector2.right;
+            _rightStickReady = false;
+        }
+
+        if (mouseReleased || gamepadReleased)
             ExecuteChargedThrow();
     }
 
@@ -909,6 +1018,12 @@ public class MorningStarLauncher : MonoBehaviour
         if (handAnchor == null)
             return Vector2.zero;
 
+        if (TryGetGamepadAimDirection(out Vector2 gamepadDir))
+        {
+            _lastValidAimDirection = gamepadDir;
+            return gamepadDir;
+        }
+
         if (!TryGetPointerScreen(out Vector2 screenPos))
         {
             if (_lastValidAimDirection.sqrMagnitude > 1e-6f)
@@ -930,6 +1045,119 @@ public class MorningStarLauncher : MonoBehaviour
 
         _lastValidAimDirection = dir.normalized;
         return _lastValidAimDirection;
+    }
+
+    private void UpdateGamepadInputState()
+    {
+        _gamepadFirePressedThisFrame = false;
+
+        if (!enableGamepadInput)
+            return;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+        {
+            _rightStickReady = true;
+            return;
+        }
+
+        Vector2 stick = pad.rightStick.ReadValue();
+        float magnitude = stick.magnitude;
+
+        if (magnitude > 0.0001f)
+        {
+            _lastGamepadAimDirection = stick.normalized;
+            _pendingAimDirection = _lastGamepadAimDirection;
+        }
+
+        if (magnitude >= gamepadFireThreshold)
+        {
+            if (_rightStickReady && !pad.rightStickButton.isPressed)
+            {
+                _gamepadFirePressedThisFrame = true;
+                _rightStickReady = false;
+            }
+        }
+        else if (magnitude <= gamepadResetThreshold)
+        {
+            _rightStickReady = true;
+        }
+
+    }
+
+    private bool TryGetGamepadAimDirection(out Vector2 direction)
+    {
+        direction = Vector2.zero;
+
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        Vector2 stick = pad.rightStick.ReadValue();
+        float magnitude = stick.magnitude;
+        if (magnitude <= gamepadResetThreshold)
+            return false;
+
+        direction = stick.normalized;
+        _lastGamepadAimDirection = direction;
+        return true;
+    }
+
+    private bool IsGamepadSwingHoldPressed()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.leftShoulder.isPressed)
+            return true;
+
+        if (useLeftTriggerForSwingHold && pad.leftTrigger.ReadValue() > 0.05f)
+            return true;
+
+        return false;
+    }
+
+    private bool WasGamepadSwingHoldPressedThisFrame()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.leftShoulder.wasPressedThisFrame)
+            return true;
+
+        if (useLeftTriggerForSwingHold)
+            return pad.leftTrigger.wasPressedThisFrame;
+
+        return false;
+    }
+
+    private bool WasGamepadSwingHoldReleasedThisFrame()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.leftShoulder.wasReleasedThisFrame)
+            return true;
+
+        if (useLeftTriggerForSwingHold)
+            return pad.leftTrigger.wasReleasedThisFrame;
+
+        return false;
     }
 
     private Vector2 GetThrowOriginPosition()
@@ -1061,7 +1289,12 @@ public class MorningStarLauncher : MonoBehaviour
 
     private bool CanStateDealCombatDamage()
     {
-        return _state == MorningStarState.Thrown || _state == MorningStarState.Dropping;
+        return _state == MorningStarState.Dragging
+            || _state == MorningStarState.SpinCharging
+            || _state == MorningStarState.Thrown
+            || _state == MorningStarState.Dropping
+            || _state == MorningStarState.Hooked
+            || _state == MorningStarState.Swinging;
     }
 
     private bool TryProcessCombatHit(Collision2D collision)
