@@ -1,6 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 鉄球を吸着する磁力ポイント。
+/// Traversal Assist をONにすると、鉄球が磁力範囲へ入っている間だけ
+/// プレイヤーにも短い引っ張りを与え、磁力ダッシュ用の支点として使える。
+/// 既存Prefabへの影響を避けるため、初期値はOFF。
+/// </summary>
 public class MagnetPoint : MonoBehaviour
 {
     [Header("References")]
@@ -15,6 +21,14 @@ public class MagnetPoint : MonoBehaviour
     [SerializeField] private float snapDistance = 0.4f;
     [SerializeField] private bool slowNearCenter = true;
 
+    [Header("Traversal Assist (Optional)")]
+    [SerializeField] private bool pullPlayerWhileBallAttached = false;
+    [SerializeField] private string playerTag = "Player";
+    [SerializeField] private float playerPullForce = 55f;
+    [SerializeField] private float playerMaxPullSpeed = 12f;
+    [SerializeField] private float playerReleaseDistance = 0.8f;
+    [SerializeField] private float playerPassDistance = 0.25f;
+
     [Header("Visual Settings")]
     [SerializeField] private Color idleColor = Color.blue;
     [SerializeField] private Color activeColor = Color.cyan;
@@ -27,6 +41,11 @@ public class MagnetPoint : MonoBehaviour
         new HashSet<Rigidbody2D>();
 
     private SpriteRenderer spriteRenderer;
+
+    private Rigidbody2D playerRigidbody;
+    private bool traversalActive;
+    private bool traversalFinished;
+    private float traversalDirectionX;
 
     private void Awake()
     {
@@ -60,6 +79,7 @@ public class MagnetPoint : MonoBehaviour
         if (!detectedBodies.Contains(rb))
         {
             detectedBodies.Add(rb);
+            BeginTraversalAssist();
             Debug.Log("MagnetPoint Detect");
         }
 
@@ -77,6 +97,12 @@ public class MagnetPoint : MonoBehaviour
         {
             escapeThrowGrantedBodies.Remove(rb);
             Debug.Log("MagnetPoint Release");
+        }
+
+        if (detectedBodies.Count == 0)
+        {
+            traversalActive = false;
+            traversalFinished = false;
         }
 
         UpdateVisual();
@@ -98,6 +124,7 @@ public class MagnetPoint : MonoBehaviour
             Attract(rb);
         }
 
+        ApplyTraversalAssist();
         UpdateVisual();
     }
 
@@ -156,18 +183,73 @@ public class MagnetPoint : MonoBehaviour
         Debug.Log("MagnetPoint: Escape throw granted");
     }
 
+    private void BeginTraversalAssist()
+    {
+        if (!pullPlayerWhileBallAttached || detectedBodies.Count == 0)
+            return;
+
+        CachePlayer();
+        if (playerRigidbody == null)
+            return;
+
+        float dx = transform.position.x - playerRigidbody.position.x;
+        traversalDirectionX = Mathf.Abs(dx) > 0.05f ? Mathf.Sign(dx) : 1f;
+        traversalActive = true;
+        traversalFinished = false;
+    }
+
+    private void ApplyTraversalAssist()
+    {
+        if (other.CompareTag(targetTag))
+            return true;
+
+        // 磁力点の反対側へ抜けたら、引き戻さない。
+        float passedDistance = (playerRigidbody.position.x - transform.position.x) * traversalDirectionX;
+        if (passedDistance >= playerPassDistance)
+        {
+            traversalFinished = true;
+            return;
+        }
+
+        Vector2 toMagnet = (Vector2)transform.position - playerRigidbody.position;
+        float distance = toMagnet.magnitude;
+        if (distance <= playerReleaseDistance || distance <= 0.01f)
+            return;
+
+        Vector2 direction = toMagnet / distance;
+        playerRigidbody.AddForce(direction * playerPullForce, ForceMode2D.Force);
+
+        float towardSpeed = Vector2.Dot(playerRigidbody.linearVelocity, direction);
+        if (towardSpeed > playerMaxPullSpeed)
+        {
+            playerRigidbody.linearVelocity -= direction * (towardSpeed - playerMaxPullSpeed);
+        }
+    }
+
+    private void CachePlayer()
+    {
+        if (playerRigidbody != null)
+            return;
+
+        try
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag(playerTag);
+            if (playerObject != null)
+                playerRigidbody = playerObject.GetComponent<Rigidbody2D>();
+        }
+        catch (UnityException)
+        {
+            playerRigidbody = null;
+        }
+    }
+
     private bool IsTarget(Collider2D other)
     {
         if (other.CompareTag(targetTag))
             return true;
 
-        if (other.attachedRigidbody != null &&
-            other.attachedRigidbody.CompareTag(targetTag))
-        {
-            return true;
-        }
-
-        return false;
+        return other.attachedRigidbody != null
+            && other.attachedRigidbody.CompareTag(targetTag);
     }
 
     private void UpdateVisual()

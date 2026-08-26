@@ -15,6 +15,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private bool stopAngularVelocityOnHit = true;
     [SerializeField] private bool debugLog;
 
+    [Header("Hit SFX")]
+    [SerializeField] private AudioSource hitAudioSource;
+    [SerializeField] private AudioClip morningStarHitClip;
+    [SerializeField, Range(0f, 1f)] private float morningStarHitVolume = 0.9f;
+
     private int _currentHp;
     private Rigidbody2D _rigidbody2D;
     private float _hitStunTimer;
@@ -22,11 +27,14 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     public int CurrentHp => _currentHp;
     public int MaxHp => maxHp;
     public bool IsHitStunned => _hitStunTimer > 0f;
+    public int HitSoundPlayCount { get; private set; }
 
     private void Awake()
     {
         _currentHp = maxHp;
         _rigidbody2D = GetComponent<Rigidbody2D>();
+        if (hitAudioSource == null)
+            hitAudioSource = OneShotAudioUtility.FindWorldImpactSource();
         if (_rigidbody2D != null)
         {
             _rigidbody2D.freezeRotation = true;
@@ -48,10 +56,13 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     public void OnMorningStarHit(MorningStarHitContext context)
     {
-        if (_currentHp <= 0)
+        if (_currentHp <= 0 || context.Damage <= 0)
             return;
 
         _currentHp = Mathf.Max(0, _currentHp - context.Damage);
+        if (OneShotAudioUtility.Play2D(hitAudioSource, morningStarHitClip, morningStarHitVolume, transform.position))
+            HitSoundPlayCount++;
+
         if (debugLog)
             Debug.Log($"Enemy hit damage={context.Damage}");
 

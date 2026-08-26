@@ -22,11 +22,11 @@ public class Player : MonoBehaviour
 
     [SerializeField, Tooltip("地上の横方向加速力")]
 
-    private float _groundMoveForce = 60f;
+    private float _groundMoveForce = 70f;
 
     [SerializeField, Tooltip("地上の横減速（速度に比例）")]
 
-    private float _groundLinearDragX = 12f;
+    private float _groundLinearDragX = 8f;
 
 
 
@@ -34,21 +34,21 @@ public class Player : MonoBehaviour
 
     [SerializeField, Range(0f, 1f), Tooltip("空中の加速力＝地上×この値")]
 
-    private float _airMoveFactor = 0.5f;
+    private float _airMoveFactor = 0.1f;
 
     [SerializeField, Tooltip("空中の横減速")]
 
-    private float _airLinearDragX = 2f;
+    private float _airLinearDragX = 1.5f;
 
 
 
     [Header("ジャンプ（Impulse）")]
 
-    [SerializeField] private float _jumpSpeed = 7f;
+    [SerializeField] private float _jumpSpeed = 8f;
 
     [SerializeField, Tooltip("コヨーテタイム（秒）")]
 
-    private float _coyoteTime = 0.12f;
+    private float _coyoteTime = 0.1f;
 
     [SerializeField, Tooltip("ジャンプバッファ（秒）")]
 
@@ -58,13 +58,13 @@ public class Player : MonoBehaviour
 
     [Header("ジャンプ物理")]
 
-    [SerializeField] private float _fallGravityMultiplier = 2.5f;
+    [SerializeField] private float _fallGravityMultiplier = 4f;
 
     [SerializeField] private float _jumpCutMultiplier = 2f;
 
     [SerializeField, Tooltip("最大落下速度（負の値）")]
 
-    private float _maxFallSpeed = -22f;
+    private float _maxFallSpeed = -50f;
 
 
 
@@ -77,6 +77,10 @@ public class Player : MonoBehaviour
     [SerializeField, Tooltip("flipX が使えない場合のみ Visual の localScale.x を反転")]
     private Transform _visualRoot;
 
+    private Transform _weaponHandAnchor;
+    private Vector3 _rightFacingHandAnchorLocalPosition;
+    private bool _handAnchorFacingInitialized;
+
 
 
     [Header("空中発射")]
@@ -87,13 +91,48 @@ public class Player : MonoBehaviour
 
 
 
+    [Header("効果音")]
+
+    [SerializeField] private AudioSource _sfxAudioSource;
+
+    [SerializeField] private AudioSource _footstepAudioSource;
+
+    [SerializeField] private AudioClip _jumpClip;
+
+    [SerializeField] private AudioClip _footstepGrassClip;
+
+    [SerializeField] private AudioClip[] _jumpVoiceClips;
+
+    [SerializeField] private AudioClip _landingClip;
+
+    [SerializeField, Range(0f, 1f)] private float _jumpVolume = 1f;
+
+    [SerializeField, Range(0f, 1f)] private float _footstepVolume = 0.55f;
+
+    [SerializeField, Range(0f, 1f)] private float _jumpVoiceVolume = 0.7f;
+
+    [SerializeField, Range(0f, 1f)] private float _landingVolume = 0.8f;
+
+    [SerializeField, Min(0f)] private float _footstepMinHorizontalSpeed = 0.1f;
+
+    [SerializeField] private PlayerHealth _playerHealth;
+
+
+
     private Vector2 _moveInput;
+    private Vector2 _actionMoveInput;
 
     private Rigidbody2D _rigid;
 
     private bool _bjump;
 
     private Animator _anim;
+
+    private bool _wasGrounded;
+
+    private bool _groundStateInitialized;
+
+    private bool _hasObservedGrounded;
 
     private int _floorContactCount;
 
@@ -125,6 +164,56 @@ public class Player : MonoBehaviour
 
     public bool IsBackwardAim => _backwardAim;
 
+    public Transform WeaponHandAnchor => _weaponHandAnchor;
+
+    public Vector3 RightFacingHandAnchorLocalPosition => _rightFacingHandAnchorLocalPosition;
+
+    public AudioClip LastJumpVoiceClip { get; private set; }
+
+    public int JumpVoicePlayCount { get; private set; }
+
+    public int LandingSoundPlayCount { get; private set; }
+
+
+
+    private void Awake()
+
+    {
+
+        if (_playerHealth == null)
+
+            _playerHealth = GetComponent<PlayerHealth>();
+
+    }
+
+
+
+    private void OnEnable()
+
+    {
+
+        if (_playerHealth != null)
+
+            _playerHealth.OnDead += HandlePlayerDead;
+
+    }
+
+
+
+    private void OnDisable()
+
+    {
+
+        if (_playerHealth != null)
+
+            _playerHealth.OnDead -= HandlePlayerDead;
+
+
+
+        StopFootstepAudio();
+
+    }
+
 
 
     private void Start()
@@ -139,7 +228,11 @@ public class Player : MonoBehaviour
 
             _bodySprite = GetComponentInChildren<SpriteRenderer>();
 
+        ResolveWeaponHandAnchor();
+
         _bjump = false;
+
+        ConfigureAudioSources();
 
         ApplyMovementFacingVisual();
 
@@ -155,9 +248,34 @@ public class Player : MonoBehaviour
 
 
 
-        if (_anim != null)
+        bool grounded = IsGrounded;
 
+        bool landedThisFrame = _groundStateInitialized
+            && _hasObservedGrounded
+            && !_wasGrounded
+            && grounded;
+
+        if (_anim != null)
+        {
             _anim.SetBool("Walk", Mathf.Abs(_moveInput.x) > 0.01f);
+            _anim.SetBool("Jump", !grounded);
+            _anim.SetFloat("VerticalSpeed", _rigid != null ? _rigid.linearVelocity.y : 0f);
+
+            if (landedThisFrame)
+                _anim.SetTrigger("Land");
+        }
+
+        if (landedThisFrame)
+            PlayLandingSound();
+
+        _groundStateInitialized = true;
+        if (grounded)
+            _hasObservedGrounded = true;
+        _wasGrounded = grounded;
+
+
+
+        UpdateFootstepAudio(grounded);
 
 
 
@@ -191,6 +309,10 @@ public class Player : MonoBehaviour
 
             _rigid.AddForce(Vector2.up * _jumpSpeed, ForceMode2D.Impulse);
 
+            StopFootstepAudio();
+
+            PlayJumpSound();
+
             _bjump = true;
 
             _jumpBufferTimer = 0f;
@@ -215,7 +337,7 @@ public class Player : MonoBehaviour
 
     {
 
-        float x = _moveInput.x;
+        float x = _actionMoveInput.x;
 
 
 
@@ -231,7 +353,7 @@ public class Player : MonoBehaviour
 
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) kx += 1f;
 
-            if (Mathf.Abs(kx) > 0.01f)
+            if (Mathf.Abs(kx) > Mathf.Abs(x))
 
                 x = kx;
 
@@ -239,6 +361,23 @@ public class Player : MonoBehaviour
 
 
 
+        Gamepad pad = Gamepad.current;
+
+        if (pad != null)
+
+        {
+
+            Vector2 stick = pad.leftStick.ReadValue();
+
+            if (Mathf.Abs(stick.x) > Mathf.Abs(x))
+
+                x = stick.x;
+
+        }
+
+
+
+        x = Mathf.Clamp(x, -1f, 1f);
         _moveInput = new Vector2(x, 0f);
 
     }
@@ -305,6 +444,160 @@ public class Player : MonoBehaviour
 
 
 
+    private void ConfigureAudioSources()
+
+    {
+
+        if (_footstepAudioSource == null)
+
+            return;
+
+
+
+        _footstepAudioSource.clip = _footstepGrassClip;
+
+        _footstepAudioSource.loop = true;
+
+        _footstepAudioSource.playOnAwake = false;
+
+        _footstepAudioSource.volume = _footstepVolume;
+
+    }
+
+
+
+    private void UpdateFootstepAudio(bool grounded)
+
+    {
+
+        if (_footstepAudioSource == null || _rigid == null)
+
+            return;
+
+
+
+        bool isAlive = _playerHealth == null || !_playerHealth.IsDead;
+
+        bool shouldPlay = grounded
+
+            && !_bjump
+
+            && isAlive
+
+            && Mathf.Abs(_rigid.linearVelocity.x) > _footstepMinHorizontalSpeed;
+
+
+
+        if (shouldPlay)
+
+        {
+
+            if (!_footstepAudioSource.isPlaying && _footstepAudioSource.clip != null)
+
+                _footstepAudioSource.Play();
+
+        }
+
+        else
+
+        {
+
+            StopFootstepAudio();
+
+        }
+
+    }
+
+
+
+    private void StopFootstepAudio()
+
+    {
+
+        if (_footstepAudioSource != null && _footstepAudioSource.isPlaying)
+
+            _footstepAudioSource.Stop();
+
+    }
+
+
+
+    private void PlayJumpSound()
+
+    {
+
+        if (_sfxAudioSource != null && _jumpClip != null)
+
+            _sfxAudioSource.PlayOneShot(_jumpClip, _jumpVolume);
+
+        AudioClip voiceClip = GetRandomJumpVoiceClip();
+        if (_sfxAudioSource == null || voiceClip == null)
+            return;
+
+        _sfxAudioSource.PlayOneShot(voiceClip, _jumpVoiceVolume);
+        LastJumpVoiceClip = voiceClip;
+        JumpVoicePlayCount++;
+
+    }
+
+
+
+    private AudioClip GetRandomJumpVoiceClip()
+
+    {
+
+        if (_jumpVoiceClips == null || _jumpVoiceClips.Length == 0)
+            return null;
+
+        int validClipCount = 0;
+        foreach (AudioClip clip in _jumpVoiceClips)
+        {
+            if (clip != null)
+                validClipCount++;
+        }
+
+        if (validClipCount == 0)
+            return null;
+
+        int selectedIndex = Random.Range(0, validClipCount);
+        foreach (AudioClip clip in _jumpVoiceClips)
+        {
+            if (clip == null)
+                continue;
+            if (selectedIndex-- == 0)
+                return clip;
+        }
+
+        return null;
+
+    }
+
+
+
+    private void PlayLandingSound()
+
+    {
+
+        if (_sfxAudioSource == null || _landingClip == null)
+            return;
+
+        _sfxAudioSource.PlayOneShot(_landingClip, _landingVolume);
+        LandingSoundPlayCount++;
+
+    }
+
+
+
+    private void HandlePlayerDead()
+
+    {
+
+        StopFootstepAudio();
+
+    }
+
+
+
     private void OnCollisionEnter2D(Collision2D collision)
 
     {
@@ -349,7 +642,7 @@ public class Player : MonoBehaviour
 
         Vector2 v = context.ReadValue<Vector2>();
 
-        _moveInput = new Vector2(v.x, 0f);
+        _actionMoveInput = new Vector2(v.x, 0f);
 
     }
 
@@ -543,29 +836,67 @@ public class Player : MonoBehaviour
 
             sprite.flipX = !_facingRight;
 
-            return;
+        }
+
+        else if (_visualRoot != null)
+
+        {
+
+            Vector3 scale = _visualRoot.localScale;
+
+            float absX = Mathf.Abs(scale.x);
+
+            if (absX < 1e-4f)
+
+                absX = 1f;
+
+            scale.x = _facingRight ? absX : -absX;
+
+            _visualRoot.localScale = scale;
 
         }
 
 
 
-        if (_visualRoot == null)
+        ApplyWeaponHandAnchorFacing();
 
+    }
+
+
+
+    private void ResolveWeaponHandAnchor()
+
+    {
+
+        MorningStarLauncher launcher = GetComponent<MorningStarLauncher>();
+        Transform resolvedAnchor = launcher != null ? launcher.HandAnchor : null;
+
+        if (resolvedAnchor == null || resolvedAnchor == transform)
+            resolvedAnchor = transform.Find("HandAnchor");
+
+        if (resolvedAnchor == null || resolvedAnchor == transform)
             return;
 
+        _weaponHandAnchor = resolvedAnchor;
+        _rightFacingHandAnchorLocalPosition = resolvedAnchor.localPosition;
+        _handAnchorFacingInitialized = true;
+
+    }
 
 
-        Vector3 scale = _visualRoot.localScale;
 
-        float absX = Mathf.Abs(scale.x);
+    private void ApplyWeaponHandAnchorFacing()
 
-        if (absX < 1e-4f)
+    {
 
-            absX = 1f;
+        if (!_handAnchorFacingInitialized || _weaponHandAnchor == null)
+            return;
 
-        scale.x = _facingRight ? absX : -absX;
-
-        _visualRoot.localScale = scale;
+        Vector3 localPosition = _rightFacingHandAnchorLocalPosition;
+        localPosition.x = _facingRight
+            ? _rightFacingHandAnchorLocalPosition.x
+            : -_rightFacingHandAnchorLocalPosition.x;
+        _weaponHandAnchor.localPosition = localPosition;
 
     }
 

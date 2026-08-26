@@ -1,0 +1,188 @@
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+/// <summary>
+/// v7生成済みステージへ、磁力スイング操作と敵見た目を反映するための小さなパッチ。
+/// ステージ地形を作り直さないため、既存配置を壊さずに調整できる。
+/// </summary>
+public static class SampleSceneMagnetSwingPatch
+{
+    private const string EnemySpritePath = "Assets/image_/tekkyu_enemy.png";
+
+    [MenuItem("鉄球少女/SampleScene/磁力スイング・敵見た目パッチを適用")]
+    private static void ApplyPatch()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            return;
+
+        Sprite enemySprite = LoadSprite(EnemySpritePath);
+        if (enemySprite == null)
+        {
+            EditorUtility.DisplayDialog(
+                "敵画像が見つかりません",
+                EnemySpritePath + " が見つかりません。",
+                "OK");
+            return;
+        }
+
+        Player player = Object.FindAnyObjectByType<Player>(FindObjectsInactive.Exclude);
+        float playerHeight = ReadPlayerWorldHeight(player);
+        ApplyEnemyVisuals(enemySprite, playerHeight);
+        ApplyMagnetSettings();
+        UpdateMagnetGuides();
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[Magnet Swing Patch] 敵見た目と磁力スイング設定を反映しました。");
+
+        EditorUtility.DisplayDialog(
+            "反映完了",
+            "・敵を tekkyu_enemy の見た目へ変更\n"
+            + "・磁力点を「吸着 → 自動スイング支点」へ変更\n\n"
+            + "操作：鉄球を磁力点へ当てる → 自動で引っ張られて振り子になる。\n"
+            + "A / D で振り幅を作り、左クリックを押して照準、離すと次の磁力点へ射出します。",
+            "OK");
+    }
+
+    private static void ApplyEnemyVisuals(Sprite enemySprite, float playerHeight)
+    {
+        Enemy[] enemies = Object.FindObjectsByType<Enemy>(FindObjectsInactive.Exclude);
+
+        float desiredHeight = Mathf.Clamp(playerHeight * 0.56f, 1.25f, 1.90f);
+        float spriteScale = desiredHeight / Mathf.Max(0.0001f, enemySprite.bounds.size.y);
+
+        foreach (Enemy enemy in enemies)
+        {
+            if (!IsGeneratedStageObject(enemy.transform))
+                continue;
+
+            SpriteRenderer renderer = enemy.GetComponent<SpriteRenderer>();
+            BoxCollider2D collider = enemy.GetComponent<BoxCollider2D>();
+            if (renderer == null || collider == null)
+                continue;
+
+            enemy.transform.localScale = new Vector3(spriteScale, spriteScale, 1f);
+            renderer.sprite = enemySprite;
+            renderer.color = Color.white;
+            renderer.sortingOrder = 6;
+
+            // 見た目より少し小さめにして、鉄球を当てやすくする。
+            collider.size = new Vector2(0.90f / spriteScale, 1.08f / spriteScale);
+            collider.offset = new Vector2(0f, -0.04f / spriteScale);
+
+            int enemyLayer = LayerMask.NameToLayer("Enemy");
+            if (enemyLayer >= 0)
+                enemy.gameObject.layer = enemyLayer;
+
+            EditorUtility.SetDirty(enemy);
+        }
+    }
+
+    private static void ApplyMagnetSettings()
+    {
+        MagnetPoint[] magnets = Object.FindObjectsByType<MagnetPoint>(FindObjectsInactive.Exclude);
+
+        foreach (MagnetPoint magnet in magnets)
+        {
+            if (!IsGeneratedStageObject(magnet.transform))
+                continue;
+
+            CircleCollider2D trigger = magnet.GetComponent<CircleCollider2D>();
+            if (trigger != null)
+            {
+                trigger.isTrigger = true;
+                EditorUtility.SetDirty(trigger);
+            }
+
+            SerializedObject serialized = new SerializedObject(magnet);
+            SetFloat(serialized, "attractionForce", 38f);
+            SetFloat(serialized, "maxAttractSpeed", 11f);
+            SetFloat(serialized, "snapDistance", 0.30f);
+            SetBool(serialized, "slowNearCenter", true);
+            SetBool(serialized, "useAsSwingAnchor", true);
+            SetFloat(serialized, "attachDistance", 0.30f);
+            SetBool(serialized, "autoBeginSwing", true);
+            SetFloat(serialized, "reattachGraceTime", 0.15f);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            EditorUtility.SetDirty(magnet);
+        }
+    }
+
+    private static void UpdateMagnetGuides()
+    {
+        SetGuideText("Guide_MagnetA", "鉄球を磁力点へ\n吸着したらスイング");
+        SetGuideText("Guide_MagnetB", "A / D で振る\nクリックを離して次へ");
+    }
+
+    private static void SetGuideText(string objectName, string text)
+    {
+        GameObject guide = GameObject.Find(objectName);
+        if (guide == null)
+            return;
+
+        TextMesh mesh = guide.GetComponent<TextMesh>();
+        if (mesh == null)
+            return;
+
+        mesh.text = text;
+        EditorUtility.SetDirty(mesh);
+    }
+
+    private static float ReadPlayerWorldHeight(Player player)
+    {
+        if (player == null)
+            return 3.2f;
+
+        CapsuleCollider2D capsule = player.GetComponent<CapsuleCollider2D>();
+        if (capsule == null)
+            return 3.2f;
+
+        return capsule.size.y * Mathf.Abs(player.transform.lossyScale.y);
+    }
+
+    private static bool IsGeneratedStageObject(Transform current)
+    {
+        while (current != null)
+        {
+            if (current.name == "AutoGeneratedStageV7"
+                || current.name == "AutoGeneratedStageV8"
+                || current.name == "AutoGeneratedStageV6"
+                || current.name == "AutoGeneratedStage")
+            {
+                return true;
+            }
+
+            current = current.parent;
+        }
+
+        return false;
+    }
+
+    private static Sprite LoadSprite(string path)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        foreach (Object asset in assets)
+        {
+            if (asset is Sprite sprite)
+                return sprite;
+        }
+
+        return null;
+    }
+
+    private static void SetFloat(SerializedObject serialized, string propertyName, float value)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property != null)
+            property.floatValue = value;
+    }
+
+    private static void SetBool(SerializedObject serialized, string propertyName, bool value)
+    {
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property != null)
+            property.boolValue = value;
+    }
+}

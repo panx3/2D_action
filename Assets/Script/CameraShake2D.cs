@@ -1,40 +1,59 @@
-using System.Collections;
 using UnityEngine;
 
+[DisallowMultipleComponent]
+[DefaultExecutionOrder(1000)]
 public class CameraShake2D : MonoBehaviour
 {
-    private Vector3 _originalLocalPosition;
-    private Coroutine _shakeRoutine;
+    private float _remainingDuration;
+    private float _strength;
+    private Vector3 _appliedOffset;
 
-    private void Awake()
+    public bool IsShaking => _remainingDuration > 0f;
+    public float CurrentStrength => IsShaking ? _strength : 0f;
+
+    private void Update()
     {
-        _originalLocalPosition = transform.localPosition;
+        // 前フレームの揺れを CameraFollow の LateUpdate より先に外す。
+        // これにより追従計算へランダムなオフセットを混ぜない。
+        RemoveAppliedOffset();
+
+        if (_remainingDuration > 0f)
+            _remainingDuration = Mathf.Max(0f, _remainingDuration - Time.deltaTime);
     }
 
     public void Shake(float duration, float strength)
     {
-        if (!isActiveAndEnabled)
+        if (!isActiveAndEnabled || duration <= 0f || strength <= 0f)
             return;
 
-        if (_shakeRoutine != null)
-            StopCoroutine(_shakeRoutine);
-
-        _shakeRoutine = StartCoroutine(ShakeRoutine(duration, strength));
+        RemoveAppliedOffset();
+        _remainingDuration = duration;
+        _strength = strength;
     }
 
-    private IEnumerator ShakeRoutine(float duration, float strength)
+    private void LateUpdate()
     {
-        float timer = 0f;
+        if (_remainingDuration <= 0f)
+            return;
 
-        while (timer < duration)
-        {
-            timer += Time.deltaTime;
-            Vector2 offset = Random.insideUnitCircle * strength;
-            transform.localPosition = _originalLocalPosition + new Vector3(offset.x, offset.y, 0f);
-            yield return null;
-        }
+        Vector2 randomOffset = Random.insideUnitCircle * _strength;
+        _appliedOffset = new Vector3(randomOffset.x, randomOffset.y, 0f);
+        transform.localPosition += _appliedOffset;
+    }
 
-        transform.localPosition = _originalLocalPosition;
-        _shakeRoutine = null;
+    private void OnDisable()
+    {
+        RemoveAppliedOffset();
+        _remainingDuration = 0f;
+        _strength = 0f;
+    }
+
+    private void RemoveAppliedOffset()
+    {
+        if (_appliedOffset == Vector3.zero)
+            return;
+
+        transform.localPosition -= _appliedOffset;
+        _appliedOffset = Vector3.zero;
     }
 }
