@@ -152,9 +152,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BreakableWall
   hitPoint: 1
+  breakSpeedThreshold: 6
   fragmentPrefab: {fileID: 3995165092266263535, guid: 1a76fc2abdb40a74094afbd5840bfdb9, type: 3}
   fragmentCount: 10
   fragmentSpread: 0.3
   minForce: 1.5
   maxForce: 3.5
   fragmentLifeTime: 2
+  breakAudioSource: {fileID: 0}
+  breakImpactClip: {fileID: 8300000, guid: 5423a6a881679504fb9984e7cf6b0276, type: 3}
+  breakImpactVolume: 0.9
+  showDebugLog: 0

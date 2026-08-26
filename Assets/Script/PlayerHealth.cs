@@ -31,10 +31,16 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField, Tooltip("ノックバック適用先の Player。未設定なら同 GameObject から自動取得。")]
     private Player _player;
 
+    [Header("被弾効果音")]
+    [SerializeField] private AudioSource _damageAudioSource;
+    [SerializeField] private AudioClip _damageClip;
+    [SerializeField, Range(0f, 1f)] private float _damageVolume = 0.8f;
+
     public int CurrentHp { get; private set; }
     public int MaxHp => _maxHp;
     public bool IsDead { get; private set; }
     public bool IsInvincible { get; private set; }
+    public int DamageSoundPlayCount { get; private set; }
 
     public event Action OnDamaged;
     public event Action OnDead;
@@ -55,6 +61,12 @@ public class PlayerHealth : MonoBehaviour
     {
         if (_player == null) _player = GetComponent<Player>();
         if (_spriteRenderer == null) _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (_damageAudioSource == null)
+        {
+            Transform sfxTransform = transform.Find("SfxAudioSource");
+            if (sfxTransform != null)
+                _damageAudioSource = sfxTransform.GetComponent<AudioSource>();
+        }
 
         if (_initialized)
             return;
@@ -85,6 +97,12 @@ public class PlayerHealth : MonoBehaviour
 
         if (_player != null && knockbackImpulse != Vector2.zero)
             _player.ApplyExternalImpulse(knockbackImpulse, ForceMode2D.Impulse);
+
+        if (_damageAudioSource != null && _damageClip != null)
+        {
+            _damageAudioSource.PlayOneShot(_damageClip, _damageVolume);
+            DamageSoundPlayCount++;
+        }
 
         OnDamaged?.Invoke();
         NotifyHealthChanged();

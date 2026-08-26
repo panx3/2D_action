@@ -193,9 +193,25 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private AudioClip tensionSnapClip;
     [SerializeField] private float tensionSnapVolume = 0.35f;
     [SerializeField] private float tensionSnapPitchRandomRange = 0.05f;
+
+    [Header("Ground Impact Camera Shake")]
     [SerializeField] private CameraShake2D cameraShake;
-    [SerializeField] private float tensionSnapShakeDuration = 0.06f;
-    [SerializeField] private float tensionSnapShakeStrength = 0.04f;
+    [SerializeField, Min(0f)] private float minimumGroundImpactSpeed = 7f;
+    [SerializeField, Min(0f)] private float shakeDuration = 0.10f;
+    [SerializeField, Min(0f)] private float minimumShakeStrength = 0.06f;
+    [SerializeField, Min(0f)] private float maximumShakeStrength = 0.16f;
+    [SerializeField, Min(0f)] private float maxImpactSpeed = 20f;
+    [SerializeField, Min(0f)] private float shakeCooldown = 0.10f;
+
+    [Header("Ground Impact SFX")]
+    [SerializeField] private AudioSource groundImpactAudioSource;
+    [SerializeField] private AudioClip groundImpactClip;
+    [SerializeField, Range(0f, 1f)] private float groundImpactVolume = 0.9f;
+
+    [Header("Launch SFX")]
+    [SerializeField] private AudioSource sfxAudioSource;
+    [SerializeField] private AudioClip morningStarLaunchClip;
+    [SerializeField, Range(0f, 1f)] private float morningStarLaunchVolume = 1f;
 
     [Header("照準ガイド")]
     [SerializeField] private bool showAimGuide = true;
@@ -215,7 +231,6 @@ public class MorningStarLauncher : MonoBehaviour
     private Rigidbody2D _playerRb;
     private MorningStarState _state = MorningStarState.Dragging;
     private float _nextLaunchTime;
-    private int _airThrowsUsed;
     private Vector2 _pendingLaunchDir;
     private Vector2 _recallStartPosition;
     private Vector2 _recallTargetPosition;
@@ -247,6 +262,7 @@ public class MorningStarLauncher : MonoBehaviour
     private bool _gamepadFirePressedThisFrame;
     private float _lastCharge01;
     private float _lastSpeedMultiplier = 1f;
+    private float _nextGroundImpactShakeTime;
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
     private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
@@ -254,6 +270,11 @@ public class MorningStarLauncher : MonoBehaviour
     private float _defaultLineWidth;
     private bool _lineVisualDefaultsCached;
     private float _defaultBallLinearDamping;
+
+    public float LastGroundImpactSpeed { get; private set; }
+    public float LastGroundImpactShakeStrength { get; private set; }
+    public int GroundImpactShakeCount { get; private set; }
+    public int GroundImpactSoundCount { get; private set; }
     private bool _tensionSnapUsed;
     private float _tensionSnapCooldownTimer;
     private bool _throwPullAssistActive;
@@ -273,6 +294,7 @@ public class MorningStarLauncher : MonoBehaviour
     public float MaxRopeLength => GetEffectiveRopeLength();
     public float LastCharge01 => _lastCharge01;
     public float LastSpeedMultiplier => _lastSpeedMultiplier;
+    public Transform HandAnchor => handAnchor;
 
     public bool IsRopeLineVisible =>
         _state == MorningStarState.Dragging
@@ -297,6 +319,12 @@ public class MorningStarLauncher : MonoBehaviour
             playerBodyCollider = playerRigidbody2D.GetComponent<Collider2D>();
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
+        if (sfxAudioSource == null)
+        {
+            Transform sfxTransform = transform.Find("SfxAudioSource");
+            if (sfxTransform != null)
+                sfxAudioSource = sfxTransform.GetComponent<AudioSource>();
+        }
         if (cameraShake == null && Camera.main != null)
             cameraShake = Camera.main.GetComponent<CameraShake2D>();
         if (animator == null)
@@ -374,13 +402,13 @@ public class MorningStarLauncher : MonoBehaviour
         if (morningStarRb == null)
             return;
 
-        ResetAirThrowsWhenGrounded();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
         UpdateGamepadInputState();
         ProcessRecoilTrigger();
         UpdateFallbackLineRenderer();
 
+        // 1. Release（Hooked / HookSwing）
         if ((_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
             && WasReleasePressedThisFrame())
         {
@@ -388,6 +416,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         }
 
+        // 2. Hooked / HookSwing 専用（Fire Buffer に入れない）
         if (_state == MorningStarState.Hooked)
         {
             HandleHookedClickInput();
@@ -406,6 +435,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         }
 
+        // 3. Dragging / Dropping
         if (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
         {
             if (enableSpinCharge)
@@ -414,6 +444,7 @@ public class MorningStarLauncher : MonoBehaviour
                 HandleSimpleFireInput();
         }
 
+        // 4. Returning / RecallBeforeThrow / Thrown の Fire Buffer
         ProcessBufferedFireInputForRestrictedStates();
 
         if (_fireBufferTimer > 0f)
@@ -432,7 +463,6 @@ public class MorningStarLauncher : MonoBehaviour
 
         float dt = Time.fixedDeltaTime;
         Vector2 hand = GetHandWorld();
-
         if (_tensionSnapCooldownTimer > 0f)
             _tensionSnapCooldownTimer = Mathf.Max(0f, _tensionSnapCooldownTimer - dt);
 
@@ -572,7 +602,6 @@ public class MorningStarLauncher : MonoBehaviour
         _tensionSnapCooldownTimer = tensionSnapCooldown;
         PlayThrowPullVisualLean(dir);
         PlayTensionSnapSound();
-        PlayTensionSnapCameraShake();
         LogDebug("MorningStar Tension Snap");
     }
 
@@ -662,6 +691,7 @@ public class MorningStarLauncher : MonoBehaviour
     {
         Mouse mouse = Mouse.current;
 
+        // 投擲クリックの押しっぱなしを Hook 後の短押し再射出と誤認しない
         if (_requireReleaseBeforeHookClick)
         {
             if (!((mouse != null && mouse.leftButton.isPressed) || IsGamepadSwingHoldPressed()))
@@ -837,7 +867,6 @@ public class MorningStarLauncher : MonoBehaviour
         {
             _fireHoldTime = 0f;
             _isFireHolding = true;
-
             Vector2 aim = CalculateAimDirection();
             if (aim.sqrMagnitude > 0.001f)
                 _pendingAimDirection = aim;
@@ -927,8 +956,6 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         if (Time.time < _nextLaunchTime)
             return;
-        if (!CanStartAnotherThrow())
-            return;
 
         _state = MorningStarState.SpinCharging;
         _chargeTime = 0f;
@@ -957,7 +984,6 @@ public class MorningStarLauncher : MonoBehaviour
 
         Vector2 center = GetHandWorld();
         Vector2 offset = new Vector2(Mathf.Cos(_spinAngle), Mathf.Sin(_spinAngle)) * spinRadius;
-
         morningStarRb.MovePosition(center + offset);
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
@@ -968,15 +994,9 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.SpinCharging || morningStarRb == null)
             return;
 
-        float charge01 = maxChargeTime > 0f
-            ? Mathf.Clamp01(_chargeTime / maxChargeTime)
-            : 1f;
-
+        float charge01 = maxChargeTime > 0f ? Mathf.Clamp01(_chargeTime / maxChargeTime) : 1f;
         _lastCharge01 = charge01;
-        _lastSpeedMultiplier = Mathf.Lerp(
-            minChargedThrowMultiplier,
-            maxChargedThrowMultiplier,
-            charge01);
+        _lastSpeedMultiplier = Mathf.Lerp(minChargedThrowMultiplier, maxChargedThrowMultiplier, charge01);
 
         Vector2 aimDir = _pendingAimDirection.sqrMagnitude > 0.001f
             ? _pendingAimDirection.normalized
@@ -1009,7 +1029,6 @@ public class MorningStarLauncher : MonoBehaviour
         Vector2 origin = _hookPoint.sqrMagnitude > 1e-8f
             ? _hookPoint
             : (Vector2)morningStarRb.position;
-
         return CalculateAimDirectionFrom(origin);
     }
 
@@ -1028,7 +1047,6 @@ public class MorningStarLauncher : MonoBehaviour
         {
             if (_lastValidAimDirection.sqrMagnitude > 1e-6f)
                 return _lastValidAimDirection;
-
             return Vector2.zero;
         }
 
@@ -1039,7 +1057,6 @@ public class MorningStarLauncher : MonoBehaviour
         {
             if (_lastValidAimDirection.sqrMagnitude > 1e-6f)
                 return _lastValidAimDirection;
-
             return Vector2.zero;
         }
 
@@ -1226,15 +1243,11 @@ public class MorningStarLauncher : MonoBehaviour
 
         Vector2 v = _playerRb.linearVelocity;
         Vector2 boostDir;
-
         if (v.sqrMagnitude > 0.25f)
-        {
             boostDir = v.normalized;
-        }
         else
         {
             boostDir = (Vector2)_playerRb.position - _hookPoint;
-
             if (boostDir.sqrMagnitude < 1e-6f)
                 boostDir = Vector2.right;
             else
@@ -1251,6 +1264,8 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (morningStarRb == null || collision.collider == null)
             return;
+
+        TryPlayGroundImpactCameraShake(collision);
 
         if ((_state == MorningStarState.Thrown || _state == MorningStarState.Dropping)
             && HasFloorContact(collision)
@@ -1318,12 +1333,9 @@ public class MorningStarLauncher : MonoBehaviour
             return false;
 
         EntityId colliderId = other.GetEntityId();
-
         if (_lastCombatHitTimeByColliderId.TryGetValue(colliderId, out float lastHitTime)
             && Time.time - lastHitTime < hitCooldownPerTarget)
-        {
             return false;
-        }
 
         MorningStarHitContext context = BuildHitContext(collision, impactSpeed);
         receiver.OnMorningStarHit(context);
@@ -1341,12 +1353,9 @@ public class MorningStarLauncher : MonoBehaviour
             return true;
 
         int layerBit = 1 << layer;
-
         if (enemyLayers.value != 0 && (enemyLayers.value & layerBit) != 0)
             return true;
-
-        return breakableLayers.value != 0
-               && (breakableLayers.value & layerBit) != 0;
+        return breakableLayers.value != 0 && (breakableLayers.value & layerBit) != 0;
     }
 
     private MorningStarHitContext BuildHitContext(Collision2D collision, float impactSpeed)
@@ -1358,7 +1367,6 @@ public class MorningStarLauncher : MonoBehaviour
         if (collision.contactCount > 0)
         {
             Vector2 normal = collision.GetContact(0).normal;
-
             if (normal.sqrMagnitude > 1e-6f)
                 impactDir = -normal.normalized;
         }
@@ -1369,22 +1377,11 @@ public class MorningStarLauncher : MonoBehaviour
         int damage = Mathf.RoundToInt(baseDamage + scaledSpeed * damagePerSpeed);
         damage = Mathf.Clamp(damage, minDamage, maxDamage);
 
-        float knockbackMag = Mathf.Clamp(
-            baseKnockback + scaledSpeed * knockbackPerSpeed,
-            0f,
-            maxKnockback);
-
+        float knockbackMag = Mathf.Clamp(baseKnockback + scaledSpeed * knockbackPerSpeed, 0f, maxKnockback);
         Vector2 knockback = impactDir * knockbackMag;
 
-        float hitStop = Mathf.Clamp(
-            damage * hitStopPerDamage,
-            minCombatHitStop,
-            maxCombatHitStop);
-
-        hitStop *= Mathf.Lerp(
-            0.85f,
-            1.15f,
-            Mathf.InverseLerp(minDamage, maxDamage, damage));
+        float hitStop = Mathf.Clamp(damage * hitStopPerDamage, minCombatHitStop, maxCombatHitStop);
+        hitStop *= Mathf.Lerp(0.85f, 1.15f, Mathf.InverseLerp(minDamage, maxDamage, damage));
 
         Vector2 impactPoint = collision.contactCount > 0
             ? collision.GetContact(0).point
@@ -1446,13 +1443,83 @@ public class MorningStarLauncher : MonoBehaviour
         return false;
     }
 
+    private void TryPlayGroundImpactCameraShake(Collision2D collision)
+    {
+        if (!IsFloorTagged(collision.collider)
+            || collision.collider.GetComponentInParent<IMorningStarHitReceiver>() != null
+            || Time.time < _nextGroundImpactShakeTime)
+            return;
+
+        float impactSpeed = GetGroundNormalImpactSpeed(collision);
+        if (impactSpeed < minimumGroundImpactSpeed)
+            return;
+
+        if (cameraShake == null && Camera.main != null)
+            cameraShake = Camera.main.GetComponent<CameraShake2D>();
+        if (groundImpactAudioSource == null)
+            groundImpactAudioSource = OneShotAudioUtility.FindWorldImpactSource();
+        if (cameraShake == null)
+            return;
+
+        if (!cameraShake.enabled)
+            cameraShake.enabled = true;
+
+        float upperImpactSpeed = Mathf.Max(minimumGroundImpactSpeed, maxImpactSpeed);
+        float impact01 = Mathf.InverseLerp(minimumGroundImpactSpeed, upperImpactSpeed, impactSpeed);
+        float minStrength = Mathf.Min(minimumShakeStrength, maximumShakeStrength);
+        float maxStrength = Mathf.Max(minimumShakeStrength, maximumShakeStrength);
+        float strength = Mathf.Lerp(minStrength, maxStrength, impact01);
+
+        if (OneShotAudioUtility.Play2D(
+                groundImpactAudioSource,
+                groundImpactClip,
+                groundImpactVolume,
+                morningStarRb != null ? morningStarRb.position : transform.position))
+        {
+            GroundImpactSoundCount++;
+        }
+
+        cameraShake.Shake(shakeDuration, strength);
+        _nextGroundImpactShakeTime = Time.time + shakeCooldown;
+        LastGroundImpactSpeed = impactSpeed;
+        LastGroundImpactShakeStrength = strength;
+        GroundImpactShakeCount++;
+    }
+
+    private float GetGroundNormalImpactSpeed(Collision2D collision)
+    {
+        float impactSpeed = 0f;
+        Vector2 relativeVelocity = collision.relativeVelocity;
+
+        foreach (ContactPoint2D contact in collision.contacts)
+        {
+            if (contact.normal.y <= floorNormalThreshold)
+                continue;
+
+            Vector2 normal = contact.normal.normalized;
+            impactSpeed = Mathf.Max(impactSpeed, Mathf.Abs(Vector2.Dot(relativeVelocity, normal)));
+        }
+
+        return impactSpeed;
+    }
+
+    private static bool IsFloorTagged(Collider2D collider)
+    {
+        for (Transform current = collider.transform; current != null; current = current.parent)
+        {
+            if (current.CompareTag("Floor"))
+                return true;
+        }
+
+        return false;
+    }
+
     private bool IsHookableContactNormal(Vector2 normal)
     {
         if (normal.sqrMagnitude < 1e-6f)
             return false;
 
         Vector2 n = normal.normalized;
-
         bool isFloor = n.y > floorNormalThreshold;
         bool isCeiling = n.y < -floorNormalThreshold;
         bool isWall = Mathf.Abs(n.x) > 0.5f;
@@ -1467,7 +1534,7 @@ public class MorningStarLauncher : MonoBehaviour
         return isFloor || isCeiling || isWall;
     }
 
-    private bool HasFloorContact(Collision2D collision)
+    public bool HasFloorContact(Collision2D collision)
     {
         if (collision.contactCount == 0)
             return false;
@@ -1487,7 +1554,6 @@ public class MorningStarLauncher : MonoBehaviour
             return Vector2.zero;
 
         Vector2 hookPoint = collision.GetContact(0).point;
-
         if (hookPoint.sqrMagnitude < 1e-8f && collision.rigidbody != null)
             hookPoint = collision.rigidbody.position;
 
@@ -1537,9 +1603,7 @@ public class MorningStarLauncher : MonoBehaviour
     {
         _savedTimeScale = Time.timeScale;
         Time.timeScale = 0f;
-
         yield return new WaitForSecondsRealtime(duration);
-
         Time.timeScale = _savedTimeScale;
         _hitStopRoutine = null;
     }
@@ -1563,14 +1627,9 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         Color c = hooked ? hookedChainColor : normalChainColor;
-
         lineRenderer.startColor = c;
         lineRenderer.endColor = c;
-
-        float w = hooked
-            ? _defaultLineWidth * hookedChainWidthMultiplier
-            : _defaultLineWidth;
-
+        float w = hooked ? _defaultLineWidth * hookedChainWidthMultiplier : _defaultLineWidth;
         lineRenderer.startWidth = w;
         lineRenderer.endWidth = w;
     }
@@ -1585,15 +1644,10 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         if (Time.time - _hookedAtTime < hookStickMinTime)
             return;
-        if (!CanStartAnotherThrow())
-            return;
 
         Vector2 d = aimDir.normalized;
         Vector2 hand = GetHandWorld();
-
-        Vector2 worldTarget = (Vector2)morningStarRb.position
-                              + d * Mathf.Max(minAimDistance, maxThrowDistance);
-
+        Vector2 worldTarget = (Vector2)morningStarRb.position + d * Mathf.Max(minAimDistance, maxThrowDistance);
         UpdateAimFacing(worldTarget);
         ShowClickAimVisuals(worldTarget, hand);
 
@@ -1654,7 +1708,6 @@ public class MorningStarLauncher : MonoBehaviour
         Vector2 playerPos = _playerRb.position;
         Vector2 toHook = _hookPoint - playerPos;
         float distance = toHook.magnitude;
-
         if (distance <= 0.01f)
             return;
 
@@ -1663,22 +1716,18 @@ public class MorningStarLauncher : MonoBehaviour
 
         Vector2 v = _playerRb.linearVelocity;
         Vector2 awayDir = -dirToHook;
-
         float awaySpeed = Vector2.Dot(v, awayDir);
         if (awaySpeed > 0f)
             v -= awayDir * awaySpeed * swingRadialDamping;
 
         Vector2 tangent = new Vector2(-dirToHook.y, dirToHook.x);
-
         float moveX = player != null ? player.MoveInputX : 0f;
         if (Mathf.Abs(moveX) > 0.01f)
             _playerRb.AddForce(tangent * moveX * swingInputForce, ForceMode2D.Force);
 
         float radialAlong = Vector2.Dot(v, dirToHook);
         float tangentAlong = Vector2.Dot(v, tangent);
-
-        v = dirToHook * radialAlong
-            + tangent * (tangentAlong * swingTangentKeepRate);
+        v = dirToHook * radialAlong + tangent * (tangentAlong * swingTangentKeepRate);
 
         if (maxSwingSpeed > 0f && v.sqrMagnitude > maxSwingSpeed * maxSwingSpeed)
             v = v.normalized * maxSwingSpeed;
@@ -1686,53 +1735,13 @@ public class MorningStarLauncher : MonoBehaviour
         _playerRb.linearVelocity = v;
     }
 
-    private bool IsPlayerGrounded()
-    {
-        return player != null && player.IsGrounded;
-    }
-
-    private void ResetAirThrowsWhenGrounded()
-    {
-        if (IsPlayerGrounded())
-            _airThrowsUsed = 0;
-    }
-
-    private bool CanStartAnotherThrow()
-    {
-        if (!limitAirThrows || IsPlayerGrounded())
-            return true;
-
-        return _airThrowsUsed < Mathf.Max(0, maxAirThrows);
-    }
-
-    private bool TryConsumeAirThrow()
-    {
-        if (!limitAirThrows || IsPlayerGrounded())
-            return true;
-
-        int allowedAirThrows = Mathf.Max(0, maxAirThrows);
-
-        if (_airThrowsUsed >= allowedAirThrows)
-            return false;
-
-        _airThrowsUsed++;
-        return true;
-    }
-
-    private void BeginRecallBeforeThrow(
-        Vector2 launchDir,
-        float recallTimeMultiplier = 1f,
-        float throwSpeedMultiplier = 1f)
+    private void BeginRecallBeforeThrow(Vector2 launchDir, float recallTimeMultiplier = 1f, float throwSpeedMultiplier = 1f)
     {
         if (launchDir.sqrMagnitude < 1e-6f || morningStarRb == null)
             return;
 
-        if (!TryConsumeAirThrow())
-            return;
-
         Vector2 hand = GetHandWorld();
         Vector2 d = launchDir.normalized;
-
         Vector2 worldTarget = hand + d * Mathf.Max(minAimDistance, maxThrowDistance);
 
         UpdateAimFacing(worldTarget);
@@ -1752,10 +1761,7 @@ public class MorningStarLauncher : MonoBehaviour
         _recallTimer = 0f;
         _recallHoldTimer = 0f;
         _recallDelayTimer = recallStartDelay;
-
-        _activeRecallDuration = Mathf.Max(
-            0.01f,
-            visibleRecallTime * Mathf.Max(0.05f, recallTimeMultiplier));
+        _activeRecallDuration = Mathf.Max(0.01f, visibleRecallTime * Mathf.Max(0.05f, recallTimeMultiplier));
 
         _state = MorningStarState.RecallBeforeThrow;
 
@@ -1765,7 +1771,6 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
         morningStarRb.WakeUp();
-
         SetAnimatorBool(_hashLaunchCharge, true);
     }
 
@@ -1787,10 +1792,8 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         _recallTimer += dt;
-
         float t = Mathf.Clamp01(_recallTimer / _activeRecallDuration);
         float eased = 1f - Mathf.Pow(1f - t, recallEasePower);
-
         Vector2 pos = Vector2.Lerp(_recallStartPosition, _recallTargetPosition, eased);
         morningStarRb.position = pos;
 
@@ -1810,10 +1813,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         Vector2 origin = GetThrowOriginPosition();
-
-        Vector2 d = _pendingLaunchDir.sqrMagnitude > 1e-12f
-            ? _pendingLaunchDir.normalized
-            : Vector2.right;
+        Vector2 d = _pendingLaunchDir.sqrMagnitude > 1e-12f ? _pendingLaunchDir.normalized : Vector2.right;
 
         morningStarRb.position = origin;
         morningStarRb.linearVelocity = Vector2.zero;
@@ -1823,26 +1823,20 @@ public class MorningStarLauncher : MonoBehaviour
             chainConstraint.enabled = true;
 
         float speed = throwSpeed * _pendingThrowSpeedMultiplier;
-
         if (maxBallLinearSpeed > 0f)
             speed = Mathf.Min(speed, maxBallLinearSpeed);
 
         float offset = Mathf.Max(0f, launchStartOffset);
         morningStarRb.position = origin + d * offset;
-
         Vector2 launchVelocity = d * speed;
-
         if (postThrowDownwardBias > 0f)
             launchVelocity += Vector2.down * postThrowDownwardBias;
-
-        if (maxBallLinearSpeed > 0f
-            && launchVelocity.sqrMagnitude > maxBallLinearSpeed * maxBallLinearSpeed)
-        {
+        if (maxBallLinearSpeed > 0f && launchVelocity.sqrMagnitude > maxBallLinearSpeed * maxBallLinearSpeed)
             launchVelocity = launchVelocity.normalized * maxBallLinearSpeed;
-        }
 
         morningStarRb.linearVelocity = launchVelocity;
         morningStarRb.WakeUp();
+        PlayMorningStarLaunchSound();
 
         ApplyThrowPullToPlayer(d);
         BeginThrowPullAssist(d);
@@ -1852,10 +1846,8 @@ public class MorningStarLauncher : MonoBehaviour
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;
         _state = MorningStarState.Thrown;
-
         SetAnimatorBool(_hashLaunchCharge, false);
         SetAnimatorTrigger(_hashLaunchFire);
-
         _recoilTriggerTime = Time.time + launchRecoilDelay;
 
         if (aimLaunchCooldown > 0f)
@@ -1874,15 +1866,12 @@ public class MorningStarLauncher : MonoBehaviour
         bool horizontalDominant = Mathf.Abs(pullDir.x) > Mathf.Abs(pullDir.y);
 
         float upwardLimit = grounded ? throwPullGroundUpwardLimit : airUpwardLimit;
-
         if (!horizontalDominant)
             upwardLimit = grounded ? throwPullGroundUpwardLimit : airUpwardLimit;
         else if (grounded)
             upwardLimit = throwPullGroundUpwardLimit;
-
         if (pullDir.y > upwardLimit)
             pullDir.y = upwardLimit;
-
         if (pullDir.sqrMagnitude < 1e-6f)
             return Vector2.zero;
 
@@ -1891,28 +1880,17 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void ApplyThrowPullToPlayer(Vector2 throwDirection)
     {
-        if (!applyThrowRecoilToPlayer
-            || _playerRb == null
-            || throwDirection.sqrMagnitude < 1e-6f)
-        {
+        if (!applyThrowRecoilToPlayer || _playerRb == null || throwDirection.sqrMagnitude < 1e-6f)
             return;
-        }
 
-        Vector2 pullDir = ApplyThrowPullDirectionLimits(
-            throwDirection.normalized,
-            recoilUpwardLimit);
+        Vector2 pullDir = ApplyThrowPullDirectionLimits(throwDirection.normalized, recoilUpwardLimit);
 
         bool grounded = player != null && player.IsGrounded;
-
         if (pullDir.sqrMagnitude < 1e-6f)
             return;
 
-        float impulse = grounded
-            ? groundedThrowRecoilImpulse
-            : airThrowRecoilImpulse;
-
+        float impulse = grounded ? groundedThrowRecoilImpulse : airThrowRecoilImpulse;
         impulse = Mathf.Max(impulse, throwPullMinVisibleImpulse);
-
         if (impulse <= 0f)
             return;
 
@@ -1921,8 +1899,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (maxPlayerRecoilSpeed > 0f
             && _playerRb.linearVelocity.sqrMagnitude > maxPlayerRecoilSpeed * maxPlayerRecoilSpeed)
         {
-            _playerRb.linearVelocity =
-                _playerRb.linearVelocity.normalized * maxPlayerRecoilSpeed;
+            _playerRb.linearVelocity = _playerRb.linearVelocity.normalized * maxPlayerRecoilSpeed;
         }
 
         LogDebug($"MorningStar Throw Pull impulse={impulse}, dir={pullDir}");
@@ -1930,38 +1907,24 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void BeginThrowPullAssist(Vector2 throwDirection)
     {
-        if (!enableThrowPullAssist
-            || _playerRb == null
-            || throwDirection.sqrMagnitude < 1e-6f)
-        {
+        if (!enableThrowPullAssist || _playerRb == null || throwDirection.sqrMagnitude < 1e-6f)
             return;
-        }
 
-        Vector2 dir = ApplyThrowPullDirectionLimits(
-            throwDirection.normalized,
-            throwPullAirUpwardLimit);
+        Vector2 dir = ApplyThrowPullDirectionLimits(throwDirection.normalized, throwPullAirUpwardLimit);
 
         bool grounded = player != null && player.IsGrounded;
-
         if (dir.sqrMagnitude < 1e-6f)
             return;
 
-        float widthMultiplier = grounded
-            ? groundedThrowPullDistanceInPlayerWidths
-            : airThrowPullDistanceInPlayerWidths;
-
+        float widthMultiplier = grounded ? groundedThrowPullDistanceInPlayerWidths : airThrowPullDistanceInPlayerWidths;
         _throwPullAssistActive = true;
         _throwPullAssistTimer = throwPullAssistDuration;
         _throwPullAssistDirection = dir;
         _throwPullStartPlayerPosition = _playerRb.position;
-
-        _throwPullTargetDistance = GetPlayerWidth()
-                                   * Mathf.Max(0f, widthMultiplier);
+        _throwPullTargetDistance = GetPlayerWidth() * Mathf.Max(0f, widthMultiplier);
 
         PlayThrowPullVisualLean(dir);
-
-        LogDebug(
-            $"Throw Pull Assist start targetDistance={_throwPullTargetDistance}, dir={dir}");
+        LogDebug($"Throw Pull Assist start targetDistance={_throwPullTargetDistance}, dir={dir}");
     }
 
     private void UpdateThrowPullAssist()
@@ -1972,11 +1935,7 @@ public class MorningStarLauncher : MonoBehaviour
         _throwPullAssistTimer -= Time.fixedDeltaTime;
 
         Vector2 current = _playerRb.position;
-
-        float moved = Vector2.Dot(
-            current - _throwPullStartPlayerPosition,
-            _throwPullAssistDirection);
-
+        float moved = Vector2.Dot(current - _throwPullStartPlayerPosition, _throwPullAssistDirection);
         if (moved >= _throwPullTargetDistance || _throwPullAssistTimer <= 0f)
         {
             _throwPullAssistActive = false;
@@ -1984,29 +1943,19 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         if (throwPullAssistForce > 0f)
-        {
-            _playerRb.AddForce(
-                _throwPullAssistDirection * throwPullAssistForce,
-                ForceMode2D.Force);
-        }
+            _playerRb.AddForce(_throwPullAssistDirection * throwPullAssistForce, ForceMode2D.Force);
 
         Vector2 v = _playerRb.linearVelocity;
-
         float speedAlongDir = Vector2.Dot(v, _throwPullAssistDirection);
-
         float desiredMinSpeed = Mathf.Min(
             throwPullAssistMaxSpeed,
-            _throwPullTargetDistance
-            / Mathf.Max(0.05f, throwPullAssistDuration));
+            _throwPullTargetDistance / Mathf.Max(0.05f, throwPullAssistDuration));
 
         if (speedAlongDir < desiredMinSpeed)
             v += _throwPullAssistDirection * (desiredMinSpeed - speedAlongDir);
 
-        if (throwPullAssistMaxSpeed > 0f
-            && v.sqrMagnitude > throwPullAssistMaxSpeed * throwPullAssistMaxSpeed)
-        {
+        if (throwPullAssistMaxSpeed > 0f && v.sqrMagnitude > throwPullAssistMaxSpeed * throwPullAssistMaxSpeed)
             v = v.normalized * throwPullAssistMaxSpeed;
-        }
 
         _playerRb.linearVelocity = v;
     }
@@ -2033,45 +1982,24 @@ public class MorningStarLauncher : MonoBehaviour
     private IEnumerator VisualLeanRoutine(Vector2 pullDir)
     {
         Quaternion original = playerVisualRoot.localRotation;
-
-        float sign = Mathf.Abs(pullDir.x) >= 0.01f
-            ? Mathf.Sign(pullDir.x)
-            : 1f;
-
-        Quaternion target = Quaternion.Euler(
-            0f,
-            0f,
-            -sign * visualLeanAngle);
+        float sign = Mathf.Abs(pullDir.x) >= 0.01f ? Mathf.Sign(pullDir.x) : 1f;
+        Quaternion target = Quaternion.Euler(0f, 0f, -sign * visualLeanAngle);
 
         float t = 0f;
-
         while (t < visualLeanDuration)
         {
             t += Time.deltaTime;
-
-            float a = visualLeanDuration > 0f
-                ? Mathf.Clamp01(t / visualLeanDuration)
-                : 1f;
-
-            playerVisualRoot.localRotation =
-                Quaternion.Slerp(original, target, a);
-
+            float a = visualLeanDuration > 0f ? Mathf.Clamp01(t / visualLeanDuration) : 1f;
+            playerVisualRoot.localRotation = Quaternion.Slerp(original, target, a);
             yield return null;
         }
 
         t = 0f;
-
         while (t < visualLeanReturnDuration)
         {
             t += Time.deltaTime;
-
-            float a = visualLeanReturnDuration > 0f
-                ? Mathf.Clamp01(t / visualLeanReturnDuration)
-                : 1f;
-
-            playerVisualRoot.localRotation =
-                Quaternion.Slerp(target, original, a);
-
+            float a = visualLeanReturnDuration > 0f ? Mathf.Clamp01(t / visualLeanReturnDuration) : 1f;
+            playerVisualRoot.localRotation = Quaternion.Slerp(target, original, a);
             yield return null;
         }
 
@@ -2083,31 +2011,19 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
-
         if (audioSource == null || tensionSnapClip == null)
             return;
 
         float originalPitch = audioSource.pitch;
-
-        audioSource.pitch = 1f + Random.Range(
-            -tensionSnapPitchRandomRange,
-            tensionSnapPitchRandomRange);
-
+        audioSource.pitch = 1f + Random.Range(-tensionSnapPitchRandomRange, tensionSnapPitchRandomRange);
         audioSource.PlayOneShot(tensionSnapClip, tensionSnapVolume);
         audioSource.pitch = originalPitch;
     }
 
-    private void PlayTensionSnapCameraShake()
+    private void PlayMorningStarLaunchSound()
     {
-        if (cameraShake == null && Camera.main != null)
-            cameraShake = Camera.main.GetComponent<CameraShake2D>();
-
-        if (cameraShake == null)
-            return;
-
-        cameraShake.Shake(
-            tensionSnapShakeDuration,
-            tensionSnapShakeStrength);
+        if (sfxAudioSource != null && morningStarLaunchClip != null)
+            sfxAudioSource.PlayOneShot(morningStarLaunchClip, morningStarLaunchVolume);
     }
 
     private void UpdateThrown(float dt, Vector2 hand)
@@ -2124,18 +2040,14 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         float dist = Vector2.Distance(hand, morningStarRb.position);
-
         if (dist >= maxThrowDistance && !IsMorningStarTouchingHookable())
         {
             BeginDropAfterThrow();
             return;
         }
 
-        if (_thrownElapsed > 0.1f
-            && morningStarRb.linearVelocity.magnitude <= dropTransitionSpeed)
-        {
+        if (_thrownElapsed > 0.1f && morningStarRb.linearVelocity.magnitude <= dropTransitionSpeed)
             BeginDropAfterThrow();
-        }
     }
 
     private void BeginDropAfterThrow()
@@ -2169,7 +2081,6 @@ public class MorningStarLauncher : MonoBehaviour
             return false;
 
         Collider2D ballCol = morningStarRb.GetComponent<Collider2D>();
-
         if (ballCol == null)
             return false;
 
@@ -2179,9 +2090,7 @@ public class MorningStarLauncher : MonoBehaviour
         filter.useTriggers = false;
 
         ContactPoint2D[] contacts = new ContactPoint2D[8];
-
         int count = ballCol.GetContacts(filter, contacts);
-
         for (int i = 0; i < count; i++)
         {
             if (IsHookableContactNormal(contacts[i].normal))
@@ -2195,16 +2104,11 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (_state == MorningStarState.Returning)
             return;
-
-        if ((_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
-            && _isHooked)
-        {
+        if ((_state == MorningStarState.Hooked || _state == MorningStarState.Swinging) && _isHooked)
             return;
-        }
 
         bool canManualReturn = _state == MorningStarState.Thrown
-                               || _state == MorningStarState.Dropping;
-
+            || _state == MorningStarState.Dropping;
         if (!canManualReturn)
             return;
 
@@ -2214,10 +2118,7 @@ public class MorningStarLauncher : MonoBehaviour
         _tensionSnapCooldownTimer = 0f;
         _throwPullAssistActive = false;
         _state = MorningStarState.Returning;
-
-        _rehookLockoutTimer = Mathf.Max(
-            _rehookLockoutTimer,
-            rehookLockoutTime);
+        _rehookLockoutTimer = Mathf.Max(_rehookLockoutTimer, rehookLockoutTime);
 
         if (disableChainConstraintDuringReturn)
             SetChainConstraintActive(false);
@@ -2250,10 +2151,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         }
 
-        float speed = Mathf.Min(
-            returnSpeed,
-            maxBallLinearSpeed > 0f ? maxBallLinearSpeed : returnSpeed);
-
+        float speed = Mathf.Min(returnSpeed, maxBallLinearSpeed > 0f ? maxBallLinearSpeed : returnSpeed);
         morningStarRb.linearVelocity = toTarget.normalized * speed;
         morningStarRb.angularVelocity = 0f;
     }
@@ -2270,7 +2168,6 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
         morningStarRb.WakeUp();
-
         EnterDraggingState(false);
     }
 
@@ -2280,42 +2177,28 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         morningStarRb.position = GetThrowSocketWorld();
-
         if (zeroVelocity)
         {
             morningStarRb.linearVelocity = Vector2.zero;
             morningStarRb.angularVelocity = 0f;
         }
-
         morningStarRb.WakeUp();
     }
 
     private void EnsureCollisionReporter()
     {
-        MorningStarCollisionReporter reporter =
-            morningStarRb.GetComponent<MorningStarCollisionReporter>();
-
+        MorningStarCollisionReporter reporter = morningStarRb.GetComponent<MorningStarCollisionReporter>();
         if (reporter == null)
-        {
-            reporter = morningStarRb.gameObject
-                .AddComponent<MorningStarCollisionReporter>();
-        }
-
+            reporter = morningStarRb.gameObject.AddComponent<MorningStarCollisionReporter>();
         reporter.Initialize(this);
     }
 
-    private Transform GetThrowSocket()
-    {
-        return throwSocket != null ? throwSocket : handAnchor;
-    }
+    private Transform GetThrowSocket() => throwSocket != null ? throwSocket : handAnchor;
 
     private Vector2 GetThrowSocketWorld()
     {
         Transform socket = GetThrowSocket();
-
-        return socket != null
-            ? (Vector2)socket.position
-            : GetHandWorld();
+        return socket != null ? (Vector2)socket.position : GetHandWorld();
     }
 
     private void SetChainConstraintActive(bool active)
@@ -2337,25 +2220,18 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (chainConstraint != null)
             return chainConstraint.MaxRopeLength;
-
         return maxRopeLength;
     }
 
     private Vector2 GetHandWorld()
     {
-        return handAnchor != null
-            ? (Vector2)handAnchor.position
-            : (Vector2)transform.position;
+        return handAnchor != null ? (Vector2)handAnchor.position : (Vector2)transform.position;
     }
 
     private void UpdateFallbackLineRenderer()
     {
-        if (chainLineController != null
-            || lineRenderer == null
-            || morningStarRb == null)
-        {
+        if (chainLineController != null || lineRenderer == null || morningStarRb == null)
             return;
-        }
 
         if (chainLineController != null)
         {
@@ -2364,15 +2240,12 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         lineRenderer.enabled = IsRopeLineVisible;
-
         if (!lineRenderer.enabled)
             return;
 
         lineRenderer.positionCount = 2;
-
         Vector3 start = GetHandWorld();
         Vector3 end = ClampToRopeLength(start, morningStarRb.position);
-
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
     }
@@ -2381,10 +2254,8 @@ public class MorningStarLauncher : MonoBehaviour
     {
         float maxLen = GetEffectiveRopeLength();
         Vector3 off = end - start;
-
         if (off.sqrMagnitude <= maxLen * maxLen)
             return end;
-
         return start + off.normalized * maxLen;
     }
 
@@ -2400,13 +2271,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         Vector2 toAim = aimWorld - hand;
-
-        float len = Mathf.Min(
-            toAim.magnitude,
-            aimGuideMaxLength > 0f
-                ? aimGuideMaxLength
-                : GetEffectiveRopeLength());
-
+        float len = Mathf.Min(toAim.magnitude, aimGuideMaxLength > 0f ? aimGuideMaxLength : GetEffectiveRopeLength());
         if (toAim.sqrMagnitude <= 1e-8f)
         {
             aimGuideLineRenderer.enabled = false;
@@ -2426,10 +2291,9 @@ public class MorningStarLauncher : MonoBehaviour
 
         float moveX = player.MoveInputX;
         float aimDirX = aimWorld.x - player.transform.position.x;
-
         bool backward = Mathf.Abs(moveX) > 0.01f
-                        && Mathf.Abs(aimDirX) > 0.01f
-                        && Mathf.Sign(moveX) != Mathf.Sign(aimDirX);
+            && Mathf.Abs(aimDirX) > 0.01f
+            && Mathf.Sign(moveX) != Mathf.Sign(aimDirX);
 
         player.SetAimFacing(aimWorld.x, backward);
         SetAnimatorBool(_hashBackwardAim, backward);
@@ -2442,12 +2306,9 @@ public class MorningStarLauncher : MonoBehaviour
 
         Collider2D[] playerCols = _playerRb.GetComponents<Collider2D>();
         Collider2D[] ballCols = morningStarRb.GetComponents<Collider2D>();
-
         foreach (Collider2D pc in playerCols)
         {
-            if (pc == null)
-                continue;
-
+            if (pc == null) continue;
             foreach (Collider2D bc in ballCols)
             {
                 if (bc != null)
@@ -2459,39 +2320,30 @@ public class MorningStarLauncher : MonoBehaviour
     private bool TryGetPointerScreen(out Vector2 screenPos)
     {
         screenPos = default;
-
         Mouse mouse = Mouse.current;
         if (mouse == null)
             return false;
 
         screenPos = mouse.position.ReadValue();
-
         if (!restrictPointerToGameView)
             return true;
 
         Camera cam = GetAimCamera();
-
         if (cam == null)
             return true;
 
         return cam.pixelRect.Contains(screenPos);
     }
 
-    private Camera GetAimCamera()
-    {
-        return aimCamera != null ? aimCamera : Camera.main;
-    }
+    private Camera GetAimCamera() => aimCamera != null ? aimCamera : Camera.main;
 
     private Vector2 WorldFromScreen(Vector2 screen)
     {
         Camera cam = GetAimCamera();
-
         if (cam == null)
             return GetHandWorld();
 
-        Vector3 world = cam.ScreenToWorldPoint(
-            new Vector3(screen.x, screen.y, screenZ));
-
+        Vector3 world = cam.ScreenToWorldPoint(new Vector3(screen.x, screen.y, screenZ));
         return new Vector2(world.x, world.y);
     }
 
@@ -2503,55 +2355,37 @@ public class MorningStarLauncher : MonoBehaviour
         _bufferedAimDirection = worldDirection.normalized;
         _fireBufferTimer = fireInputBufferTime;
 
-        if (_state == MorningStarState.Dragging
-            || _state == MorningStarState.Dropping)
-        {
+        if (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
             TryConsumeBufferedFire();
-        }
     }
 
     public void RequestReturn()
     {
-        if (_state == MorningStarState.Thrown
-            || _state == MorningStarState.Dropping)
-        {
+        if (_state == MorningStarState.Thrown || _state == MorningStarState.Dropping)
             BeginReturn();
-        }
-        else if (_state == MorningStarState.Hooked
-                 || _state == MorningStarState.Swinging)
-        {
+        else if (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
             BeginRelease();
-        }
     }
 
     private void ProcessRecoilTrigger()
     {
         if (_recoilTriggerTime < 0f || Time.time < _recoilTriggerTime)
             return;
-
         SetAnimatorTrigger(_hashLaunchRecoil);
         _recoilTriggerTime = -1f;
     }
 
     private void SetAnimatorBool(int hash, bool value)
     {
-        if (animator == null
-            || !HasAnimatorParam(hash, AnimatorControllerParameterType.Bool))
-        {
+        if (animator == null || !HasAnimatorParam(hash, AnimatorControllerParameterType.Bool))
             return;
-        }
-
         animator.SetBool(hash, value);
     }
 
     private void SetAnimatorTrigger(int hash)
     {
-        if (animator == null
-            || !HasAnimatorParam(hash, AnimatorControllerParameterType.Trigger))
-        {
+        if (animator == null || !HasAnimatorParam(hash, AnimatorControllerParameterType.Trigger))
             return;
-        }
-
         animator.SetTrigger(hash);
     }
 
