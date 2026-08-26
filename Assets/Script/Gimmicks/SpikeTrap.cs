@@ -1,18 +1,19 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class SpikeTrap : MonoBehaviour
 {
     [Header("Detect Settings")]
-    [SerializeField] private string playerTag = "Player";
     [SerializeField] private string morningStarTag = "morningstar";
 
-    [Header("Hit Settings")]
-    [SerializeField] private float hitCooldown = 0.5f;
+    [Header("Damage Settings")]
+    [SerializeField] private int damage = 1;
 
-    [Header("Events")]
-    [SerializeField] private UnityEvent onPlayerHit;
+    [SerializeField, Tooltip("棘に当たった時にPlayerへ与えるノックバック")]
+    private Vector2 knockbackImpulse = new Vector2(0f, 6f);
+
+    [SerializeField, Tooltip("触れ続けた時に、次のダメージが入るまでの間隔")]
+    private float hitCooldown = 0.8f;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugLog = true;
@@ -21,38 +22,70 @@ public class SpikeTrap : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        TryHit(other.gameObject);
+        TryHit(other);
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        TryHit(other);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        TryHit(collision.gameObject);
+        TryHit(collision.collider);
     }
 
-    private void TryHit(GameObject hitObject)
+    private void OnCollisionStay2D(Collision2D collision)
     {
-        if (!canHit) return;
+        TryHit(collision.collider);
+    }
 
-        if (hitObject.CompareTag(morningStarTag))
-        {
+    private void TryHit(Collider2D other)
+    {
+        if (!canHit || other == null)
             return;
-        }
 
-        if (!hitObject.CompareTag(playerTag))
-        {
+        // 鉄球には反応しない
+        if (IsMorningStar(other))
             return;
-        }
+
+        // Player本人・子オブジェクトのどちらに触れても取得する
+        PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
+
+        if (playerHealth == null)
+            return;
+
+        // 死亡中・無敵時間中は追加ダメージを入れない
+        if (playerHealth.IsDead || playerHealth.IsInvincible)
+            return;
 
         canHit = false;
 
+        playerHealth.TakeDamage(damage, knockbackImpulse);
+
         if (showDebugLog)
         {
-            Debug.Log("SpikeTrap: Player hit.");
+            Debug.Log(
+                $"SpikeTrap: Player damaged. Damage={damage}",
+                this
+            );
         }
 
-        onPlayerHit?.Invoke();
-
         StartCoroutine(HitCooldownRoutine());
+    }
+
+    private bool IsMorningStar(Collider2D other)
+    {
+        if (other.CompareTag(morningStarTag))
+            return true;
+
+        if (other.attachedRigidbody != null &&
+            other.attachedRigidbody.CompareTag(morningStarTag))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private IEnumerator HitCooldownRoutine()

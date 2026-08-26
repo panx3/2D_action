@@ -1735,7 +1735,61 @@ public class MorningStarLauncher : MonoBehaviour
         _playerRb.linearVelocity = v;
     }
 
-    private void BeginRecallBeforeThrow(Vector2 launchDir, float recallTimeMultiplier = 1f, float throwSpeedMultiplier = 1f)
+    private bool IsPlayerGrounded()
+    {
+        return player != null && player.IsGrounded;
+    }
+
+    private void ResetAirThrowsWhenGrounded()
+    {
+        if (IsPlayerGrounded())
+            _airThrowsUsed = 0;
+    }
+
+    private bool CanStartAnotherThrow()
+    {
+        if (!limitAirThrows || IsPlayerGrounded())
+            return true;
+
+        return _airThrowsUsed < Mathf.Max(0, maxAirThrows);
+    }
+
+    private bool TryConsumeAirThrow()
+    {
+        if (!limitAirThrows || IsPlayerGrounded())
+            return true;
+
+        int allowedAirThrows = Mathf.Max(0, maxAirThrows);
+
+        if (_airThrowsUsed >= allowedAirThrows)
+            return false;
+
+        _airThrowsUsed++;
+        return true;
+    }
+
+    public void GrantMagnetEscapeThrow()
+    {
+        if (!limitAirThrows)
+            return;
+
+        int allowedAirThrows = Mathf.Max(0, maxAirThrows);
+
+        if (allowedAirThrows <= 0)
+            return;
+
+        // maxAirThrows = 1 の場合、
+        // 次の空中射出を1回だけ可能にする。
+        _airThrowsUsed = Mathf.Min(
+            _airThrowsUsed,
+            allowedAirThrows - 1
+        );
+    }
+
+    private void BeginRecallBeforeThrow(
+        Vector2 launchDir,
+        float recallTimeMultiplier = 1f,
+        float throwSpeedMultiplier = 1f)
     {
         if (launchDir.sqrMagnitude < 1e-6f || morningStarRb == null)
             return;
