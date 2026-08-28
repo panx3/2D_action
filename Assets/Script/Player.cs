@@ -107,11 +107,11 @@ public class Player : MonoBehaviour
 
     [SerializeField, Range(0f, 1f)] private float _jumpVolume = 1f;
 
-    [SerializeField, Range(0f, 1f)] private float _footstepVolume = 0.55f;
+    [SerializeField, Range(0f, 1f)] private float _footstepVolume = 0.39f;
 
-    [SerializeField, Range(0f, 1f)] private float _jumpVoiceVolume = 0.7f;
+    [SerializeField, Range(0f, 1f)] private float _jumpVoiceVolume = 1f;
 
-    [SerializeField, Range(0f, 1f)] private float _landingVolume = 0.8f;
+    [SerializeField, Range(0f, 1f)] private float _landingVolume = 0.55f;
 
     [SerializeField, Min(0f)] private float _footstepMinHorizontalSpeed = 0.1f;
 

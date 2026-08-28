@@ -73,6 +73,10 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float aimLaunchCooldown = 0f;
     [SerializeField] private float fireInputBufferTime = 0.18f;
 
+    [Header("空中射出制限")]
+    [SerializeField] private bool limitAirThrows = true;
+    [SerializeField, Min(0)] private int maxAirThrows = 1;
+
     [Header("Gamepad（追加入力）")]
     [SerializeField] private bool enableGamepadInput = true;
     [SerializeField, Range(0.05f, 1f)] private float gamepadFireThreshold = 0.70f;
@@ -206,12 +210,12 @@ public class MorningStarLauncher : MonoBehaviour
     [Header("Ground Impact SFX")]
     [SerializeField] private AudioSource groundImpactAudioSource;
     [SerializeField] private AudioClip groundImpactClip;
-    [SerializeField, Range(0f, 1f)] private float groundImpactVolume = 0.9f;
+    [SerializeField, Range(0f, 1f)] private float groundImpactVolume = 0.56f;
 
     [Header("Launch SFX")]
     [SerializeField] private AudioSource sfxAudioSource;
     [SerializeField] private AudioClip morningStarLaunchClip;
-    [SerializeField, Range(0f, 1f)] private float morningStarLaunchVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float morningStarLaunchVolume = 0.55f;
 
     [Header("照準ガイド")]
     [SerializeField] private bool showAimGuide = true;
@@ -231,6 +235,7 @@ public class MorningStarLauncher : MonoBehaviour
     private Rigidbody2D _playerRb;
     private MorningStarState _state = MorningStarState.Dragging;
     private float _nextLaunchTime;
+    private int _airThrowsUsed;
     private Vector2 _pendingLaunchDir;
     private Vector2 _recallStartPosition;
     private Vector2 _recallTargetPosition;
@@ -243,6 +248,7 @@ public class MorningStarLauncher : MonoBehaviour
     private float _dropElapsed;
     private Vector2 _hookPoint;
     private bool _isHooked;
+    private MagnetPoint _attachedMagnet;
     private float _rehookLockoutTimer;
     private float _fireBufferTimer;
     private Vector2 _bufferedAimDirection;
@@ -308,6 +314,88 @@ public class MorningStarLauncher : MonoBehaviour
 
     public bool IsHookedState =>
         _state == MorningStarState.Hooked || _state == MorningStarState.Swinging;
+
+    /// <summary>
+    /// Playerのリスポーン後に、鉄球・鎖・入力ラッチを安全な待機状態へ戻す。
+    /// 物理パラメータは変更せず、既存のDragging初期化経路を再利用する。
+    /// </summary>
+    public void ResetForRespawn()
+    {
+        _airThrowsUsed = 0;
+        _nextLaunchTime = 0f;
+        _fireBufferTimer = 0f;
+        _bufferedAimDirection = Vector2.zero;
+        _pendingLaunchDir = Vector2.zero;
+        _pendingAimDirection = Vector2.zero;
+        _gamepadFirePressedThisFrame = false;
+        _recoilTriggerTime = -1f;
+
+        Gamepad pad = Gamepad.current;
+        _rightStickReady = pad == null
+            || pad.rightStick.ReadValue().magnitude <= gamepadResetThreshold;
+
+        if (morningStarRb != null)
+        {
+            morningStarRb.linearVelocity = Vector2.zero;
+            morningStarRb.angularVelocity = 0f;
+            morningStarRb.WakeUp();
+        }
+
+        EnterDraggingState(true);
+
+        if (animator != null)
+        {
+            if (HasAnimatorParam(_hashLaunchFire, AnimatorControllerParameterType.Trigger))
+                animator.ResetTrigger(_hashLaunchFire);
+            if (HasAnimatorParam(_hashLaunchRecoil, AnimatorControllerParameterType.Trigger))
+                animator.ResetTrigger(_hashLaunchRecoil);
+        }
+
+        if (player != null)
+            player.ClearAimFacing();
+    }
+
+    /// <summary>
+    /// MagnetPoint が鉄球を吸着完了状態へ移すための入口。
+    /// 通常の壁 Hook と同じ固定・スイング・再射出経路を使う。
+    /// </summary>
+    public bool TryAttachToMagnet(MagnetPoint magnet, Rigidbody2D targetBody, Vector2 anchorPosition)
+    {
+        if (magnet == null || targetBody == null || targetBody != morningStarRb)
+            return false;
+
+        if (_state == MorningStarState.RecallBeforeThrow
+            || _state == MorningStarState.Returning
+            || _state == MorningStarState.SpinCharging)
+        {
+            return false;
+        }
+
+        if (_isHooked)
+        {
+            if (_attachedMagnet != magnet)
+                return false;
+
+            _hookPoint = anchorPosition;
+            return true;
+        }
+
+        BeginHook(anchorPosition);
+        _attachedMagnet = magnet;
+        BeginSwinging();
+        GrantMagnetEscapeThrow();
+        return _isHooked && _state == MorningStarState.Swinging;
+    }
+
+    public bool IsAttachedToMagnet(MagnetPoint magnet, Rigidbody2D targetBody)
+    {
+        return magnet != null
+            && targetBody != null
+            && targetBody == morningStarRb
+            && _attachedMagnet == magnet
+            && _isHooked
+            && (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging);
+    }
 
     private void Awake()
     {
@@ -402,6 +490,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (morningStarRb == null)
             return;
 
+        ResetAirThrowsWhenGrounded();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
         UpdateGamepadInputState();
@@ -609,6 +698,7 @@ public class MorningStarLauncher : MonoBehaviour
     {
         _state = MorningStarState.Dragging;
         _isHooked = false;
+        _attachedMagnet = null;
         _hookPoint = Vector2.zero;
         _recallTimer = 0f;
         _recallHoldTimer = 0f;
@@ -748,6 +838,14 @@ public class MorningStarLauncher : MonoBehaviour
         Mouse mouse = Mouse.current;
         bool swingHold = (mouse != null && mouse.leftButton.isPressed)
             || IsGamepadSwingHoldPressed();
+
+        // Magnetへ到達した瞬間に残っている発射入力を、即時再射出と誤認しない。
+        if (_requireReleaseBeforeHookClick)
+        {
+            if (!swingHold)
+                _requireReleaseBeforeHookClick = false;
+            return;
+        }
 
         if (swingHold)
         {
@@ -955,6 +1053,8 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
             return;
         if (Time.time < _nextLaunchTime)
+            return;
+        if (!CanStartAnotherThrow())
             return;
 
         _state = MorningStarState.SpinCharging;
@@ -1219,6 +1319,7 @@ public class MorningStarLauncher : MonoBehaviour
         ApplyReleaseBoostToPlayer();
 
         _isHooked = false;
+        _attachedMagnet = null;
         _hookPoint = Vector2.zero;
 
         if (morningStarRb != null)
@@ -1233,6 +1334,10 @@ public class MorningStarLauncher : MonoBehaviour
         _hookClickHoldTimer = 0f;
         _requireReleaseBeforeHookClick = false;
         ApplyHookedChainVisual(false);
+
+        // BeginReturn は Thrown / Dropping からの回収だけを受け付ける。
+        // Hook解除後に Swinging のままだと回収が拒否されるため、解除済み状態へ移す。
+        _state = MorningStarState.Dropping;
         BeginReturn();
     }
 
@@ -1565,6 +1670,7 @@ public class MorningStarLauncher : MonoBehaviour
         _state = MorningStarState.Hooked;
         _hookPoint = hookPoint;
         _isHooked = true;
+        _attachedMagnet = null;
         _hookedAtTime = Time.time;
         _thrownElapsed = 0f;
         _fireBufferTimer = 0f;
@@ -1644,6 +1750,8 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         if (Time.time - _hookedAtTime < hookStickMinTime)
             return;
+        if (!CanStartAnotherThrow())
+            return;
 
         Vector2 d = aimDir.normalized;
         Vector2 hand = GetHandWorld();
@@ -1652,6 +1760,7 @@ public class MorningStarLauncher : MonoBehaviour
         ShowClickAimVisuals(worldTarget, hand);
 
         _isHooked = false;
+        _attachedMagnet = null;
         _hookPoint = Vector2.zero;
         _rehookLockoutTimer = rehookLockoutTime;
         ApplyHookedChainVisual(false);
@@ -1792,6 +1901,9 @@ public class MorningStarLauncher : MonoBehaviour
         float throwSpeedMultiplier = 1f)
     {
         if (launchDir.sqrMagnitude < 1e-6f || morningStarRb == null)
+            return;
+
+        if (!TryConsumeAirThrow())
             return;
 
         Vector2 hand = GetHandWorld();
@@ -2167,6 +2279,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         _isHooked = false;
+        _attachedMagnet = null;
         _hookPoint = Vector2.zero;
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;

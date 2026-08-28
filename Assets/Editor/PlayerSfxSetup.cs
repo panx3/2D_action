@@ -201,7 +201,7 @@ public static class PlayerSfxSetup
         SetObjectReference(playerObject, "_footstepGrassClip", footstepClip);
         SetObjectReference(playerObject, "_playerHealth", health);
         playerObject.FindProperty("_jumpVolume").floatValue = 1f;
-        playerObject.FindProperty("_footstepVolume").floatValue = 0.55f;
+        playerObject.FindProperty("_footstepVolume").floatValue = 0.39f;
         playerObject.FindProperty("_footstepMinHorizontalSpeed").floatValue = 0.1f;
         playerObject.ApplyModifiedPropertiesWithoutUndo();
 
@@ -212,7 +212,7 @@ public static class PlayerSfxSetup
         SerializedObject launcherObject = new SerializedObject(launcher);
         SetObjectReference(launcherObject, "sfxAudioSource", sfxSource);
         SetObjectReference(launcherObject, "morningStarLaunchClip", launchClip);
-        launcherObject.FindProperty("morningStarLaunchVolume").floatValue = 1f;
+        launcherObject.FindProperty("morningStarLaunchVolume").floatValue = 0.55f;
         launcherObject.ApplyModifiedPropertiesWithoutUndo();
 
         EditorUtility.SetDirty(sfxSource);

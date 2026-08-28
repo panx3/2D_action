@@ -36,6 +36,10 @@ public class MagnetPoint : MonoBehaviour
 
     private readonly List<Rigidbody2D> detectedBodies = new List<Rigidbody2D>();
 
+    // Attach解除直後、Triggerを抜けるまでは再吸着させない。
+    private readonly HashSet<Rigidbody2D> attachedBodies = new HashSet<Rigidbody2D>();
+    private readonly HashSet<Rigidbody2D> suppressedUntilExitBodies = new HashSet<Rigidbody2D>();
+
     // この磁石に近づいた時、脱出用射出を渡した鉄球を記録する
     private readonly HashSet<Rigidbody2D> escapeThrowGrantedBodies =
         new HashSet<Rigidbody2D>();
@@ -95,6 +99,8 @@ public class MagnetPoint : MonoBehaviour
 
         if (detectedBodies.Remove(rb))
         {
+            attachedBodies.Remove(rb);
+            suppressedUntilExitBodies.Remove(rb);
             escapeThrowGrantedBodies.Remove(rb);
             Debug.Log("MagnetPoint Release");
         }
@@ -117,9 +123,26 @@ public class MagnetPoint : MonoBehaviour
             if (rb == null)
             {
                 detectedBodies.RemoveAt(i);
+                attachedBodies.Remove(rb);
+                suppressedUntilExitBodies.Remove(rb);
                 escapeThrowGrantedBodies.Remove(rb);
                 continue;
             }
+
+            if (attachedBodies.Contains(rb))
+            {
+                if (morningStarLauncher != null
+                    && morningStarLauncher.IsAttachedToMagnet(this, rb))
+                {
+                    continue;
+                }
+
+                attachedBodies.Remove(rb);
+                suppressedUntilExitBodies.Add(rb);
+            }
+
+            if (suppressedUntilExitBodies.Contains(rb))
+                continue;
 
             Attract(rb);
         }
@@ -139,6 +162,7 @@ public class MagnetPoint : MonoBehaviour
         if (distance <= 0.01f)
         {
             TryGrantMagnetEscapeThrow(rb);
+            TryAttach(rb);
             return;
         }
 
@@ -155,6 +179,7 @@ public class MagnetPoint : MonoBehaviour
             // 鉄球が磁石につかまった時だけ、
             // 脱出用の空中射出を1回回復する
             TryGrantMagnetEscapeThrow(rb);
+            TryAttach(rb);
         }
         else
         {
@@ -168,6 +193,21 @@ public class MagnetPoint : MonoBehaviour
             rb.linearVelocity,
             maxAttractSpeed
         );
+    }
+
+    private void TryAttach(Rigidbody2D rb)
+    {
+        if (morningStarLauncher == null || attachedBodies.Contains(rb))
+            return;
+
+        if (!morningStarLauncher.TryAttachToMagnet(this, rb, transform.position))
+            return;
+
+        attachedBodies.Add(rb);
+        rb.position = transform.position;
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        Debug.Log("MagnetPoint Attach");
     }
 
     private void TryGrantMagnetEscapeThrow(Rigidbody2D rb)
@@ -200,8 +240,12 @@ public class MagnetPoint : MonoBehaviour
 
     private void ApplyTraversalAssist()
     {
-        if (other.CompareTag(targetTag))
-            return true;
+        if (!pullPlayerWhileBallAttached || !traversalActive || traversalFinished || detectedBodies.Count == 0)
+            return;
+
+        CachePlayer();
+        if (playerRigidbody == null)
+            return;
 
         // 磁力点の反対側へ抜けたら、引き戻さない。
         float passedDistance = (playerRigidbody.position.x - transform.position.x) * traversalDirectionX;

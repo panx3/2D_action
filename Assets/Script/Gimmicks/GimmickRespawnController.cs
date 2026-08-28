@@ -11,6 +11,7 @@ public class GimmickRespawnController : MonoBehaviour
     [SerializeField] private Transform player;
     [SerializeField] private Rigidbody2D playerRigidbody;
     [SerializeField] private PlayerHealth playerHealth;
+    [SerializeField] private MorningStarLauncher morningStarLauncher;
     [SerializeField] private Transform initialRespawnPoint;
 
     [Header("Optional Morning Star Reset")]
@@ -22,10 +23,21 @@ public class GimmickRespawnController : MonoBehaviour
 
     private void Awake()
     {
-        if (playerHealth == null && player != null)
+        if (player == null)
         {
-            playerHealth = player.GetComponent<PlayerHealth>();
+            Player resolvedPlayer = FindAnyObjectByType<Player>(FindObjectsInactive.Exclude);
+            if (resolvedPlayer != null)
+                player = resolvedPlayer.transform;
         }
+
+        if (playerRigidbody == null && player != null)
+            playerRigidbody = player.GetComponent<Rigidbody2D>();
+
+        if (playerHealth == null && player != null)
+            playerHealth = player.GetComponent<PlayerHealth>();
+
+        if (morningStarLauncher == null && player != null)
+            morningStarLauncher = player.GetComponent<MorningStarLauncher>();
 
         if (initialRespawnPoint != null)
         {
@@ -45,36 +57,54 @@ public class GimmickRespawnController : MonoBehaviour
 
     public void Respawn()
     {
+        RespawnAt(currentRespawnPosition, true);
+    }
+
+    /// <summary>
+    /// 死亡・落下のどちらからも同じ位置／MorningStar初期化処理を使用する。
+    /// </summary>
+    public void RespawnAt(Vector3 position, bool restoreFullHealth)
+    {
         if (player == null)
             return;
 
+        currentRespawnPosition = position;
+
         // チェックポイントまたは初期地点へ戻す
-        player.position = currentRespawnPosition;
+        player.position = position;
 
         if (playerRigidbody != null)
         {
+            playerRigidbody.position = position;
             playerRigidbody.linearVelocity = Vector2.zero;
             playerRigidbody.angularVelocity = 0f;
         }
 
-        // 復帰時は常にHP満タン
+        // 既存の落下復帰・死亡復帰は満タン、明示的なHP維持復帰にも対応する。
         if (playerHealth != null)
         {
-            playerHealth.ResetToFullHp();
+            if (restoreFullHealth || playerHealth.CurrentHp <= 0)
+                playerHealth.ResetToFullHp();
+            else
+                playerHealth.ReviveKeepCurrentHp();
         }
 
-        if (morningstar != null)
+        if (morningStarLauncher != null)
+        {
+            morningStarLauncher.ResetForRespawn();
+        }
+        else if (morningstar != null)
         {
             morningstar.position =
-                currentRespawnPosition + (Vector3)morningstarOffset;
+                position + (Vector3)morningstarOffset;
         }
 
-        if (morningstarRigidbody != null)
+        if (morningStarLauncher == null && morningstarRigidbody != null)
         {
             morningstarRigidbody.linearVelocity = Vector2.zero;
             morningstarRigidbody.angularVelocity = 0f;
         }
 
-        Debug.Log("Player Respawned and HP restored");
+        Debug.Log("Player, MorningStar and Chain respawned safely");
     }
 }

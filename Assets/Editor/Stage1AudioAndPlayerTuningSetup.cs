@@ -273,9 +273,9 @@ public static class Stage1AudioAndPlayerTuningSetup
         SetObjectArray(serializedPlayer, "_jumpVoiceClips", assets.Voices);
         SetObject(serializedPlayer, "_landingClip", assets.Landing);
         SetFloat(serializedPlayer, "_jumpVolume", 1f);
-        SetFloat(serializedPlayer, "_footstepVolume", 0.55f);
-        SetFloat(serializedPlayer, "_jumpVoiceVolume", 0.7f);
-        SetFloat(serializedPlayer, "_landingVolume", 0.8f);
+        SetFloat(serializedPlayer, "_footstepVolume", 0.39f);
+        SetFloat(serializedPlayer, "_jumpVoiceVolume", 1f);
+        SetFloat(serializedPlayer, "_landingVolume", 0.55f);
         serializedPlayer.ApplyModifiedPropertiesWithoutUndo();
 
         PlayerHealth health = player.GetComponent<PlayerHealth>();
@@ -296,10 +296,10 @@ public static class Stage1AudioAndPlayerTuningSetup
         SerializedObject serializedLauncher = new SerializedObject(launcher);
         SetObject(serializedLauncher, "sfxAudioSource", sfxSource);
         SetObject(serializedLauncher, "morningStarLaunchClip", assets.Launch);
-        SetFloat(serializedLauncher, "morningStarLaunchVolume", 1f);
+        SetFloat(serializedLauncher, "morningStarLaunchVolume", 0.55f);
         SetObject(serializedLauncher, "groundImpactAudioSource", worldImpactSource);
         SetObject(serializedLauncher, "groundImpactClip", assets.Impact);
-        SetFloat(serializedLauncher, "groundImpactVolume", 0.9f);
+        SetFloat(serializedLauncher, "groundImpactVolume", 0.56f);
         serializedLauncher.ApplyModifiedPropertiesWithoutUndo();
 
         EditorUtility.SetDirty(player);

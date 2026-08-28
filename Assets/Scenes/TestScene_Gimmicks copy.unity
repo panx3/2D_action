@@ -3459,7 +3459,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RespawnController
   player: {fileID: 467605180}
   playerRigidbody: {fileID: 467605175}
-  playerHealth: {fileID: 0}
   initialRespawnPoint: {fileID: 1650382550}
   morningstar: {fileID: 1296931098}
   morningstarRigidbody: {fileID: 1296931093}
