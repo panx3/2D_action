@@ -543,6 +543,14 @@ MonoBehaviour:
   _fallGravityMultiplier: 4
   _jumpCutMultiplier: 2
   _maxFallSpeed: -50
+  _groundCheckCollider: {fileID: 8743620259344489302}
+  _groundLayers:
+    serializedVersion: 2
+    m_Bits: 65
+  _groundCheckWidthRatio: 0.72
+  _groundCheckHeight: 0.12
+  _groundCheckVerticalOverlap: 0.02
+  _groundedGraceTime: 0.05
   _bodySprite: {fileID: 0}
   _visualRoot: {fileID: 0}
   _airLaunchBlinkDuration: 0.22
@@ -629,9 +637,9 @@ DistanceJoint2D:
   m_AutoConfigureConnectedAnchor: 0
   m_Anchor: {x: -1.0643938, y: -1.2720803}
   m_ConnectedAnchor: {x: 0, y: 0}
-  m_AutoConfigureDistance: 1
-  m_Distance: 0.24890906
-  m_MaxDistanceOnly: 0
+  m_AutoConfigureDistance: 0
+  m_Distance: 4.5
+  m_MaxDistanceOnly: 1
 --- !u!114 &1434055133346620660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -655,6 +663,7 @@ MonoBehaviour:
   usePlayerOnSameObject: 1
   player: {fileID: 3272722357809851847}
   chainConstraint: {fileID: 0}
+  hookRopeJoint: {fileID: 9115680363452693613}
   aimCamera: {fileID: 0}
   restrictPointerToGameView: 1
   screenZ: 10
@@ -681,6 +690,7 @@ MonoBehaviour:
   hitCooldownPerTarget: 0.2
   postHitSpeedRetention: 0.7
   maxRopeLength: 4.5
+  launchRopeLengthMultiplier: 1.4
   ballMass: 0.35
   maxBallLinearSpeed: 20
   throwSpeed: 18
@@ -725,6 +735,8 @@ MonoBehaviour:
   swingRadialDamping: 0.9
   swingTangentKeepRate: 0.95
   maxSwingSpeed: 16
+  magnetSwingForce: 12
+  magnetMaxSwingSpeed: 16
   hookedChainWidthMultiplier: 1.25
   normalChainColor: {r: 1, g: 1, b: 1, a: 1}
   hookedChainColor: {r: 1, g: 0.9, b: 0.5, a: 1}
@@ -797,8 +809,13 @@ MonoBehaviour:
   backwardAimParam: BackwardAim
   launchChargeParam: LaunchCharge
   launchFireTrigger: LaunchFire
+  launchPoseActiveParam: LaunchPoseActive
   launchRecoilTrigger: LaunchRecoil
   launchRecoilDelay: 0.08
+  launchReadyAnchorLocalPosition: {x: -2.03, y: -1.02}
+  launchAnchorLocalPosition: {x: 2.87, y: 0.39}
+  launchPoseForwardFrameTime: 0.06
+  launchPoseMaxHoldTime: 0.4
   debugLog: 0
 --- !u!114 &5634095436392871117
 MonoBehaviour:

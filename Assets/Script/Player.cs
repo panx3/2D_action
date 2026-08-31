@@ -68,6 +68,34 @@ public class Player : MonoBehaviour
 
 
 
+    [Header("接地判定")]
+
+    [SerializeField, Tooltip("接地判定の基準にするPlayer本体Collider。未設定なら同じGameObjectから取得")]
+
+    private Collider2D _groundCheckCollider;
+
+    [SerializeField, Tooltip("床として判定するLayer（現在のStage床はDefault / Walls）")]
+
+    private LayerMask _groundLayers = (1 << 0) | (1 << 6);
+
+    [SerializeField, Range(0.6f, 0.8f), Tooltip("本体Collider幅に対するGroundCheck幅")]
+
+    private float _groundCheckWidthRatio = 0.72f;
+
+    [SerializeField, Range(0.08f, 0.15f), Tooltip("GroundCheckの高さ（World Unit）")]
+
+    private float _groundCheckHeight = 0.12f;
+
+    [SerializeField, Range(0f, 0.05f), Tooltip("Collider最下端へ重ねるGroundCheckの厚み")]
+
+    private float _groundCheckVerticalOverlap = 0.02f;
+
+    [SerializeField, Min(0f), Tooltip("Tile境界などの瞬間的な判定抜けを吸収する時間。Coyote Timeとは別管理")]
+
+    private float _groundedGraceTime = 0.05f;
+
+
+
     [Header("見た目")]
 
     [FormerlySerializedAs("_spriteRenderer")]
@@ -80,6 +108,8 @@ public class Player : MonoBehaviour
     private Transform _weaponHandAnchor;
     private Vector3 _rightFacingHandAnchorLocalPosition;
     private bool _handAnchorFacingInitialized;
+    private bool _weaponHandAnchorOverrideActive;
+    private Vector3 _weaponHandAnchorOverrideRightLocalPosition;
 
 
 
@@ -123,6 +153,7 @@ public class Player : MonoBehaviour
     private Vector2 _actionMoveInput;
 
     private Rigidbody2D _rigid;
+    private MorningStarLauncher _morningStarLauncher;
 
     private bool _bjump;
 
@@ -132,9 +163,13 @@ public class Player : MonoBehaviour
 
     private bool _groundStateInitialized;
 
-    private bool _hasObservedGrounded;
+    private readonly Collider2D[] _groundCheckResults = new Collider2D[8];
 
-    private int _floorContactCount;
+    private bool _isGrounded;
+
+    private bool _rawGrounded;
+
+    private float _groundedGraceTimer;
 
     private float _coyoteTimer;
 
@@ -160,13 +195,58 @@ public class Player : MonoBehaviour
 
     public Rigidbody2D Rigidbody2D => _rigid;
 
-    public bool IsGrounded => _floorContactCount > 0;
+    public bool IsGrounded => _isGrounded;
+
+    public event System.Action Landed;
 
     public bool IsBackwardAim => _backwardAim;
 
     public Transform WeaponHandAnchor => _weaponHandAnchor;
 
     public Vector3 RightFacingHandAnchorLocalPosition => _rightFacingHandAnchorLocalPosition;
+
+    /// <summary>
+    /// Launch Poseなど、現在のSpriteだけに必要な手元位置を一時的に使用する。
+    /// 右向き座標を受け取り、既存flipX方式と同じく左向きではXだけ反転する。
+    /// </summary>
+    public void SetWeaponHandAnchorPose(Vector2 rightFacingLocalPosition)
+    {
+        _weaponHandAnchorOverrideActive = true;
+        _weaponHandAnchorOverrideRightLocalPosition = new Vector3(
+            rightFacingLocalPosition.x,
+            rightFacingLocalPosition.y,
+            _rightFacingHandAnchorLocalPosition.z);
+        ApplyWeaponHandAnchorFacing();
+    }
+
+    public void ClearWeaponHandAnchorPose()
+    {
+        _weaponHandAnchorOverrideActive = false;
+        ApplyWeaponHandAnchorFacing();
+    }
+
+    /// <summary>
+    /// 実射出方向へ体を向ける。SpriteRenderer.flipXと既存HandAnchor反転だけを更新し、
+    /// Player Root / Visualのscaleは変更しない。ほぼ垂直なら現在方向を維持する。
+    /// </summary>
+    public bool SetLaunchFacing(float launchDirectionX, float horizontalThreshold = 0.1f)
+    {
+        if (Mathf.Abs(launchDirectionX) < Mathf.Max(0f, horizontalThreshold))
+            return false;
+
+        _facingRight = launchDirectionX > 0f;
+        _backwardAim = false;
+
+        SpriteRenderer sprite = ResolveBodySprite();
+        if (sprite != null)
+            sprite.flipX = !_facingRight;
+
+        if (_anim != null && HasAnimatorParam("BackwardAim", AnimatorControllerParameterType.Bool))
+            _anim.SetBool("BackwardAim", false);
+
+        ApplyWeaponHandAnchorFacing();
+        return true;
+    }
 
     public AudioClip LastJumpVoiceClip { get; private set; }
 
@@ -179,6 +259,12 @@ public class Player : MonoBehaviour
     private void Awake()
 
     {
+
+        _morningStarLauncher = GetComponent<MorningStarLauncher>();
+
+        _rigid = GetComponent<Rigidbody2D>();
+
+        ResolveGroundCheckCollider();
 
         if (_playerHealth == null)
 
@@ -220,7 +306,9 @@ public class Player : MonoBehaviour
 
     {
 
-        _rigid = GetComponent<Rigidbody2D>();
+        if (_rigid == null)
+
+            _rigid = GetComponent<Rigidbody2D>();
 
         _anim = GetComponent<Animator>();
 
@@ -231,6 +319,8 @@ public class Player : MonoBehaviour
         ResolveWeaponHandAnchor();
 
         _bjump = false;
+
+        RefreshGroundedState();
 
         ConfigureAudioSources();
 
@@ -251,7 +341,6 @@ public class Player : MonoBehaviour
         bool grounded = IsGrounded;
 
         bool landedThisFrame = _groundStateInitialized
-            && _hasObservedGrounded
             && !_wasGrounded
             && grounded;
 
@@ -266,11 +355,13 @@ public class Player : MonoBehaviour
         }
 
         if (landedThisFrame)
+        {
             PlayLandingSound();
 
+            Landed?.Invoke();
+        }
+
         _groundStateInitialized = true;
-        if (grounded)
-            _hasObservedGrounded = true;
         _wasGrounded = grounded;
 
 
@@ -297,6 +388,8 @@ public class Player : MonoBehaviour
 
     {
 
+        RefreshGroundedState();
+
         bool grounded = IsGrounded;
 
         bool canJump = grounded || _coyoteTimer > 0f;
@@ -314,6 +407,8 @@ public class Player : MonoBehaviour
             PlayJumpSound();
 
             _bjump = true;
+
+            ClearGroundedStateForJump();
 
             _jumpBufferTimer = 0f;
 
@@ -598,39 +693,201 @@ public class Player : MonoBehaviour
 
 
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void ResolveGroundCheckCollider()
 
     {
 
-        if (collision.gameObject.CompareTag("Floor"))
+        if (_groundCheckCollider == null)
 
-        {
-
-            _floorContactCount++;
-
-            _bjump = false;
-
-        }
+            _groundCheckCollider = GetComponent<Collider2D>();
 
     }
 
 
 
-    private void OnCollisionExit2D(Collision2D collision)
+    private void RefreshGroundedState()
 
     {
 
-        if (collision.gameObject.CompareTag("Floor"))
+        ResolveGroundCheckCollider();
+
+        bool wasRawGrounded = _rawGrounded;
+
+        bool risingFromJump = _bjump
+
+            && _rigid != null
+
+            && _rigid.linearVelocity.y > 0.05f;
+
+        _rawGrounded = !risingFromJump && CheckGroundOverlap();
+
+
+
+        if (_rawGrounded)
 
         {
 
-            _floorContactCount = Mathf.Max(0, _floorContactCount - 1);
+            _groundedGraceTimer = _groundedGraceTime;
 
-            if (_floorContactCount == 0 && !_bjump)
+            _isGrounded = true;
 
-                _coyoteTimer = _coyoteTime;
+            _coyoteTimer = 0f;
+
+            if (_rigid == null || _rigid.linearVelocity.y <= 0.05f)
+
+                _bjump = false;
+
+            return;
 
         }
+
+
+
+        if (wasRawGrounded && !_bjump)
+
+            _coyoteTimer = Mathf.Max(_coyoteTimer, _coyoteTime);
+
+
+
+        if (risingFromJump)
+
+        {
+
+            _groundedGraceTimer = 0f;
+
+            _isGrounded = false;
+
+            return;
+
+        }
+
+
+
+        _groundedGraceTimer = Mathf.Max(0f, _groundedGraceTimer - Time.fixedDeltaTime);
+
+        _isGrounded = _groundedGraceTimer > 0f;
+
+    }
+
+
+
+    private bool CheckGroundOverlap()
+
+    {
+
+        if (_groundCheckCollider == null || !_groundCheckCollider.enabled)
+
+            return false;
+
+
+
+        GetGroundCheckBox(_groundCheckCollider.bounds, out Vector2 center, out Vector2 size);
+
+        ContactFilter2D filter = new ContactFilter2D();
+
+        filter.SetLayerMask(_groundLayers);
+
+        filter.useTriggers = false;
+
+        int hitCount = Physics2D.OverlapBox(center, size, 0f, filter, _groundCheckResults);
+
+
+
+        for (int i = 0; i < hitCount; i++)
+
+        {
+
+            Collider2D hit = _groundCheckResults[i];
+
+            _groundCheckResults[i] = null;
+
+            if (hit != null && hit != _groundCheckCollider && !hit.transform.IsChildOf(transform))
+
+                return true;
+
+        }
+
+
+
+        return false;
+
+    }
+
+
+
+    private void GetGroundCheckBox(Bounds colliderBounds, out Vector2 center, out Vector2 size)
+
+    {
+
+        float width = Mathf.Max(0.01f, colliderBounds.size.x * _groundCheckWidthRatio);
+
+        float height = Mathf.Max(0.01f, _groundCheckHeight);
+
+        center = new Vector2(
+
+            colliderBounds.center.x,
+
+            colliderBounds.min.y - height * 0.5f + _groundCheckVerticalOverlap);
+
+        size = new Vector2(width, height);
+
+    }
+
+
+
+    private void ClearGroundedStateForJump()
+
+    {
+
+        _rawGrounded = false;
+
+        _isGrounded = false;
+
+        _groundedGraceTimer = 0f;
+
+    }
+
+
+
+    private void OnValidate()
+
+    {
+
+        if (_groundLayers.value == 0)
+
+            _groundLayers = LayerMask.GetMask("Default", "Walls");
+
+        _groundCheckWidthRatio = Mathf.Clamp(_groundCheckWidthRatio, 0.6f, 0.8f);
+
+        _groundCheckHeight = Mathf.Clamp(_groundCheckHeight, 0.08f, 0.15f);
+
+        _groundCheckVerticalOverlap = Mathf.Clamp(_groundCheckVerticalOverlap, 0f, 0.05f);
+
+        _groundedGraceTime = Mathf.Max(0f, _groundedGraceTime);
+
+        ResolveGroundCheckCollider();
+
+    }
+
+
+
+    private void OnDrawGizmosSelected()
+
+    {
+
+        ResolveGroundCheckCollider();
+
+        if (_groundCheckCollider == null)
+
+            return;
+
+
+
+        GetGroundCheckBox(_groundCheckCollider.bounds, out Vector2 center, out Vector2 size);
+
+        Gizmos.color = Application.isPlaying && _isGrounded ? Color.green : Color.red;
+
+        Gizmos.DrawWireCube(center, size);
 
     }
 
@@ -792,6 +1049,15 @@ public class Player : MonoBehaviour
 
     {
 
+        // Hook/Swing中またはLaunch Pose中にHandAnchorを左右へ瞬間移動させると、
+        // 物理ロープ支点や発射Animationの向きが崩れるため、完了まで向きを固定する。
+        if (_morningStarLauncher != null
+            && (_morningStarLauncher.IsHookedState || _morningStarLauncher.IsLaunchPoseActive))
+        {
+            ApplyMovementFacingVisual();
+            return;
+        }
+
         float moveX = _moveInput.x;
 
         if (moveX > 0.01f)
@@ -892,10 +1158,12 @@ public class Player : MonoBehaviour
         if (!_handAnchorFacingInitialized || _weaponHandAnchor == null)
             return;
 
-        Vector3 localPosition = _rightFacingHandAnchorLocalPosition;
+        Vector3 localPosition = _weaponHandAnchorOverrideActive
+            ? _weaponHandAnchorOverrideRightLocalPosition
+            : _rightFacingHandAnchorLocalPosition;
         localPosition.x = _facingRight
-            ? _rightFacingHandAnchorLocalPosition.x
-            : -_rightFacingHandAnchorLocalPosition.x;
+            ? localPosition.x
+            : -localPosition.x;
         _weaponHandAnchor.localPosition = localPosition;
 
     }

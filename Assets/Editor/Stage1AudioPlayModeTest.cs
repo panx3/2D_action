@@ -162,7 +162,9 @@ public static class Stage1AudioPlayModeTest
         int voiceCountBefore = player.JumpVoicePlayCount;
         playerBody.gravityScale = 0f;
         playerBody.linearVelocity = Vector2.zero;
-        SetPlayerField(player, "_floorContactCount", 1);
+        SetPlayerField(player, "_isGrounded", true);
+        SetPlayerField(player, "_rawGrounded", false);
+        SetPlayerField(player, "_groundedGraceTimer", 1f);
         SetPlayerField(player, "_bjump", false);
         SetPlayerField(player, "_coyoteTimer", 0f);
         SetPlayerField(player, "_jumpBufferTimer", 1f);
@@ -177,9 +179,8 @@ public static class Stage1AudioPlayModeTest
 
         int landingCountBefore = player.LandingSoundPlayCount;
         SetPlayerField(player, "_groundStateInitialized", true);
-        SetPlayerField(player, "_hasObservedGrounded", true);
         SetPlayerField(player, "_wasGrounded", false);
-        SetPlayerField(player, "_floorContactCount", 1);
+        SetPlayerField(player, "_isGrounded", true);
         InvokePlayer(player, "Update");
         Require(player.LandingSoundPlayCount == landingCountBefore + 1, "air-to-ground transition did not play landing SFX");
         InvokePlayer(player, "Update");

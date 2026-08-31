@@ -5,11 +5,14 @@ using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// モーニングスター：状態管理・発射・回収・壁刺し・スイング引っ張り・鎖解除。
-/// Joint2D は使わず ChainConstraint2D + 独自張力。
+/// モーニングスター：状態管理・発射・回収・壁刺し・スイング・鎖解除。
+/// 通常時は ChainConstraint2D、Hook/Swing中は既存 DistanceJoint2D を
+/// Max Distance Only のロープとして使い、手元と固定支点の最大距離を守る。
 /// </summary>
 public class MorningStarLauncher : MonoBehaviour
 {
+    private const string LauncherPoseLayerName = "Launcher Pose";
+
     public enum MorningStarState
     {
         Dragging,
@@ -34,6 +37,8 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private bool usePlayerOnSameObject = true;
     [SerializeField] private Player player;
     [SerializeField] private ChainConstraint2D chainConstraint;
+    [SerializeField, Tooltip("Hook/Swing中の最大距離制約。未設定ならPlayer上の既存DistanceJoint2Dを使用")]
+    private DistanceJoint2D hookRopeJoint;
     [FormerlySerializedAs("mainCamera")]
     [SerializeField] private Camera aimCamera;
     [SerializeField] private bool restrictPointerToGameView = true;
@@ -61,6 +66,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     [Header("紐の長さ（Dragging / Thrown 時の ChainConstraint2D）")]
     [SerializeField] private float maxRopeLength = 4.5f;
+    [SerializeField, Min(1f), Tooltip("実射出中だけ有効になる最大鎖長倍率")]
+    private float launchRopeLengthMultiplier = 1.4f;
 
     [Header("鉄球物理")]
     [SerializeField] private float ballMass = 0.35f;
@@ -72,6 +79,8 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float launchStartOffset = 0.25f;
     [SerializeField] private float aimLaunchCooldown = 0f;
     [SerializeField] private float fireInputBufferTime = 0.18f;
+    [SerializeField, Range(0f, 1f), Tooltip("この値未満の横成分では現在の向きを維持")]
+    private float horizontalFacingThreshold = 0.1f;
 
     [Header("空中射出制限")]
     [SerializeField] private bool limitAirThrows = true;
@@ -97,7 +106,6 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float maxThrownTime = 0.45f;
     [SerializeField] private float maxThrowDistance = 4.8f;
     [SerializeField] private float dropTransitionSpeed = 2f;
-    [SerializeField] private float dropToDraggingTime = 0.35f;
     [SerializeField] private bool enableChainConstraintWhileDropping = true;
 
     [Header("Returning（右クリック/Bのみ）")]
@@ -128,6 +136,10 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float swingRadialDamping = 0.9f;
     [SerializeField, Range(0f, 1f)] private float swingTangentKeepRate = 0.95f;
     [SerializeField] private float maxSwingSpeed = 16f;
+
+    [Header("Magnet Swing Assist")]
+    [SerializeField, Min(0f)] private float magnetSwingForce = 12f;
+    [SerializeField, Min(0f)] private float magnetMaxSwingSpeed = 16f;
 
     [Header("Hooked フィードバック")]
     [SerializeField] private float hookedChainWidthMultiplier = 1.25f;
@@ -226,8 +238,19 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private string backwardAimParam = "BackwardAim";
     [SerializeField] private string launchChargeParam = "LaunchCharge";
     [SerializeField] private string launchFireTrigger = "LaunchFire";
+    [SerializeField] private string launchPoseActiveParam = "LaunchPoseActive";
     [SerializeField] private string launchRecoilTrigger = "LaunchRecoil";
     [SerializeField] private float launchRecoilDelay = 0.08f;
+
+    [Header("Launch Pose Anchor")]
+    [SerializeField, Tooltip("右向きの構えフレームで棒先端へ合わせたHandAnchor localPosition")]
+    private Vector2 launchReadyAnchorLocalPosition = new Vector2(-2.03f, -1.02f);
+    [SerializeField, Tooltip("右向きの投げ切りフレームで棒先端へ合わせたHandAnchor localPosition")]
+    private Vector2 launchAnchorLocalPosition = new Vector2(2.87f, 0.39f);
+    [SerializeField, Min(0f), Tooltip("構えから投げ切りAnchorへ切り替える時間。Clipの2枚目と同じ0.06秒")]
+    private float launchPoseForwardFrameTime = 0.06f;
+    [SerializeField, Min(0.01f), Tooltip("接触・Magnet・Recallがない場合のLaunch Pose最大保持時間")]
+    private float launchPoseMaxHoldTime = 0.40f;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog;
@@ -245,7 +268,6 @@ public class MorningStarLauncher : MonoBehaviour
     private float _activeRecallDuration;
     private float _pendingThrowSpeedMultiplier = 1f;
     private float _thrownElapsed;
-    private float _dropElapsed;
     private Vector2 _hookPoint;
     private bool _isHooked;
     private MagnetPoint _attachedMagnet;
@@ -276,6 +298,14 @@ public class MorningStarLauncher : MonoBehaviour
     private float _defaultLineWidth;
     private bool _lineVisualDefaultsCached;
     private float _defaultBallLinearDamping;
+    private bool _launchPoseActive;
+    private bool _waitingForLaunchImpact;
+    private bool _launchForwardAnchorApplied;
+    private float _launchPoseElapsed;
+    private bool _playerLandingSubscribed;
+    private PlayerHealth _playerHealth;
+    private bool _playerDeathSubscribed;
+    private bool _launchRopeLengthActive;
 
     public float LastGroundImpactSpeed { get; private set; }
     public float LastGroundImpactShakeStrength { get; private set; }
@@ -293,14 +323,23 @@ public class MorningStarLauncher : MonoBehaviour
     private int _hashBackwardAim;
     private int _hashLaunchCharge;
     private int _hashLaunchFire;
+    private int _hashLaunchPoseActive;
     private int _hashLaunchRecoil;
 
     public MorningStarState State => _state;
     public MorningStarState CurrentState => _state;
     public float MaxRopeLength => GetEffectiveRopeLength();
+    public float BaseMaxRopeLength => Mathf.Max(0.1f, maxRopeLength);
+    public float LaunchRopeLengthMultiplier => Mathf.Max(1f, launchRopeLengthMultiplier);
+    public bool IsLaunchRopeLengthActive => _launchRopeLengthActive;
     public float LastCharge01 => _lastCharge01;
     public float LastSpeedMultiplier => _lastSpeedMultiplier;
     public Transform HandAnchor => handAnchor;
+    public Vector2 RopeAnchorWorld => GetPlayerRopeAnchorWorld();
+    public bool IsLaunchPoseActive => _launchPoseActive;
+    public Vector2 LaunchReadyAnchorLocalPosition => launchReadyAnchorLocalPosition;
+    public Vector2 LaunchAnchorLocalPosition => launchAnchorLocalPosition;
+    public float LaunchPoseMaxHoldTime => launchPoseMaxHoldTime;
 
     public bool IsRopeLineVisible =>
         _state == MorningStarState.Dragging
@@ -321,6 +360,9 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
         _airThrowsUsed = 0;
         _nextLaunchTime = 0f;
         _fireBufferTimer = 0f;
@@ -384,6 +426,8 @@ public class MorningStarLauncher : MonoBehaviour
         _attachedMagnet = magnet;
         BeginSwinging();
         GrantMagnetEscapeThrow();
+        if (_isHooked && _state == MorningStarState.Swinging)
+            EndLaunchPose();
         return _isHooked && _state == MorningStarState.Swinging;
     }
 
@@ -401,8 +445,14 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (usePlayerOnSameObject && playerRigidbody2D == null)
             playerRigidbody2D = GetComponent<Rigidbody2D>();
+        if (hookRopeJoint == null)
+            hookRopeJoint = GetComponent<DistanceJoint2D>();
+        if (hookRopeJoint != null)
+            hookRopeJoint.enabled = false;
         if (player == null && playerRigidbody2D != null)
             player = playerRigidbody2D.GetComponent<Player>();
+        if (_playerHealth == null)
+            _playerHealth = GetComponent<PlayerHealth>();
         if (playerBodyCollider == null && playerRigidbody2D != null)
             playerBodyCollider = playerRigidbody2D.GetComponent<Collider2D>();
         if (audioSource == null)
@@ -423,11 +473,23 @@ public class MorningStarLauncher : MonoBehaviour
         _hashBackwardAim = Animator.StringToHash(backwardAimParam);
         _hashLaunchCharge = Animator.StringToHash(launchChargeParam);
         _hashLaunchFire = Animator.StringToHash(launchFireTrigger);
+        _hashLaunchPoseActive = Animator.StringToHash(launchPoseActiveParam);
         _hashLaunchRecoil = Animator.StringToHash(launchRecoilTrigger);
+
+        // AnimatorControllerのSerialized Weightが欠落していても、
+        // 実射出Triggerを受けるVisualレイヤーを確実に有効化する。
+        if (animator != null)
+        {
+            int launcherPoseLayer = animator.GetLayerIndex(LauncherPoseLayerName);
+            if (launcherPoseLayer >= 0)
+                animator.SetLayerWeight(launcherPoseLayer, 1f);
+        }
     }
 
     private void OnValidate()
     {
+        launchRopeLengthMultiplier = Mathf.Max(1f, launchRopeLengthMultiplier);
+        horizontalFacingThreshold = Mathf.Clamp01(horizontalFacingThreshold);
         if (hookableLayers.value == 0)
             hookableLayers = LayerMask.GetMask("Walls", "Default");
         if (enemyLayers.value == 0)
@@ -437,9 +499,20 @@ public class MorningStarLauncher : MonoBehaviour
         SyncRopeLengthToConstraint();
     }
 
+    private void OnEnable()
+    {
+        SubscribeToPlayerLanding();
+        SubscribeToPlayerDeath();
+    }
+
     private void Start()
     {
+        SubscribeToPlayerLanding();
+        SubscribeToPlayerDeath();
+
         _playerRb = playerRigidbody2D;
+        EnsureHookRopeJoint();
+        SetHookRopeJointActive(false);
         if (playerBodyCollider == null && _playerRb != null)
             playerBodyCollider = _playerRb.GetComponent<Collider2D>();
 
@@ -485,17 +558,34 @@ public class MorningStarLauncher : MonoBehaviour
         EnterDraggingState(true);
     }
 
+    private void OnDisable()
+    {
+        UnsubscribeFromPlayerLanding();
+        UnsubscribeFromPlayerDeath();
+        EndLaunchPose();
+        SetLaunchRopeLengthActive(false);
+        SetHookRopeJointActive(false);
+    }
+
     private void Update()
     {
         if (morningStarRb == null)
             return;
 
-        ResetAirThrowsWhenGrounded();
+        UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
         UpdateGamepadInputState();
         ProcessRecoilTrigger();
         UpdateFallbackLineRenderer();
+
+        // Thrown / Droppingの回収は、右クリック・B・Gamepad Eastによる明示操作だけ。
+        if ((_state == MorningStarState.Thrown || _state == MorningStarState.Dropping)
+            && WasReleasePressedThisFrame())
+        {
+            BeginReturn();
+            return;
+        }
 
         // 1. Release（Hooked / HookSwing）
         if ((_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
@@ -567,7 +657,8 @@ public class MorningStarLauncher : MonoBehaviour
                 break;
 
             case MorningStarState.RecallBeforeThrow:
-                SetChainConstraintActive(!disableChainConstraintDuringRecall);
+                SetChainConstraintActive(
+                    !disableChainConstraintDuringRecall && IsMorningStarWithinBaseRopeLength());
                 UpdateRecallBeforeThrow(dt);
                 break;
 
@@ -578,21 +669,23 @@ public class MorningStarLauncher : MonoBehaviour
 
             case MorningStarState.Dropping:
                 SetChainConstraintActive(enableChainConstraintWhileDropping);
-                UpdateDropping(dt);
                 break;
 
             case MorningStarState.Returning:
-                SetChainConstraintActive(!disableChainConstraintDuringReturn);
+                SetChainConstraintActive(
+                    !disableChainConstraintDuringReturn && IsMorningStarWithinBaseRopeLength());
                 UpdateReturning(dt);
                 break;
 
             case MorningStarState.Hooked:
                 SetChainConstraintActive(false);
+                SetHookRopeJointActive(true);
                 UpdateHookedFixed(dt);
                 break;
 
             case MorningStarState.Swinging:
                 SetChainConstraintActive(false);
+                SetHookRopeJointActive(true);
                 UpdateSwingingFixed(dt);
                 break;
         }
@@ -696,6 +789,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void EnterDraggingState(bool snapBallToSocket)
     {
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
         _state = MorningStarState.Dragging;
         _isHooked = false;
         _attachedMagnet = null;
@@ -705,7 +800,6 @@ public class MorningStarLauncher : MonoBehaviour
         _recallDelayTimer = 0f;
         _pendingThrowSpeedMultiplier = 1f;
         _thrownElapsed = 0f;
-        _dropElapsed = 0f;
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;
         _throwPullAssistActive = false;
@@ -715,6 +809,7 @@ public class MorningStarLauncher : MonoBehaviour
         _hookClickHolding = false;
         _requireReleaseBeforeHookClick = false;
         _chargeTime = 0f;
+        SetHookRopeJointActive(false);
         SetChainConstraintActive(true);
         SetSpinGuardActive(false);
         ApplyHookedChainVisual(false);
@@ -1305,8 +1400,8 @@ public class MorningStarLauncher : MonoBehaviour
         _hookClickHolding = false;
         _hookClickHoldTimer = 0f;
 
-        if (chainConstraint != null)
-            chainConstraint.enabled = false;
+        SetChainConstraintActive(false);
+        SetHookRopeJointActive(true);
 
         LogDebug("MorningStar HookSwing");
     }
@@ -1316,7 +1411,9 @@ public class MorningStarLauncher : MonoBehaviour
         if ((_state != MorningStarState.Hooked && _state != MorningStarState.Swinging) || !_isHooked)
             return;
 
+        EndLaunchPose();
         ApplyReleaseBoostToPlayer();
+        SetHookRopeJointActive(false);
 
         _isHooked = false;
         _attachedMagnet = null;
@@ -1369,6 +1466,11 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (morningStarRb == null || collision.collider == null)
             return;
+
+        // ReporterはOnCollisionEnter2Dだけを通知するため、Launch開始前からの
+        // 接触継続ではなく、射出後に新しく発生した最初の床接触だけが対象になる。
+        if (_waitingForLaunchImpact && HasFloorContact(collision))
+            EndLaunchPose();
 
         TryPlayGroundImpactCameraShake(collision);
 
@@ -1667,6 +1769,9 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void BeginHook(Vector2 hookPoint)
     {
+        // Hook/Magnet Swingは常に通常鎖長。Constraintを先に外して急補正を防ぐ。
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
         _state = MorningStarState.Hooked;
         _hookPoint = hookPoint;
         _isHooked = true;
@@ -1688,6 +1793,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (disableChainConstraintWhileHooked)
             SetChainConstraintActive(false);
+        SetHookRopeJointActive(true);
 
         _rehookLockoutTimer = Mathf.Max(rehookLockoutTime, hookStickMinTime);
         SetAnimatorBool(_hashLaunchCharge, false);
@@ -1760,6 +1866,7 @@ public class MorningStarLauncher : MonoBehaviour
         ShowClickAimVisuals(worldTarget, hand);
 
         _isHooked = false;
+        SetHookRopeJointActive(false);
         _attachedMagnet = null;
         _hookPoint = Vector2.zero;
         _rehookLockoutTimer = rehookLockoutTime;
@@ -1814,20 +1921,57 @@ public class MorningStarLauncher : MonoBehaviour
         if (_playerRb == null)
             return;
 
-        Vector2 playerPos = _playerRb.position;
-        Vector2 toHook = _hookPoint - playerPos;
+        Vector2 ropeStart = GetPlayerRopeAnchorWorld();
+        Vector2 toHook = _hookPoint - ropeStart;
         float distance = toHook.magnitude;
         if (distance <= 0.01f)
             return;
 
         Vector2 dirToHook = toHook / distance;
-        _playerRb.AddForce(dirToHook * swingPullForce, ForceMode2D.Force);
-
         Vector2 v = _playerRb.linearVelocity;
-        Vector2 awayDir = -dirToHook;
-        float awaySpeed = Vector2.Dot(v, awayDir);
-        if (awaySpeed > 0f)
-            v -= awayDir * awaySpeed * swingRadialDamping;
+        float ropeLength = GetEffectiveRopeLength();
+        bool ropeIsTaut = distance >= Mathf.Max(0.1f, ropeLength - 0.05f);
+
+        if (_attachedMagnet != null)
+        {
+            // 最大距離とRadial方向の解決はDistanceJoint2Dへ任せる。
+            // ここでは鎖が張った時だけ、入力を接線方向へ変換して補助する。
+            if (!ropeIsTaut)
+                return;
+
+            Vector2 magnetTangent = new Vector2(dirToHook.y, -dirToHook.x);
+            if (magnetTangent.x < 0f)
+                magnetTangent = -magnetTangent;
+
+            float magnetMoveX = player != null ? player.MoveInputX : 0f;
+            if (Mathf.Abs(magnetMoveX) > 0.01f && magnetSwingForce > 0f)
+                _playerRb.AddForce(magnetTangent * magnetMoveX * magnetSwingForce, ForceMode2D.Force);
+
+            if (magnetMaxSwingSpeed > 0f)
+            {
+                float tangentSpeed = Vector2.Dot(v, magnetTangent);
+                float limitedTangentSpeed = Mathf.Clamp(
+                    tangentSpeed,
+                    -magnetMaxSwingSpeed,
+                    magnetMaxSwingSpeed);
+                if (!Mathf.Approximately(tangentSpeed, limitedTangentSpeed))
+                    _playerRb.linearVelocity = v + magnetTangent * (limitedTangentSpeed - tangentSpeed);
+            }
+
+            return;
+        }
+
+        // 鎖がたるんでいる間はPlayerを支点へ吸い込まない。
+        // 最大長付近だけ既存Forceを張力として使い、外向き速度を抑える。
+        if (ropeIsTaut)
+        {
+            _playerRb.AddForce(dirToHook * swingPullForce, ForceMode2D.Force);
+
+            Vector2 awayDir = -dirToHook;
+            float awaySpeed = Vector2.Dot(v, awayDir);
+            if (awaySpeed > 0f)
+                v -= awayDir * awaySpeed * swingRadialDamping;
+        }
 
         Vector2 tangent = new Vector2(-dirToHook.y, dirToHook.x);
         float moveX = player != null ? player.MoveInputX : 0f;
@@ -1849,10 +1993,66 @@ public class MorningStarLauncher : MonoBehaviour
         return player != null && player.IsGrounded;
     }
 
-    private void ResetAirThrowsWhenGrounded()
+    private void SubscribeToPlayerLanding()
     {
-        if (IsPlayerGrounded())
-            _airThrowsUsed = 0;
+        if (_playerLandingSubscribed)
+            return;
+
+        if (player == null && playerRigidbody2D != null)
+            player = playerRigidbody2D.GetComponent<Player>();
+
+        if (player == null)
+            return;
+
+        player.Landed += HandlePlayerLanded;
+        _playerLandingSubscribed = true;
+    }
+
+    private void UnsubscribeFromPlayerLanding()
+    {
+        if (!_playerLandingSubscribed)
+            return;
+
+        if (player != null)
+            player.Landed -= HandlePlayerLanded;
+        _playerLandingSubscribed = false;
+    }
+
+    private void HandlePlayerLanded()
+    {
+        _airThrowsUsed = 0;
+    }
+
+    private void SubscribeToPlayerDeath()
+    {
+        if (_playerDeathSubscribed)
+            return;
+
+        if (_playerHealth == null)
+            _playerHealth = GetComponent<PlayerHealth>();
+        if (_playerHealth == null)
+            return;
+
+        _playerHealth.OnDead += HandlePlayerDead;
+        _playerDeathSubscribed = true;
+    }
+
+    private void UnsubscribeFromPlayerDeath()
+    {
+        if (!_playerDeathSubscribed)
+            return;
+
+        if (_playerHealth != null)
+            _playerHealth.OnDead -= HandlePlayerDead;
+        _playerDeathSubscribed = false;
+    }
+
+    private void HandlePlayerDead()
+    {
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetHookRopeJointActive(false);
+        SetLaunchRopeLengthActive(false);
     }
 
     private bool CanStartAnotherThrow()
@@ -1906,11 +2106,17 @@ public class MorningStarLauncher : MonoBehaviour
         if (!TryConsumeAirThrow())
             return;
 
+        // 前回Launch Poseが残っている場合も、新しいRecall開始時点で必ず解除する。
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
+
         Vector2 hand = GetHandWorld();
         Vector2 d = launchDir.normalized;
         Vector2 worldTarget = hand + d * Mathf.Max(minAimDistance, maxThrowDistance);
 
         UpdateAimFacing(worldTarget);
+        FacePlayerForLaunch(d);
         ShowClickAimVisuals(worldTarget, hand);
 
         _pendingLaunchDir = d;
@@ -1978,12 +2184,15 @@ public class MorningStarLauncher : MonoBehaviour
         if (morningStarRb == null)
             return;
 
-        Vector2 origin = GetThrowOriginPosition();
         Vector2 d = _pendingLaunchDir.sqrMagnitude > 1e-12f ? _pendingLaunchDir.normalized : Vector2.right;
+        FacePlayerForLaunch(d);
+        Vector2 origin = GetThrowOriginPosition();
 
         morningStarRb.position = origin;
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
+
+        SetLaunchRopeLengthActive(true);
 
         if (chainConstraint != null)
             chainConstraint.enabled = true;
@@ -2013,6 +2222,7 @@ public class MorningStarLauncher : MonoBehaviour
         _tensionSnapCooldownTimer = 0f;
         _state = MorningStarState.Thrown;
         SetAnimatorBool(_hashLaunchCharge, false);
+        BeginLaunchPose();
         SetAnimatorTrigger(_hashLaunchFire);
         _recoilTriggerTime = Time.time + launchRecoilDelay;
 
@@ -2222,23 +2432,11 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         _state = MorningStarState.Dropping;
-        _dropElapsed = 0f;
 
         if (chainConstraint != null)
             chainConstraint.enabled = enableChainConstraintWhileDropping;
 
         morningStarRb.WakeUp();
-    }
-
-    private void UpdateDropping(float dt)
-    {
-        if (_state != MorningStarState.Dropping)
-            return;
-
-        _dropElapsed += dt;
-
-        if (_dropElapsed >= dropToDraggingTime)
-            EnterDraggingState(false);
     }
 
     private bool IsMorningStarTouchingHookable()
@@ -2278,6 +2476,10 @@ public class MorningStarLauncher : MonoBehaviour
         if (!canManualReturn)
             return;
 
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
+
         _isHooked = false;
         _attachedMagnet = null;
         _hookPoint = Vector2.zero;
@@ -2290,7 +2492,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (disableChainConstraintDuringReturn)
             SetChainConstraintActive(false);
         else
-            SetChainConstraintActive(true);
+            SetChainConstraintActive(IsMorningStarWithinBaseRopeLength());
 
         SetAnimatorBool(_hashLaunchCharge, false);
         ApplyHookedChainVisual(false);
@@ -2374,25 +2576,91 @@ public class MorningStarLauncher : MonoBehaviour
             chainConstraint.enabled = active;
     }
 
+    private bool IsMorningStarWithinBaseRopeLength()
+    {
+        if (morningStarRb == null)
+            return true;
+
+        return Vector2.Distance(GetHandWorld(), morningStarRb.position)
+            <= BaseMaxRopeLength + 0.01f;
+    }
+
+    private void EnsureHookRopeJoint()
+    {
+        if (hookRopeJoint != null || _playerRb == null)
+            return;
+
+        hookRopeJoint = _playerRb.GetComponent<DistanceJoint2D>();
+        if (hookRopeJoint == null)
+            hookRopeJoint = _playerRb.gameObject.AddComponent<DistanceJoint2D>();
+    }
+
+    private void SetHookRopeJointActive(bool active)
+    {
+        EnsureHookRopeJoint();
+        if (hookRopeJoint == null)
+            return;
+
+        if (!active || !_isHooked || _playerRb == null)
+        {
+            hookRopeJoint.enabled = false;
+            return;
+        }
+
+        // connectedBody == null の場合、connectedAnchorはworld固定点になる。
+        // MagnetPointは鉄球だけをこの同じ支点へ固定する。
+        hookRopeJoint.connectedBody = null;
+        hookRopeJoint.autoConfigureConnectedAnchor = false;
+        hookRopeJoint.autoConfigureDistance = false;
+        hookRopeJoint.enableCollision = false;
+        hookRopeJoint.maxDistanceOnly = true;
+        hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(GetHandWorld());
+        hookRopeJoint.connectedAnchor = _hookPoint;
+        hookRopeJoint.distance = GetEffectiveRopeLength();
+        if (!hookRopeJoint.enabled)
+            hookRopeJoint.enabled = true;
+    }
+
     private void SyncRopeLengthToConstraint()
     {
         if (chainConstraint != null)
         {
-            chainConstraint.SetMaxRopeLength(maxRopeLength);
+            chainConstraint.SetMaxRopeLength(GetEffectiveRopeLength());
             chainConstraint.MaxBallSpeed = maxBallLinearSpeed;
         }
     }
 
+    private void SetLaunchRopeLengthActive(bool active)
+    {
+        _launchRopeLengthActive = active;
+        SyncRopeLengthToConstraint();
+
+        // Hook/Magnet用Jointは通常長でのみ使用するが、状態変更と同フレームでも整合させる。
+        if (hookRopeJoint != null && hookRopeJoint.enabled)
+            hookRopeJoint.distance = GetEffectiveRopeLength();
+    }
+
     private float GetEffectiveRopeLength()
     {
-        if (chainConstraint != null)
-            return chainConstraint.MaxRopeLength;
-        return maxRopeLength;
+        float multiplier = _launchRopeLengthActive
+            ? Mathf.Max(1f, launchRopeLengthMultiplier)
+            : 1f;
+        return Mathf.Max(0.1f, maxRopeLength) * multiplier;
     }
 
     private Vector2 GetHandWorld()
     {
         return handAnchor != null ? (Vector2)handAnchor.position : (Vector2)transform.position;
+    }
+
+    private Vector2 GetPlayerRopeAnchorWorld()
+    {
+        // HandAnchorはUpdateで左右反転するため、Physics step間ではJoint anchorと
+        // 1フレームだけ異なることがある。Hook中の物理・表示は実際のJoint支点を正とする。
+        if (_isHooked && hookRopeJoint != null && hookRopeJoint.enabled && _playerRb != null)
+            return _playerRb.transform.TransformPoint(hookRopeJoint.anchor);
+
+        return GetHandWorld();
     }
 
     private void UpdateFallbackLineRenderer()
@@ -2411,7 +2679,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         lineRenderer.positionCount = 2;
-        Vector3 start = GetHandWorld();
+        Vector3 start = GetPlayerRopeAnchorWorld();
         Vector3 end = ClampToRopeLength(start, morningStarRb.position);
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
@@ -2464,6 +2732,15 @@ public class MorningStarLauncher : MonoBehaviour
 
         player.SetAimFacing(aimWorld.x, backward);
         SetAnimatorBool(_hashBackwardAim, backward);
+    }
+
+    private void FacePlayerForLaunch(Vector2 launchDirection)
+    {
+        if (player == null)
+            return;
+
+        player.SetLaunchFacing(launchDirection.x, horizontalFacingThreshold);
+        SetAnimatorBool(_hashBackwardAim, false);
     }
 
     private void IgnorePlayerBallCollision()
@@ -2532,6 +2809,49 @@ public class MorningStarLauncher : MonoBehaviour
             BeginReturn();
         else if (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
             BeginRelease();
+    }
+
+    private void BeginLaunchPose()
+    {
+        _launchPoseActive = true;
+        _waitingForLaunchImpact = true;
+        _launchForwardAnchorApplied = false;
+        _launchPoseElapsed = 0f;
+        SetAnimatorBool(_hashLaunchPoseActive, true);
+
+        if (player != null)
+            player.SetWeaponHandAnchorPose(launchReadyAnchorLocalPosition);
+    }
+
+    private void UpdateLaunchPose()
+    {
+        if (!_launchPoseActive)
+            return;
+
+        _launchPoseElapsed += Time.deltaTime;
+
+        if (!_launchForwardAnchorApplied
+            && _launchPoseElapsed >= Mathf.Max(0f, launchPoseForwardFrameTime))
+        {
+            _launchForwardAnchorApplied = true;
+            if (player != null)
+                player.SetWeaponHandAnchorPose(launchAnchorLocalPosition);
+        }
+
+        if (_launchPoseElapsed >= Mathf.Max(0.01f, launchPoseMaxHoldTime))
+            EndLaunchPose();
+    }
+
+    private void EndLaunchPose()
+    {
+        _launchPoseActive = false;
+        _waitingForLaunchImpact = false;
+        _launchForwardAnchorApplied = false;
+        _launchPoseElapsed = 0f;
+        SetAnimatorBool(_hashLaunchPoseActive, false);
+
+        if (player != null)
+            player.ClearWeaponHandAnchorPose();
     }
 
     private void ProcessRecoilTrigger()

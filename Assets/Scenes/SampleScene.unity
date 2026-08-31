@@ -2255,11 +2255,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   _target: {fileID: 5482672115534824993}
   _offset: {x: 0, y: 1.5}
-  _smoothTimeX: 0.3
-  _smoothTimeY: 0.22
+  _smoothTimeX: 0.24
+  _smoothTimeY: 0.176
   _followDeadZoneX: 2.5
   _followDeadZoneY: 1.5
-  _maxFollowSpeed: 10
+  _maxFollowSpeed: 12.5
   _useBounds: 1
   _minX: 5.5
   _maxX: 93
@@ -3265,31 +3265,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: snapDistance
-      value: 0.3
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: attractionForce
-      value: 45
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: maxAttractSpeed
-      value: 14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: playerPullForce
-      value: 68
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: playerMaxPullSpeed
-      value: 13
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: playerReleaseDistance
-      value: 0.85
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: pullPlayerWhileBallAttached
-      value: 1
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5775,31 +5759,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: snapDistance
-      value: 0.3
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: attractionForce
-      value: 45
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: maxAttractSpeed
-      value: 14
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: playerPullForce
-      value: 68
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: playerMaxPullSpeed
-      value: 13
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: playerReleaseDistance
-      value: 0.85
-      objectReference: {fileID: 0}
-    - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
-      propertyPath: pullPlayerWhileBallAttached
-      value: 1
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -46366,9 +46334,19 @@ MonoBehaviour:
   autoFallbackWhenLinksHidden: 1
   hideLineWhenLinksVisible: 0
   chainLinkVisual: {fileID: 1387360810}
-  useSag: 0
-  sagPointCount: 8
-  sagAmount: 0.25
+  useSag: 1
+  sagSegments: 16
+  sagStrength: 0.6
+  maxSag: 1.5
+  sortingLayerName: Default
+  sortingOrder: 8
+  morningStarOrderOffset: 1
+  avoidGroundPenetration: 1
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 65
+  chainCollisionRadius: 0.14
+  collisionSkin: 0.01
 --- !u!120 &1387360808
 LineRenderer:
   serializedVersion: 3
@@ -46526,16 +46504,16 @@ MonoBehaviour:
   sortingLayerName: Default
   autoScaleFromSprite: 1
   useSag: 1
-  maxSagAmount: 0.45
-  sagSlackMultiplier: 0.35
+  sagSegments: 16
+  maxSagAmount: 1.5
+  sagSlackMultiplier: 0.6
   fallbackMaxRopeLength: 5
-  tautDistanceRate: 0.9
-  hookedSagMultiplier: 0
-  thrownSagMultiplier: 0.15
-  draggingSagMultiplier: 1
-  droppingSagMultiplier: 0.7
-  transitionSagMultiplier: 0.2
-  spinChargeSagMultiplier: 0
+  avoidGroundPenetration: 1
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 65
+  chainCollisionRadius: 0.14
+  collisionSkin: 0.01
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   hookedColor: {r: 1, g: 0.95, b: 0.65, a: 1}
   wrapPoints: []
@@ -50750,7 +50728,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 9
   m_MaskInteraction: 0
   m_Sprite: {fileID: 6401073759314182162, guid: db6f53115a222e94ab8c68de6220b894, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -50913,6 +50891,9 @@ MonoBehaviour:
   _displaySize: {x: 583.66, y: 92.098}
   _displayPadding: {x: 143, y: -113}
   _rebuildMasksOnPlay: 0
+  _hpSmoothDuration: 0.25
+  _damageShakeDuration: 0.14
+  _damageShakeAmount: {x: 4, y: 1.5}
 --- !u!1 &3000000010
 GameObject:
   m_ObjectHideFlags: 0

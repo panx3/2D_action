@@ -224,7 +224,9 @@ public static class PlayerSfxPlayModeTest
         footstepSource.Play();
         playerBody.gravityScale = 0f;
         playerBody.linearVelocity = Vector2.zero;
-        SetPlayerField("_floorContactCount", 1);
+        SetPlayerField("_isGrounded", true);
+        SetPlayerField("_rawGrounded", false);
+        SetPlayerField("_groundedGraceTimer", 1f);
         SetPlayerField("_bjump", false);
         SetPlayerField("_coyoteTimer", 0f);
         SetPlayerField("_jumpBufferTimer", 1f);

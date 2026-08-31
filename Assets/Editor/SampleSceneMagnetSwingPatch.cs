@@ -96,14 +96,10 @@ public static class SampleSceneMagnetSwingPatch
             }
 
             SerializedObject serialized = new SerializedObject(magnet);
-            SetFloat(serialized, "attractionForce", 38f);
-            SetFloat(serialized, "maxAttractSpeed", 11f);
-            SetFloat(serialized, "snapDistance", 0.30f);
+            SetFloat(serialized, "attractionForce", 40f);
+            SetFloat(serialized, "maxAttractSpeed", 8f);
+            SetFloat(serialized, "snapDistance", 0.80f);
             SetBool(serialized, "slowNearCenter", true);
-            SetBool(serialized, "useAsSwingAnchor", true);
-            SetFloat(serialized, "attachDistance", 0.30f);
-            SetBool(serialized, "autoBeginSwing", true);
-            SetFloat(serialized, "reattachGraceTime", 0.15f);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             EditorUtility.SetDirty(magnet);

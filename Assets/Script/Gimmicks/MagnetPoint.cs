@@ -2,10 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 鉄球を吸着する磁力ポイント。
-/// Traversal Assist をONにすると、鉄球が磁力範囲へ入っている間だけ
-/// プレイヤーにも短い引っ張りを与え、磁力ダッシュ用の支点として使える。
-/// 既存Prefabへの影響を避けるため、初期値はOFF。
+/// 鉄球だけを吸引し、到達後は MorningStarLauncher の既存Hook支点へ固定する。
+/// Playerは磁力を直接受けず、鎖の張力・重力・慣性・空中入力で振り子運動する。
 /// </summary>
 public class MagnetPoint : MonoBehaviour
 {
@@ -16,23 +14,19 @@ public class MagnetPoint : MonoBehaviour
     [SerializeField] private string targetTag = "morningstar";
 
     [Header("Magnet Settings")]
-    [SerializeField] private float attractionForce = 25f;
+    [SerializeField] private float attractionForce = 40f;
     [SerializeField] private float maxAttractSpeed = 8f;
-    [SerializeField] private float snapDistance = 0.4f;
+    [SerializeField] private float snapDistance = 0.8f;
     [SerializeField] private bool slowNearCenter = true;
 
-    [Header("Traversal Assist (Optional)")]
-    [SerializeField] private bool pullPlayerWhileBallAttached = false;
-    [SerializeField] private string playerTag = "Player";
-    [SerializeField] private float playerPullForce = 55f;
-    [SerializeField] private float playerMaxPullSpeed = 12f;
-    [SerializeField] private float playerReleaseDistance = 0.8f;
-    [SerializeField] private float playerPassDistance = 0.25f;
-
     [Header("Visual Settings")]
-    [SerializeField] private Color idleColor = Color.blue;
-    [SerializeField] private Color activeColor = Color.cyan;
-    [SerializeField] private Color nearColor = Color.magenta;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Transform visualRoot;
+    [SerializeField] private Color idleColor = new Color(0.78f, 0.82f, 0.9f, 1f);
+    [SerializeField] private Color activeColor = new Color(0.9f, 1f, 1f, 1f);
+    [SerializeField] private Color nearColor = Color.white;
+    [SerializeField, Range(0f, 0.1f)] private float activePulseAmount = 0.04f;
+    [SerializeField, Min(0f)] private float activePulseSpeed = 4f;
 
     private readonly List<Rigidbody2D> detectedBodies = new List<Rigidbody2D>();
 
@@ -44,16 +38,16 @@ public class MagnetPoint : MonoBehaviour
     private readonly HashSet<Rigidbody2D> escapeThrowGrantedBodies =
         new HashSet<Rigidbody2D>();
 
-    private SpriteRenderer spriteRenderer;
-
-    private Rigidbody2D playerRigidbody;
-    private bool traversalActive;
-    private bool traversalFinished;
-    private float traversalDirectionX;
+    private Vector3 visualBaseScale = Vector3.one;
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (visualRoot == null && spriteRenderer != null)
+            visualRoot = spriteRenderer.transform;
+        if (visualRoot != null)
+            visualBaseScale = visualRoot.localScale;
 
         // Inspector未設定でも、Playerから自動取得を試す
         if (morningStarLauncher == null)
@@ -70,6 +64,24 @@ public class MagnetPoint : MonoBehaviour
         UpdateVisual();
     }
 
+    private void Update()
+    {
+        if (visualRoot == null)
+            return;
+
+        float pulse = 0f;
+        if (detectedBodies.Count > 0 && activePulseAmount > 0f)
+            pulse = (Mathf.Sin(Time.time * activePulseSpeed) * 0.5f + 0.5f) * activePulseAmount;
+
+        visualRoot.localScale = visualBaseScale * (1f + pulse);
+    }
+
+    private void OnDisable()
+    {
+        if (visualRoot != null)
+            visualRoot.localScale = visualBaseScale;
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!IsTarget(other))
@@ -83,7 +95,6 @@ public class MagnetPoint : MonoBehaviour
         if (!detectedBodies.Contains(rb))
         {
             detectedBodies.Add(rb);
-            BeginTraversalAssist();
             Debug.Log("MagnetPoint Detect");
         }
 
@@ -103,12 +114,6 @@ public class MagnetPoint : MonoBehaviour
             suppressedUntilExitBodies.Remove(rb);
             escapeThrowGrantedBodies.Remove(rb);
             Debug.Log("MagnetPoint Release");
-        }
-
-        if (detectedBodies.Count == 0)
-        {
-            traversalActive = false;
-            traversalFinished = false;
         }
 
         UpdateVisual();
@@ -147,7 +152,6 @@ public class MagnetPoint : MonoBehaviour
             Attract(rb);
         }
 
-        ApplyTraversalAssist();
         UpdateVisual();
     }
 
@@ -221,70 +225,6 @@ public class MagnetPoint : MonoBehaviour
 
         morningStarLauncher.GrantMagnetEscapeThrow();
         Debug.Log("MagnetPoint: Escape throw granted");
-    }
-
-    private void BeginTraversalAssist()
-    {
-        if (!pullPlayerWhileBallAttached || detectedBodies.Count == 0)
-            return;
-
-        CachePlayer();
-        if (playerRigidbody == null)
-            return;
-
-        float dx = transform.position.x - playerRigidbody.position.x;
-        traversalDirectionX = Mathf.Abs(dx) > 0.05f ? Mathf.Sign(dx) : 1f;
-        traversalActive = true;
-        traversalFinished = false;
-    }
-
-    private void ApplyTraversalAssist()
-    {
-        if (!pullPlayerWhileBallAttached || !traversalActive || traversalFinished || detectedBodies.Count == 0)
-            return;
-
-        CachePlayer();
-        if (playerRigidbody == null)
-            return;
-
-        // 磁力点の反対側へ抜けたら、引き戻さない。
-        float passedDistance = (playerRigidbody.position.x - transform.position.x) * traversalDirectionX;
-        if (passedDistance >= playerPassDistance)
-        {
-            traversalFinished = true;
-            return;
-        }
-
-        Vector2 toMagnet = (Vector2)transform.position - playerRigidbody.position;
-        float distance = toMagnet.magnitude;
-        if (distance <= playerReleaseDistance || distance <= 0.01f)
-            return;
-
-        Vector2 direction = toMagnet / distance;
-        playerRigidbody.AddForce(direction * playerPullForce, ForceMode2D.Force);
-
-        float towardSpeed = Vector2.Dot(playerRigidbody.linearVelocity, direction);
-        if (towardSpeed > playerMaxPullSpeed)
-        {
-            playerRigidbody.linearVelocity -= direction * (towardSpeed - playerMaxPullSpeed);
-        }
-    }
-
-    private void CachePlayer()
-    {
-        if (playerRigidbody != null)
-            return;
-
-        try
-        {
-            GameObject playerObject = GameObject.FindGameObjectWithTag(playerTag);
-            if (playerObject != null)
-                playerRigidbody = playerObject.GetComponent<Rigidbody2D>();
-        }
-        catch (UnityException)
-        {
-            playerRigidbody = null;
-        }
     }
 
     private bool IsTarget(Collider2D other)

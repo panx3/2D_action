@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: "\u30B9\u30C6\u30FC\u30B8\u30C6\u30AF\u30B9\u30C1\u30E3\u7D20\u6750_0"
+  m_Name: "\u5730\u9762\u30C9\u30C3\u30C8\u7D75_3"
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 1194345313681906602, guid: 663099914fcb5434b9d01910accdeda6, type: 3}
+  m_Sprite: {fileID: 7801092048883531668, guid: cf14fc139cb14ee40b5b4a2c84fa8698, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
-    e00: 1
+    e00: 2
     e01: 0
     e02: 0
     e03: 0
     e10: 0
-    e11: 1
+    e11: 2
     e12: 0
     e13: 0
     e20: 0

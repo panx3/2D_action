@@ -17,8 +17,11 @@ public class HitSwitch : MonoBehaviour
     [SerializeField] private float flashInterval = 0.15f;
 
     [Header("Visual Settings")]
-    [SerializeField] private Color offColor = Color.gray;
-    [SerializeField] private Color onColor = Color.yellow;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Sprite offSprite;
+    [SerializeField] private Sprite onSprite;
+    [SerializeField] private Color offColor = Color.white;
+    [SerializeField] private Color onColor = Color.white;
     [SerializeField] private Color warningColor = Color.red;
 
     [Header("Events")]
@@ -28,13 +31,15 @@ public class HitSwitch : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugLog = false;
 
-    private SpriteRenderer spriteRenderer;
     private bool isOn = false;
     private Coroutine activeCoroutine;
 
+    public bool IsOn => isOn;
+
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         UpdateVisual(offColor);
     }
 
@@ -122,6 +127,9 @@ public class HitSwitch : MonoBehaviour
     {
         if (spriteRenderer == null) return;
 
+        Sprite stateSprite = isOn ? onSprite : offSprite;
+        if (stateSprite != null)
+            spriteRenderer.sprite = stateSprite;
         spriteRenderer.color = color;
     }
 }

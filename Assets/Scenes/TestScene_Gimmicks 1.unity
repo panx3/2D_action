@@ -1515,8 +1515,9 @@ MonoBehaviour:
   startPoint: {fileID: 94864274}
   endPoint: {fileID: 1296931098}
   useSag: 1
-  sagPointCount: 8
-  sagAmount: 0.25
+  sagSegments: 16
+  sagStrength: 0.6
+  maxSag: 1.5
 --- !u!120 &1693767021
 LineRenderer:
   serializedVersion: 3

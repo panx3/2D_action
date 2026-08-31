@@ -41,6 +41,17 @@ public static class GameplayFeatureIntegrator
         Debug.Log($"[GameplayFeatureIntegrator] Complete: {launcherResult}");
     }
 
+    [MenuItem("鉄球少女/Gameplay/Launcher Animationのみ再設定")]
+    public static void ApplyLauncherAnimationOnly()
+    {
+        if (!ConfigureLauncherAnimation())
+            throw new FileNotFoundException("Launcher texture not found.", LauncherTexturePath);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("[GameplayFeatureIntegrator] MorningStarLaunch animation configured.");
+    }
+
     private static void ConfigureGroundTextures()
     {
         ConfigureMultipleSpriteTexture(GroundTexturePath, 80f, CreateStoneGroundRects());
@@ -124,6 +135,14 @@ public static class GameplayFeatureIntegrator
             pivot = new Vector2(0.5f, 0.5f),
             spriteID = GUID.Generate()
         };
+    }
+
+    private static SpriteRect CreateSpriteRect(string name, Rect rect, Vector2 pivot)
+    {
+        SpriteRect spriteRect = CreateSpriteRect(name, rect);
+        spriteRect.alignment = SpriteAlignment.Custom;
+        spriteRect.pivot = pivot;
+        return spriteRect;
     }
 
     private static void ConfigureMultipleSpriteTexture(
@@ -342,8 +361,15 @@ public static class GameplayFeatureIntegrator
 
         List<SpriteRect> rects = new List<SpriteRect>
         {
-            CreateSpriteRect("ランチャーポーズAni_0", new Rect(0f, 0f, 151f, 148f)),
-            CreateSpriteRect("ランチャーポーズAni_1", new Rect(151f, 0f, 151f, 148f))
+            // Idleの足裏位置（Pivotから下64px）と左右の足の中点を基準に合わせる。
+            CreateSpriteRect(
+                "ランチャーポーズAni_0",
+                new Rect(0f, 0f, 151f, 148f),
+                new Vector2(82f / 151f, 64f / 148f)),
+            CreateSpriteRect(
+                "ランチャーポーズAni_1",
+                new Rect(151f, 0f, 151f, 148f),
+                new Vector2(58.25f / 151f, 64f / 148f))
         };
         ConfigureMultipleSpriteTexture(LauncherTexturePath, 32f, rects);
 
@@ -399,6 +425,13 @@ public static class GameplayFeatureIntegrator
             controller.AddParameter("LaunchFire", AnimatorControllerParameterType.Trigger);
         }
 
+        if (!controller.parameters.Any(parameter =>
+                parameter.name == "LaunchPoseActive"
+                && parameter.type == AnimatorControllerParameterType.Bool))
+        {
+            controller.AddParameter("LaunchPoseActive", AnimatorControllerParameterType.Bool);
+        }
+
         const string layerName = "Launcher Pose";
         int layerIndex = Array.FindIndex(controller.layers, layer => layer.name == layerName);
         if (layerIndex < 0)
@@ -407,7 +440,8 @@ public static class GameplayFeatureIntegrator
             layerIndex = controller.layers.Length - 1;
         }
 
-        AnimatorControllerLayer layer = controller.layers[layerIndex];
+        AnimatorControllerLayer[] layers = controller.layers;
+        AnimatorControllerLayer layer = layers[layerIndex];
         layer.defaultWeight = 1f;
         layer.blendingMode = AnimatorLayerBlendingMode.Override;
         AnimatorStateMachine stateMachine = layer.stateMachine;
@@ -430,17 +464,28 @@ public static class GameplayFeatureIntegrator
             empty.RemoveTransition(transition);
         foreach (AnimatorStateTransition transition in launch.transitions.ToArray())
             launch.RemoveTransition(transition);
+        foreach (AnimatorStateTransition transition in stateMachine.anyStateTransitions
+                     .Where(transition => transition.destinationState == launch)
+                     .ToArray())
+        {
+            stateMachine.RemoveAnyStateTransition(transition);
+        }
 
-        AnimatorStateTransition enter = empty.AddTransition(launch);
+        AnimatorStateTransition enter = stateMachine.AddAnyStateTransition(launch);
         enter.hasExitTime = false;
         enter.duration = 0f;
         enter.canTransitionToSelf = false;
         enter.AddCondition(AnimatorConditionMode.If, 0f, "LaunchFire");
 
         AnimatorStateTransition exit = launch.AddTransition(empty);
-        exit.hasExitTime = true;
-        exit.exitTime = 1f;
+        exit.hasExitTime = false;
         exit.duration = 0f;
+        exit.canTransitionToSelf = false;
+        exit.AddCondition(AnimatorConditionMode.IfNot, 0f, "LaunchPoseActive");
+
+        // controller.layers getterはコピーを返すため、変更したLayerを必ず戻す。
+        layers[layerIndex] = layer;
+        controller.layers = layers;
 
         EditorUtility.SetDirty(stateMachine);
         EditorUtility.SetDirty(controller);

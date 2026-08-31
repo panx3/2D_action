@@ -18,10 +18,10 @@ public class CameraFollow : MonoBehaviour
 
     [Header("滑らかさ（秒・小さいほど素早く追う）")]
     [FormerlySerializedAs("_smoothTime")]
-    [SerializeField, Tooltip("横方向の SmoothDamp 到達時間。目安 0.25〜0.35")]
-    private float _smoothTimeX = 0.3f;
-    [SerializeField, Tooltip("縦方向の SmoothDamp 到達時間。目安 0.18〜0.28")]
-    private float _smoothTimeY = 0.22f;
+    [SerializeField, Tooltip("横方向の SmoothDamp 到達時間。目安 0.16〜0.24")]
+    private float _smoothTimeX = 0.24f;
+    [SerializeField, Tooltip("縦方向の SmoothDamp 到達時間。目安 0.16〜0.22")]
+    private float _smoothTimeY = 0.176f;
 
     [Header("デッドゾーン")]
     [FormerlySerializedAs("_followDeadZone")]
@@ -31,8 +31,8 @@ public class CameraFollow : MonoBehaviour
     private float _followDeadZoneY = 1.5f;
 
     [Header("追従速度上限")]
-    [SerializeField, Tooltip("1 フレームあたりの最大追従速度（units/s）。0 で無制限。目安 8〜12")]
-    private float _maxFollowSpeed = 10f;
+    [SerializeField, Tooltip("1 フレームあたりの最大追従速度（units/s）。0 で無制限。目安 10〜15")]
+    private float _maxFollowSpeed = 12.5f;
 
     [Header("移動範囲制限（任意）")]
     [SerializeField, Tooltip("カメラ位置をステージ範囲で Clamp するか")]

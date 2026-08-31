@@ -60,10 +60,36 @@ public class SegmentHpBarUI : MonoBehaviour
     [SerializeField, Tooltip("ON のとき Play 開始時に SegmentMaskLayer を _segmentMaskRects から再生成する")]
     private bool _rebuildMasksOnPlay = false;
 
+    [Header("HP Smooth")]
+    [SerializeField, Min(0f), Tooltip("実HPへ表示が追従する時間（秒）")]
+    private float _hpSmoothDuration = 0.25f;
+
+    [Header("Damage Shake")]
+    [SerializeField, Min(0f)] private float _damageShakeDuration = 0.14f;
+    [SerializeField, Tooltip("被弾時の最大揺れ幅（UI Pixel）")]
+    private Vector2 _damageShakeAmount = new Vector2(4f, 1.5f);
+
     private Image[] _segmentMasks;
     private bool _masksBuilt;
     private bool _loggedPlayerHealthResolve;
+    private float _targetHpNormalized = 1f;
+    private float _displayHpNormalized = 1f;
+    private float _hpMoveSpeed;
+    private int _displaySegmentCount = SegmentMaskCount;
+    private bool _displayInitialized;
+    private RectTransform _shakeRoot;
+    private Vector2 _initialAnchoredPosition;
+    private float _shakeElapsed;
+    private bool _isShaking;
+    private bool _shakeBaseCached;
     private static Sprite _whiteSprite;
+
+    public float TargetHpNormalized => _targetHpNormalized;
+    public float DisplayHpNormalized => _displayHpNormalized;
+    public float HpSmoothDuration => _hpSmoothDuration;
+    public bool IsShaking => _isShaking;
+    public Vector2 InitialAnchoredPosition => _initialAnchoredPosition;
+    public float MaxShakeOffsetObserved { get; private set; }
 
     private void Reset()
     {
@@ -84,6 +110,7 @@ public class SegmentHpBarUI : MonoBehaviour
         if (_applyDisplayLayoutOnPlay)
             ApplyDisplayLayout();
         EnsureMaskRectCapacity();
+        CacheShakeRoot();
     }
 
     private void Start()
@@ -105,6 +132,13 @@ public class SegmentHpBarUI : MonoBehaviour
     private void OnDisable()
     {
         UnbindHealthEvents();
+        FinishDamageShake();
+    }
+
+    private void Update()
+    {
+        UpdateDisplayedHp();
+        UpdateDamageShake();
     }
 
     [ContextMenu("Recalculate Segment Mask Rects From Bar")]
@@ -258,6 +292,8 @@ public class SegmentHpBarUI : MonoBehaviour
 
         _playerHealth.OnHealthChanged -= HandleHealthChanged;
         _playerHealth.OnHealthChanged += HandleHealthChanged;
+        _playerHealth.OnDamaged -= HandleDamaged;
+        _playerHealth.OnDamaged += HandleDamaged;
     }
 
     private void UnbindHealthEvents()
@@ -266,11 +302,17 @@ public class SegmentHpBarUI : MonoBehaviour
             return;
 
         _playerHealth.OnHealthChanged -= HandleHealthChanged;
+        _playerHealth.OnDamaged -= HandleDamaged;
     }
 
     private void HandleHealthChanged(int currentHp, int maxHp)
     {
         SetHp(currentHp, maxHp);
+    }
+
+    private void HandleDamaged()
+    {
+        StartDamageShake();
     }
 
     private void RefreshFromHealth()
@@ -282,22 +324,155 @@ public class SegmentHpBarUI : MonoBehaviour
     /// <summary>現在HPに合わせて右端からマスクを表示する。</summary>
     public void SetHp(int currentHp, int maxHp)
     {
+        maxHp = Mathf.Max(1, maxHp);
+        currentHp = Mathf.Clamp(currentHp, 0, maxHp);
+        _displaySegmentCount = Mathf.Min(SegmentMaskCount, maxHp);
+
+        float normalized = currentHp / (float)maxHp;
+        _targetHpNormalized = normalized;
+
+        if (!_displayInitialized)
+        {
+            _displayInitialized = true;
+            _displayHpNormalized = normalized;
+            _hpMoveSpeed = 0f;
+        }
+        else
+        {
+            float remaining = Mathf.Abs(_targetHpNormalized - _displayHpNormalized);
+            _hpMoveSpeed = _hpSmoothDuration > 0f
+                ? remaining / _hpSmoothDuration
+                : remaining;
+        }
+
+        ApplyDisplayedHp();
+    }
+
+    private void UpdateDisplayedHp()
+    {
+        if (!_displayInitialized)
+            return;
+
+        if (Mathf.Approximately(_displayHpNormalized, _targetHpNormalized))
+        {
+            _displayHpNormalized = _targetHpNormalized;
+            return;
+        }
+
+        if (_hpSmoothDuration <= 0f)
+            _displayHpNormalized = _targetHpNormalized;
+        else
+            _displayHpNormalized = Mathf.MoveTowards(
+                _displayHpNormalized,
+                _targetHpNormalized,
+                _hpMoveSpeed * Time.deltaTime);
+
+        if (Mathf.Abs(_displayHpNormalized - _targetHpNormalized) <= 0.0001f)
+            _displayHpNormalized = _targetHpNormalized;
+
+        ApplyDisplayedHp();
+    }
+
+    private void ApplyDisplayedHp()
+    {
         if (!_masksBuilt || _segmentMasks == null)
             return;
 
-        maxHp = Mathf.Max(1, maxHp);
-        currentHp = Mathf.Clamp(currentHp, 0, maxHp);
-
-        int segmentsToUse = Mathf.Min(SegmentMaskCount, maxHp);
-        int lostSegments = Mathf.Clamp(maxHp - currentHp, 0, segmentsToUse);
+        int segmentsToUse = Mathf.Clamp(_displaySegmentCount, 1, SegmentMaskCount);
+        float lostSegments = (1f - Mathf.Clamp01(_displayHpNormalized)) * segmentsToUse;
 
         for (int i = 0; i < _segmentMasks.Length; i++)
         {
             if (_segmentMasks[i] == null) continue;
             _segmentMasks[i].gameObject.SetActive(i < segmentsToUse);
-            // i=0 が右端。ダメージ分だけ右から暗くする。
-            _segmentMasks[i].enabled = i < lostSegments;
+            float coverage = Mathf.Clamp01(lostSegments - i);
+            _segmentMasks[i].enabled = coverage > 0.0001f;
+            ApplyMaskCoverage(i, coverage);
         }
+    }
+
+    private void ApplyMaskCoverage(int index, float coverage)
+    {
+        if (_hpBarImage == null || index < 0 || index >= _segmentMaskRects.Length)
+            return;
+
+        Vector2 rectSize = _hpBarImage.rectTransform.rect.size;
+        if (rectSize.x <= 0f || rectSize.y <= 0f)
+            rectSize = _displaySize;
+
+        GetSpriteContentRect(rectSize, out Vector2 contentMin, out Vector2 contentSize);
+        HpSegmentMaskRect spec = _segmentMaskRects[index];
+        spec.xMin = Mathf.Lerp(spec.xMax, spec.xMin, Mathf.Clamp01(coverage));
+        ApplyMaskRect(
+            _segmentMasks[index].rectTransform,
+            spec,
+            contentMin,
+            contentSize,
+            rectSize);
+    }
+
+    private void StartDamageShake()
+    {
+        CacheShakeRoot();
+        if (_shakeRoot == null)
+            return;
+
+        _shakeRoot.anchoredPosition = _initialAnchoredPosition;
+        _shakeElapsed = 0f;
+        MaxShakeOffsetObserved = 0f;
+        _isShaking = _damageShakeDuration > 0f
+            && _damageShakeAmount.sqrMagnitude > 0.0001f;
+        if (_isShaking)
+            ApplyDamageShakeOffset(0.08f);
+    }
+
+    private void UpdateDamageShake()
+    {
+        if (!_isShaking || _shakeRoot == null)
+            return;
+
+        _shakeElapsed += Time.deltaTime;
+        if (_shakeElapsed >= _damageShakeDuration)
+        {
+            FinishDamageShake();
+            return;
+        }
+
+        float progress = Mathf.Clamp01(_shakeElapsed / Mathf.Max(0.0001f, _damageShakeDuration));
+        ApplyDamageShakeOffset(progress);
+    }
+
+    private void ApplyDamageShakeOffset(float progress)
+    {
+        progress = Mathf.Clamp01(progress);
+        float envelope = 1f - progress;
+        Vector2 offset = new Vector2(
+            Mathf.Sin(progress * Mathf.PI * 8f) * _damageShakeAmount.x,
+            Mathf.Sin(progress * Mathf.PI * 11f + 0.7f) * _damageShakeAmount.y);
+        MaxShakeOffsetObserved = Mathf.Max(MaxShakeOffsetObserved, offset.magnitude * envelope);
+        _shakeRoot.anchoredPosition = _initialAnchoredPosition + offset * envelope;
+    }
+
+    private void FinishDamageShake()
+    {
+        if (_shakeRoot != null && _shakeBaseCached)
+            _shakeRoot.anchoredPosition = _initialAnchoredPosition;
+        _shakeElapsed = 0f;
+        _isShaking = false;
+    }
+
+    private void CacheShakeRoot()
+    {
+        if (_hpBarImage == null)
+            return;
+
+        RectTransform candidate = _hpBarImage.rectTransform;
+        if (_shakeRoot == candidate && _shakeBaseCached)
+            return;
+
+        _shakeRoot = candidate;
+        _initialAnchoredPosition = candidate.anchoredPosition;
+        _shakeBaseCached = true;
     }
 
     private void ApplyDisplayLayout()
@@ -311,6 +486,9 @@ public class SegmentHpBarUI : MonoBehaviour
         rect.pivot = new Vector2(0f, 1f);
         rect.anchoredPosition = _displayPadding;
         rect.sizeDelta = _displaySize;
+        _shakeRoot = rect;
+        _initialAnchoredPosition = rect.anchoredPosition;
+        _shakeBaseCached = true;
     }
 
     private void EnsureHpBarImage()

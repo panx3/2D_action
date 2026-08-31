@@ -70,32 +70,21 @@ public static class PlayerJumpAnimationSetup
         AnimatorStateTransition toUp = machine.AddAnyStateTransition(up);
         ConfigureImmediate(toUp);
         toUp.AddCondition(AnimatorConditionMode.If, 0f, "Jump");
-        toUp.AddCondition(AnimatorConditionMode.Greater, 0.01f, "VerticalSpeed");
+        toUp.AddCondition(AnimatorConditionMode.Greater, 0.05f, "VerticalSpeed");
 
         AnimatorStateTransition toFall = machine.AddAnyStateTransition(fall);
         ConfigureImmediate(toFall);
         toFall.AddCondition(AnimatorConditionMode.If, 0f, "Jump");
-        toFall.AddCondition(AnimatorConditionMode.Less, 0.01f, "VerticalSpeed");
-
-        AnimatorStateTransition toLand = machine.AddAnyStateTransition(land);
-        ConfigureImmediate(toLand);
-        toLand.AddCondition(AnimatorConditionMode.If, 0f, "Land");
+        toFall.AddCondition(AnimatorConditionMode.Less, 0.05f, "VerticalSpeed");
 
         AnimatorStateTransition upToFall = up.AddTransition(fall);
         ConfigureImmediate(upToFall);
-        upToFall.AddCondition(AnimatorConditionMode.Less, 0.01f, "VerticalSpeed");
+        upToFall.AddCondition(AnimatorConditionMode.Less, 0.05f, "VerticalSpeed");
 
-        // Scene開始直後、最初のPhysics接触が確定する前にJumpFallへ入った場合の復帰経路。
-        // 実着地時はAnyStateのLand Trigger遷移が先にJumpLandへ遷移する。
-        AnimatorStateTransition fallToIdle = fall.AddTransition(idle);
-        ConfigureImmediate(fallToIdle);
-        fallToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, "Jump");
-        fallToIdle.AddCondition(AnimatorConditionMode.IfNot, 0f, "Walk");
-
-        AnimatorStateTransition fallToWalk = fall.AddTransition(walk);
-        ConfigureImmediate(fallToWalk);
-        fallToWalk.AddCondition(AnimatorConditionMode.IfNot, 0f, "Jump");
-        fallToWalk.AddCondition(AnimatorConditionMode.If, 0f, "Walk");
+        // Player.cs が !wasGrounded && isGrounded の瞬間だけ発火するLand Triggerを使う。
+        AnimatorStateTransition fallToLand = fall.AddTransition(land);
+        ConfigureImmediate(fallToLand);
+        fallToLand.AddCondition(AnimatorConditionMode.If, 0f, "Land");
 
         AnimatorStateTransition landToIdle = land.AddTransition(idle);
         ConfigureLandingExit(landToIdle);

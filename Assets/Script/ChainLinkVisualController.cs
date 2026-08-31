@@ -16,24 +16,23 @@ public class ChainLinkVisualController : MonoBehaviour
     [SerializeField] private int maxSegments = 80;
     [SerializeField] private float segmentSpacing = 0.16f;
     [SerializeField] private float segmentScale = 1.8f;
-    [SerializeField] private int sortingOrder = 5;
+    [SerializeField] private int sortingOrder = 8;
     [SerializeField] private string sortingLayerName = "Default";
     [SerializeField] private bool autoScaleFromSprite = true;
 
     [Header("Sag")]
     [SerializeField] private bool useSag = true;
-    [SerializeField] private float maxSagAmount = 0.45f;
-    [SerializeField] private float sagSlackMultiplier = 0.35f;
+    [SerializeField, Min(2)] private int sagSegments = 16;
+    [SerializeField] private float maxSagAmount = 1.5f;
+    [SerializeField] private float sagSlackMultiplier = 0.6f;
     [SerializeField] private float fallbackMaxRopeLength = 4.5f;
 
-    [Header("State Sag")]
-    [SerializeField] private float tautDistanceRate = 0.9f;
-    [SerializeField] private float hookedSagMultiplier = 0f;
-    [SerializeField] private float thrownSagMultiplier = 0.15f;
-    [SerializeField] private float draggingSagMultiplier = 1f;
-    [SerializeField] private float droppingSagMultiplier = 0.7f;
-    [SerializeField] private float transitionSagMultiplier = 0.2f;
-    [SerializeField] private float spinChargeSagMultiplier = 0f;
+    [Header("Visual Ground Collision")]
+    [SerializeField] private bool avoidGroundPenetration = true;
+    [SerializeField, Tooltip("Player接地判定と同じ Default + Walls")]
+    private LayerMask groundLayerMask = (1 << 0) | (1 << 6);
+    [SerializeField, Min(0.001f)] private float chainCollisionRadius = 0.14f;
+    [SerializeField, Min(0f)] private float collisionSkin = 0.01f;
 
     [Header("Color")]
     [SerializeField] private Color normalColor = Color.white;
@@ -46,17 +45,21 @@ public class ChainLinkVisualController : MonoBehaviour
     [SerializeField] private bool debugLog;
 
     private readonly List<SpriteRenderer> _links = new List<SpriteRenderer>();
-    private readonly List<Vector3> _pathPoints = new List<Vector3>(8);
+    private readonly List<Vector3> _pathPoints = new List<Vector3>(20);
     private bool _loggedInit;
     private bool _loggedLauncherResolve;
     private int _lastActiveLinkCount;
+    private readonly RaycastHit2D[] _collisionHits = new RaycastHit2D[8];
+    private ContactFilter2D _groundFilter;
 
     public bool IsDisplaying { get; private set; }
     public bool IsVisualReady =>
         startPoint != null && endPoint != null && chainLinkSprite != null;
+    public int LastCollisionAdjustedPointCount { get; private set; }
 
     private void Awake()
     {
+        RefreshGroundFilter();
         ResolveLauncher();
         EnsureSegmentScale();
         BuildPool();
@@ -169,24 +172,51 @@ public class ChainLinkVisualController : MonoBehaviour
     {
         _pathPoints.Clear();
 
-        Vector3 start = startPoint.position;
+        Vector3 start = launcher != null ? (Vector3)launcher.RopeAnchorWorld : startPoint.position;
         Vector3 end = endPoint.position;
-        _pathPoints.Add(start);
+        if (wrapPoints.Count == 0)
+        {
+            int count = avoidGroundPenetration ? Mathf.Max(3, sagSegments) : Mathf.Max(2, sagSegments);
+            float sag = useSag ? CalculateSagAmount(start, end) : 0f;
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (float)(count - 1);
+                Vector3 point = Vector3.Lerp(start, end, t);
+                point.y -= sag * (4f * t * (1f - t));
+                _pathPoints.Add(point);
+            }
 
+            ResolveGroundCollision();
+            return;
+        }
+
+        _pathPoints.Add(start);
         for (int i = 0; i < wrapPoints.Count; i++)
         {
             if (wrapPoints[i] != null)
                 _pathPoints.Add(wrapPoints[i].position);
         }
-
-        if (useSag && wrapPoints.Count == 0)
-        {
-            Vector3 mid = Vector3.Lerp(start, end, 0.5f);
-            mid.y -= CalculateSagAmount(start, end);
-            _pathPoints.Add(mid);
-        }
-
         _pathPoints.Add(end);
+        ResolveGroundCollision();
+    }
+
+    private void ResolveGroundCollision()
+    {
+        LastCollisionAdjustedPointCount = avoidGroundPenetration
+            ? ChainVisualCollision2D.Resolve(
+                _pathPoints,
+                chainCollisionRadius,
+                collisionSkin,
+                _groundFilter,
+                _collisionHits)
+            : 0;
+    }
+
+    private void RefreshGroundFilter()
+    {
+        _groundFilter = new ContactFilter2D();
+        _groundFilter.SetLayerMask(groundLayerMask);
+        _groundFilter.useTriggers = false;
     }
 
     private float CalculateSagAmount(Vector3 start, Vector3 end)
@@ -197,42 +227,8 @@ public class ChainLinkVisualController : MonoBehaviour
         float maxLen = launcher != null ? launcher.MaxRopeLength : fallbackMaxRopeLength;
         float distance = Vector2.Distance(start, end);
         float slack = Mathf.Max(0f, maxLen - distance);
-        float tension01 = Mathf.InverseLerp(maxLen * tautDistanceRate, maxLen, distance);
-        float sag = slack * sagSlackMultiplier * (1f - tension01);
-        sag *= GetStateSagMultiplier();
+        float sag = slack * sagSlackMultiplier;
         return Mathf.Min(maxSagAmount, Mathf.Max(0f, sag));
-    }
-
-    private float GetStateSagMultiplier()
-    {
-        if (launcher == null)
-            return 1f;
-
-        switch (launcher.CurrentState)
-        {
-            case MorningStarLauncher.MorningStarState.Hooked:
-            case MorningStarLauncher.MorningStarState.Swinging:
-                return hookedSagMultiplier;
-
-            case MorningStarLauncher.MorningStarState.Thrown:
-                return thrownSagMultiplier;
-
-            case MorningStarLauncher.MorningStarState.Dropping:
-                return droppingSagMultiplier;
-
-            case MorningStarLauncher.MorningStarState.Dragging:
-                return draggingSagMultiplier;
-
-            case MorningStarLauncher.MorningStarState.SpinCharging:
-                return spinChargeSagMultiplier;
-
-            case MorningStarLauncher.MorningStarState.RecallBeforeThrow:
-            case MorningStarLauncher.MorningStarState.Returning:
-                return transitionSagMultiplier;
-
-            default:
-                return 1f;
-        }
     }
 
     private void DrawLinksAlongPath()
@@ -361,7 +357,12 @@ public class ChainLinkVisualController : MonoBehaviour
         maxSegments = Mathf.Max(0, maxSegments);
         segmentSpacing = Mathf.Max(0.001f, segmentSpacing);
         segmentScale = Mathf.Max(0.001f, segmentScale);
-        tautDistanceRate = Mathf.Clamp01(tautDistanceRate);
+        sagSegments = Mathf.Max(2, sagSegments);
+        maxSagAmount = Mathf.Max(0f, maxSagAmount);
+        sagSlackMultiplier = Mathf.Max(0f, sagSlackMultiplier);
+        chainCollisionRadius = Mathf.Max(0.001f, chainCollisionRadius);
+        collisionSkin = Mathf.Max(0f, collisionSkin);
+        RefreshGroundFilter();
         EnsureSegmentScale();
     }
 }

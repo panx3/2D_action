@@ -333,16 +333,16 @@ public static class PlayableSampleStageBuilderV7
         ConfigureCheckpoint(checkpointB.GetComponent<Checkpoint>(), respawn, deathRespawn);
 
         // 磁力峡谷。鉄球が磁力点に入っている間、Playerにも短い磁力ダッシュを与える。
-        // MagnetPoint.cs の「Traversal Assist」を有効にしている。
+        // MagnetPoint 側は鉄球の吸着と固定のみを担当し、Player の振り子補助は Launcher 側で行う。
         GameObject magnetA = Spawn(assets.magnet, root, "MagnetPoint_A", new Vector2(79.25f, step * 0.72f + 3.10f));
         FitPrefabToWorldSize(magnetA, magnetSprite, new Vector2(1.22f, 1.22f), new Color(0.20f, 0.90f, 1f, 1f));
         ConfigureCircleColliderWorldRadius(magnetA.GetComponent<CircleCollider2D>(), magnetA.transform, 2.0f);
-        ConfigureMagnetTraversal(magnetA.GetComponent<MagnetPoint>(), 68f, 13f, 0.85f);
+        ConfigureMagnetTraversal(magnetA.GetComponent<MagnetPoint>());
 
         GameObject magnetB = Spawn(assets.magnet, root, "MagnetPoint_B", new Vector2(84.45f, step * 1.05f + 3.10f));
         FitPrefabToWorldSize(magnetB, magnetSprite, new Vector2(1.22f, 1.22f), new Color(0.20f, 0.90f, 1f, 1f));
         ConfigureCircleColliderWorldRadius(magnetB.GetComponent<CircleCollider2D>(), magnetB.transform, 2.0f);
-        ConfigureMagnetTraversal(magnetB.GetComponent<MagnetPoint>(), 68f, 13f, 0.85f);
+        ConfigureMagnetTraversal(magnetB.GetComponent<MagnetPoint>());
 
         GameObject goal = Spawn(assets.goal, root, "Goal", new Vector2(94.1f, step * 0.72f + 1.05f));
         FitPrefabToWorldSize(goal, goalSprite, new Vector2(1.55f, 1.90f), Color.white);
@@ -651,18 +651,14 @@ public static class PlayableSampleStageBuilderV7
         SetFloat(platform, "respawnDelay", respawnDelay);
     }
 
-    private static void ConfigureMagnetTraversal(MagnetPoint magnet, float playerPullForce, float playerMaxPullSpeed, float releaseDistance)
+    private static void ConfigureMagnetTraversal(MagnetPoint magnet)
     {
         if (magnet == null)
             return;
 
-        SetFloat(magnet, "attractionForce", 45f);
-        SetFloat(magnet, "maxAttractSpeed", 14f);
-        SetFloat(magnet, "snapDistance", 0.30f);
-        SetBool(magnet, "pullPlayerWhileBallAttached", true);
-        SetFloat(magnet, "playerPullForce", playerPullForce);
-        SetFloat(magnet, "playerMaxPullSpeed", playerMaxPullSpeed);
-        SetFloat(magnet, "playerReleaseDistance", releaseDistance);
+        SetFloat(magnet, "attractionForce", 40f);
+        SetFloat(magnet, "maxAttractSpeed", 8f);
+        SetFloat(magnet, "snapDistance", 0.80f);
     }
 
     // ---------------------------------------------------------------------
