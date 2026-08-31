@@ -29,7 +29,7 @@ public static class TitleSceneBuilder
     private const string NearBackgroundPath = "Assets/image_/背景_一番手前.png";
     private const string BoldFontPath = "Assets/Fonts/NotoSansJP-Bold SDF.asset";
     private const string LatinFontPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
-    private const string BgmPath = "Assets/Audio/BGM/Peritune_Winds_Embrace.ogg";
+    private const string BgmPath = "Assets/Audio/BGM/TitleBGM.mp3";
     private const string LaunchSfxPath = "Assets/Audio/SFX/tekkyu_launch.wav";
     private const string ChainSfxPath = "Assets/Audio/SFX/Imported/打撃6.mp3";
     private const string ControlsPanelPrefabPath = "Assets/Prefabs/UI/ControlsPanel.prefab";
@@ -98,10 +98,11 @@ public static class TitleSceneBuilder
         TitleScreenController controller = controllerObject.AddComponent<TitleScreenController>();
         AudioSource bgmSource = controllerObject.AddComponent<AudioSource>();
         bgmSource.clip = AssetDatabase.LoadAssetAtPath<AudioClip>(BgmPath);
-        bgmSource.playOnAwake = true;
+        bgmSource.playOnAwake = false;
         bgmSource.loop = true;
         bgmSource.volume = 0.2f;
         bgmSource.spatialBlend = 0f;
+        GameBgmController bgmController = controllerObject.AddComponent<GameBgmController>();
         AudioSource sfxSource = controllerObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
         sfxSource.loop = false;
@@ -188,6 +189,7 @@ public static class TitleSceneBuilder
             new Graphic[] { crystalAura, crystalCore, start.glowImage, start.electricTop, start.electricBottom },
             bgmSource,
             sfxSource);
+        ConfigureBgmController(bgmController, bgmSource);
 
         Canvas.ForceUpdateCanvases();
         character.chain.RefreshNow();
@@ -538,6 +540,17 @@ public static class TitleSceneBuilder
         serialized.FindProperty("bgmSource").objectReferenceValue = bgmSource;
         serialized.FindProperty("sfxSource").objectReferenceValue = sfxSource;
         serialized.FindProperty("startConfirmClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(LaunchSfxPath);
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void ConfigureBgmController(GameBgmController controller, AudioSource source)
+    {
+        SerializedObject serialized = new SerializedObject(controller);
+        serialized.FindProperty("bgmSource").objectReferenceValue = source;
+        serialized.FindProperty("initialState").enumValueIndex = (int)GameBgmController.BgmState.Title;
+        serialized.FindProperty("titleClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(BgmPath);
+        serialized.FindProperty("titleVolume").floatValue = 0.2f;
+        serialized.FindProperty("switchFadeDuration").floatValue = 0.5f;
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
