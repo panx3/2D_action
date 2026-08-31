@@ -41,24 +41,15 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField, Range(0f, 0.2f)] private float startPulseScale = 0.035f;
     [SerializeField, Min(0f)] private float backgroundDrift = 8f;
 
-    [Header("START演出")]
-    [SerializeField, Min(0f)] private float ballLaunchDistance = 280f;
-    [SerializeField, Min(0.05f)] private float ballLaunchDuration = 0.3f;
-    [SerializeField, Min(0f)] private float chainTensionDelay = 0.3f;
-    [SerializeField, Min(0f)] private float heroPullDistance = 52f;
-    [SerializeField, Min(0.05f)] private float heroPullDuration = 0.18f;
-    [SerializeField, Min(0f)] private float cameraShakeStrength = 6f;
-    [SerializeField, Min(0.05f)] private float cameraShakeDuration = 0.16f;
-    [SerializeField, Range(0f, 0.5f)] private float flashAlpha = 0.17f;
-    [SerializeField, Min(0.1f)] private float fadeOutDuration = 0.45f;
+    [Header("Scene Push Transition")]
+    [SerializeField, Min(0f)] private float transitionStartDelay = 0.12f;
+    [SerializeField, Min(0.05f)] private float transitionSlideDuration = 0.8f;
 
     [Header("Audio")]
     [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioClip startConfirmClip;
-    [SerializeField] private AudioClip chainTensionClip;
     [SerializeField, Range(0f, 1f)] private float startConfirmVolume = 0.55f;
-    [SerializeField, Range(0f, 1f)] private float chainTensionVolume = 0.7f;
 
     private Vector2 _sceneOrigin;
     private Vector2 _heroOrigin;
@@ -322,76 +313,24 @@ public sealed class TitleScreenController : MonoBehaviour
         if (sfxSource != null && startConfirmClip != null)
             sfxSource.PlayOneShot(startConfirmClip, startConfirmVolume);
 
-        const float sequenceDuration = 1.08f;
-        bool chainSoundPlayed = false;
+        float delay = Mathf.Max(0f, transitionStartDelay);
         float elapsed = 0f;
-        while (elapsed < sequenceDuration)
+        while (elapsed < delay)
         {
             elapsed += Time.unscaledDeltaTime;
-
-            float panelT = Mathf.Clamp01(elapsed / 0.18f);
-            float panelPunch = Mathf.Sin(panelT * Mathf.PI) * 0.05f;
+            float t = delay > 0f ? Mathf.Clamp01(elapsed / delay) : 1f;
+            float punch = Mathf.Sin(t * Mathf.PI);
             if (startPanel != null)
-                startPanel.localScale = _startScaleOrigin * (1f + panelPunch);
+                startPanel.localScale = _startScaleOrigin * (1f + punch * 0.05f);
             if (startGlow != null)
-                startGlow.localScale = _startGlowScaleOrigin * (1f + Mathf.Sin(panelT * Mathf.PI) * 0.13f);
-
-            float ballT = SmoothRange(elapsed, 0.1f, 0.1f + Mathf.Max(0.05f, ballLaunchDuration));
-            float ballEase = 1f - Mathf.Pow(1f - ballT, 3f);
-            if (ballRoot != null)
-            {
-                ballRoot.anchoredPosition = _ballOrigin + Vector2.right * (ballLaunchDistance * ballEase);
-                ballRoot.localEulerAngles = _ballRotationOrigin + Vector3.forward * (-48f * ballEase);
-            }
-
-            float tensionT = SmoothRange(elapsed, chainTensionDelay, chainTensionDelay + 0.16f);
-            if (chainDisplay != null)
-                chainDisplay.SetTension(tensionT);
-
-            if (!chainSoundPlayed && tensionT > 0.05f)
-            {
-                chainSoundPlayed = true;
-                if (sfxSource != null && chainTensionClip != null)
-                    sfxSource.PlayOneShot(chainTensionClip, chainTensionVolume);
-            }
-
-            float heroStart = chainTensionDelay + 0.1f;
-            float heroT = SmoothRange(elapsed, heroStart, heroStart + Mathf.Max(0.05f, heroPullDuration));
-            float heroEase = 1f - Mathf.Pow(1f - heroT, 2f);
-            if (heroMotionRoot != null)
-            {
-                heroMotionRoot.anchoredPosition = _heroOrigin + Vector2.right * (heroPullDistance * heroEase);
-                heroMotionRoot.localRotation = Quaternion.Euler(0f, 0f, -2.5f * Mathf.Sin(heroT * Mathf.PI));
-            }
-
-            float shakeStart = heroStart;
-            float shakeT = Mathf.Clamp01((elapsed - shakeStart) / Mathf.Max(0.05f, cameraShakeDuration));
-            if (sceneRoot != null)
-            {
-                float decay = 1f - shakeT;
-                float shake = Mathf.Sin(shakeT * Mathf.PI * 4f) * cameraShakeStrength * decay;
-                sceneRoot.anchoredPosition = _sceneOrigin + new Vector2(shake, -shake * 0.35f);
-            }
-
-            float flashT = Mathf.Clamp01((elapsed - shakeStart) / 0.22f);
-            float flash = Mathf.Sin(flashT * Mathf.PI) * flashAlpha;
-            SetCanvasAlpha(flashGroup, flash);
-
-            float fadeStart = sequenceDuration - Mathf.Max(0.1f, fadeOutDuration);
-            float fadeT = SmoothRange(elapsed, fadeStart, sequenceDuration);
-            SetCanvasAlpha(fadeGroup, fadeT);
-            if (bgmSource != null)
-                bgmSource.volume = Mathf.Lerp(_bgmStartVolume, 0f, fadeT);
-
+                startGlow.localScale = _startGlowScaleOrigin * (1f + punch * 0.13f);
             yield return null;
         }
 
-        SetCanvasAlpha(flashGroup, 0f);
-        SetCanvasAlpha(fadeGroup, 1f);
-        if (sceneRoot != null)
-            sceneRoot.anchoredPosition = _sceneOrigin;
-        if (bgmSource != null)
-            bgmSource.Stop();
+        if (startPanel != null)
+            startPanel.localScale = _startScaleOrigin;
+        if (startGlow != null)
+            startGlow.localScale = _startGlowScaleOrigin;
 
         if (string.IsNullOrWhiteSpace(stageSceneName))
         {
@@ -400,10 +339,14 @@ public sealed class TitleScreenController : MonoBehaviour
             yield break;
         }
 
-        Time.timeScale = 1f;
-        AsyncOperation load = SceneManager.LoadSceneAsync(stageSceneName, LoadSceneMode.Single);
-        while (load != null && !load.isDone)
-            yield return null;
+        if (!ScreenPushTransition.Begin(stageSceneName, transitionSlideDuration))
+        {
+            Debug.LogError("[TitleScreen] Scene Push Transitionを開始できませんでした。", this);
+            _isStarting = false;
+            _inputReady = true;
+            if (startButton != null)
+                startButton.interactable = true;
+        }
     }
 
     private void CacheAmbientState()

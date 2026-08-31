@@ -323,13 +323,21 @@ public static class HpRopeFeaturePlayModeTest
 
     private static RectTransform GetHpRect()
     {
-        UnityEngine.UI.Image[] images = hpUi.GetComponentsInChildren<UnityEngine.UI.Image>(true);
-        foreach (UnityEngine.UI.Image image in images)
+        RectTransform[] rects = hpUi.GetComponentsInChildren<RectTransform>(true);
+        foreach (RectTransform rect in rects)
         {
-            if (image.name == "HpBarImage")
-                return image.rectTransform;
+            if (rect.name == "HPBarRoot")
+                return rect;
         }
-        throw new InvalidOperationException("HpBarImage RectTransform missing");
+
+        // 旧Sceneとの互換用。
+        foreach (RectTransform rect in rects)
+        {
+            if (rect.name == "HpBarImage")
+                return rect;
+        }
+
+        throw new InvalidOperationException("HPBarRoot RectTransform missing");
     }
 
     private static void NextPhase()

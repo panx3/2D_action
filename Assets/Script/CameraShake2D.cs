@@ -31,6 +31,16 @@ public class CameraShake2D : MonoBehaviour
         _strength = strength;
     }
 
+    /// <summary>
+    /// Respawn等のカメラスナップ前に、現在加算済みのShake Offsetを安全に除去する。
+    /// </summary>
+    public void ResetShake()
+    {
+        RemoveAppliedOffset();
+        _remainingDuration = 0f;
+        _strength = 0f;
+    }
+
     private void LateUpdate()
     {
         if (_remainingDuration <= 0f)
@@ -43,9 +53,7 @@ public class CameraShake2D : MonoBehaviour
 
     private void OnDisable()
     {
-        RemoveAppliedOffset();
-        _remainingDuration = 0f;
-        _strength = 0f;
+        ResetShake();
     }
 
     private void RemoveAppliedOffset()

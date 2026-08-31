@@ -20,13 +20,24 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private AudioClip morningStarHitClip;
     [SerializeField, Range(0f, 1f)] private float morningStarHitVolume = 0.9f;
 
+    [Header("Death Fragment")]
+    [SerializeField] private GameObject fragmentPrefab;
+    [SerializeField, Min(0)] private int fragmentCount = 10;
+    [SerializeField, Min(0f)] private float fragmentSpread = 0.3f;
+    [SerializeField, Min(0f)] private float minFragmentForce = 1.5f;
+    [SerializeField, Min(0f)] private float maxFragmentForce = 3f;
+    [SerializeField, Min(0f)] private float fragmentLifeTime = 2f;
+
     private int _currentHp;
     private Rigidbody2D _rigidbody2D;
     private float _hitStunTimer;
+    private bool _deathHandled;
+    private Vector2 _lastImpactDirection = Vector2.right;
 
     public int CurrentHp => _currentHp;
     public int MaxHp => maxHp;
     public bool IsHitStunned => _hitStunTimer > 0f;
+    public bool IsDeathHandled => _deathHandled;
     public int HitSoundPlayCount { get; private set; }
 
     private void Awake()
@@ -66,6 +77,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         if (debugLog)
             Debug.Log($"Enemy hit damage={context.Damage}");
 
+        if (context.ImpactDirection.sqrMagnitude > 0.0001f)
+            _lastImpactDirection = context.ImpactDirection.normalized;
+        else if (context.KnockbackImpulse.sqrMagnitude > 0.0001f)
+            _lastImpactDirection = context.KnockbackImpulse.normalized;
+
         if (_rigidbody2D != null)
         {
             if (freezeRotationOnHit)
@@ -101,8 +117,24 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     private void HandleDeath()
     {
+        if (_deathHandled)
+            return;
+
+        _deathHandled = true;
+
         if (debugLog)
             Debug.Log($"[EnemyHealth] HandleDeath on {name}", this);
+
+        DisableAfterDeath();
+        FragmentBurst2D.Spawn(
+            fragmentPrefab,
+            transform.position,
+            _lastImpactDirection,
+            fragmentCount,
+            fragmentSpread,
+            minFragmentForce,
+            maxFragmentForce,
+            fragmentLifeTime);
 
         if (destroyOnDeath)
         {
@@ -110,8 +142,26 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             return;
         }
 
-        foreach (Collider2D col in GetComponents<Collider2D>())
-            col.enabled = false;
+        gameObject.SetActive(false);
+    }
+
+    private void DisableAfterDeath()
+    {
+        Enemy movement = GetComponent<Enemy>();
+        if (movement != null)
+            movement.enabled = false;
+
+        foreach (Collider2D col in GetComponentsInChildren<Collider2D>(true))
+        {
+            if (col != null)
+                col.enabled = false;
+        }
+
+        foreach (SpriteRenderer renderer in GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            if (renderer != null)
+                renderer.enabled = false;
+        }
 
         if (_rigidbody2D != null)
         {
@@ -119,17 +169,30 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _rigidbody2D.angularVelocity = 0f;
             _rigidbody2D.simulated = false;
         }
-
-        gameObject.SetActive(false);
     }
 
     public void ResetHealth()
     {
         _currentHp = maxHp;
         _hitStunTimer = 0f;
+        _deathHandled = false;
+        _lastImpactDirection = Vector2.right;
 
-        foreach (Collider2D col in GetComponents<Collider2D>())
-            col.enabled = true;
+        Enemy movement = GetComponent<Enemy>();
+        if (movement != null)
+            movement.enabled = true;
+
+        foreach (Collider2D col in GetComponentsInChildren<Collider2D>(true))
+        {
+            if (col != null)
+                col.enabled = true;
+        }
+
+        foreach (SpriteRenderer renderer in GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            if (renderer != null)
+                renderer.enabled = true;
+        }
 
         if (_rigidbody2D != null)
         {

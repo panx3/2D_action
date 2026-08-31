@@ -24,22 +24,8 @@ public static class TekkyuEnemySetup
     [MenuItem("Tools/Tekkyu Enemy/Apply Setup")]
     public static void Apply()
     {
-        try
-        {
-            ConfigureSpriteImporter();
-            EnsureFolder(EnemyFolderPath);
-            GameObject prefab = CreateOrUpdatePrefab();
-            Vector3 position = PlaceInCompletScene(prefab);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            ValidateAll(position);
-            Debug.Log($"[TekkyuEnemySetup] COMPLETE prefab={PrefabPath}, scenePosition={position}");
-        }
-        catch (Exception exception)
-        {
-            Debug.LogException(exception);
-            throw;
-        }
+        // 旧1枚絵をRootへ戻す処理は、Visual分離と固定Colliderを壊すため使用しない。
+        RatEnemyVisualSetup.Apply();
     }
 
     public static void ApplyFromCommandLine()
@@ -58,16 +44,8 @@ public static class TekkyuEnemySetup
     [MenuItem("Tools/Tekkyu Enemy/Validate Setup")]
     public static void Validate()
     {
-        try
-        {
-            ValidateAll(null);
-            Debug.Log("[TekkyuEnemySetup] VALIDATION PASSED");
-        }
-        catch (Exception exception)
-        {
-            Debug.LogException(exception);
-            throw;
-        }
+        RatEnemyVisualSetup.Validate();
+        Debug.Log("[TekkyuEnemySetup] VALIDATION PASSED");
     }
 
     public static void ValidateFromCommandLine()
