@@ -20,15 +20,22 @@ public class GoalPoint : MonoBehaviour
     [Header("Events")]
     [SerializeField] private UnityEvent onGoalReached;
 
+    [Header("Goal UI")]
+    [SerializeField] private GoalMenuController goalMenu;
+
     [Header("Debug")]
     [SerializeField] private bool showDebugLog = true;
 
     private SpriteRenderer spriteRenderer;
     private bool isCleared = false;
 
+    public bool IsCleared => isCleared;
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        if (goalMenu == null)
+            goalMenu = FindAnyObjectByType<GoalMenuController>(FindObjectsInactive.Include);
         UpdateVisual(idleColor);
     }
 
@@ -74,6 +81,11 @@ public class GoalPoint : MonoBehaviour
         {
             Debug.Log("GoalPoint: Stage Clear!");
         }
+
+        if (goalMenu != null)
+            goalMenu.ShowGoal();
+        else
+            Debug.LogWarning("[GoalPoint] GoalMenuControllerがSceneにありません。", this);
 
         onGoalReached?.Invoke();
     }

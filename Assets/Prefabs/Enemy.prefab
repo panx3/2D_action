@@ -97,7 +97,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: -0.05, y: -0.095}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.05263158, y: 0.23529412}
@@ -107,7 +107,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.32, y: 0.32}
+  m_Size: {x: 0.76, y: 0.62}
   m_EdgeRadius: 0
 --- !u!114 &8000000000000000006
 MonoBehaviour:
@@ -159,6 +159,12 @@ MonoBehaviour:
   hitAudioSource: {fileID: 0}
   morningStarHitClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
   morningStarHitVolume: 0.9
+  fragmentPrefab: {fileID: 3995165092266263535, guid: 1e71fb6d4622d2b4dba1d6e194e211f7, type: 3}
+  fragmentCount: 10
+  fragmentSpread: 0.3
+  minFragmentForce: 1.5
+  maxFragmentForce: 3
+  fragmentLifeTime: 2
 --- !u!1 &8956351982974009865
 GameObject:
   m_ObjectHideFlags: 0
@@ -241,7 +247,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 6
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 6063fcf818ef5d148b649efb3324fc47, type: 3}
+  m_Sprite: {fileID: -2562866488414266981, guid: bce3f132952a6204fbfe4328deb9ecb0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

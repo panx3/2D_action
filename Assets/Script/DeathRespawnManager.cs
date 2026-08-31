@@ -20,6 +20,8 @@ public class DeathRespawnManager : MonoBehaviour
     private PlayerHealth _playerHealth;
     [SerializeField, Tooltip("落下復帰と共通のPlayer／MorningStar／Chain初期化を行うController。")]
     private GimmickRespawnController _gimmickRespawnController;
+    [SerializeField, Tooltip("GimmickRespawnControllerが無い場合のCamera即時復帰先。")]
+    private CameraFollow _cameraFollow;
 
     [Header("リスポーン設定")]
     [SerializeField, Tooltip("死亡から復活までの待機時間（秒）。")]
@@ -35,6 +37,9 @@ public class DeathRespawnManager : MonoBehaviour
 
         if (_gimmickRespawnController == null)
             _gimmickRespawnController = FindAnyObjectByType<GimmickRespawnController>(FindObjectsInactive.Exclude);
+
+        if (_cameraFollow == null)
+            _cameraFollow = FindAnyObjectByType<CameraFollow>(FindObjectsInactive.Exclude);
 
         if (_defaultSpawnPoint != null)
         {
@@ -135,6 +140,10 @@ public class DeathRespawnManager : MonoBehaviour
             else
                 _playerHealth.ReviveKeepCurrentHp();
         }
+
+        // 通常経路ではGimmickRespawnController側がReset完了後にSnapする。
+        if (_gimmickRespawnController == null && _cameraFollow != null)
+            _cameraFollow.SnapToTarget();
 
         _respawnRoutine = null;
     }

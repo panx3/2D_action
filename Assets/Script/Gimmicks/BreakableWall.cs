@@ -146,35 +146,14 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
             return;
         }
 
-        for (int i = 0; i < fragmentCount; i++)
-        {
-            Vector3 offset = new Vector3(
-                Random.Range(-fragmentSpread, fragmentSpread),
-                Random.Range(-fragmentSpread, fragmentSpread),
-                0f);
-
-            GameObject fragment = Instantiate(
-                fragmentPrefab,
-                transform.position + offset,
-                Quaternion.Euler(0f, 0f, Random.Range(0f, 360f)));
-
-            Rigidbody2D rb = fragment.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                Vector2 randomDirection = (
-                    hitDirection
-                    + Random.insideUnitCircle * 0.8f
-                    + Vector2.up * 0.4f
-                ).normalized;
-
-                rb.AddForce(
-                    randomDirection * Random.Range(minForce, maxForce),
-                    ForceMode2D.Impulse);
-
-                rb.AddTorque(Random.Range(-180f, 180f));
-            }
-
-            Destroy(fragment, fragmentLifeTime);
-        }
+        FragmentBurst2D.Spawn(
+            fragmentPrefab,
+            transform.position,
+            hitDirection,
+            fragmentCount,
+            fragmentSpread,
+            minForce,
+            maxForce,
+            fragmentLifeTime);
     }
 }

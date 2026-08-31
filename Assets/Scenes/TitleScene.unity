@@ -633,21 +633,12 @@ MonoBehaviour:
   startPulsePeriod: 2
   startPulseScale: 0.035
   backgroundDrift: 8
-  ballLaunchDistance: 280
-  ballLaunchDuration: 0.3
-  chainTensionDelay: 0.3
-  heroPullDistance: 52
-  heroPullDuration: 0.18
-  cameraShakeStrength: 6
-  cameraShakeDuration: 0.16
-  flashAlpha: 0.17
-  fadeOutDuration: 0.45
+  transitionStartDelay: 0.12
+  transitionSlideDuration: 0.8
   bgmSource: {fileID: 117526966}
   sfxSource: {fileID: 117526965}
   startConfirmClip: {fileID: 8300000, guid: 00d2ceb8b3a5b8948b49fbaa0097125b, type: 3}
-  chainTensionClip: {fileID: 8300000, guid: 5423a6a881679504fb9984e7cf6b0276, type: 3}
   startConfirmVolume: 0.55
-  chainTensionVolume: 0.7
 --- !u!4 &117526968
 Transform:
   m_ObjectHideFlags: 0
@@ -1386,7 +1377,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 4}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &320732374
@@ -2336,7 +2327,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: fb1677da5a4240d468d7437e1b03c551, type: 3}
+  m_Texture: {fileID: 2800000, guid: 4766df83453a7b74bb3a8f14b989b12e, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0

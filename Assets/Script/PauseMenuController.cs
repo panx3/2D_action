@@ -29,9 +29,11 @@ public sealed class PauseMenuController : MonoBehaviour
     [SerializeField] private string titleSceneName = "TitleScene";
 
     private InputAction _pauseAction;
+    private bool _externallyBlocked;
 
     public bool IsPaused { get; private set; }
     public bool IsShowingControls => controlsPanel != null && controlsPanel.IsVisible;
+    public bool IsExternallyBlocked => _externallyBlocked;
 
     private void Awake()
     {
@@ -163,6 +165,9 @@ public sealed class PauseMenuController : MonoBehaviour
 
     private void HandlePausePerformed(InputAction.CallbackContext context)
     {
+        if (_externallyBlocked)
+            return;
+
         if (IsShowingControls)
         {
             HandleControlsBack();
@@ -177,7 +182,7 @@ public sealed class PauseMenuController : MonoBehaviour
 
     public void OpenPause()
     {
-        if (IsPaused)
+        if (IsPaused || _externallyBlocked)
             return;
 
         IsPaused = true;
@@ -226,6 +231,21 @@ public sealed class PauseMenuController : MonoBehaviour
         ClearSelection();
 
         SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
+    }
+
+    /// <summary>Goal等の優先UI表示中はPause入力とPause表示を停止する。</summary>
+    public void SetExternalPauseBlocked(bool blocked)
+    {
+        _externallyBlocked = blocked;
+        if (!blocked || !IsPaused)
+            return;
+
+        if (controlsPanel != null)
+            controlsPanel.Hide();
+        if (presentationRoot != null)
+            presentationRoot.SetActive(false);
+        IsPaused = false;
+        ClearSelection();
     }
 
     private void HandleControlsBack()
