@@ -61,6 +61,32 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         ApplyCrystalStage(0);
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (_isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
+            return;
+
+        // BreakableWall と同じ実衝突経路を使う。
+        // Launcher の combat LayerMask に含まれない GoalPoint でも、
+        // morningstar Tag と衝突転送Componentを持つ鉄球だけを受け付ける。
+        float impactSpeed = Mathf.Max(
+            collision.relativeVelocity.magnitude,
+            morningStarBody.linearVelocity.magnitude);
+        Vector2 impactDirection = GetCollisionDirection(collision, morningStarBody);
+        Vector2 impactPoint = collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : morningStarBody.position;
+
+        OnMorningStarHit(new MorningStarHitContext(
+            1,
+            Vector2.zero,
+            0f,
+            impactPoint,
+            impactDirection,
+            impactSpeed,
+            1f));
+    }
+
     public void OnMorningStarHit(MorningStarHitContext context)
     {
         if (_isBroken || context.Damage <= 0 || Time.unscaledTime < _nextHitTime)
@@ -74,9 +100,6 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         SpawnFragments(context.ImpactPoint, context.ImpactDirection,
             finalHit ? fragmentsOnBreak : fragmentsPerHit);
 
-        if (showDebugLog)
-            Debug.Log($"[GoalPoint] Crystal hit {_hitCount}/{requiredHits}", this);
-
         if (!finalHit)
             return;
 
@@ -88,6 +111,31 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             cameraShake.Shake(breakShakeDuration, breakShakeStrength);
 
         StartCoroutine(CompleteGoalRoutine());
+    }
+
+    private static bool TryGetMorningStarBody(Collider2D other, out Rigidbody2D morningStarBody)
+    {
+        morningStarBody = other != null ? other.attachedRigidbody : null;
+        if (morningStarBody == null)
+            return false;
+
+        return morningStarBody.CompareTag("morningstar")
+            && morningStarBody.GetComponent<MorningStarCollisionReporter>() != null;
+    }
+
+    private static Vector2 GetCollisionDirection(Collision2D collision, Rigidbody2D morningStarBody)
+    {
+        if (collision.contactCount > 0)
+        {
+            Vector2 direction = -collision.GetContact(0).normal;
+            if (direction.sqrMagnitude > 1e-6f)
+                return direction.normalized;
+        }
+
+        if (morningStarBody.linearVelocity.sqrMagnitude > 1e-6f)
+            return morningStarBody.linearVelocity.normalized;
+
+        return Vector2.right;
     }
 
     private IEnumerator CompleteGoalRoutine()
