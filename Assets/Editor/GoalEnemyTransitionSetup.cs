@@ -16,7 +16,7 @@ public static class GoalEnemyTransitionSetup
     private const string GoalPrefabPath = "Assets/Prefabs/UI/GoalMenu.prefab";
     private const string EnemyFragmentPath = "Assets/Prefabs/Enemies/EnemyFragment.prefab";
 
-    [MenuItem("Tools/鉄球少女/Apply Enemy Fragments Goal UI And Push Transition")]
+    [MenuItem("Tools/鉄球少女/Apply Enemy Fragments Goal UI And Loading Transition")]
     public static void Apply()
     {
         ConfigureEnemyPrefab("Assets/Prefabs/Enemy.prefab");
@@ -26,7 +26,7 @@ public static class GoalEnemyTransitionSetup
         ConfigureTitleScene();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[GoalEnemyTransitionSetup] Enemy fragments, Goal UI and Title push transition applied.");
+        Debug.Log("[GoalEnemyTransitionSetup] Enemy fragments, Goal UI and Title loading transition applied.");
     }
 
     private static void ConfigureEnemyPrefab(string path)
@@ -205,8 +205,15 @@ public static class GoalEnemyTransitionSetup
 
         SerializedObject serialized = new SerializedObject(title);
         serialized.FindProperty("stageSceneName").stringValue = "CompletScene";
-        serialized.FindProperty("transitionStartDelay").floatValue = 0.12f;
-        serialized.FindProperty("transitionSlideDuration").floatValue = 0.8f;
+        serialized.FindProperty("loadingBallSprite").objectReferenceValue =
+            AssetDatabase.LoadAllAssetsAtPath("Assets/image_/鉄球.png").OfType<Sprite>().FirstOrDefault();
+        serialized.FindProperty("loadingFont").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/NotoSansJP-Bold SDF.asset");
+        serialized.FindProperty("fadeOutDuration").floatValue = 0.25f;
+        serialized.FindProperty("minimumLoadingDuration").floatValue = 0.6f;
+        serialized.FindProperty("loadingFadeOutDuration").floatValue = 0.18f;
+        serialized.FindProperty("stageFadeInDuration").floatValue = 0.3f;
+        serialized.FindProperty("loadingRotationSpeed").floatValue = 220f;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

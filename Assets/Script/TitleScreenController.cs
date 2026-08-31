@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -41,9 +42,14 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField, Range(0f, 0.2f)] private float startPulseScale = 0.035f;
     [SerializeField, Min(0f)] private float backgroundDrift = 8f;
 
-    [Header("Scene Push Transition")]
-    [SerializeField, Min(0f)] private float transitionStartDelay = 0.12f;
-    [SerializeField, Min(0.05f)] private float transitionSlideDuration = 0.8f;
+    [Header("Stage Loading Transition")]
+    [SerializeField] private Sprite loadingBallSprite;
+    [SerializeField] private TMP_FontAsset loadingFont;
+    [SerializeField, Min(0f)] private float fadeOutDuration = 0.25f;
+    [SerializeField, Min(0f)] private float minimumLoadingDuration = 0.6f;
+    [SerializeField, Min(0f)] private float loadingFadeOutDuration = 0.18f;
+    [SerializeField, Min(0f)] private float stageFadeInDuration = 0.3f;
+    [SerializeField, Min(0f)] private float loadingRotationSpeed = 220f;
 
     [Header("Audio")]
     [SerializeField] private AudioSource bgmSource;
@@ -66,6 +72,7 @@ public sealed class TitleScreenController : MonoBehaviour
     public bool InputReady => _inputReady;
     public bool IsStarting => _isStarting;
     public string StageSceneName => stageSceneName;
+    public float MinimumLoadingDuration => minimumLoadingDuration;
 
     private void Awake()
     {
@@ -129,7 +136,7 @@ public sealed class TitleScreenController : MonoBehaviour
         if (EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(null);
 
-        StartCoroutine(StartSequenceRoutine());
+        StartSequence();
     }
 
     public void OnControlsPressed()
@@ -308,45 +315,40 @@ public sealed class TitleScreenController : MonoBehaviour
         }
     }
 
-    private IEnumerator StartSequenceRoutine()
+    private void StartSequence()
     {
         if (sfxSource != null && startConfirmClip != null)
             sfxSource.PlayOneShot(startConfirmClip, startConfirmVolume);
-
-        float delay = Mathf.Max(0f, transitionStartDelay);
-        float elapsed = 0f;
-        while (elapsed < delay)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = delay > 0f ? Mathf.Clamp01(elapsed / delay) : 1f;
-            float punch = Mathf.Sin(t * Mathf.PI);
-            if (startPanel != null)
-                startPanel.localScale = _startScaleOrigin * (1f + punch * 0.05f);
-            if (startGlow != null)
-                startGlow.localScale = _startGlowScaleOrigin * (1f + punch * 0.13f);
-            yield return null;
-        }
-
-        if (startPanel != null)
-            startPanel.localScale = _startScaleOrigin;
-        if (startGlow != null)
-            startGlow.localScale = _startGlowScaleOrigin;
 
         if (string.IsNullOrWhiteSpace(stageSceneName))
         {
             Debug.LogError("[TitleScreen] Stage Sceneが設定されていません。", this);
             _isStarting = false;
-            yield break;
+            RestoreStartInput();
+            return;
         }
 
-        if (!ScreenPushTransition.Begin(stageSceneName, transitionSlideDuration))
+        if (!TitleStageTransition.Begin(
+                stageSceneName,
+                loadingBallSprite,
+                loadingFont,
+                fadeOutDuration,
+                minimumLoadingDuration,
+                loadingFadeOutDuration,
+                stageFadeInDuration,
+                loadingRotationSpeed))
         {
-            Debug.LogError("[TitleScreen] Scene Push Transitionを開始できませんでした。", this);
+            Debug.LogError("[TitleScreen] Stage Loading Transitionを開始できませんでした。", this);
             _isStarting = false;
-            _inputReady = true;
-            if (startButton != null)
-                startButton.interactable = true;
+            RestoreStartInput();
         }
+    }
+
+    private void RestoreStartInput()
+    {
+        _inputReady = true;
+        if (startButton != null)
+            startButton.interactable = true;
     }
 
     private void CacheAmbientState()
