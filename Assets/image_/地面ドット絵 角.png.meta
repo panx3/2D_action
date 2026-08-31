@@ -60,7 +60,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 60
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
@@ -134,8 +134,12 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 24}
       customData: 
       outline: []
-      physicsShape: []
-      tessellationDetail: -1
+      physicsShape:
+      - - {x: -30, y: -30}
+        - {x: 30, y: -30}
+        - {x: 30, y: 5}
+        - {x: -30, y: 6}
+      tessellationDetail: 0
       bones: []
       spriteID: 30cae60a45324da20800000000000000
       internalID: 3086130491031464963
@@ -156,8 +160,12 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 24}
       customData: 
       outline: []
-      physicsShape: []
-      tessellationDetail: -1
+      physicsShape:
+      - - {x: -30, y: -30}
+        - {x: 30, y: -30}
+        - {x: 30, y: 4}
+        - {x: -30, y: 5}
+      tessellationDetail: 0
       bones: []
       spriteID: 26e5a6dd038be7e20800000000000000
       internalID: 3350317692822904418
@@ -178,8 +186,13 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
-      physicsShape: []
-      tessellationDetail: -1
+      physicsShape:
+      - - {x: -30, y: 15}
+        - {x: 4, y: -27}
+        - {x: 30, y: -28}
+        - {x: 30, y: 30}
+        - {x: -30, y: 30}
+      tessellationDetail: 0
       bones: []
       spriteID: ffb7594b15c763350800000000000000
       internalID: 5996116644254284799
@@ -200,8 +213,13 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
-      physicsShape: []
-      tessellationDetail: -1
+      physicsShape:
+      - - {x: -30, y: -30}
+        - {x: -2, y: -27}
+        - {x: 30, y: 12}
+        - {x: 30, y: 30}
+        - {x: -30, y: 30}
+      tessellationDetail: 0
       bones: []
       spriteID: 3d34c519e04ca91c0800000000000000
       internalID: -4496065711128689709

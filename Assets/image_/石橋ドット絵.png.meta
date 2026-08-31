@@ -54,7 +54,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 72
+  spritePixelsToUnits: 54
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
@@ -120,16 +120,21 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 7
-        y: 87
-        width: 72
-        height: 72
+        y: 72
+        width: 54
+        height: 54
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 55}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
-      physicsShape: []
-      tessellationDetail: -1
+      physicsShape:
+      - - {x: 27, y: -27}
+        - {x: 26, y: 5}
+        - {x: -27, y: 5}
+        - {x: -27, y: -15}
+        - {x: 0, y: -27}
+      tessellationDetail: 0
       bones: []
       spriteID: f151a2cc35cb19c40800000000000000
       internalID: 5517398086599185695
@@ -141,17 +146,21 @@ TextureImporter:
       name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_1"
       rect:
         serializedVersion: 2
-        x: 79
-        y: 87
-        width: 72
-        height: 72
+        x: 61
+        y: 72
+        width: 54
+        height: 54
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 55}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
-      physicsShape: []
-      tessellationDetail: -1
+      physicsShape:
+      - - {x: 27, y: 5}
+        - {x: -27, y: 5}
+        - {x: -27, y: -27}
+        - {x: 27, y: -27}
+      tessellationDetail: 0
       bones: []
       spriteID: 9b9938db8ade2b180800000000000000
       internalID: -9100950587972544071
@@ -163,16 +172,21 @@ TextureImporter:
       name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_2"
       rect:
         serializedVersion: 2
-        x: 151
-        y: 87
-        width: 72
-        height: 72
+        x: 115
+        y: 72
+        width: 54
+        height: 54
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 55}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
-      physicsShape: []
+      physicsShape:
+      - - {x: 27, y: -27}
+        - {x: 26, y: 5}
+        - {x: -27, y: 5}
+        - {x: -27, y: -16}
+        - {x: -27, y: -27}
       tessellationDetail: 0
       bones: []
       spriteID: 55bf6a7355eb7ba46b80abfbb63a0eb5
@@ -185,16 +199,20 @@ TextureImporter:
       name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_3"
       rect:
         serializedVersion: 2
-        x: 7
-        y: 15
-        width: 72
-        height: 72
+        x: 169
+        y: 72
+        width: 54
+        height: 54
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
-      physicsShape: []
+      physicsShape:
+      - - {x: 27, y: -27}
+        - {x: 27, y: 5}
+        - {x: -27, y: 5}
+        - {x: -27, y: -27}
       tessellationDetail: 0
       bones: []
       spriteID: 41c5756f56853044b82c7c409c39c05d
@@ -207,10 +225,10 @@ TextureImporter:
       name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_4"
       rect:
         serializedVersion: 2
-        x: 79
-        y: 15
-        width: 72
-        height: 72
+        x: 7
+        y: 18
+        width: 54
+        height: 54
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -229,10 +247,10 @@ TextureImporter:
       name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_5"
       rect:
         serializedVersion: 2
-        x: 151
-        y: 15
-        width: 72
-        height: 72
+        x: 61
+        y: 18
+        width: 54
+        height: 54
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -243,6 +261,50 @@ TextureImporter:
       bones: []
       spriteID: 8722c4bd8014fca4eadfee3935c18219
       internalID: 20839221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_6"
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 18
+        width: 54
+        height: 54
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4c339a804e9701c4898d5d5bc2204b7d
+      internalID: -884153212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_7"
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 18
+        width: 54
+        height: 54
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2a1e5242017e59a48af89b18aabcee70
+      internalID: 401223336
       vertices: []
       indices: 
       edges: []
@@ -261,7 +323,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":3.0,"y":2.0},"gridSpriteSize":{"x":77.0,"y":87.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":4.0,"y":2.0},"gridSpriteSize":{"x":57.0,"y":87.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_0": 5517398086599185695
       "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_1": -9100950587972544071
@@ -269,6 +331,8 @@ TextureImporter:
       "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_3": -762022809
       "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_4": -1063650849
       "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_5": 20839221
+      "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_6": -884153212
+      "\u77F3\u6A4B\u30C9\u30C3\u30C8\u7D75_7": 401223336
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
