@@ -30,6 +30,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0f)] private float breakShakeDuration = 0.12f;
     [SerializeField, Min(0f)] private float breakShakeStrength = 0.06f;
     [SerializeField] private GoalMenuController goalMenu;
+    [SerializeField] private CrystalAcquiredUI crystalAcquiredUI;
     [SerializeField] private UnityEvent onGoalReached;
 
     [Header("Debug")]
@@ -41,6 +42,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     private float _nextHitTime;
     private bool _isBroken;
     private bool _isCleared;
+    private bool _goalSequenceStarted;
 
     public int HitCount => _hitCount;
     public int RequiredHits => requiredHits;
@@ -54,6 +56,8 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 
         if (goalMenu == null)
             goalMenu = FindAnyObjectByType<GoalMenuController>(FindObjectsInactive.Include);
+        if (crystalAcquiredUI == null)
+            crystalAcquiredUI = FindAnyObjectByType<CrystalAcquiredUI>(FindObjectsInactive.Include);
         if (cameraShake == null)
             cameraShake = FindAnyObjectByType<CameraShake2D>(FindObjectsInactive.Exclude);
 
@@ -110,7 +114,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         if (cameraShake != null)
             cameraShake.Shake(breakShakeDuration, breakShakeStrength);
 
-        StartCoroutine(CompleteGoalRoutine());
+        BeginGoalSequence();
     }
 
     private static bool TryGetMorningStarBody(Collider2D other, out Rigidbody2D morningStarBody)
@@ -136,6 +140,18 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             return morningStarBody.linearVelocity.normalized;
 
         return Vector2.right;
+    }
+
+    private void BeginGoalSequence()
+    {
+        if (_goalSequenceStarted)
+            return;
+
+        _goalSequenceStarted = true;
+        if (crystalAcquiredUI != null && crystalAcquiredUI.Play(ReachGoal))
+            return;
+
+        StartCoroutine(CompleteGoalRoutine());
     }
 
     private IEnumerator CompleteGoalRoutine()
