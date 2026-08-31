@@ -633,8 +633,13 @@ MonoBehaviour:
   startPulsePeriod: 2
   startPulseScale: 0.035
   backgroundDrift: 8
-  transitionStartDelay: 0.12
-  transitionSlideDuration: 0.8
+  loadingBallSprite: {fileID: 6401073759314182162, guid: db6f53115a222e94ab8c68de6220b894, type: 3}
+  loadingFont: {fileID: 11400000, guid: 6149577b1674316468d9b1630195c738, type: 2}
+  fadeOutDuration: 0.25
+  minimumLoadingDuration: 0.6
+  loadingFadeOutDuration: 0.18
+  stageFadeInDuration: 0.3
+  loadingRotationSpeed: 220
   bgmSource: {fileID: 117526966}
   sfxSource: {fileID: 117526965}
   startConfirmClip: {fileID: 8300000, guid: 00d2ceb8b3a5b8948b49fbaa0097125b, type: 3}

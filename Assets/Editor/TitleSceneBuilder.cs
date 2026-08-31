@@ -528,10 +528,16 @@ public static class TitleSceneBuilder
         serialized.FindProperty("chainDisplay").objectReferenceValue = chain;
         SetObjectArray(serialized.FindProperty("backgroundLayers"), backgrounds.Cast<UnityEngine.Object>().ToArray());
         SetObjectArray(serialized.FindProperty("ambientGlowGraphics"), ambientGraphics.Cast<UnityEngine.Object>().ToArray());
+        serialized.FindProperty("loadingBallSprite").objectReferenceValue = LoadSprite(BallPath, "鉄球_0");
+        serialized.FindProperty("loadingFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldFontPath);
+        serialized.FindProperty("fadeOutDuration").floatValue = 0.25f;
+        serialized.FindProperty("minimumLoadingDuration").floatValue = 0.6f;
+        serialized.FindProperty("loadingFadeOutDuration").floatValue = 0.18f;
+        serialized.FindProperty("stageFadeInDuration").floatValue = 0.3f;
+        serialized.FindProperty("loadingRotationSpeed").floatValue = 220f;
         serialized.FindProperty("bgmSource").objectReferenceValue = bgmSource;
         serialized.FindProperty("sfxSource").objectReferenceValue = sfxSource;
         serialized.FindProperty("startConfirmClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(LaunchSfxPath);
-        serialized.FindProperty("chainTensionClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(ChainSfxPath);
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
