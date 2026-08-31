@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 1872fab582df402449bc8eb1c2d6d812
+guid: 24acbf16a3c1bf6408c6d32af97644e4
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3766708752051349692
-    second: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_0"
-  - first:
-      213: -936678719628197350
-    second: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_1"
+      213: 2401122891804987809
+    second: "\u30BB\u30FC\u30D6\u30DD\u30A4\u30F3\u30C8\u30E2\u30CB\u30E5\u30E1\u30F3\u30C8\u30C9\u30C3\u30C8\u7D75_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,45 +113,67 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_0"
+      name: CheckpointMonument_Base
       rect:
         serializedVersion: 2
-        x: 6
-        y: 79
-        width: 260
-        height: 35
+        x: 12
+        y: 18
+        width: 127
+        height: 122
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 447df9dc856f9bbc0800000000000000
-      internalID: -3766708752051349692
+      spriteID: 3f4772d3a611de148b94480f34857f6b
+      internalID: 1427229934
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_1"
+      name: CheckpointMonument_GlowCrystal
       rect:
         serializedVersion: 2
-        x: 6
-        y: 16
-        width: 260
-        height: 35
+        x: 51
+        y: 83
+        width: 39
+        height: 45
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a12c4efcaaf3003f0800000000000000
-      internalID: -936678719628197350
+      spriteID: e57a4b44fcacc5c4fa92711599d7ce47
+      internalID: -1060313077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CheckpointMonument_GlowEmblem
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 49
+        width: 28
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f385b0cb728679d4b8a174dcea8fc465
+      internalID: 2024986605
       vertices: []
       indices: 
       edges: []
@@ -163,7 +182,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 55e6e4cc136fe00499db8158dadc3cbd
+    spriteID: 3dae48ce00d70414c867c9dea63b9504
     internalID: 0
     vertices: []
     indices: 
@@ -173,8 +192,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_0": -3766708752051349692
-      "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_1": -936678719628197350
+      CheckpointMonument_Base: 1427229934
+      CheckpointMonument_GlowCrystal: -1060313077
+      CheckpointMonument_GlowEmblem: 2024986605
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

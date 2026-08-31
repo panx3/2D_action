@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 1872fab582df402449bc8eb1c2d6d812
+guid: 1cbf9c8560a01c0409917a92947baaaa
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3766708752051349692
-    second: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_0"
-  - first:
-      213: -936678719628197350
-    second: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_1"
+      213: -3229185841531830618
+    second: "\u30B4\u30FC\u30EB\u7D50\u6676(\u7834\u7247)_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,45 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_0"
+      name: GoalCrystalFragment
       rect:
         serializedVersion: 2
-        x: 6
-        y: 79
-        width: 260
-        height: 35
+        x: 19
+        y: 6
+        width: 20
+        height: 27
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 447df9dc856f9bbc0800000000000000
-      internalID: -3766708752051349692
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_1"
-      rect:
-        serializedVersion: 2
-        x: 6
-        y: 16
-        width: 260
-        height: 35
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a12c4efcaaf3003f0800000000000000
-      internalID: -936678719628197350
+      spriteID: 3743dc0dc80a8d047b76e8b23ff819e5
+      internalID: 9040891
       vertices: []
       indices: 
       edges: []
@@ -163,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 55e6e4cc136fe00499db8158dadc3cbd
+    spriteID: 831f10beec65d41448a072b7e8d26b58
     internalID: 0
     vertices: []
     indices: 
@@ -173,8 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_0": -3766708752051349692
-      "\u4F53\u529B\u30B2\u30FC\u30B8\u30C9\u30C3\u30C8\u7D75_1": -936678719628197350
+      GoalCrystalFragment: 9040891
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
