@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -38,6 +39,7 @@ public static class TekkyuEnemyPlayModeTest
     private static Rigidbody2D actualMorningStarBody;
     private static int hpAfterActualHit;
     private static int actualMorningStarDamage;
+    private static int fragmentBaseline;
 
     static TekkyuEnemyPlayModeTest()
     {
@@ -47,6 +49,7 @@ public static class TekkyuEnemyPlayModeTest
 
     public static void Run()
     {
+        RatEnemyVisualSetup.Validate();
         SessionState.SetBool(RunningKey, true);
         EditorSceneManager.OpenScene(ScenePath);
         Subscribe();
@@ -144,11 +147,28 @@ public static class TekkyuEnemyPlayModeTest
 
                 case 4 when EditorApplication.timeSinceStartup - actualHitAt >= 0.30d:
                     Check(sceneEnemy == null, "Enemy is destroyed when HP reaches 0");
+                    CheckEnemyFragments();
+                    phase = 5;
+                    break;
+
+                case 5 when EditorApplication.timeSinceStartup - actualHitAt >= 1.80d:
+                    Check(UnityEngine.Object.FindObjectsByType<EnemyFragment>(FindObjectsInactive.Exclude)
+                            .Select(fragment => fragment.GetComponent<SpriteRenderer>())
+                            .Any(renderer => renderer != null && renderer.color.a > 0f && renderer.color.a < 0.95f),
+                        "EnemyFragment did not fade before expiration");
+                    phase = 6;
+                    break;
+
+                case 6 when EditorApplication.timeSinceStartup - actualHitAt >= 2.25d:
+                    Check(CountEnemyFragments() <= fragmentBaseline,
+                        "EnemyFragment instances did not expire after their configured lifetime");
                     passed = true;
                     Debug.Log("[TekkyuEnemyPlayTest] PASS visible=True, floorContact=True, " +
-                              "contactDamage=True, hp=3->2->1->0, knockback=True, hitStun=True, death=True, duplicateHit=False");
+                              "walk4=True, colliderFixed=True, flipX=True, contactDamage=True, " +
+                              "hp=3->2->1->0, knockback=True, hitStun=True, death=True, " +
+                              "fragments=10, fragmentSprites=multiple, fragmentCollider=False, duplicateDeath=False");
                     StopPlayMode();
-                    phase = 5;
+                    phase = 7;
                     break;
             }
         }
@@ -166,23 +186,37 @@ public static class TekkyuEnemyPlayModeTest
         sceneEnemy = GameObject.Find(EnemyName);
         Check(sceneEnemy != null, "TekkyuEnemy_MidStage exists in Play Mode");
 
-        SpriteRenderer renderer = sceneEnemy.GetComponent<SpriteRenderer>();
+        SpriteRenderer renderer = sceneEnemy.GetComponentInChildren<SpriteRenderer>(true);
+        Animator animator = sceneEnemy.GetComponentInChildren<Animator>(true);
         sceneHealth = sceneEnemy.GetComponent<EnemyHealth>();
         sceneEnemyAi = sceneEnemy.GetComponent<Enemy>();
         sceneBody = sceneEnemy.GetComponent<Rigidbody2D>();
         sceneCollider = sceneEnemy.GetComponent<Collider2D>();
 
-        Check(renderer != null && renderer.enabled && renderer.sprite != null, "Enemy SpriteRenderer is visible");
-        Check(renderer.sprite.texture.width == 133 && renderer.sprite.texture.height == 136,
-            "Enemy uses the attached 133 x 136 texture");
+        Check(sceneEnemy.GetComponent<SpriteRenderer>() == null && sceneEnemy.GetComponent<Animator>() == null,
+            "SpriteRenderer/Animator must not remain on the physics Root");
+        Check(renderer != null && animator != null && renderer.enabled && renderer.sprite != null,
+            "Visual child does not contain a visible SpriteRenderer and Animator");
+        Check(renderer.sprite.texture.width == 281 && renderer.sprite.texture.height == 94,
+            "Enemy does not use the attached 281 x 94 four-frame walk sheet");
         Check(sceneHealth != null && sceneHealth.MaxHp == 3 && sceneHealth.CurrentHp == 3,
             "Enemy starts with Current/Max HP 3/3");
         Check(sceneEnemyAi != null, "Enemy.cs is active");
         Check(sceneBody != null && sceneBody.bodyType == RigidbodyType2D.Dynamic, "Existing dynamic Rigidbody2D is active");
         Check(sceneCollider is BoxCollider2D && sceneCollider.enabled && !sceneCollider.isTrigger,
             "Body-sized BoxCollider2D is active");
+        Check(sceneCollider.transform == sceneEnemy.transform, "Collider2D is not on Enemy Root");
+        Check(Vector3.Distance(sceneEnemy.transform.localScale, Vector3.one) < 0.001f,
+            "CompletScene Enemy Root scale is not (1,1,1)");
+        BoxCollider2D bodyCollider = (BoxCollider2D)sceneCollider;
+        Check(Vector2.Distance(bodyCollider.size, new Vector2(1.52f, 1.24f)) < 0.001f,
+            "TekkyuEnemy fixed collider size changed");
+        Check(Vector2.Distance(bodyCollider.offset, new Vector2(-0.1f, -0.19f)) < 0.001f,
+            "TekkyuEnemy fixed collider offset changed");
+        VerifyWalkFramesAndFacing(animator, renderer, bodyCollider);
 
         initialEnemyY = sceneBody.position.y;
+        fragmentBaseline = CountEnemyFragments();
     }
 
     private static void CheckFloorAndContactDamage()
@@ -337,7 +371,66 @@ public static class TekkyuEnemyPlayModeTest
 
         sceneHealth.OnMorningStarHit(context);
         Check(sceneHealth.CurrentHp == 0, "Third 1-damage hit changes HP 1 -> 0");
+        int fragmentCountAfterDeath = CountEnemyFragments();
+        sceneHealth.OnMorningStarHit(context);
+        Check(CountEnemyFragments() == fragmentCountAfterDeath,
+            "A repeated death hit generated a second fragment burst");
         actualHitAt = EditorApplication.timeSinceStartup;
+    }
+
+    private static void VerifyWalkFramesAndFacing(
+        Animator animator,
+        SpriteRenderer renderer,
+        BoxCollider2D bodyCollider)
+    {
+        Vector2 originalSize = bodyCollider.size;
+        Vector2 originalOffset = bodyCollider.offset;
+        Vector3 originalRootScale = sceneEnemy.transform.localScale;
+        HashSet<Sprite> frames = new HashSet<Sprite>();
+
+        for (int i = 0; i < 4; i++)
+        {
+            animator.Play("Walk", 0, i / 4f);
+            animator.Update(0f);
+            frames.Add(renderer.sprite);
+            Check(bodyCollider.size == originalSize && bodyCollider.offset == originalOffset,
+                "Collider changed while sampling walk sprites");
+            Check(sceneEnemy.transform.localScale == originalRootScale,
+                "Animation changed Enemy Root scale");
+        }
+        Check(frames.Count == 4, "Walk state did not display four distinct sprites");
+
+        MethodInfo moveToward = typeof(Enemy).GetMethod(
+            "MoveToward", BindingFlags.Instance | BindingFlags.NonPublic);
+        Check(moveToward != null, "Enemy MoveToward method is missing");
+        moveToward.Invoke(sceneEnemyAi, new object[] { sceneEnemy.transform.position.x + 5f });
+        Check(renderer.flipX, "Visual did not face right through SpriteRenderer.flipX");
+        moveToward.Invoke(sceneEnemyAi, new object[] { sceneEnemy.transform.position.x - 5f });
+        Check(!renderer.flipX, "Visual did not face left through SpriteRenderer.flipX");
+        Check(sceneEnemy.transform.localScale == originalRootScale,
+            "Facing changed Enemy Root scale");
+        sceneBody.linearVelocity = Vector2.zero;
+        animator.SetBool("IsMoving", false);
+    }
+
+    private static void CheckEnemyFragments()
+    {
+        EnemyFragment[] fragments = UnityEngine.Object.FindObjectsByType<EnemyFragment>(FindObjectsInactive.Exclude);
+        Check(fragments.Length >= fragmentBaseline + 10, "Ten EnemyFragment instances were not generated");
+        EnemyFragment[] spawned = fragments.Skip(fragmentBaseline).ToArray();
+        Check(spawned.Select(fragment => fragment.CurrentSprite).Where(sprite => sprite != null).Distinct().Count() >= 4,
+            "EnemyFragment did not mix multiple fragment sprites");
+        Check(spawned.All(fragment => fragment.GetComponent<Collider2D>() == null),
+            "EnemyFragment has a Collider2D and can obstruct Player");
+        Check(spawned.All(fragment => fragment.GetComponent<Rigidbody2D>() != null),
+            "EnemyFragment Rigidbody2D is missing");
+        Check(spawned.Any(fragment => Mathf.Abs(fragment.GetComponent<Rigidbody2D>().angularVelocity) > 1f),
+            "EnemyFragment rotation was not applied");
+    }
+
+    private static int CountEnemyFragments()
+    {
+        return UnityEngine.Object.FindObjectsByType<EnemyFragment>(FindObjectsInactive.Exclude).Length;
     }
 
     private static void StopPlayMode()

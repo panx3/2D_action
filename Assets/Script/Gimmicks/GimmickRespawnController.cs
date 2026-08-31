@@ -12,6 +12,7 @@ public class GimmickRespawnController : MonoBehaviour
     [SerializeField] private Rigidbody2D playerRigidbody;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private MorningStarLauncher morningStarLauncher;
+    [SerializeField] private CameraFollow cameraFollow;
     [SerializeField] private Transform initialRespawnPoint;
 
     [Header("Optional Morning Star Reset")]
@@ -38,6 +39,9 @@ public class GimmickRespawnController : MonoBehaviour
 
         if (morningStarLauncher == null && player != null)
             morningStarLauncher = player.GetComponent<MorningStarLauncher>();
+
+        if (cameraFollow == null)
+            cameraFollow = FindAnyObjectByType<CameraFollow>(FindObjectsInactive.Exclude);
 
         if (initialRespawnPoint != null)
         {
@@ -104,6 +108,11 @@ public class GimmickRespawnController : MonoBehaviour
             morningstarRigidbody.linearVelocity = Vector2.zero;
             morningstarRigidbody.angularVelocity = 0f;
         }
+
+        // Player位置・速度、MorningStar／Chainを直した後にカメラを即座に復帰する。
+        // Snap内でLook Aheadと残留CameraShakeも0へ戻る。
+        if (cameraFollow != null)
+            cameraFollow.SnapToTarget();
 
         Debug.Log("Player, MorningStar and Chain respawned safely");
     }

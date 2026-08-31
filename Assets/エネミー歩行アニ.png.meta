@@ -1,16 +1,19 @@
 fileFormatVersion: 2
-guid: 313d2165ce81749499e69e1b61ff1a75
+guid: 2a09845a2b986e34dbfd12d2d0a29c61
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6621690452497818994
-    second: HpGauge_Full
+      213: -2562866488414266981
+    second: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_0"
   - first:
-      213: 6621690452497818995
-    second: HpGauge_MediumReference
+      213: -4531811350737327596
+    second: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_1"
   - first:
-      213: 6621690452497818996
-    second: HpGauge_Empty
+      213: -8650231963078933633
+    second: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_2"
+  - first:
+      213: 5239997933427509312
+    second: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_3"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -43,7 +46,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -81,7 +84,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -94,7 +97,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -107,7 +110,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -119,67 +122,89 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: HpGauge_Full
+      name: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_0"
       rect:
         serializedVersion: 2
-        x: 8
-        y: 56
-        width: 244
-        height: 28
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 2756ab12268f4eb50800000000000000
-      internalID: 6621690452497818994
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: HpGauge_MediumReference
-      rect:
-        serializedVersion: 2
-        x: 7
-        y: 28
-        width: 246
-        height: 28
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 3756ab12268f4eb50800000000000000
-      internalID: 6621690452497818995
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: HpGauge_Empty
-      rect:
-        serializedVersion: 2
-        x: 7
+        x: 3
         y: 0
-        width: 246
-        height: 28
+        width: 66
+        height: 85
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4756ab12268f4eb50800000000000000
-      internalID: 6621690452497818996
+      spriteID: b999057e18ede6cd0800000000000000
+      internalID: -2562866488414266981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_1"
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 0
+        width: 71
+        height: 87
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41ae73a4695cb11c0800000000000000
+      internalID: -4531811350737327596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_2"
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 0
+        width: 73
+        height: 82
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7343f74cd334f780800000000000000
+      internalID: -8650231963078933633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_3"
+      rect:
+        serializedVersion: 2
+        x: 212
+        y: 0
+        width: 68
+        height: 84
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0484ab59b5638b840800000000000000
+      internalID: 5239997933427509312
       vertices: []
       indices: 
       edges: []
@@ -188,7 +213,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: e26c75b87dee2234eab5dd3c08af348b
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -198,9 +223,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      HpGauge_Empty: 6621690452497818996
-      HpGauge_Full: 6621690452497818994
-      HpGauge_MediumReference: 6621690452497818995
+      "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_0": -2562866488414266981
+      "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_1": -4531811350737327596
+      "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_2": -8650231963078933633
+      "\u30A8\u30CD\u30DF\u30FC\u6B69\u884C\u30A2\u30CB_3": 5239997933427509312
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
