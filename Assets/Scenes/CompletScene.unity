@@ -2634,7 +2634,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 970642514569089510, guid: 6406cee492b0faa498feb5c491714654, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -11356,19 +11356,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9131789140251874504, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: m_LocalScale.x
-      value: 3.4944
+      value: 4.6370687
       objectReference: {fileID: 0}
     - target: {fileID: 9131789140251874504, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: m_LocalScale.y
-      value: 3.122
+      value: 4.1634994
       objectReference: {fileID: 0}
     - target: {fileID: 9131789140251874504, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 167.5269
+      value: 167.9268
       objectReference: {fileID: 0}
     - target: {fileID: 9131789140251874504, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 11.3429
+      value: 12.3427
       objectReference: {fileID: 0}
     - target: {fileID: 9131789140251874504, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -11962,6 +11962,14 @@ PrefabInstance:
     - target: {fileID: 2390508566584777804, guid: 6152b310939587546a1b98ef34a8c65d, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.33
+      objectReference: {fileID: 0}
+    - target: {fileID: 2469085872607522291, guid: 6152b310939587546a1b98ef34a8c65d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2718840512655033134, guid: 6152b310939587546a1b98ef34a8c65d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5273356435021031006, guid: 6152b310939587546a1b98ef34a8c65d, type: 3}
       propertyPath: m_Name
@@ -12832,7 +12840,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: -1
+  m_SortingOrder: -2
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0.67999995, y: 0, z: 0}
