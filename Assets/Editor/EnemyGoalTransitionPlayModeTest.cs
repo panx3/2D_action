@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEditor;
@@ -8,6 +9,8 @@ using UnityEngine;
 [InitializeOnLoad]
 public static class EnemyGoalTransitionPlayModeTest
 {
+    public const string RequestPath = "Temp/EnemyGoalTransitionPlayModeTest.request";
+    private const string ScenePath = "Assets/Scenes/CompletScene.unity";
     private const string RunningKey = "EnemyGoalTransitionPlayModeTest.Running";
     private const string ResultKey = "EnemyGoalTransitionPlayModeTest.Result";
 
@@ -24,6 +27,7 @@ public static class EnemyGoalTransitionPlayModeTest
     private static Rigidbody2D playerBody;
     private static Sprite previousGoalSprite;
     private static bool finished;
+    private static bool celebrationVerified;
 
     static EnemyGoalTransitionPlayModeTest()
     {
@@ -31,11 +35,27 @@ public static class EnemyGoalTransitionPlayModeTest
             Subscribe();
     }
 
+    [InitializeOnLoadMethod]
+    private static void QueueRequestedRun()
+    {
+        if (File.Exists(RequestPath))
+            EditorApplication.delayCall += RunRequested;
+    }
+
+    private static void RunRequested()
+    {
+        if (!File.Exists(RequestPath) || EditorApplication.isPlayingOrWillChangePlaymode)
+            return;
+        File.Delete(RequestPath);
+        Run();
+    }
+
     public static void Run()
     {
         SessionState.SetBool(RunningKey, true);
         SessionState.EraseString(ResultKey);
-        EditorSceneManager.OpenScene("Assets/Scenes/CompletScene.unity");
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path != ScenePath)
+            EditorSceneManager.OpenScene(ScenePath);
         Subscribe();
         EditorApplication.isPlaying = true;
     }
@@ -56,6 +76,7 @@ public static class EnemyGoalTransitionPlayModeTest
             warnings = 0;
             errors = 0;
             finished = false;
+            celebrationVerified = false;
             Application.logMessageReceived -= CountLog;
             Application.logMessageReceived += CountLog;
             EditorApplication.update -= Tick;
@@ -68,7 +89,8 @@ public static class EnemyGoalTransitionPlayModeTest
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             string result = SessionState.GetString(ResultKey, "FAILED: Play Mode ended early");
             Debug.Log("[EnemyGoalTransitionTest] " + result);
-            EditorApplication.Exit(result.StartsWith("PASS", StringComparison.Ordinal) ? 0 : 1);
+            if (Application.isBatchMode)
+                EditorApplication.Exit(result.StartsWith("PASS", StringComparison.Ordinal) ? 0 : 1);
         }
     }
 
@@ -144,7 +166,12 @@ public static class EnemyGoalTransitionPlayModeTest
                     break;
 
                 case 6:
-                    if (elapsed < 0.5d)
+                    if (!celebrationVerified && elapsed >= 0.3d)
+                    {
+                        VerifyCelebrationInProgress();
+                        celebrationVerified = true;
+                    }
+                    if (elapsed < 2.15d)
                         return;
                     VerifyGoalState();
                     Finish(true, "enemyDeath+fragments+fragmentLifetime+playerContactIgnored+goal3Hits+goalUI+pauseLock+timeScale; warnings="
@@ -285,6 +312,23 @@ public static class EnemyGoalTransitionPlayModeTest
             "Goal celebration hierarchy does not contain fourteen editable sparkle elements");
         Require(UnityEngine.Object.FindObjectsByType<CrystalFragment>(FindObjectsInactive.Exclude).Length >= 8,
             "Final Goal crystal fragment burst was not generated");
+    }
+
+    private static void VerifyCelebrationInProgress()
+    {
+        CrystalAcquiredUI celebration = UnityEngine.Object.FindAnyObjectByType<CrystalAcquiredUI>(
+            FindObjectsInactive.Include);
+        Require(celebration != null && celebration.HasPlayed && celebration.IsPlaying,
+            "Goal celebration did not start after the final crystal hit");
+        Require(!goalMenu.IsGoalReached,
+            "Goal menu opened before the celebration finished");
+        Require(pauseMenu.IsExternallyBlocked,
+            "Pause was not blocked during the goal celebration");
+        Transform logo = celebration.transform.Find("GoalCelebrationPresentation/CongratulationLogo");
+        Require(logo != null && logo.gameObject.activeInHierarchy,
+            "CONGRATULATION logo is not active during the goal celebration");
+        Require(celebration.GetComponentsInChildren<TextMeshProUGUI>(true).Length == 0,
+            "Legacy crystal-acquired text remains in the celebration UI");
     }
 
     private static void VerifyGoalUiText()
