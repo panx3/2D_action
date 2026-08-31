@@ -156,6 +156,8 @@ MonoBehaviour:
   chromaticStrength: 0.22
   contrastStrength: 0.3
   enableHotkey: 0
+  loadSavedPreferences: 0
+  includeOverlayCanvases: 1
   hotkey: 101
   targetCamera: {fileID: 1360393371}
   crtShader: {fileID: 4800000, guid: 83ac983f7efe4fd99406d1070ad10045, type: 3}
@@ -11329,6 +11331,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7896955492392581463, guid: f0aad4b22a807f04296a4dc77f3cf4a2, type: 3}
       propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7896955492392581463, guid: f0aad4b22a807f04296a4dc77f3cf4a2, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7896955492392581463, guid: f0aad4b22a807f04296a4dc77f3cf4a2, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7896955492392581463, guid: f0aad4b22a807f04296a4dc77f3cf4a2, type: 3}
+      propertyPath: m_LocalScale.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7896955492392581463, guid: f0aad4b22a807f04296a4dc77f3cf4a2, type: 3}

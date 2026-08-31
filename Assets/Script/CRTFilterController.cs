@@ -1,11 +1,12 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// CompletScene の常時CRT表示を一括管理する。
-/// カメラへの描画コンポーネントは実行時だけ追加し、既存のカメラ設定は変更しない。
+/// Scene単位の常時CRT表示を一括管理する。
+/// カメラへの描画コンポーネントは実行時だけ追加する。
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class CRTFilterController : MonoBehaviour
@@ -44,6 +45,12 @@ public sealed class CRTFilterController : MonoBehaviour
     [SerializeField]
     private bool enableHotkey;
 
+    [SerializeField, Tooltip("ONの場合のみ、起動時に共通PlayerPrefsをScene設定へ反映します。OFFではInspector設定を優先します。")]
+    private bool loadSavedPreferences;
+
+    [SerializeField, Tooltip("Screen Space - OverlayのUIを一時的にCamera描画へ含め、CRTを画面全体へ適用します。")]
+    private bool includeOverlayCanvases = true;
+
 #if ENABLE_INPUT_SYSTEM
     [SerializeField]
     private Key hotkey = Key.F8;
@@ -57,23 +64,31 @@ public sealed class CRTFilterController : MonoBehaviour
 
     private CRTFilterRenderer filterRenderer;
     private bool ownsRenderer;
+    private bool ownsCameraRenderer;
+    private readonly Dictionary<Canvas, CanvasState> convertedCanvases = new Dictionary<Canvas, CanvasState>();
+
+    private struct CanvasState
+    {
+        public RenderMode RenderMode;
+        public Camera WorldCamera;
+        public float PlaneDistance;
+    }
 
     private void Awake()
     {
-        LoadPreferences();
-        InitializeRenderer();
-        ApplySettings();
+        if (loadSavedPreferences)
+            LoadPreferences();
     }
 
     private void OnEnable()
     {
+        InitializeRenderer();
         ApplySettings();
     }
 
     private void OnDisable()
     {
-        if (filterRenderer != null)
-            filterRenderer.enabled = false;
+        StopRendering();
     }
 
     private void Update()
@@ -101,7 +116,9 @@ public sealed class CRTFilterController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (ownsRenderer && filterRenderer != null)
+        StopRendering();
+
+        if (ownsRenderer && filterRenderer != null && filterRenderer.CanBeDestroyedBy(this))
             Destroy(filterRenderer);
     }
 
@@ -150,7 +167,7 @@ public sealed class CRTFilterController : MonoBehaviour
 
     private void InitializeRenderer()
     {
-        if (filterRenderer != null)
+        if (filterRenderer != null && ownsCameraRenderer)
             return;
 
         Camera cameraToUse = targetCamera != null ? targetCamera : Camera.main;
@@ -160,15 +177,31 @@ public sealed class CRTFilterController : MonoBehaviour
             return;
         }
 
+        targetCamera = cameraToUse;
+
         filterRenderer = cameraToUse.GetComponent<CRTFilterRenderer>();
+        bool createdRenderer = false;
         if (filterRenderer == null)
         {
             filterRenderer = cameraToUse.gameObject.AddComponent<CRTFilterRenderer>();
             filterRenderer.hideFlags = HideFlags.HideInInspector;
             ownsRenderer = true;
+            createdRenderer = true;
         }
 
-        filterRenderer.Initialize(crtShader);
+        if (!filterRenderer.TryClaim(this, crtShader))
+        {
+            Debug.LogWarning(
+                "[CRTFilter] CRTFilterController already exists for this camera. Duplicate CRT filter disabled.",
+                this);
+            if (createdRenderer)
+                Destroy(filterRenderer);
+            filterRenderer = null;
+            enabled = false;
+            return;
+        }
+
+        ownsCameraRenderer = true;
     }
 
     private void ApplySettings()
@@ -177,6 +210,15 @@ public sealed class CRTFilterController : MonoBehaviour
             return;
 
         bool shouldRender = isActiveAndEnabled && crtEnabled && masterStrength > 0f;
+        if (!shouldRender)
+        {
+            StopVisualEffect();
+            return;
+        }
+
+        if (includeOverlayCanvases)
+            ConvertOverlayCanvases();
+
         filterRenderer.SetSettings(
             masterStrength,
             scanlineStrength,
@@ -184,7 +226,72 @@ public sealed class CRTFilterController : MonoBehaviour
             vignetteStrength,
             chromaticStrength,
             contrastStrength);
-        filterRenderer.enabled = shouldRender;
+        filterRenderer.enabled = true;
+    }
+
+    private void StopVisualEffect()
+    {
+        if (filterRenderer != null && ownsCameraRenderer)
+            filterRenderer.enabled = false;
+
+        RestoreOverlayCanvases();
+    }
+
+    private void StopRendering()
+    {
+        StopVisualEffect();
+
+        if (filterRenderer != null && ownsCameraRenderer)
+            filterRenderer.Release(this);
+
+        ownsCameraRenderer = false;
+    }
+
+    private void ConvertOverlayCanvases()
+    {
+        Canvas[] sceneCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        foreach (Canvas canvas in sceneCanvases)
+            TryConvertCanvas(canvas);
+    }
+
+    private void TryConvertCanvas(Canvas canvas)
+    {
+        if (canvas == null
+            || targetCamera == null
+            || canvas.gameObject.scene != gameObject.scene
+            || !canvas.isRootCanvas
+            || canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            || convertedCanvases.ContainsKey(canvas))
+            return;
+
+        convertedCanvases.Add(canvas, new CanvasState
+        {
+            RenderMode = canvas.renderMode,
+            WorldCamera = canvas.worldCamera,
+            PlaneDistance = canvas.planeDistance
+        });
+
+        canvas.renderMode = RenderMode.ScreenSpaceCamera;
+        canvas.worldCamera = targetCamera;
+        canvas.planeDistance = Mathf.Clamp(
+            canvas.planeDistance,
+            targetCamera.nearClipPlane + 0.01f,
+            targetCamera.farClipPlane - 0.01f);
+    }
+
+    private void RestoreOverlayCanvases()
+    {
+        foreach (KeyValuePair<Canvas, CanvasState> entry in convertedCanvases)
+        {
+            if (entry.Key == null)
+                continue;
+
+            entry.Key.renderMode = entry.Value.RenderMode;
+            entry.Key.worldCamera = entry.Value.WorldCamera;
+            entry.Key.planeDistance = entry.Value.PlaneDistance;
+        }
+
+        convertedCanvases.Clear();
     }
 }
 
@@ -208,16 +315,42 @@ internal sealed class CRTFilterRenderer : MonoBehaviour
     private float vignetteStrength;
     private float chromaticStrength;
     private float contrastStrength;
+    private CRTFilterController owner;
 
-    public void Initialize(Shader shader)
+    public bool TryClaim(CRTFilterController requestedOwner, Shader shader)
     {
-        if (material != null || shader == null || !shader.isSupported)
-            return;
+        if (requestedOwner == null || (owner != null && owner != requestedOwner))
+            return false;
+
+        owner = requestedOwner;
+        if (material != null)
+            return true;
+
+        if (shader == null || !shader.isSupported)
+        {
+            owner = null;
+            return false;
+        }
 
         material = new Material(shader)
         {
             hideFlags = HideFlags.HideAndDontSave
         };
+        return true;
+    }
+
+    public void Release(CRTFilterController requestedOwner)
+    {
+        if (owner != requestedOwner)
+            return;
+
+        enabled = false;
+        owner = null;
+    }
+
+    public bool CanBeDestroyedBy(CRTFilterController requestedOwner)
+    {
+        return owner == null || owner == requestedOwner;
     }
 
     public void SetSettings(
