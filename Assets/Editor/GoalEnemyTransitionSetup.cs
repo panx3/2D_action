@@ -186,7 +186,7 @@ public static class GoalEnemyTransitionSetup
         {
             SerializedObject goalSerialized = new SerializedObject(goal);
             goalSerialized.FindProperty("goalMenu").objectReferenceValue = menu;
-            goalSerialized.FindProperty("oneShot").boolValue = true;
+            goalSerialized.FindProperty("requiredHits").intValue = 3;
             goalSerialized.FindProperty("onGoalReached").FindPropertyRelative("m_PersistentCalls")
                 .FindPropertyRelative("m_Calls").arraySize = 0;
             goalSerialized.ApplyModifiedPropertiesWithoutUndo();

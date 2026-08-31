@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3514624810534279794
+--- !u!1 &9048580898443275380
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,40 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 9131789140251874504}
-  - component: {fileID: 4547409357698617644}
-  - component: {fileID: 2195058826763006093}
-  - component: {fileID: 2060218637352738784}
+  - component: {fileID: 3629233071208515214}
+  - component: {fileID: 1562323525030451514}
+  - component: {fileID: 3615828547732504469}
+  - component: {fileID: 8854201316218618752}
   m_Layer: 0
-  m_Name: GoalPoint
+  m_Name: CrystalFragment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &9131789140251874504
+--- !u!4 &3629233071208515214
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3514624810534279794}
+  m_GameObject: {fileID: 9048580898443275380}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 48.98, y: 1.02, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &4547409357698617644
+--- !u!212 &1562323525030451514
 SpriteRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3514624810534279794}
+  m_GameObject: {fileID: 9048580898443275380}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -81,28 +81,34 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 12
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1509280492, guid: 9bc635972f2136a4aa4d10c5a0d042f3, type: 3}
+  m_Sprite: {fileID: 9040891, guid: 1cbf9c8560a01c0409917a92947baaaa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.2, y: 0.27}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!61 &2195058826763006093
-BoxCollider2D:
+--- !u!50 &3615828547732504469
+Rigidbody2D:
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3514624810534279794}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
+  m_GameObject: {fileID: 9048580898443275380}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 0.02
+  m_LinearDamping: 0.2
+  m_AngularDamping: 0.1
+  m_GravityScale: 0.8
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -110,67 +116,20 @@ BoxCollider2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.02}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.7, y: 1.92}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.66, y: 1.82}
-  m_EdgeRadius: 0
---- !u!114 &2060218637352738784
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
+--- !u!114 &8854201316218618752
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3514624810534279794}
+  m_GameObject: {fileID: 9048580898443275380}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1dba14fba894384ba0d0a92ad97e55a, type: 3}
+  m_Script: {fileID: 11500000, guid: 9ebdf942da9072c44b7b156d1127fc79, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoalPoint
-  requiredHits: 3
-  hitCooldown: 0.15
-  crystalStages:
-  - {fileID: 1509280492, guid: 9bc635972f2136a4aa4d10c5a0d042f3, type: 3}
-  - {fileID: 1719753171, guid: 9bc635972f2136a4aa4d10c5a0d042f3, type: 3}
-  - {fileID: 349587640, guid: 9bc635972f2136a4aa4d10c5a0d042f3, type: 3}
-  - {fileID: 1435472584, guid: 9bc635972f2136a4aa4d10c5a0d042f3, type: 3}
-  fragmentPrefab: {fileID: 8854201316218618752, guid: 5cca2b3cd6449094882fee80ff585ff0, type: 3}
-  fragmentsPerHit: 3
-  fragmentsOnBreak: 12
-  minFragmentForce: 1.5
-  maxFragmentForce: 4
-  fragmentSpawnSpread: {x: 0.25, y: 0.45}
-  fragmentLifetimeRange: {x: 1, y: 2}
-  goalPresentationDelay: 0.18
-  cameraShake: {fileID: 0}
-  breakShakeDuration: 0.12
-  breakShakeStrength: 0.06
-  goalMenu: {fileID: 0}
-  onGoalReached:
-    m_PersistentCalls:
-      m_Calls: []
-  showDebugLog: 1
+  m_EditorClassIdentifier: Assembly-CSharp::CrystalFragment
+  fadeDuration: 0.35

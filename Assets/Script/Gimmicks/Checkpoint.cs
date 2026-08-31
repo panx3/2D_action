@@ -1,10 +1,10 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
 /// Playerが通過した復帰地点を登録するCheckpoint。
-/// DeathRespawnManagerには死亡リスポーン用の地点を登録し、
-/// GimmickRespawnControllerにはRespawnZone等の即時復帰用地点を登録する。
+/// 既存のRespawn登録を維持しつつ、起動後はMonumentの発光を保持する。
 /// </summary>
 public class Checkpoint : MonoBehaviour
 {
@@ -19,15 +19,23 @@ public class Checkpoint : MonoBehaviour
     [SerializeField] private Transform respawnPoint;
 
     [Header("Visual Settings")]
-    [SerializeField] private Color inactiveColor = Color.gray;
-    [SerializeField] private Color activeColor = Color.cyan;
+    [SerializeField] private Color inactiveColor = new Color(0.52f, 0.47f, 0.56f, 1f);
+    [SerializeField] private Color activeColor = Color.white;
+    [SerializeField] private SpriteRenderer[] glowRenderers;
+    [SerializeField, Min(0f)] private float glowTransitionDuration = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float glowPulseMinimum = 0.72f;
+    [SerializeField, Min(0f)] private float glowPulseSpeed = 1.8f;
 
-    private SpriteRenderer spriteRenderer;
-    private bool isActivated = false;
+    private SpriteRenderer _spriteRenderer;
+    private Color[] _glowBaseColors;
+    private Coroutine _glowRoutine;
+    private bool _isActivated;
+
+    public bool IsActivated => _isActivated;
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
 
         if (respawnPoint == null)
             respawnPoint = transform;
@@ -39,7 +47,18 @@ public class Checkpoint : MonoBehaviour
                 Debug.LogWarning("[Checkpoint] DeathRespawnManager was auto-found. Assign it in Inspector to avoid wrong references.", this);
         }
 
-        UpdateVisual();
+        CacheGlowColors();
+        SetVisualImmediate(false);
+    }
+
+    private void Update()
+    {
+        if (!_isActivated || _glowRoutine != null || glowRenderers == null)
+            return;
+
+        float pulse = Mathf.Lerp(glowPulseMinimum, 1f,
+            (Mathf.Sin(Time.unscaledTime * glowPulseSpeed * Mathf.PI * 2f) + 1f) * 0.5f);
+        SetGlowAlpha(pulse);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -52,7 +71,10 @@ public class Checkpoint : MonoBehaviour
 
     private void Activate()
     {
-        isActivated = true;
+        if (_isActivated)
+            return;
+
+        _isActivated = true;
 
         if (deathRespawnManager != null)
             deathRespawnManager.RegisterCheckpoint(respawnPoint.position);
@@ -60,13 +82,63 @@ public class Checkpoint : MonoBehaviour
         if (gimmickRespawnController != null)
             gimmickRespawnController.SetRespawnPoint(respawnPoint.position);
 
-        UpdateVisual();
+        if (_glowRoutine != null)
+            StopCoroutine(_glowRoutine);
+        _glowRoutine = StartCoroutine(GlowOnRoutine());
     }
 
-    private void UpdateVisual()
+    private IEnumerator GlowOnRoutine()
     {
-        if (spriteRenderer == null) return;
+        float duration = Mathf.Max(0f, glowTransitionDuration);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = duration > 0f ? Mathf.SmoothStep(0f, 1f, elapsed / duration) : 1f;
+            if (_spriteRenderer != null)
+                _spriteRenderer.color = Color.Lerp(inactiveColor, activeColor, t);
+            SetGlowAlpha(t);
+            yield return null;
+        }
 
-        spriteRenderer.color = isActivated ? activeColor : inactiveColor;
+        SetVisualImmediate(true);
+        _glowRoutine = null;
+    }
+
+    private void CacheGlowColors()
+    {
+        if (glowRenderers == null)
+        {
+            _glowBaseColors = System.Array.Empty<Color>();
+            return;
+        }
+
+        _glowBaseColors = new Color[glowRenderers.Length];
+        for (int i = 0; i < glowRenderers.Length; i++)
+            _glowBaseColors[i] = glowRenderers[i] != null ? glowRenderers[i].color : Color.white;
+    }
+
+    private void SetVisualImmediate(bool active)
+    {
+        if (_spriteRenderer != null)
+            _spriteRenderer.color = active ? activeColor : inactiveColor;
+        SetGlowAlpha(active ? 1f : 0f);
+    }
+
+    private void SetGlowAlpha(float normalizedAlpha)
+    {
+        if (glowRenderers == null || _glowBaseColors == null)
+            return;
+
+        for (int i = 0; i < glowRenderers.Length && i < _glowBaseColors.Length; i++)
+        {
+            SpriteRenderer renderer = glowRenderers[i];
+            if (renderer == null)
+                continue;
+
+            Color color = _glowBaseColors[i];
+            color.a *= Mathf.Clamp01(normalizedAlpha);
+            renderer.color = color;
+        }
     }
 }
