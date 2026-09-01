@@ -11723,8 +11723,20 @@ PrefabInstance:
     m_TransformParent: {fileID: 1951599249}
     m_Modifications:
     - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+      propertyPath: fragmentsPerHit
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+      propertyPath: fragmentsOnBreak
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: maxFragmentForce
-      value: 2.5
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+      propertyPath: minFragmentForce
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: onGoalReached.m_PersistentCalls.m_Calls.Array.size
