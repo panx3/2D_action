@@ -65,7 +65,6 @@ public sealed class TitleScreenController : MonoBehaviour
     private Vector3 _startGlowScaleOrigin;
     private Vector2[] _backgroundOrigins;
     private Color[] _ambientBaseColors;
-    private float _bgmStartVolume;
     private bool _inputReady;
     private bool _isStarting;
 
@@ -87,8 +86,6 @@ public sealed class TitleScreenController : MonoBehaviour
         _ballRotationOrigin = ballRoot != null ? ballRoot.localEulerAngles : Vector3.zero;
         _startScaleOrigin = startPanel != null ? startPanel.localScale : Vector3.one;
         _startGlowScaleOrigin = startGlow != null ? startGlow.localScale : Vector3.one;
-        _bgmStartVolume = bgmSource != null ? bgmSource.volume : 0f;
-
         CacheAmbientState();
         SetCanvasAlpha(backgroundGroup, 0f);
         SetCanvasAlpha(logoGroup, 0f);
@@ -341,7 +338,11 @@ public sealed class TitleScreenController : MonoBehaviour
             Debug.LogError("[TitleScreen] Stage Loading Transitionを開始できませんでした。", this);
             _isStarting = false;
             RestoreStartInput();
+            return;
         }
+
+        // Loading表示中にタイトル曲だけを短くフェードアウトする。
+        GameBgmController.Instance?.FadeOut(fadeOutDuration);
     }
 
     private void RestoreStartInput()

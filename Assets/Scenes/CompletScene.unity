@@ -149,11 +149,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CRTFilterController
   crtEnabled: 1
-  masterStrength: 0.4
-  scanlineStrength: 0.45
-  noiseStrength: 0.18
-  vignetteStrength: 0.35
-  chromaticStrength: 0.22
+  masterStrength: 1
+  scanlineStrength: 0.81
+  noiseStrength: 0.31
+  vignetteStrength: 0.7
+  chromaticStrength: 0.6
   contrastStrength: 0.3
   enableHotkey: 0
   loadSavedPreferences: 0
@@ -13691,6 +13691,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2113063732}
   - component: {fileID: 2113063731}
+  - component: {fileID: 2113063733}
   m_Layer: 0
   m_Name: StageAudio
   m_TagString: Untagged
@@ -13710,7 +13711,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 7853699dbee321a4b8f72acca9176cf0, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 0.15
   m_Pitch: 1
   Loop: 1
@@ -13811,6 +13812,27 @@ Transform:
   - {fileID: 442157073}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2113063733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2113063730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 912d2912bebbc4a408ab434e734b23ca, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::GameBgmController
+  bgmSource: {fileID: 2113063731}
+  initialState: 2
+  titleClip: {fileID: 0}
+  stageClip: {fileID: 8300000, guid: 7853699dbee321a4b8f72acca9176cf0, type: 3}
+  goalClip: {fileID: 8300000, guid: 05acc61ae75301b4b9a960abb7a8252c, type: 3}
+  titleVolume: 0.2
+  stageVolume: 0.15
+  goalVolume: 0.15
+  switchFadeDuration: 0.5
 --- !u!1001 &2121398669
 PrefabInstance:
   m_ObjectHideFlags: 0

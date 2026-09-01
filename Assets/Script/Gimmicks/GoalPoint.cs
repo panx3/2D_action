@@ -148,6 +148,8 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             return;
 
         _goalSequenceStarted = true;
+        // 最終破壊が成立し、獲得演出へ進むことが確定した時点で一度だけ切り替える。
+        GameBgmController.Instance?.PlayGoal();
         if (crystalAcquiredUI != null && crystalAcquiredUI.Play(ReachGoal))
             return;
 
