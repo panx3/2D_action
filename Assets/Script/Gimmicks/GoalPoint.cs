@@ -7,7 +7,7 @@ using UnityEngine.Events;
 /// Player接触ではGoalにならない。
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(SpriteRenderer), typeof(Collider2D))]
+[RequireComponent(typeof(Collider2D))]
 public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 {
     [Header("Crystal Damage")]
@@ -23,6 +23,18 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0f)] private float maxFragmentForce = 4f;
     [SerializeField] private Vector2 fragmentSpawnSpread = new Vector2(0.25f, 0.45f);
     [SerializeField] private Vector2 fragmentLifetimeRange = new Vector2(1f, 2f);
+
+    [Header("Hit Feedback")]
+    [SerializeField] private Transform visual;
+    [SerializeField] private AudioSource crystalAudioSource;
+    [SerializeField] private AudioClip crackClip;
+    [SerializeField] private AudioClip shatterClip;
+    [SerializeField, Range(0f, 1f)] private float crackVolume = 0.75f;
+    [SerializeField, Range(0f, 1f)] private float shatterVolume = 0.9f;
+    [SerializeField, Min(0f)] private float hitShakeDuration = 0.12f;
+    [SerializeField, Min(0f)] private float hitShakeAmount = 0.065f;
+    [SerializeField, Min(0f)] private float finalShakeDuration = 0.14f;
+    [SerializeField, Range(1f, 2f)] private float finalShakeMultiplier = 1.3f;
 
     [Header("Goal Presentation")]
     [SerializeField, Min(0f)] private float goalPresentationDelay = 0.18f;
@@ -43,16 +55,40 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     private bool _isBroken;
     private bool _isCleared;
     private bool _goalSequenceStarted;
+    private Vector3 _visualInitialLocalPosition;
+    private Coroutine _visualShakeRoutine;
 
     public int HitCount => _hitCount;
     public int RequiredHits => requiredHits;
     public bool IsBroken => _isBroken;
     public bool IsCleared => _isCleared;
+    public int CrackSoundPlayCount { get; private set; }
+    public int ShatterSoundPlayCount { get; private set; }
 
     private void Awake()
     {
-        _spriteRenderer = GetComponent<SpriteRenderer>();
+        if (visual == null)
+        {
+            _spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+            visual = _spriteRenderer != null ? _spriteRenderer.transform : null;
+        }
+        else
+        {
+            _spriteRenderer = visual.GetComponent<SpriteRenderer>();
+        }
+
+        if (visual != null)
+            _visualInitialLocalPosition = visual.localPosition;
+
         _hitCollider = GetComponent<Collider2D>();
+        if (crystalAudioSource == null)
+            crystalAudioSource = GetComponent<AudioSource>();
+        if (crystalAudioSource != null)
+        {
+            crystalAudioSource.playOnAwake = false;
+            crystalAudioSource.loop = false;
+            crystalAudioSource.spatialBlend = 0f;
+        }
 
         if (goalMenu == null)
             goalMenu = FindAnyObjectByType<GoalMenuController>(FindObjectsInactive.Include);
@@ -100,6 +136,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         _hitCount = Mathf.Min(requiredHits, _hitCount + 1);
         bool finalHit = _hitCount >= requiredHits;
 
+        PlayHitFeedback(finalHit);
         ApplyCrystalStage(_hitCount);
         SpawnFragments(context.ImpactPoint, context.ImpactDirection,
             finalHit ? fragmentsOnBreak : fragmentsPerHit);
@@ -115,6 +152,72 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             cameraShake.Shake(breakShakeDuration, breakShakeStrength);
 
         BeginGoalSequence();
+    }
+
+    private void OnDisable()
+    {
+        if (_visualShakeRoutine != null)
+        {
+            StopCoroutine(_visualShakeRoutine);
+            _visualShakeRoutine = null;
+        }
+
+        ResetVisualPosition();
+    }
+
+    private void PlayHitFeedback(bool finalHit)
+    {
+        AudioClip clip = finalHit ? shatterClip : crackClip;
+        float volume = finalHit ? shatterVolume : crackVolume;
+        if (crystalAudioSource != null && clip != null)
+        {
+            // 前のOneShotも止め、最終HitでCrackとShatterが重ならないようにする。
+            crystalAudioSource.Stop();
+            crystalAudioSource.PlayOneShot(clip, volume);
+            if (finalHit)
+                ShatterSoundPlayCount++;
+            else
+                CrackSoundPlayCount++;
+        }
+
+        StartVisualShake(finalHit);
+    }
+
+    private void StartVisualShake(bool finalHit)
+    {
+        if (visual == null)
+            return;
+
+        if (_visualShakeRoutine != null)
+            StopCoroutine(_visualShakeRoutine);
+
+        ResetVisualPosition();
+        float duration = finalHit ? finalShakeDuration : hitShakeDuration;
+        float amount = finalHit ? hitShakeAmount * finalShakeMultiplier : hitShakeAmount;
+        _visualShakeRoutine = StartCoroutine(ShakeVisualRoutine(duration, amount));
+    }
+
+    private IEnumerator ShakeVisualRoutine(float duration, float amount)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float fade = duration > 0f ? 1f - Mathf.Clamp01(elapsed / duration) : 0f;
+            float x = Random.Range(-amount, amount) * fade;
+            float y = Random.Range(-amount * 0.25f, amount * 0.25f) * fade;
+            visual.localPosition = _visualInitialLocalPosition + new Vector3(x, y, 0f);
+            yield return null;
+        }
+
+        ResetVisualPosition();
+        _visualShakeRoutine = null;
+    }
+
+    private void ResetVisualPosition()
+    {
+        if (visual != null)
+            visual.localPosition = _visualInitialLocalPosition;
     }
 
     private static bool TryGetMorningStarBody(Collider2D other, out Rigidbody2D morningStarBody)
