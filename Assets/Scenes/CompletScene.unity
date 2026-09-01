@@ -11411,6 +11411,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 1951599249}
     m_Modifications:
     - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+      propertyPath: maxFragmentForce
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060218637352738784, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
       propertyPath: onGoalReached.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -12856,7 +12860,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8000000000000000007, guid: 58aa887053318a9478bfa013fd462049, type: 3}
       propertyPath: maxFragmentForce
-      value: 3.5
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
