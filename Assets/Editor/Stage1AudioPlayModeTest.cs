@@ -97,7 +97,7 @@ public static class Stage1AudioPlayModeTest
         PlayerHealth health = UnityEngine.Object.FindAnyObjectByType<PlayerHealth>();
         Require(player != null && health != null, "Player/PlayerHealth missing");
 
-        AudioClip bgmClip = LoadClip("Assets/Audio/BGM/tekkyu_shojo_stage1_theme_v4_european_fantasy.wav");
+        AudioClip bgmClip = LoadClip("Assets/Audio/BGM/Peritune_Winds_Embrace.ogg");
         AudioClip jumpClip = LoadClip("Assets/Audio/SFX/jump_realistic.wav");
         AudioClip footstepClip = LoadClip("Assets/Audio/SFX/footstep_grass.wav");
         AudioClip landingClip = LoadClip("Assets/Audio/SFX/Imported/ジャンプの着地.mp3");
@@ -116,7 +116,7 @@ public static class Stage1AudioPlayModeTest
         int activeBgmCount = 0;
         foreach (AudioSource source in UnityEngine.Object.FindObjectsByType<AudioSource>())
         {
-            if (source.clip == bgmClip && source.loop && source.playOnAwake)
+            if (source.clip == bgmClip && source.loop && !source.playOnAwake)
             {
                 bgmSource = source;
                 activeBgmCount++;
@@ -126,8 +126,11 @@ public static class Stage1AudioPlayModeTest
         Require(activeBgmCount == 1, $"formal BGM source count is {activeBgmCount}");
         Require(bgmSource != null && bgmSource.gameObject.name == "StageAudio", "StageAudio BGM source missing");
         Require(bgmSource.isPlaying, "Stage BGM did not start in Play Mode");
-        Require(Mathf.Approximately(bgmSource.volume, 0.2f) && Mathf.Approximately(bgmSource.spatialBlend, 0f),
+        Require(Mathf.Approximately(bgmSource.volume, 0.15f) && Mathf.Approximately(bgmSource.spatialBlend, 0f),
             "Stage BGM volume/spatial settings invalid");
+        GameBgmController bgmController = bgmSource.GetComponent<GameBgmController>();
+        Require(bgmController != null && bgmController.CurrentState == GameBgmController.BgmState.Stage,
+            "Stage BGM controller/state invalid");
 
         RequirePlayerFloat(player, "_groundMoveForce", 70f);
         RequirePlayerFloat(player, "_groundLinearDragX", 8f);

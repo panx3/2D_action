@@ -8,7 +8,8 @@ using UnityEngine.SceneManagement;
 public static class Stage1AudioAndPlayerTuningSetup
 {
     private const string CompletScenePath = "Assets/Scenes/CompletScene.unity";
-    private const string BgmPath = "Assets/Audio/BGM/tekkyu_shojo_stage1_theme_v4_european_fantasy.wav";
+    private const string BgmPath = "Assets/Audio/BGM/Peritune_Winds_Embrace.ogg";
+    private const string GoalBgmPath = "Assets/Audio/BGM/GoalBGM.mp3";
     private const string JumpPath = "Assets/Audio/SFX/jump_realistic.wav";
     private const string LaunchPath = "Assets/Audio/SFX/tekkyu_launch.wav";
     private const string FootstepPath = "Assets/Audio/SFX/footstep_grass.wav";
@@ -28,6 +29,7 @@ public static class Stage1AudioAndPlayerTuningSetup
     private sealed class AudioAssets
     {
         public AudioClip Bgm;
+        public AudioClip GoalBgm;
         public AudioClip Jump;
         public AudioClip Launch;
         public AudioClip Footstep;
@@ -95,6 +97,7 @@ public static class Stage1AudioAndPlayerTuningSetup
         return new AudioAssets
         {
             Bgm = LoadClip(BgmPath),
+            GoalBgm = LoadClip(GoalBgmPath),
             Jump = LoadClip(JumpPath),
             Launch = LoadClip(LaunchPath),
             Footstep = LoadClip(FootstepPath),
@@ -168,7 +171,7 @@ public static class Stage1AudioAndPlayerTuningSetup
             throw new InvalidOperationException("Player missing from CompletScene.");
 
         AudioSource worldImpactSource;
-        AudioSource bgmSource = EnsureStageAudio(scene, assets.Bgm, out worldImpactSource);
+        AudioSource bgmSource = EnsureStageAudio(scene, assets.Bgm, assets.GoalBgm, out worldImpactSource);
         ConfigurePlayer(player, assets, worldImpactSource);
 
         foreach (EnemyHealth enemy in FindAllInScene<EnemyHealth>(scene))
@@ -183,7 +186,11 @@ public static class Stage1AudioAndPlayerTuningSetup
             throw new InvalidOperationException("Failed to save CompletScene.");
     }
 
-    private static AudioSource EnsureStageAudio(Scene scene, AudioClip bgmClip, out AudioSource worldImpactSource)
+    private static AudioSource EnsureStageAudio(
+        Scene scene,
+        AudioClip bgmClip,
+        AudioClip goalBgmClip,
+        out AudioSource worldImpactSource)
     {
         GameObject stageAudio = null;
         foreach (GameObject root in scene.GetRootGameObjects())
@@ -204,7 +211,20 @@ public static class Stage1AudioAndPlayerTuningSetup
         AudioSource bgmSource = stageAudio.GetComponent<AudioSource>();
         if (bgmSource == null)
             bgmSource = stageAudio.AddComponent<AudioSource>();
-        ConfigureSource(bgmSource, bgmClip, true, true, 0.2f);
+        ConfigureSource(bgmSource, bgmClip, true, false, 0.15f);
+
+        GameBgmController bgmController = stageAudio.GetComponent<GameBgmController>();
+        if (bgmController == null)
+            bgmController = stageAudio.AddComponent<GameBgmController>();
+        SerializedObject serializedBgm = new SerializedObject(bgmController);
+        serializedBgm.FindProperty("bgmSource").objectReferenceValue = bgmSource;
+        serializedBgm.FindProperty("initialState").enumValueIndex = (int)GameBgmController.BgmState.Stage;
+        serializedBgm.FindProperty("stageClip").objectReferenceValue = bgmClip;
+        serializedBgm.FindProperty("goalClip").objectReferenceValue = goalBgmClip;
+        serializedBgm.FindProperty("stageVolume").floatValue = 0.15f;
+        serializedBgm.FindProperty("goalVolume").floatValue = 0.15f;
+        serializedBgm.FindProperty("switchFadeDuration").floatValue = 0.5f;
+        serializedBgm.ApplyModifiedPropertiesWithoutUndo();
 
         Transform worldImpactTransform = stageAudio.transform.Find(OneShotAudioUtility.WorldImpactSourceName);
         if (worldImpactTransform == null)
@@ -363,7 +383,7 @@ public static class Stage1AudioAndPlayerTuningSetup
         List<AudioSource> formalBgmSources = new List<AudioSource>();
         foreach (AudioSource source in FindAllInScene<AudioSource>(scene))
         {
-            if (source.clip == assets.Bgm && source.loop && source.playOnAwake)
+            if (source.clip == assets.Bgm && source.loop && !source.playOnAwake)
                 formalBgmSources.Add(source);
         }
 
@@ -372,11 +392,15 @@ public static class Stage1AudioAndPlayerTuningSetup
 
         AudioSource bgm = formalBgmSources[0];
         if (bgm.gameObject.name != "StageAudio"
-            || !Mathf.Approximately(bgm.volume, 0.2f)
+            || !Mathf.Approximately(bgm.volume, 0.15f)
             || !Mathf.Approximately(bgm.spatialBlend, 0f))
         {
             throw new InvalidOperationException("StageAudio BGM settings are invalid.");
         }
+
+        GameBgmController bgmController = bgm.GetComponent<GameBgmController>();
+        if (bgmController == null)
+            throw new InvalidOperationException("StageAudio GameBgmController is missing.");
 
         AudioSource world = bgm.transform.Find(OneShotAudioUtility.WorldImpactSourceName)?.GetComponent<AudioSource>();
         if (world == null || world.loop || world.playOnAwake || world.clip != null)

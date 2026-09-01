@@ -316,6 +316,18 @@ public static class EnemyGoalTransitionPlayModeTest
 
     private static void VerifyCelebrationInProgress()
     {
+        GameBgmController bgm = GameBgmController.Instance;
+        AudioClip goalClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/BGM/GoalBGM.mp3");
+        Require(bgm != null && bgm.CurrentState == GameBgmController.BgmState.Goal,
+            "Goal BGM state did not start with the celebration");
+        Require(bgm.Source != null && bgm.Source.clip == goalClip && bgm.Source.isPlaying,
+            "Stage BGM did not switch to GoalBGM");
+        int timeSamplesBeforeRepeat = bgm.Source.timeSamples;
+        bgm.PlayGoal();
+        bgm.PlayGoal();
+        Require(bgm.Source.timeSamples >= timeSamplesBeforeRepeat,
+            "Repeated Goal requests restarted GoalBGM");
+
         CrystalAcquiredUI celebration = UnityEngine.Object.FindAnyObjectByType<CrystalAcquiredUI>(
             FindObjectsInactive.Include);
         Require(celebration != null && celebration.HasPlayed && celebration.IsPlaying,
