@@ -1960,11 +1960,12 @@ MonoBehaviour:
   _visualRoot: {fileID: 0}
   _airLaunchBlinkDuration: 0.22
   _airLaunchBlinkInterval: 0.05
-  _draggingMoveAssistMultiplier: 1.22
+  _enableDraggingMoveAssist: 1
+  _draggingStartAssist: 0.08
+  _draggingCruiseAssist: 0.28
   _draggingAssistRampTime: 0.2
   _draggingMaxSpeedMultiplier: 1.05
-  _draggingAssistFadeStartRopeRatio: 0.72
-  _draggingAssistStopRopeRatio: 0.9
+  _draggingBallSpeedForFullAssist: 3.5
   _sfxAudioSource: {fileID: 844245848}
   _footstepAudioSource: {fileID: 1120973971}
   _jumpClip: {fileID: 8300000, guid: 499b1cae543efbc43b6731b035b28d98, type: 3}
