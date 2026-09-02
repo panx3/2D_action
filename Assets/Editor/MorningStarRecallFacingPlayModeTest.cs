@@ -112,13 +112,12 @@ public static class MorningStarRecallFacingPlayModeTest
                 case 2:
                     if (elapsed < 1.1d)
                         return;
-                    Require(launcher.CurrentState == MorningStarLauncher.MorningStarState.Dropping,
-                        $"launch auto-transitioned to {launcher.CurrentState} instead of remaining Dropping");
-                    Require(launcher.IsLaunchRopeLengthActive,
-                        "launch rope length was automatically restored without Recall");
-                    Require(Mathf.Abs(launcher.MaxRopeLength
-                                      - launcher.BaseMaxRopeLength * launcher.LaunchRopeLengthMultiplier) < 0.001f,
-                        "persistent thrown state lost the 1.4x rope length");
+                    Require(launcher.CurrentState == MorningStarLauncher.MorningStarState.Dragging,
+                        $"finished flight remained in {launcher.CurrentState} instead of Rest/Dragging");
+                    Require(!launcher.IsLaunchRopeLengthActive,
+                        "finished flight retained the launch rope length");
+                    Require(Mathf.Abs(launcher.MaxRopeLength - launcher.BaseMaxRopeLength) < 0.001f,
+                        "Rest did not restore the base rope length");
                     Require(Mathf.Abs(constraint.MaxRopeLength - launcher.MaxRopeLength) < 0.001f,
                         "ChainConstraint did not keep the effective maximum length");
                     launcher.RequestReturn();
@@ -275,7 +274,7 @@ public static class MorningStarRecallFacingPlayModeTest
         EditorApplication.update -= Tick;
         Application.logMessageReceived -= CountLog;
         SessionState.SetString(ResultKey,
-            $"PASS noAutoRecall+manualRecall+rightLeftVerticalFacing+launchPose+magnetPersistence+rootScale; "
+            $"PASS flightToRest+manualRecall+rightLeftVerticalFacing+launchPose+magnetPersistence+rootScale; "
             + $"warnings={warnings}; errors={errors}");
         EditorApplication.isPlaying = false;
     }

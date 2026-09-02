@@ -210,10 +210,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChainConstraint2D
   handAnchor: {fileID: 1696931101}
+  playerRb: {fileID: 0}
   morningStarRb: {fileID: 29217296}
-  maxRopeLength: 4
-  correctionThreshold: 0.01
-  positionCorrectionRate: 0.64
+  maxRopeLength: 6
+  tensionStartRatio: 0.82
+  tensionStrength: 42
+  tensionDamping: 5
+  maxTensionForce: 65
+  airTensionMultiplier: 1.8
+  groundPullEaseTime: 0.45
+  movingPullResistance: 0.1
+  runJumpMomentumThreshold: 3
+  jumpMomentumGraceTime: 0.5
+  runJumpTensionMultiplier: 0
+  anchorFollowTime: 0.08
   maxBallSpeed: 20
 --- !u!114 &29217293
 MonoBehaviour:
@@ -1960,12 +1970,6 @@ MonoBehaviour:
   _visualRoot: {fileID: 0}
   _airLaunchBlinkDuration: 0.22
   _airLaunchBlinkInterval: 0.05
-  _enableDraggingMoveAssist: 1
-  _draggingStartAssist: 0.08
-  _draggingCruiseAssist: 0.28
-  _draggingAssistRampTime: 0.2
-  _draggingMaxSpeedMultiplier: 1.05
-  _draggingBallSpeedForFullAssist: 3.5
   _sfxAudioSource: {fileID: 844245848}
   _footstepAudioSource: {fileID: 1120973971}
   _jumpClip: {fileID: 8300000, guid: 499b1cae543efbc43b6731b035b28d98, type: 3}
@@ -2068,11 +2072,29 @@ MonoBehaviour:
   maxCombatHitStop: 0.1
   hitCooldownPerTarget: 0.2
   postHitSpeedRetention: 0.7
-  maxRopeLength: 4
-  launchRopeLengthMultiplier: 1.4
+  maxRopeLength: 6
+  tensionStartRatio: 0.82
+  tensionStrength: 42
+  tensionDamping: 5
+  maxTensionForce: 65
+  airTensionMultiplier: 1.8
+  groundPullEaseTime: 0.45
+  movingPullResistance: 0.1
+  runJumpMomentumThreshold: 3
+  jumpMomentumGraceTime: 0.5
+  runJumpTensionMultiplier: 0
   ballMass: 0.35
+  normalBallGravityScale: 2
+  thrownBallGravityScale: 2
+  ballGroundLinearDamping: 0.08
+  ballFlyingLinearDamping: 0
   maxBallLinearSpeed: 20
-  throwSpeed: 18
+  maxBallFallSpeed: 22
+  spinChargeBallGravityScale: 0
+  hookedBallGravityScale: 0
+  throwSpeed: 25
+  launchRopeLengthMultiplier: 1.4
+  postThrowDownwardBias: 0.25
   minAimDistance: 0.2
   launchStartOffset: 0.25
   aimLaunchCooldown: 0
@@ -2080,6 +2102,10 @@ MonoBehaviour:
   horizontalFacingThreshold: 0.1
   limitAirThrows: 1
   maxAirThrows: 1
+  enableAirLaunchAssist: 1
+  airLaunchAssistDuration: 0.16
+  airLaunchGravityMultiplier: 0.4
+  airLaunchFallingVelocityReduction: 1.4
   enableGamepadInput: 1
   gamepadFireThreshold: 0.7
   gamepadResetThreshold: 0.25
@@ -2090,22 +2116,18 @@ MonoBehaviour:
   recallEasePower: 2
   recallHoldTime: 0.04
   recallStartDelay: 0
-  disableChainConstraintDuringRecall: 1
   chargedRecallTimeMultiplier: 0.6
   maxThrownTime: 0.45
   maxThrowDistance: 4.8
   dropTransitionSpeed: 2
-  enableChainConstraintWhileDropping: 1
   returnSpeed: 21
   returnFinishDistance: 0.25
-  disableChainConstraintDuringReturn: 1
   allowFloorHook: 0
   allowWallHook: 1
   allowCeilingHook: 1
   floorNormalThreshold: 0.5
   hookMinSpeed: 2
   releaseBoost: 3
-  disableChainConstraintWhileHooked: 1
   shortClickRethrowFromHook: 1
   rehookLockoutTime: 0.15
   hookStickMinTime: 0.1
@@ -2131,44 +2153,6 @@ MonoBehaviour:
   minChargedThrowMultiplier: 1.2
   maxChargedThrowMultiplier: 2.2
   spinGuardCollider: {fileID: 0}
-  enableLaunchTensionPull: 1
-  baseTensionForce: 38
-  relativeSpeedTensionBonus: 3
-  groundHorizontalTensionMultiplier: 1.25
-  airTensionMultiplier: 1.15
-  tensionMovementMaxSpeed: 12
-  minimumOutwardRelativeSpeed: 0.15
-  tensionInertiaRetentionRate: 0.82
-  tensionInertiaHoldTime: 0.2
-  tensionInertiaDecayRate: 3.5
-  enableAirTensionGravityAssist: 1
-  airTensionGravityMultiplier: 0.1
-  airTensionGravityAssistDuration: 0.4
-  airTensionMaxFallSpeedDuringAssist: -3.5
-  airTensionAssistApexVelocity: 0.15
-  normalBallGravityScale: 2
-  thrownBallGravityScale: 2
-  droppingBallGravityScale: 2.8
-  spinChargeBallGravityScale: 0
-  hookedBallGravityScale: 0
-  maxBallFallSpeed: 22
-  ballLinearDampingWhileDropping: 0.08
-  postThrowDownwardBias: 0.25
-  enableTensionSnap: 1
-  tensionSnapThreshold: 0.88
-  tensionSnapImpulse: 2.2
-  tensionSnapAirMultiplier: 1.5
-  tensionSnapCooldown: 0.15
-  groundedTensionSnapUpwardLimit: 0.03
-  playerVisualRoot: {fileID: 0}
-  enableThrowPullVisualLean: 1
-  visualLeanAngle: 10
-  visualLeanDuration: 0.1
-  visualLeanReturnDuration: 0.12
-  audioSource: {fileID: 0}
-  tensionSnapClip: {fileID: 0}
-  tensionSnapVolume: 0.35
-  tensionSnapPitchRandomRange: 0.05
   cameraShake: {fileID: 0}
   minimumGroundImpactSpeed: 7
   shakeDuration: 0.1
@@ -2195,6 +2179,8 @@ MonoBehaviour:
   launchAnchorLocalPosition: {x: 2.87, y: 0.39}
   launchPoseForwardFrameTime: 0.06
   launchPoseMaxHoldTime: 0.4
+  groundLaunchPoseHoldDuration: 0.5
+  chainAnchorVisualFollowTime: 0.08
   debugLog: 0
 --- !u!232 &625955979
 DistanceJoint2D:
@@ -3731,7 +3717,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 644621435881873491, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.05
+      value: 4.27
       objectReference: {fileID: 0}
     - target: {fileID: 644621435881873491, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: m_LocalPosition.z
