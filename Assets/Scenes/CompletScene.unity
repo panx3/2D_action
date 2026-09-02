@@ -211,7 +211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChainConstraint2D
   handAnchor: {fileID: 1696931101}
   morningStarRb: {fileID: 29217296}
-  maxRopeLength: 5
+  maxRopeLength: 4
   correctionThreshold: 0.01
   positionCorrectionRate: 0.64
   maxBallSpeed: 20
@@ -1960,6 +1960,11 @@ MonoBehaviour:
   _visualRoot: {fileID: 0}
   _airLaunchBlinkDuration: 0.22
   _airLaunchBlinkInterval: 0.05
+  _draggingMoveAssistMultiplier: 1.22
+  _draggingAssistRampTime: 0.2
+  _draggingMaxSpeedMultiplier: 1.05
+  _draggingAssistFadeStartRopeRatio: 0.72
+  _draggingAssistStopRopeRatio: 0.9
   _sfxAudioSource: {fileID: 844245848}
   _footstepAudioSource: {fileID: 1120973971}
   _jumpClip: {fileID: 8300000, guid: 499b1cae543efbc43b6731b035b28d98, type: 3}
@@ -2062,7 +2067,7 @@ MonoBehaviour:
   maxCombatHitStop: 0.1
   hitCooldownPerTarget: 0.2
   postHitSpeedRetention: 0.7
-  maxRopeLength: 5
+  maxRopeLength: 4
   launchRopeLengthMultiplier: 1.4
   ballMass: 0.35
   maxBallLinearSpeed: 20
@@ -2125,23 +2130,21 @@ MonoBehaviour:
   minChargedThrowMultiplier: 1.2
   maxChargedThrowMultiplier: 2.2
   spinGuardCollider: {fileID: 0}
-  applyThrowRecoilToPlayer: 1
-  groundedThrowRecoilImpulse: 1.4
-  airThrowRecoilImpulse: 3
-  recoilUpwardLimit: 0.18
-  maxPlayerRecoilSpeed: 12
-  throwPullHorizontalBoost: 1.25
-  throwPullMinVisibleImpulse: 0.8
-  enableThrowPullAssist: 1
-  groundedThrowPullDistanceInPlayerWidths: 1.4
-  airThrowPullDistanceInPlayerWidths: 2.8
-  throwPullAssistDuration: 0.2
-  throwPullAssistMaxSpeed: 12
-  throwPullAssistForce: 38
-  throwPullGroundUpwardLimit: 0.02
-  throwPullAirUpwardLimit: 0.35
-  playerWidthFallback: 1
-  playerBodyCollider: {fileID: 0}
+  enableLaunchTensionPull: 1
+  baseTensionForce: 38
+  relativeSpeedTensionBonus: 3
+  groundHorizontalTensionMultiplier: 1.25
+  airTensionMultiplier: 1.15
+  tensionMovementMaxSpeed: 12
+  minimumOutwardRelativeSpeed: 0.15
+  tensionInertiaRetentionRate: 0.82
+  tensionInertiaHoldTime: 0.2
+  tensionInertiaDecayRate: 3.5
+  enableAirTensionGravityAssist: 1
+  airTensionGravityMultiplier: 0.1
+  airTensionGravityAssistDuration: 0.4
+  airTensionMaxFallSpeedDuringAssist: -3.5
+  airTensionAssistApexVelocity: 0.15
   normalBallGravityScale: 2
   thrownBallGravityScale: 2
   droppingBallGravityScale: 2.8

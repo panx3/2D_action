@@ -121,6 +121,32 @@ public class Player : MonoBehaviour
 
 
 
+    [Header("Dragging Feel")]
+
+    [SerializeField, Tooltip("Dragging中の地上走行補助を有効にする")]
+
+    private bool _enableDraggingMoveAssist = true;
+
+    [SerializeField, Range(0f, 1f), Tooltip("入力開始直後に加える、地上移動力に対する補助割合")]
+
+    private float _draggingStartAssist = 0.08f;
+
+    [SerializeField, Range(0f, 1f), Tooltip("鉄球が入力方向へ十分動いている時の最大補助割合")]
+
+    private float _draggingCruiseAssist = 0.28f;
+
+    [SerializeField, Min(0f), Tooltip("Dragging補助が最大になるまでの時間")]
+
+    private float _draggingAssistRampTime = 0.2f;
+
+    [SerializeField, Range(1f, 1.05f), Tooltip("Dragging補助が働く速度上限の通常走行速度倍率")]
+
+    private float _draggingMaxSpeedMultiplier = 1.05f;
+
+    [SerializeField, Min(0.01f), Tooltip("実位置変化から求めた鉄球速度がこの値で巡航補助になる")]
+
+    private float _draggingBallSpeedForFullAssist = 3.5f;
+
     [Header("効果音")]
 
     [SerializeField] private AudioSource _sfxAudioSource;
@@ -185,6 +211,38 @@ public class Player : MonoBehaviour
 
     private Coroutine _airLaunchBlinkRoutine;
 
+    private bool _airTensionGravityAssistActive;
+
+    private float _airTensionGravityAssistRemaining;
+
+    private float _airTensionGravityMultiplier = 1f;
+
+    private float _airTensionMaxFallSpeedDuringAssist = -3.5f;
+
+    private float _airTensionAssistApexVelocity;
+
+    private float _draggingAssistRamp;
+
+    private float _draggingAssistInputSign;
+
+    private Vector2 _draggingPreviousBallPosition;
+
+    private bool _hasDraggingBallPositionSample;
+
+    private float _draggingActualBallHorizontalSpeed;
+
+    // MorningStarLauncherから張力を受けた時だけ使用する一時状態。
+    // 通常時は1のままなので、既存の歩行Dragには影響しない。
+    private float _tensionMomentumHoldTimer;
+
+    private float _tensionMomentumDragMultiplier = 1f;
+
+    private float _tensionMomentumDecayRate;
+
+    // 張力由来の横移動が実質停止したとみなす速度。
+    // Inspector調整値ではなく、残留Runtime状態を片付けるためだけの許容誤差。
+    private const float StationaryTensionMomentumSpeedThreshold = 0.05f;
+
     private bool _facingRight = true;
 
 
@@ -204,6 +262,62 @@ public class Player : MonoBehaviour
     public Transform WeaponHandAnchor => _weaponHandAnchor;
 
     public Vector3 RightFacingHandAnchorLocalPosition => _rightFacingHandAnchorLocalPosition;
+
+    /// <summary>
+    /// 鎖張力で得た横速度が通常歩行Dragで即座に消えないよう、一時的にDragを弱める。
+    /// 張力がない通常走行からは呼ばれないため、通常の操作感は変化しない。
+    /// </summary>
+    public void PreserveTensionMomentum(float holdTime, float retentionRate, float decayRate)
+    {
+        _tensionMomentumHoldTimer = Mathf.Max(_tensionMomentumHoldTimer, Mathf.Max(0f, holdTime));
+        float retainedDragMultiplier = 1f - Mathf.Clamp01(retentionRate);
+        _tensionMomentumDragMultiplier = Mathf.Min(
+            _tensionMomentumDragMultiplier,
+            retainedDragMultiplier);
+        _tensionMomentumDecayRate = Mathf.Max(0f, decayRate);
+    }
+
+    /// <summary>
+    /// 空中射出後、本張力が発生するまでの下降猶予を開始する。
+    /// 実際の補助時間は頂点付近または下降中だけ消費する。
+    /// </summary>
+    public void BeginAirTensionGravityAssist(
+        float duration,
+        float gravityMultiplier,
+        float maxFallSpeed,
+        float apexVelocity)
+    {
+        if (duration <= 0f)
+        {
+            EndAirTensionGravityAssist();
+            return;
+        }
+
+        _airTensionGravityAssistActive = true;
+        _airTensionGravityAssistRemaining = duration;
+        _airTensionGravityMultiplier = Mathf.Clamp01(gravityMultiplier);
+        _airTensionMaxFallSpeedDuringAssist = Mathf.Min(-0.01f, maxFallSpeed);
+        _airTensionAssistApexVelocity = Mathf.Max(0f, apexVelocity);
+    }
+
+    public void EndAirTensionGravityAssist()
+    {
+        _airTensionGravityAssistActive = false;
+        _airTensionGravityAssistRemaining = 0f;
+        _airTensionGravityMultiplier = 1f;
+        _airTensionAssistApexVelocity = 0f;
+    }
+
+    /// <summary>
+    /// Game Start / Return Complete / Respawnで共通のDragging Feel状態へ戻す。
+    /// 張力で得たPlayerの実速度は維持するが、Thrown/Dropping専用だった
+    /// 低Dragタイマーは終了し、通常Draggingの入力応答へ確実に戻す。
+    /// </summary>
+    public void BeginDraggingMovementState()
+    {
+        ClearTensionMomentum();
+        ResetDraggingMoveAssist();
+    }
 
     /// <summary>
     /// Launch Poseなど、現在のSpriteだけに必要な手元位置を一時的に使用する。
@@ -297,6 +411,12 @@ public class Player : MonoBehaviour
 
 
         StopFootstepAudio();
+
+        ClearTensionMomentum();
+
+        EndAirTensionGravityAssist();
+
+        ResetDraggingMoveAssist();
 
     }
 
@@ -485,15 +605,29 @@ public class Player : MonoBehaviour
 
         float h = _moveInput.x;
 
+        NormalizeStoppedDraggingMomentum();
+
         float moveF = grounded ? _groundMoveForce : _groundMoveForce * _airMoveFactor;
 
-        float drag = grounded ? _groundLinearDragX : _airLinearDragX;
+        float baseDrag = grounded ? _groundLinearDragX : _airLinearDragX;
+
+        float draggingAssistForce = CalculateDraggingMoveAssistForce(
+            h,
+            grounded,
+            moveF,
+            baseDrag);
+
+        float drag = baseDrag;
+
+        drag *= UpdateTensionMomentumDragMultiplier();
 
 
 
         if (Mathf.Abs(h) > 0.01f)
 
-            _rigid.AddForce(new Vector2(h * moveF, 0f), ForceMode2D.Force);
+            _rigid.AddForce(
+                new Vector2(h * (moveF + draggingAssistForce), 0f),
+                ForceMode2D.Force);
 
 
 
@@ -501,11 +635,203 @@ public class Player : MonoBehaviour
 
     }
 
+    private float CalculateDraggingMoveAssistForce(
+        float horizontalInput,
+        bool grounded,
+        float moveForce,
+        float baseDrag)
+
+    {
+
+        bool isGroundDragging = grounded
+            && _morningStarLauncher != null
+            && _morningStarLauncher.CanUseDraggingMoveAssist;
+
+        if (!isGroundDragging || baseDrag <= 0.001f)
+
+        {
+
+            ResetDraggingMoveAssist();
+
+            return 0f;
+
+        }
+
+        UpdateDraggingBallPositionSample();
+
+        if (!_enableDraggingMoveAssist || Mathf.Abs(horizontalInput) <= 0.01f)
+        {
+            ResetDraggingAssistInput();
+            return 0f;
+        }
+
+        float inputSign = Mathf.Sign(horizontalInput);
+        if (_draggingAssistInputSign != 0f && inputSign != _draggingAssistInputSign)
+            _draggingAssistRamp = 0f;
+        _draggingAssistInputSign = inputSign;
+
+        if (_draggingAssistRampTime <= 0f)
+            _draggingAssistRamp = 1f;
+        else
+            _draggingAssistRamp = Mathf.MoveTowards(
+                _draggingAssistRamp,
+                1f,
+                Time.fixedDeltaTime / _draggingAssistRampTime);
+
+        float ballSpeedTowardInput = Mathf.Max(
+            0f,
+            _draggingActualBallHorizontalSpeed * inputSign);
+        float ballMotion01 = Mathf.Clamp01(
+            ballSpeedTowardInput / _draggingBallSpeedForFullAssist);
+        float motionBasedAssist = Mathf.Lerp(
+            _draggingStartAssist,
+            _draggingCruiseAssist,
+            ballMotion01);
+        float assistRatio = Mathf.Lerp(
+            _draggingStartAssist,
+            motionBasedAssist,
+            _draggingAssistRamp);
+
+        float normalTargetSpeed = Mathf.Abs(horizontalInput) * moveForce / baseDrag;
+        float assistedTargetSpeed = normalTargetSpeed * _draggingMaxSpeedMultiplier;
+        float speedTowardInput = _rigid.linearVelocity.x * inputSign;
+        float speedRoom = 1f - Mathf.InverseLerp(
+            normalTargetSpeed,
+            Mathf.Max(normalTargetSpeed + 0.01f, assistedTargetSpeed),
+            speedTowardInput);
+
+        return moveForce
+            * assistRatio
+            * speedRoom;
+
+    }
+
+    /// <summary>
+    /// ChainConstraintがRigidbody速度を0にしていても、FixedUpdate間の実位置差から
+    /// Dragging中の鉄球が実際に地面を移動した横速度を取得する。
+    /// </summary>
+    private void UpdateDraggingBallPositionSample()
+    {
+        if (!_morningStarLauncher.TryGetMorningStarPosition(out Vector2 currentPosition))
+        {
+            _hasDraggingBallPositionSample = false;
+            _draggingActualBallHorizontalSpeed = 0f;
+            return;
+        }
+
+        if (!_hasDraggingBallPositionSample)
+        {
+            _draggingPreviousBallPosition = currentPosition;
+            _hasDraggingBallPositionSample = true;
+            _draggingActualBallHorizontalSpeed = 0f;
+            return;
+        }
+
+        float dt = Mathf.Max(0.0001f, Time.fixedDeltaTime);
+        _draggingActualBallHorizontalSpeed =
+            (currentPosition.x - _draggingPreviousBallPosition.x) / dt;
+        _draggingPreviousBallPosition = currentPosition;
+    }
+
+    private void ResetDraggingAssistInput()
+    {
+        _draggingAssistRamp = 0f;
+        _draggingAssistInputSign = 0f;
+    }
+
+    private void ResetDraggingMoveAssist()
+
+    {
+
+        ResetDraggingAssistInput();
+
+        _draggingPreviousBallPosition = Vector2.zero;
+
+        _hasDraggingBallPositionSample = false;
+
+        _draggingActualBallHorizontalSpeed = 0f;
+
+    }
+
+    private float UpdateTensionMomentumDragMultiplier()
+
+    {
+
+        if (_tensionMomentumHoldTimer > 0f)
+
+        {
+
+            _tensionMomentumHoldTimer = Mathf.Max(
+                0f,
+                _tensionMomentumHoldTimer - Time.fixedDeltaTime);
+
+            return _tensionMomentumDragMultiplier;
+
+        }
+
+        if (_tensionMomentumDragMultiplier >= 1f)
+
+            return 1f;
+
+        if (_tensionMomentumDecayRate <= 0f)
+
+        {
+
+            _tensionMomentumDragMultiplier = 1f;
+
+            return 1f;
+
+        }
+
+        _tensionMomentumDragMultiplier = Mathf.MoveTowards(
+            _tensionMomentumDragMultiplier,
+            1f,
+            _tensionMomentumDecayRate * Time.fixedDeltaTime);
+
+        return _tensionMomentumDragMultiplier;
+
+    }
+
+    private void ClearTensionMomentum()
+
+    {
+
+        _tensionMomentumHoldTimer = 0f;
+
+        _tensionMomentumDragMultiplier = 1f;
+
+        _tensionMomentumDecayRate = 0f;
+
+    }
+
+    /// <summary>
+    /// Recallを通らずDroppingのまま床を引きずる経路用の安全策。
+    /// Playerが実際に停止した後まで張力用の低Dragだけを残さない。
+    /// </summary>
+    private void NormalizeStoppedDraggingMomentum()
+    {
+        if (_rigid == null || _morningStarLauncher == null)
+            return;
+        if (!_morningStarLauncher.CanUseDraggingMoveAssist)
+            return;
+        if (Mathf.Abs(_rigid.linearVelocity.x)
+            > StationaryTensionMomentumSpeedThreshold)
+            return;
+
+        ClearTensionMomentum();
+    }
+
 
 
     private void ApplyJumpGravity()
 
     {
+
+        if (_airTensionGravityAssistActive && IsGrounded)
+            EndAirTensionGravityAssist();
+
+        if (TryApplyAirTensionGravityAssist())
+            return;
 
         float vy = _rigid.linearVelocity.y;
 
@@ -534,6 +860,46 @@ public class Player : MonoBehaviour
         if (_rigid.linearVelocity.y < _maxFallSpeed)
 
             _rigid.linearVelocity = new Vector2(_rigid.linearVelocity.x, _maxFallSpeed);
+
+    }
+
+    private bool TryApplyAirTensionGravityAssist()
+
+    {
+
+        if (!_airTensionGravityAssistActive || _airTensionGravityAssistRemaining <= 0f)
+            return false;
+
+        float verticalSpeed = _rigid.linearVelocity.y;
+        if (verticalSpeed > _airTensionAssistApexVelocity)
+            return false;
+
+        _airTensionGravityAssistRemaining = Mathf.Max(
+            0f,
+            _airTensionGravityAssistRemaining - Time.fixedDeltaTime);
+
+        float normalFallGravityScale = _rigid.gravityScale
+            + Mathf.Max(0f, _fallGravityMultiplier - 1f);
+        float targetGravityAcceleration = Physics2D.gravity.y
+            * normalFallGravityScale
+            * _airTensionGravityMultiplier;
+        float builtInGravityAcceleration = Physics2D.gravity.y * _rigid.gravityScale;
+        float assistAcceleration = targetGravityAcceleration - builtInGravityAcceleration;
+        _rigid.AddForce(
+            new Vector2(0f, assistAcceleration * _rigid.mass),
+            ForceMode2D.Force);
+
+        if (_rigid.linearVelocity.y < _airTensionMaxFallSpeedDuringAssist)
+        {
+            _rigid.linearVelocity = new Vector2(
+                _rigid.linearVelocity.x,
+                _airTensionMaxFallSpeedDuringAssist);
+        }
+
+        if (_airTensionGravityAssistRemaining <= 0f)
+            EndAirTensionGravityAssist();
+
+        return true;
 
     }
 
@@ -688,6 +1054,12 @@ public class Player : MonoBehaviour
     {
 
         StopFootstepAudio();
+
+        ClearTensionMomentum();
+
+        EndAirTensionGravityAssist();
+
+        ResetDraggingMoveAssist();
 
     }
 
@@ -864,6 +1236,22 @@ public class Player : MonoBehaviour
         _groundCheckVerticalOverlap = Mathf.Clamp(_groundCheckVerticalOverlap, 0f, 0.05f);
 
         _groundedGraceTime = Mathf.Max(0f, _groundedGraceTime);
+
+        _draggingStartAssist = Mathf.Clamp01(_draggingStartAssist);
+
+        _draggingCruiseAssist = Mathf.Clamp(
+            Mathf.Max(_draggingStartAssist, _draggingCruiseAssist),
+            0f,
+            1f);
+
+        _draggingAssistRampTime = Mathf.Max(0f, _draggingAssistRampTime);
+
+        _draggingMaxSpeedMultiplier = Mathf.Clamp(
+            _draggingMaxSpeedMultiplier,
+            1f,
+            1.05f);
+
+        _draggingBallSpeedForFullAssist = Mathf.Max(0.01f, _draggingBallSpeedForFullAssist);
 
         ResolveGroundCheckCollider();
 

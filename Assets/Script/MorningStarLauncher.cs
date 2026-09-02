@@ -158,26 +158,42 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float maxChargedThrowMultiplier = 2.2f;
     [SerializeField] private Collider2D spinGuardCollider;
 
-    [Header("発射時プレイヤー引っ張られ")]
-    [SerializeField] private bool applyThrowRecoilToPlayer = true;
-    [SerializeField] private float groundedThrowRecoilImpulse = 1.4f;
-    [SerializeField] private float airThrowRecoilImpulse = 3f;
-    [SerializeField] private float recoilUpwardLimit = 0.18f;
-    [SerializeField] private float maxPlayerRecoilSpeed = 12f;
-    [SerializeField] private float throwPullHorizontalBoost = 1.25f;
-    [SerializeField] private float throwPullMinVisibleImpulse = 0.8f;
+    [Header("射出後の鎖張力移動")]
+    [FormerlySerializedAs("enableThrowPullAssist")]
+    [SerializeField] private bool enableLaunchTensionPull = true;
+    [FormerlySerializedAs("throwPullAssistForce")]
+    [SerializeField, Min(0f), Tooltip("鎖が張った時にPlayerへ加える基本張力")]
+    private float baseTensionForce = 38f;
+    [SerializeField, Min(0f), Tooltip("鉄球がPlayerから離れる相対速度1m/sあたりの張力加算")]
+    private float relativeSpeedTensionBonus = 3f;
+    [FormerlySerializedAs("throwPullHorizontalBoost")]
+    [SerializeField, Min(0f), Tooltip("接地中の水平方向張力倍率")]
+    private float groundHorizontalTensionMultiplier = 1.25f;
+    [SerializeField, Min(0f), Tooltip("空中での張力倍率")]
+    private float airTensionMultiplier = 1.15f;
+    [FormerlySerializedAs("throwPullAssistMaxSpeed")]
+    [SerializeField, Min(0f), Tooltip("張力方向へ到達できる最大速度。0なら制限なし")]
+    private float tensionMovementMaxSpeed = 12f;
+    [SerializeField, Min(0f), Tooltip("張力判定に必要な、鉄球が離れる最低相対速度")]
+    private float minimumOutwardRelativeSpeed = 0.15f;
+    [SerializeField, Range(0f, 1f), Tooltip("張力で得た横速度に対して一時的に保持する割合")]
+    private float tensionInertiaRetentionRate = 0.82f;
+    [FormerlySerializedAs("throwPullAssistDuration")]
+    [SerializeField, Min(0f), Tooltip("最後に張力を受けてから慣性を強く保持する時間")]
+    private float tensionInertiaHoldTime = 0.2f;
+    [SerializeField, Min(0f), Tooltip("慣性保持後、通常の横減速へ戻る速さ")]
+    private float tensionInertiaDecayRate = 3.5f;
 
-    [Header("Throw Pull Assist（短時間の引っ張られ補助）")]
-    [SerializeField] private bool enableThrowPullAssist = true;
-    [SerializeField] private float groundedThrowPullDistanceInPlayerWidths = 1.4f;
-    [SerializeField] private float airThrowPullDistanceInPlayerWidths = 2.8f;
-    [SerializeField] private float throwPullAssistDuration = 0.2f;
-    [SerializeField] private float throwPullAssistMaxSpeed = 12f;
-    [SerializeField] private float throwPullAssistForce = 38f;
-    [SerializeField] private float throwPullGroundUpwardLimit = 0.02f;
-    [SerializeField] private float throwPullAirUpwardLimit = 0.35f;
-    [SerializeField] private float playerWidthFallback = 1f;
-    [SerializeField] private Collider2D playerBodyCollider;
+    [Header("Air Tension Grace（空中の張力待ち）")]
+    [SerializeField] private bool enableAirTensionGravityAssist = true;
+    [SerializeField, Range(0f, 1f), Tooltip("張力待ち中の落下重力倍率")]
+    private float airTensionGravityMultiplier = 0.35f;
+    [SerializeField, Min(0f), Tooltip("頂点付近または下降中に補助が働く最大時間")]
+    private float airTensionGravityAssistDuration = 0.25f;
+    [SerializeField, Tooltip("張力待ち中の最大下降速度（負の値）")]
+    private float airTensionMaxFallSpeedDuringAssist = -3.5f;
+    [SerializeField, Min(0f), Tooltip("この上昇速度以下をジャンプ頂点付近として扱う")]
+    private float airTensionAssistApexVelocity = 0.15f;
 
     [Header("鉄球の重さ")]
     [SerializeField] private float normalBallGravityScale = 2f;
@@ -191,7 +207,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     [Header("TensionSnap（鎖が張った瞬間の重さ）")]
     [SerializeField] private bool enableTensionSnap = true;
-    [SerializeField, Range(0.1f, 1.2f)] private float tensionSnapThreshold = 0.88f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("有効鎖長に対する張力開始距離の割合")]
+    private float tensionSnapThreshold = 0.88f;
     [SerializeField] private float tensionSnapImpulse = 2.2f;
     [SerializeField] private float tensionSnapAirMultiplier = 1.5f;
     [SerializeField] private float tensionSnapCooldown = 0.15f;
@@ -313,11 +330,6 @@ public class MorningStarLauncher : MonoBehaviour
     public int GroundImpactSoundCount { get; private set; }
     private bool _tensionSnapUsed;
     private float _tensionSnapCooldownTimer;
-    private bool _throwPullAssistActive;
-    private float _throwPullAssistTimer;
-    private Vector2 _throwPullAssistDirection;
-    private Vector2 _throwPullStartPlayerPosition;
-    private float _throwPullTargetDistance;
     private Coroutine _visualLeanCoroutine;
 
     private int _hashBackwardAim;
@@ -336,6 +348,18 @@ public class MorningStarLauncher : MonoBehaviour
     public float LastSpeedMultiplier => _lastSpeedMultiplier;
     public Transform HandAnchor => handAnchor;
     public Vector2 RopeAnchorWorld => GetPlayerRopeAnchorWorld();
+    public bool CanUseDraggingMoveAssist => _state == MorningStarState.Dragging;
+    public bool TryGetMorningStarPosition(out Vector2 position)
+    {
+        if (morningStarRb == null)
+        {
+            position = Vector2.zero;
+            return false;
+        }
+
+        position = morningStarRb.position;
+        return true;
+    }
     public bool IsLaunchPoseActive => _launchPoseActive;
     public Vector2 LaunchReadyAnchorLocalPosition => launchReadyAnchorLocalPosition;
     public Vector2 LaunchAnchorLocalPosition => launchAnchorLocalPosition;
@@ -360,6 +384,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        EndAirTensionGravityAssist();
         EndLaunchPose();
         SetChainConstraintActive(false);
         SetLaunchRopeLengthActive(false);
@@ -453,8 +478,6 @@ public class MorningStarLauncher : MonoBehaviour
             player = playerRigidbody2D.GetComponent<Player>();
         if (_playerHealth == null)
             _playerHealth = GetComponent<PlayerHealth>();
-        if (playerBodyCollider == null && playerRigidbody2D != null)
-            playerBodyCollider = playerRigidbody2D.GetComponent<Collider2D>();
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
         if (sfxAudioSource == null)
@@ -490,6 +513,20 @@ public class MorningStarLauncher : MonoBehaviour
     {
         launchRopeLengthMultiplier = Mathf.Max(1f, launchRopeLengthMultiplier);
         horizontalFacingThreshold = Mathf.Clamp01(horizontalFacingThreshold);
+        tensionSnapThreshold = Mathf.Clamp(tensionSnapThreshold, 0.1f, 1f);
+        baseTensionForce = Mathf.Max(0f, baseTensionForce);
+        relativeSpeedTensionBonus = Mathf.Max(0f, relativeSpeedTensionBonus);
+        groundHorizontalTensionMultiplier = Mathf.Max(0f, groundHorizontalTensionMultiplier);
+        airTensionMultiplier = Mathf.Max(0f, airTensionMultiplier);
+        tensionMovementMaxSpeed = Mathf.Max(0f, tensionMovementMaxSpeed);
+        minimumOutwardRelativeSpeed = Mathf.Max(0f, minimumOutwardRelativeSpeed);
+        tensionInertiaRetentionRate = Mathf.Clamp01(tensionInertiaRetentionRate);
+        tensionInertiaHoldTime = Mathf.Max(0f, tensionInertiaHoldTime);
+        tensionInertiaDecayRate = Mathf.Max(0f, tensionInertiaDecayRate);
+        airTensionGravityMultiplier = Mathf.Clamp01(airTensionGravityMultiplier);
+        airTensionGravityAssistDuration = Mathf.Max(0f, airTensionGravityAssistDuration);
+        airTensionMaxFallSpeedDuringAssist = Mathf.Min(-0.01f, airTensionMaxFallSpeedDuringAssist);
+        airTensionAssistApexVelocity = Mathf.Max(0f, airTensionAssistApexVelocity);
         if (hookableLayers.value == 0)
             hookableLayers = LayerMask.GetMask("Walls", "Default");
         if (enemyLayers.value == 0)
@@ -513,9 +550,6 @@ public class MorningStarLauncher : MonoBehaviour
         _playerRb = playerRigidbody2D;
         EnsureHookRopeJoint();
         SetHookRopeJointActive(false);
-        if (playerBodyCollider == null && _playerRb != null)
-            playerBodyCollider = _playerRb.GetComponent<Collider2D>();
-
         if (morningStarRb == null)
         {
             GameObject head = GameObject.FindGameObjectWithTag("morningstar");
@@ -560,6 +594,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        EndAirTensionGravityAssist();
         UnsubscribeFromPlayerLanding();
         UnsubscribeFromPlayerDeath();
         EndLaunchPose();
@@ -690,8 +725,8 @@ public class MorningStarLauncher : MonoBehaviour
                 break;
         }
 
-        UpdateThrowPullAssist();
         TryApplyTensionSnap();
+        ApplyLaunchChainTension();
         ApplyBallPhysicsByState();
     }
 
@@ -761,10 +796,16 @@ public class MorningStarLauncher : MonoBehaviour
         if (maxLen <= 0f)
             return;
 
-        Vector2 playerPos = _playerRb.position;
-        Vector2 toBall = morningStarRb.position - playerPos;
+        Vector2 toBall = morningStarRb.position - GetPlayerRopeAnchorWorld();
         float dist = toBall.magnitude;
         if (dist < maxLen * tensionSnapThreshold || dist <= 0.001f)
+            return;
+
+        Vector2 dir = toBall / dist;
+        float outwardRelativeSpeed = Vector2.Dot(
+            morningStarRb.linearVelocity - _playerRb.linearVelocity,
+            dir);
+        if (outwardRelativeSpeed < minimumOutwardRelativeSpeed && dist < maxLen)
             return;
 
         bool grounded = player != null && player.IsGrounded;
@@ -772,7 +813,6 @@ public class MorningStarLauncher : MonoBehaviour
         if (impulse <= 0f)
             return;
 
-        Vector2 dir = toBall / dist;
         if (grounded && dir.y > groundedTensionSnapUpwardLimit)
             dir.y = groundedTensionSnapUpwardLimit;
         if (dir.sqrMagnitude < 1e-6f)
@@ -780,6 +820,7 @@ public class MorningStarLauncher : MonoBehaviour
         dir.Normalize();
 
         _playerRb.AddForce(dir * impulse, ForceMode2D.Impulse);
+        EndAirTensionGravityAssist();
         _tensionSnapUsed = true;
         _tensionSnapCooldownTimer = tensionSnapCooldown;
         PlayThrowPullVisualLean(dir);
@@ -787,11 +828,103 @@ public class MorningStarLauncher : MonoBehaviour
         LogDebug("MorningStar Tension Snap");
     }
 
+    /// <summary>
+    /// 射出方向ではなく、実際のPlayer―鉄球間の鎖が張り始め、かつ両者が
+    /// さらに離れようとしている時だけ張力を加える。
+    /// </summary>
+    private void ApplyLaunchChainTension()
+    {
+        if (!enableLaunchTensionPull || _playerRb == null || morningStarRb == null)
+            return;
+        if (_state != MorningStarState.Thrown && _state != MorningStarState.Dropping)
+            return;
+
+        float ropeLength = GetEffectiveRopeLength();
+        if (ropeLength <= 0f)
+            return;
+
+        Vector2 toBall = morningStarRb.position - GetPlayerRopeAnchorWorld();
+        float distance = toBall.magnitude;
+        float tensionStartDistance = ropeLength * tensionSnapThreshold;
+        if (distance < tensionStartDistance || distance <= 0.001f)
+            return;
+
+        Vector2 directionToBall = toBall / distance;
+        Vector2 relativeVelocity = morningStarRb.linearVelocity - _playerRb.linearVelocity;
+        float outwardRelativeSpeed = Vector2.Dot(relativeVelocity, directionToBall);
+        bool ropeOverLength = distance >= ropeLength;
+        if (!ropeOverLength && outwardRelativeSpeed < minimumOutwardRelativeSpeed)
+            return;
+
+        float tautRange = Mathf.Max(0.01f, ropeLength - tensionStartDistance);
+        float tautness = Mathf.Clamp01((distance - tensionStartDistance) / tautRange);
+        float baseForce = baseTensionForce * Mathf.Max(0.15f, tautness);
+        float relativeForce = Mathf.Max(0f, outwardRelativeSpeed) * relativeSpeedTensionBonus;
+        float forceMagnitude = baseForce + relativeForce;
+        if (forceMagnitude <= 0f)
+            return;
+
+        EndAirTensionGravityAssist();
+
+        bool grounded = player != null && player.IsGrounded;
+        Vector2 pullForce;
+        if (grounded)
+        {
+            Vector2 groundDirection = directionToBall;
+            groundDirection.x *= groundHorizontalTensionMultiplier;
+            groundDirection.y = Mathf.Clamp(
+                groundDirection.y,
+                -0.15f,
+                groundedTensionSnapUpwardLimit);
+            pullForce = groundDirection * forceMagnitude;
+        }
+        else
+        {
+            pullForce = directionToBall * forceMagnitude * airTensionMultiplier;
+        }
+
+        _playerRb.AddForce(pullForce, ForceMode2D.Force);
+        LimitPlayerTensionSpeed(directionToBall, grounded);
+
+        if (player != null)
+        {
+            player.PreserveTensionMomentum(
+                tensionInertiaHoldTime,
+                tensionInertiaRetentionRate,
+                tensionInertiaDecayRate);
+        }
+    }
+
+    private void LimitPlayerTensionSpeed(Vector2 tensionDirection, bool grounded)
+    {
+        if (tensionMovementMaxSpeed <= 0f)
+            return;
+
+        Vector2 velocity = _playerRb.linearVelocity;
+        if (grounded && Mathf.Abs(tensionDirection.x) > 0.001f)
+        {
+            float horizontalSign = Mathf.Sign(tensionDirection.x);
+            float speedTowardBall = velocity.x * horizontalSign;
+            if (speedTowardBall > tensionMovementMaxSpeed)
+                velocity.x -= horizontalSign * (speedTowardBall - tensionMovementMaxSpeed);
+        }
+        else
+        {
+            float speedTowardBall = Vector2.Dot(velocity, tensionDirection);
+            if (speedTowardBall > tensionMovementMaxSpeed)
+                velocity -= tensionDirection * (speedTowardBall - tensionMovementMaxSpeed);
+        }
+
+        _playerRb.linearVelocity = velocity;
+    }
+
     private void EnterDraggingState(bool snapBallToSocket)
     {
+        EndAirTensionGravityAssist();
         SetChainConstraintActive(false);
         SetLaunchRopeLengthActive(false);
         _state = MorningStarState.Dragging;
+        ApplyBallPhysicsByState();
         _isHooked = false;
         _attachedMagnet = null;
         _hookPoint = Vector2.zero;
@@ -802,7 +935,6 @@ public class MorningStarLauncher : MonoBehaviour
         _thrownElapsed = 0f;
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;
-        _throwPullAssistActive = false;
         _fireHoldTime = 0f;
         _isFireHolding = false;
         _hookClickHoldTimer = 0f;
@@ -817,6 +949,9 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (snapBallToSocket && morningStarRb != null)
             SnapBallToSocket(zeroVelocity: true);
+
+        if (player != null)
+            player.BeginDraggingMovementState();
 
         TryConsumeBufferedFire();
     }
@@ -1769,6 +1904,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void BeginHook(Vector2 hookPoint)
     {
+        EndAirTensionGravityAssist();
         // Hook/Magnet Swingは常に通常鎖長。Constraintを先に外して急補正を防ぐ。
         SetChainConstraintActive(false);
         SetLaunchRopeLengthActive(false);
@@ -1783,7 +1919,6 @@ public class MorningStarLauncher : MonoBehaviour
         _hookClickHolding = false;
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;
-        _throwPullAssistActive = false;
         _requireReleaseBeforeHookClick = Mouse.current != null && Mouse.current.leftButton.isPressed;
 
         morningStarRb.position = _hookPoint;
@@ -1993,6 +2128,24 @@ public class MorningStarLauncher : MonoBehaviour
         return player != null && player.IsGrounded;
     }
 
+    private void BeginAirTensionGravityAssistIfNeeded()
+    {
+        if (!enableAirTensionGravityAssist || player == null || player.IsGrounded)
+            return;
+
+        player.BeginAirTensionGravityAssist(
+            airTensionGravityAssistDuration,
+            airTensionGravityMultiplier,
+            airTensionMaxFallSpeedDuringAssist,
+            airTensionAssistApexVelocity);
+    }
+
+    private void EndAirTensionGravityAssist()
+    {
+        if (player != null)
+            player.EndAirTensionGravityAssist();
+    }
+
     private void SubscribeToPlayerLanding()
     {
         if (_playerLandingSubscribed)
@@ -2020,6 +2173,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerLanded()
     {
+        EndAirTensionGravityAssist();
         _airThrowsUsed = 0;
     }
 
@@ -2049,6 +2203,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerDead()
     {
+        EndAirTensionGravityAssist();
         EndLaunchPose();
         SetChainConstraintActive(false);
         SetHookRopeJointActive(false);
@@ -2105,6 +2260,8 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (!TryConsumeAirThrow())
             return;
+
+        EndAirTensionGravityAssist();
 
         // 前回Launch Poseが残っている場合も、新しいRecall開始時点で必ず解除する。
         EndLaunchPose();
@@ -2213,14 +2370,12 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.WakeUp();
         PlayMorningStarLaunchSound();
 
-        ApplyThrowPullToPlayer(d);
-        BeginThrowPullAssist(d);
-
         _thrownElapsed = 0f;
         _lastSpeedMultiplier = _pendingThrowSpeedMultiplier;
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;
         _state = MorningStarState.Thrown;
+        BeginAirTensionGravityAssistIfNeeded();
         SetAnimatorBool(_hashLaunchCharge, false);
         BeginLaunchPose();
         SetAnimatorTrigger(_hashLaunchFire);
@@ -2228,120 +2383,6 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (aimLaunchCooldown > 0f)
             _nextLaunchTime = Time.time + aimLaunchCooldown;
-    }
-
-    private Vector2 ApplyThrowPullDirectionLimits(Vector2 direction, float airUpwardLimit)
-    {
-        if (direction.sqrMagnitude < 1e-6f)
-            return Vector2.zero;
-
-        Vector2 pullDir = direction.normalized;
-        pullDir.x *= throwPullHorizontalBoost;
-
-        bool grounded = player != null && player.IsGrounded;
-        bool horizontalDominant = Mathf.Abs(pullDir.x) > Mathf.Abs(pullDir.y);
-
-        float upwardLimit = grounded ? throwPullGroundUpwardLimit : airUpwardLimit;
-        if (!horizontalDominant)
-            upwardLimit = grounded ? throwPullGroundUpwardLimit : airUpwardLimit;
-        else if (grounded)
-            upwardLimit = throwPullGroundUpwardLimit;
-        if (pullDir.y > upwardLimit)
-            pullDir.y = upwardLimit;
-        if (pullDir.sqrMagnitude < 1e-6f)
-            return Vector2.zero;
-
-        return pullDir.normalized;
-    }
-
-    private void ApplyThrowPullToPlayer(Vector2 throwDirection)
-    {
-        if (!applyThrowRecoilToPlayer || _playerRb == null || throwDirection.sqrMagnitude < 1e-6f)
-            return;
-
-        Vector2 pullDir = ApplyThrowPullDirectionLimits(throwDirection.normalized, recoilUpwardLimit);
-
-        bool grounded = player != null && player.IsGrounded;
-        if (pullDir.sqrMagnitude < 1e-6f)
-            return;
-
-        float impulse = grounded ? groundedThrowRecoilImpulse : airThrowRecoilImpulse;
-        impulse = Mathf.Max(impulse, throwPullMinVisibleImpulse);
-        if (impulse <= 0f)
-            return;
-
-        _playerRb.AddForce(pullDir * impulse, ForceMode2D.Impulse);
-
-        if (maxPlayerRecoilSpeed > 0f
-            && _playerRb.linearVelocity.sqrMagnitude > maxPlayerRecoilSpeed * maxPlayerRecoilSpeed)
-        {
-            _playerRb.linearVelocity = _playerRb.linearVelocity.normalized * maxPlayerRecoilSpeed;
-        }
-
-        LogDebug($"MorningStar Throw Pull impulse={impulse}, dir={pullDir}");
-    }
-
-    private void BeginThrowPullAssist(Vector2 throwDirection)
-    {
-        if (!enableThrowPullAssist || _playerRb == null || throwDirection.sqrMagnitude < 1e-6f)
-            return;
-
-        Vector2 dir = ApplyThrowPullDirectionLimits(throwDirection.normalized, throwPullAirUpwardLimit);
-
-        bool grounded = player != null && player.IsGrounded;
-        if (dir.sqrMagnitude < 1e-6f)
-            return;
-
-        float widthMultiplier = grounded ? groundedThrowPullDistanceInPlayerWidths : airThrowPullDistanceInPlayerWidths;
-        _throwPullAssistActive = true;
-        _throwPullAssistTimer = throwPullAssistDuration;
-        _throwPullAssistDirection = dir;
-        _throwPullStartPlayerPosition = _playerRb.position;
-        _throwPullTargetDistance = GetPlayerWidth() * Mathf.Max(0f, widthMultiplier);
-
-        PlayThrowPullVisualLean(dir);
-        LogDebug($"Throw Pull Assist start targetDistance={_throwPullTargetDistance}, dir={dir}");
-    }
-
-    private void UpdateThrowPullAssist()
-    {
-        if (!_throwPullAssistActive || _playerRb == null)
-            return;
-
-        _throwPullAssistTimer -= Time.fixedDeltaTime;
-
-        Vector2 current = _playerRb.position;
-        float moved = Vector2.Dot(current - _throwPullStartPlayerPosition, _throwPullAssistDirection);
-        if (moved >= _throwPullTargetDistance || _throwPullAssistTimer <= 0f)
-        {
-            _throwPullAssistActive = false;
-            return;
-        }
-
-        if (throwPullAssistForce > 0f)
-            _playerRb.AddForce(_throwPullAssistDirection * throwPullAssistForce, ForceMode2D.Force);
-
-        Vector2 v = _playerRb.linearVelocity;
-        float speedAlongDir = Vector2.Dot(v, _throwPullAssistDirection);
-        float desiredMinSpeed = Mathf.Min(
-            throwPullAssistMaxSpeed,
-            _throwPullTargetDistance / Mathf.Max(0.05f, throwPullAssistDuration));
-
-        if (speedAlongDir < desiredMinSpeed)
-            v += _throwPullAssistDirection * (desiredMinSpeed - speedAlongDir);
-
-        if (throwPullAssistMaxSpeed > 0f && v.sqrMagnitude > throwPullAssistMaxSpeed * throwPullAssistMaxSpeed)
-            v = v.normalized * throwPullAssistMaxSpeed;
-
-        _playerRb.linearVelocity = v;
-    }
-
-    private float GetPlayerWidth()
-    {
-        if (playerBodyCollider != null)
-            return Mathf.Max(0.1f, playerBodyCollider.bounds.size.x);
-
-        return Mathf.Max(0.1f, playerWidthFallback);
     }
 
     private void PlayThrowPullVisualLean(Vector2 pullDir)
@@ -2476,6 +2517,8 @@ public class MorningStarLauncher : MonoBehaviour
         if (!canManualReturn)
             return;
 
+        EndAirTensionGravityAssist();
+
         EndLaunchPose();
         SetChainConstraintActive(false);
         SetLaunchRopeLengthActive(false);
@@ -2485,7 +2528,6 @@ public class MorningStarLauncher : MonoBehaviour
         _hookPoint = Vector2.zero;
         _tensionSnapUsed = false;
         _tensionSnapCooldownTimer = 0f;
-        _throwPullAssistActive = false;
         _state = MorningStarState.Returning;
         _rehookLockoutTimer = Mathf.Max(_rehookLockoutTimer, rehookLockoutTime);
 
@@ -2533,11 +2575,8 @@ public class MorningStarLauncher : MonoBehaviour
             return;
         }
 
-        morningStarRb.position = GetThrowSocketWorld();
-        morningStarRb.linearVelocity = Vector2.zero;
-        morningStarRb.angularVelocity = 0f;
-        morningStarRb.WakeUp();
-        EnterDraggingState(false);
+        // Game Start / Respawnと同じDragging初期化経路を必ず通す。
+        EnterDraggingState(true);
     }
 
     private void SnapBallToSocket(bool zeroVelocity = true)
