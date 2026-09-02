@@ -230,7 +230,6 @@ public class ChainLineController : MonoBehaviour
         if (TryDrawWrappedChain(start, end))
             return;
 
-        end = ClampEndToMaxLength(start, end);
         LastDirectDistance = Vector3.Distance(start, end);
         LastSagAmount = 0f;
         BuildAndDrawVisualPath(start, end, 0f);
@@ -243,7 +242,6 @@ public class ChainLineController : MonoBehaviour
         if (TryDrawWrappedChain(start, end))
             return;
 
-        end = ClampEndToMaxLength(start, end);
         int count = Mathf.Max(2, sagSegments);
         float directDistance = Vector3.Distance(start, end);
         float resolvedSag = CalculateSagForDistance(directDistance);
@@ -251,20 +249,6 @@ public class ChainLineController : MonoBehaviour
         LastDirectDistance = directDistance;
         LastSagAmount = resolvedSag;
         BuildAndDrawVisualPath(start, end, resolvedSag);
-    }
-
-    private Vector3 ClampEndToMaxLength(Vector3 start, Vector3 end)
-    {
-        float maxLen = maxRopeLength;
-        if (maxLen <= 0f)
-            return end;
-
-        Vector3 off = end - start;
-        float sqr = off.sqrMagnitude;
-        if (sqr <= maxLen * maxLen || sqr < 1e-10f)
-            return end;
-
-        return start + off.normalized * maxLen;
     }
 
     private bool TryDrawWrappedChain(Vector3 start, Vector3 end)

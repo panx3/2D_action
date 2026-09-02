@@ -86,6 +86,7 @@ public class ChainConstraint2D : MonoBehaviour
     public float TensionDamping => tensionDamping;
     public float AirTensionMultiplier => airTensionMultiplier;
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
+    public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
 
     public Vector2 GetRopeContactPoint(int index)
@@ -212,9 +213,9 @@ public class ChainConstraint2D : MonoBehaviour
 
         Vector2 physicsAnchor = UpdatePhysicsAnchorWorld();
         RebuildRopePath(physicsAnchor, morningStarRb.position);
+        physicsAnchor = EnforceSafetyLimit(physicsAnchor);
         UpdateRunJumpMomentumGrace(physicsAnchor, GetRopePathLength());
         ApplyRopeTension(physicsAnchor);
-        EnforceSafetyLimit(physicsAnchor);
         ClampBallSpeed();
     }
 
@@ -954,8 +955,16 @@ public class ChainConstraint2D : MonoBehaviour
             return;
         }
 
+        // Flying中は最大長まで既存の射出慣性を優先し、境界で初めて張力を伝える。
+        // Rest / Draggingは従来どおり手前から連続的に張力を立ち上げる。
         float startDistance = maxRopeLength * tensionStartRatio;
-        if (distance <= startDistance)
+        if (_prioritizeFlyingTrajectory && distance < maxRopeLength - 0.001f)
+        {
+            ResetGroundPullEase();
+            return;
+        }
+
+        if (!_prioritizeFlyingTrajectory && distance <= startDistance)
         {
             ResetGroundPullEase();
             return;
@@ -963,9 +972,13 @@ public class ChainConstraint2D : MonoBehaviour
 
         Vector2 playerPathDirection = GetPlayerPathDirection(handPosition);
         Vector2 ballPathDirection = GetBallPathDirection(handPosition);
-        float tensionRange = Mathf.Max(0.01f, maxRopeLength - startDistance);
-        float tautness = Mathf.Clamp01((distance - startDistance) / tensionRange);
-        tautness = tautness * tautness * (3f - 2f * tautness);
+        float tautness = 1f;
+        if (!_prioritizeFlyingTrajectory)
+        {
+            float tensionRange = Mathf.Max(0.01f, maxRopeLength - startDistance);
+            tautness = Mathf.Clamp01((distance - startDistance) / tensionRange);
+            tautness = tautness * tautness * (3f - 2f * tautness);
+        }
 
         float separatingSpeed = Mathf.Max(
             0f,
@@ -1202,23 +1215,65 @@ public class ChainConstraint2D : MonoBehaviour
         return value;
     }
 
-    private void EnforceSafetyLimit(Vector2 handPosition)
+    private Vector2 EnforceSafetyLimit(Vector2 handPosition)
     {
         float distance = GetRopePathLength();
-        if (distance <= maxRopeLength || distance <= 0.001f)
-            return;
+        if (distance <= 0.001f)
+            return handPosition;
 
         Vector2 playerPathDirection = GetPlayerPathDirection(handPosition);
         Vector2 ballPathDirection = GetBallPathDirection(handPosition);
+
+        if (distance > maxRopeLength)
+        {
+            // 既に超過している分はForceで戻さず、そのFixed step内で長さだけを解消する。
+            // 通常はBall側を戻し、地形に阻まれた残量だけPlayer側をBall方向へ戻す。
+            float overshoot = distance - maxRopeLength;
+            Vector2 ballCorrection = RemoveTerrainInwardComponent(-ballPathDirection * overshoot);
+            morningStarRb.position += ballCorrection;
+
+            float correctedByBall = Mathf.Clamp(
+                -Vector2.Dot(ballCorrection, ballPathDirection),
+                0f,
+                overshoot);
+            float blockedRemainder = overshoot - correctedByBall;
+            if (blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
+            {
+                Vector2 playerCorrection = playerPathDirection * blockedRemainder;
+                playerRb.position += playerCorrection;
+                handPosition += playerCorrection;
+            }
+
+            RebuildRopePath(handPosition, morningStarRb.position);
+            distance = GetRopePathLength();
+            playerPathDirection = GetPlayerPathDirection(handPosition);
+            ballPathDirection = GetBallPathDirection(handPosition);
+        }
+
         float separatingSpeed = Vector2.Dot(morningStarRb.linearVelocity, ballPathDirection)
             - Vector2.Dot(playerRb.linearVelocity, playerPathDirection);
-        if (separatingSpeed > 0f)
+        float remainingLength = Mathf.Max(0f, maxRopeLength - distance);
+        float allowedSeparatingSpeed = remainingLength / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
+        float excessSeparatingSpeed = separatingSpeed - allowedSeparatingSpeed;
+        if (excessSeparatingSpeed > 0f)
         {
-            // BallとPlayerの共通移動は残し、鎖外方向へ離れる成分だけを除去する。
-            Vector2 correction = RemoveTerrainInwardComponent(
-                -ballPathDirection * separatingSpeed);
-            morningStarRb.linearVelocity += correction;
+            // 次のPhysics stepで最大長を越える外向き相対速度だけを除去する。
+            // Ballが自由ならPlayerの速度は変えず、Ballが地形に阻まれた残量だけ
+            // Player側の「さらに離れる成分」を止める。
+            Vector2 ballVelocityCorrection = RemoveTerrainInwardComponent(
+                -ballPathDirection * excessSeparatingSpeed);
+            morningStarRb.linearVelocity += ballVelocityCorrection;
+
+            float correctedByBall = Mathf.Clamp(
+                -Vector2.Dot(ballVelocityCorrection, ballPathDirection),
+                0f,
+                excessSeparatingSpeed);
+            float blockedRemainder = excessSeparatingSpeed - correctedByBall;
+            if (blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
+                playerRb.linearVelocity += playerPathDirection * blockedRemainder;
         }
+
+        return handPosition;
     }
 
     private void ClampBallSpeed()

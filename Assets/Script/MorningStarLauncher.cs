@@ -109,7 +109,7 @@ public class MorningStarLauncher : MonoBehaviour
     [Header("Launch")]
     [SerializeField, Min(0f), Tooltip("通常射出速度。上げるほどBallの初速と衝突の勢いが増します")]
     private float throwSpeed = 18f;
-    [SerializeField, Min(1f), Tooltip("Flying中だけ使用する鎖長倍率。上げるほどBallが先行してから鎖が張ります")]
+    [SerializeField, Min(1f), Tooltip("Flying開始時に使用する鎖長倍率。Rest移行時は基準長へ安全に戻れるまで維持します")]
     private float launchRopeLengthMultiplier = 1.4f;
     [SerializeField, Tooltip("射出速度へ加える下向き成分。上げるほどBallを狙った地面へ落としやすくなります")]
     private float postThrowDownwardBias = 0.25f;
@@ -677,6 +677,7 @@ public class MorningStarLauncher : MonoBehaviour
         switch (_state)
         {
             case MorningStarState.Dragging:
+                TryRestoreBaseRopeLength();
                 break;
 
             case MorningStarState.SpinCharging:
@@ -692,6 +693,7 @@ public class MorningStarLauncher : MonoBehaviour
                 break;
 
             case MorningStarState.Dropping:
+                TryRestoreBaseRopeLength();
                 break;
 
             case MorningStarState.Returning:
@@ -720,7 +722,8 @@ public class MorningStarLauncher : MonoBehaviour
 
         _state = nextState;
 
-        bool useLaunchLength = nextState == MorningStarState.Thrown;
+        bool useLaunchLength = nextState == MorningStarState.Thrown
+            || ShouldKeepLaunchRopeLengthAfterFlight(nextState);
         SetLaunchRopeLengthActive(useLaunchLength);
 
         bool useFreeRope = nextState == MorningStarState.Dragging
@@ -2541,6 +2544,40 @@ public class MorningStarLauncher : MonoBehaviour
             hookRopeJoint.distance = GetEffectiveRopeLength();
     }
 
+    private bool ShouldKeepLaunchRopeLengthAfterFlight(MorningStarState nextState)
+    {
+        if (!_launchRopeLengthActive
+            || (nextState != MorningStarState.Dragging && nextState != MorningStarState.Dropping))
+        {
+            return false;
+        }
+
+        return GetCurrentRopeSpan() > BaseMaxRopeLength + 0.01f;
+    }
+
+    private void TryRestoreBaseRopeLength()
+    {
+        if (!_launchRopeLengthActive
+            || (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
+            || GetCurrentRopeSpan() > BaseMaxRopeLength + 0.01f)
+        {
+            return;
+        }
+
+        SetLaunchRopeLengthActive(false);
+    }
+
+    private float GetCurrentRopeSpan()
+    {
+        float directDistance = morningStarRb != null
+            ? Vector2.Distance(GetHandWorld(), morningStarRb.position)
+            : 0f;
+        float pathDistance = chainConstraint != null
+            ? chainConstraint.CurrentRopeLength
+            : 0f;
+        return Mathf.Max(directDistance, pathDistance);
+    }
+
     private float GetEffectiveRopeLength()
     {
         float multiplier = _launchRopeLengthActive
@@ -2609,18 +2646,9 @@ public class MorningStarLauncher : MonoBehaviour
 
         lineRenderer.positionCount = 2;
         Vector3 start = GetVisualRopeAnchorWorld();
-        Vector3 end = ClampToRopeLength(start, morningStarRb.position);
+        Vector3 end = morningStarRb.position;
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
-    }
-
-    private Vector3 ClampToRopeLength(Vector3 start, Vector3 end)
-    {
-        float maxLen = GetEffectiveRopeLength();
-        Vector3 off = end - start;
-        if (off.sqrMagnitude <= maxLen * maxLen)
-            return end;
-        return start + off.normalized * maxLen;
     }
 
     private void ShowClickAimVisuals(Vector2 aimWorld, Vector2 hand)

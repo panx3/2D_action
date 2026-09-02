@@ -212,7 +212,7 @@ MonoBehaviour:
   handAnchor: {fileID: 1696931101}
   playerRb: {fileID: 0}
   morningStarRb: {fileID: 29217296}
-  maxRopeLength: 6
+  maxRopeLength: 5
   tensionStartRatio: 0.82
   tensionStrength: 42
   tensionDamping: 5
@@ -2072,7 +2072,7 @@ MonoBehaviour:
   maxCombatHitStop: 0.1
   hitCooldownPerTarget: 0.2
   postHitSpeedRetention: 0.7
-  maxRopeLength: 6
+  maxRopeLength: 5
   tensionStartRatio: 0.82
   tensionStrength: 42
   tensionDamping: 5
@@ -2089,7 +2089,7 @@ MonoBehaviour:
   ballGroundLinearDamping: 0.08
   ballFlyingLinearDamping: 0
   maxBallLinearSpeed: 20
-  maxBallFallSpeed: 22
+  maxBallFallSpeed: 24
   spinChargeBallGravityScale: 0
   hookedBallGravityScale: 0
   throwSpeed: 25
@@ -2103,9 +2103,9 @@ MonoBehaviour:
   limitAirThrows: 1
   maxAirThrows: 1
   enableAirLaunchAssist: 1
-  airLaunchAssistDuration: 0.16
-  airLaunchGravityMultiplier: 0.4
-  airLaunchFallingVelocityReduction: 1.4
+  airLaunchAssistDuration: 0.17
+  airLaunchGravityMultiplier: 0.1
+  airLaunchFallingVelocityReduction: 1.5
   enableGamepadInput: 1
   gamepadFireThreshold: 0.7
   gamepadResetThreshold: 0.25

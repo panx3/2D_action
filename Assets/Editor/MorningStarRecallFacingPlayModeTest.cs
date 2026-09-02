@@ -114,15 +114,19 @@ public static class MorningStarRecallFacingPlayModeTest
                         return;
                     Require(launcher.CurrentState == MorningStarLauncher.MorningStarState.Dragging,
                         $"finished flight remained in {launcher.CurrentState} instead of Rest/Dragging");
-                    Require(!launcher.IsLaunchRopeLengthActive,
-                        "finished flight retained the launch rope length");
-                    Require(Mathf.Abs(launcher.MaxRopeLength - launcher.BaseMaxRopeLength) < 0.001f,
-                        "Rest did not restore the base rope length");
+                    float expectedRestLength = launcher.IsLaunchRopeLengthActive
+                        ? launcher.BaseMaxRopeLength * launcher.LaunchRopeLengthMultiplier
+                        : launcher.BaseMaxRopeLength;
+                    Require(Mathf.Abs(launcher.MaxRopeLength - expectedRestLength) < 0.001f,
+                        "Rest rope length did not match its retained/base state");
                     Require(Mathf.Abs(constraint.MaxRopeLength - launcher.MaxRopeLength) < 0.001f,
                         "ChainConstraint did not keep the effective maximum length");
                     launcher.RequestReturn();
                     Require(launcher.CurrentState == MorningStarLauncher.MorningStarState.Returning,
                         "explicit Recall did not enter Returning");
+                    Require(!launcher.IsLaunchRopeLengthActive
+                            && Mathf.Abs(launcher.MaxRopeLength - launcher.BaseMaxRopeLength) < 0.001f,
+                        "explicit Recall did not restore the base rope length");
                     NextPhase();
                     break;
 
