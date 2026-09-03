@@ -253,6 +253,12 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField, Range(0.05f, 0.15f), InspectorName("Chain Anchor Follow Time"), Tooltip("Spriteや向きで棒先端が変わった際に、鎖の物理支点と見た目を新しい位置へ追従させる時間")]
     private float chainAnchorVisualFollowTime = 0.08f;
 
+    [Header("Upward Launch / Hanging Visual")]
+    [SerializeField, Tooltip("斜め45度以上の射出と、上側支点からのぶら下がり中に表示するSprite")]
+    private Sprite upwardPoseSprite;
+    [SerializeField, Tooltip("右向きの上投げSpriteで、棒の先端に合わせた鎖の描画始点")]
+    private Vector2 upwardPoseChainAnchorLocalPosition = new Vector2(-0.53125f, 1.79f);
+
     [Header("Debug")]
     [SerializeField] private bool debugLog;
 
@@ -314,6 +320,10 @@ public class MorningStarLauncher : MonoBehaviour
     private bool _playerDeathSubscribed;
     private bool _launchRopeLengthActive;
     private float _airLaunchAssistRemaining;
+    private SpriteRenderer _playerBodySprite;
+    private Sprite _animatorDrivenSpriteBeforeUpwardPose;
+    private bool _upwardLaunchPoseSelected;
+    private bool _upwardSpriteOverrideActive;
 
     public float LastGroundImpactSpeed { get; private set; }
     public float LastGroundImpactShakeStrength { get; private set; }
@@ -345,6 +355,7 @@ public class MorningStarLauncher : MonoBehaviour
         ? chainConstraint.RopeContactPointCount
         : 0;
     public bool IsLaunchPoseActive => _launchPoseActive;
+    public bool IsUpwardPoseVisible => ShouldUseUpwardPose();
     public Vector2 LaunchReadyAnchorLocalPosition => launchReadyAnchorLocalPosition;
     public Vector2 LaunchAnchorLocalPosition => launchAnchorLocalPosition;
     public float LaunchPoseMaxHoldTime => launchPoseMaxHoldTime;
@@ -483,6 +494,7 @@ public class MorningStarLauncher : MonoBehaviour
             animator = GetComponent<Animator>();
         if (handAnchor == null)
             handAnchor = transform;
+        ResolvePlayerBodySprite();
 
         _hashBackwardAim = Animator.StringToHash(backwardAimParam);
         _hashLaunchCharge = Animator.StringToHash(launchChargeParam);
@@ -595,6 +607,7 @@ public class MorningStarLauncher : MonoBehaviour
         UnsubscribeFromPlayerDeath();
         StopAirLaunchAssist();
         EndLaunchPose();
+        RestoreAnimatorDrivenSprite();
         SetLaunchRopeLengthActive(false);
         SetHookRopeJointActive(false);
     }
@@ -713,6 +726,11 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         LimitBallFallSpeed();
+    }
+
+    private void LateUpdate()
+    {
+        UpdateUpwardPoseSprite();
     }
 
     /// <summary>
@@ -1976,6 +1994,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Hooked || !_isHooked)
             return;
 
+        UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
     }
 
@@ -1990,6 +2009,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Swinging || !_isHooked)
             return;
 
+        UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
         ApplySwingPullToPlayer();
     }
@@ -2498,6 +2518,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (!active || !_isHooked || _playerRb == null)
         {
+            hookRopeJoint.maxDistanceOnly = true;
             hookRopeJoint.enabled = false;
             return;
         }
@@ -2508,12 +2529,28 @@ public class MorningStarLauncher : MonoBehaviour
         hookRopeJoint.autoConfigureConnectedAnchor = false;
         hookRopeJoint.autoConfigureDistance = false;
         hookRopeJoint.enableCollision = false;
-        hookRopeJoint.maxDistanceOnly = true;
-        hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(GetHandWorld());
         hookRopeJoint.connectedAnchor = _hookPoint;
         hookRopeJoint.distance = GetEffectiveRopeLength();
+        UpdateHookRopeJointForCurrentPose();
         if (!hookRopeJoint.enabled)
             hookRopeJoint.enabled = true;
+    }
+
+    private void UpdateHookRopeJointForCurrentPose()
+    {
+        if (hookRopeJoint == null || _playerRb == null || !_isHooked)
+            return;
+
+        bool upperHanging = IsUpperHangingSupport();
+        Vector2 anchorWorld = upperHanging
+            ? GetUpwardPoseChainAnchorWorld()
+            : GetHandWorld();
+
+        hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
+        // 上側支点から吊られている間だけ定長にし、見た目と物理のたるみをなくす。
+        // それ以外は従来どおり最大長制約に戻す。
+        hookRopeJoint.maxDistanceOnly = !upperHanging;
+        hookRopeJoint.distance = GetEffectiveRopeLength();
     }
 
     private void SyncRopeLengthToConstraint()
@@ -2613,7 +2650,9 @@ public class MorningStarLauncher : MonoBehaviour
 
     private Vector2 GetVisualRopeAnchorWorld()
     {
-        Vector2 targetWorld = GetPlayerRopeAnchorWorld();
+        Vector2 targetWorld = ShouldUseUpwardPose()
+            ? GetUpwardPoseChainAnchorWorld()
+            : GetPlayerRopeAnchorWorld();
         Transform playerTransform = _playerRb != null ? _playerRb.transform : transform;
         Vector3 targetLocal = playerTransform.InverseTransformPoint(targetWorld);
 
@@ -2783,6 +2822,7 @@ public class MorningStarLauncher : MonoBehaviour
     private void BeginLaunchPose(bool launchedInAir)
     {
         _launchPoseActive = true;
+        _upwardLaunchPoseSelected = IsUpwardLaunchDirection(_pendingLaunchDir);
         _launchForwardAnchorApplied = false;
         _launchPoseElapsed = 0f;
         _activeLaunchPoseHoldDuration = launchedInAir
@@ -2790,7 +2830,7 @@ public class MorningStarLauncher : MonoBehaviour
             : groundLaunchPoseHoldDuration;
         SetAnimatorBool(_hashLaunchPoseActive, true);
 
-        if (player != null)
+        if (player != null && !_upwardLaunchPoseSelected)
             player.SetWeaponHandAnchorPose(launchReadyAnchorLocalPosition);
     }
 
@@ -2801,7 +2841,8 @@ public class MorningStarLauncher : MonoBehaviour
 
         _launchPoseElapsed += Time.deltaTime;
 
-        if (!_launchForwardAnchorApplied
+        if (!_upwardLaunchPoseSelected
+            && !_launchForwardAnchorApplied
             && _launchPoseElapsed >= Mathf.Max(0f, launchPoseForwardFrameTime))
         {
             _launchForwardAnchorApplied = true;
@@ -2816,6 +2857,7 @@ public class MorningStarLauncher : MonoBehaviour
     private void EndLaunchPose()
     {
         _launchPoseActive = false;
+        _upwardLaunchPoseSelected = false;
         _launchForwardAnchorApplied = false;
         _launchPoseElapsed = 0f;
         _activeLaunchPoseHoldDuration = 0f;
@@ -2823,6 +2865,85 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (player != null)
             player.ClearWeaponHandAnchorPose();
+    }
+
+    private bool ShouldUseUpwardPose()
+    {
+        return (_launchPoseActive && _upwardLaunchPoseSelected)
+            || IsUpperHangingPose();
+    }
+
+    private static bool IsUpwardLaunchDirection(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 1e-6f)
+            return false;
+
+        Vector2 normalized = direction.normalized;
+        return normalized.y > 0f
+            && normalized.y + 0.0001f >= Mathf.Abs(normalized.x);
+    }
+
+    private bool IsUpperHangingPose()
+    {
+        return IsUpperHangingSupport();
+    }
+
+    private bool IsUpperHangingSupport()
+    {
+        return _isHooked
+            && (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
+            && player != null
+            && !IsPlayerGrounded()
+            && _hookPoint.y > player.transform.position.y + 0.1f;
+    }
+
+    private Vector2 GetUpwardPoseChainAnchorWorld()
+    {
+        Transform playerTransform = player != null ? player.transform : transform;
+        Vector3 localPosition = upwardPoseChainAnchorLocalPosition;
+        if (player != null && !player.FacingRight)
+            localPosition.x = -localPosition.x;
+        return playerTransform.TransformPoint(localPosition);
+    }
+
+    private void ResolvePlayerBodySprite()
+    {
+        if (_playerBodySprite == null && player != null)
+            _playerBodySprite = player.GetComponentInChildren<SpriteRenderer>();
+    }
+
+    private void UpdateUpwardPoseSprite()
+    {
+        ResolvePlayerBodySprite();
+        if (_playerBodySprite == null || upwardPoseSprite == null)
+            return;
+
+        if (!ShouldUseUpwardPose())
+        {
+            RestoreAnimatorDrivenSprite();
+            return;
+        }
+
+        if (_playerBodySprite.sprite != upwardPoseSprite)
+            _animatorDrivenSpriteBeforeUpwardPose = _playerBodySprite.sprite;
+
+        _playerBodySprite.sprite = upwardPoseSprite;
+        _upwardSpriteOverrideActive = true;
+    }
+
+    private void RestoreAnimatorDrivenSprite()
+    {
+        if (!_upwardSpriteOverrideActive || _playerBodySprite == null)
+            return;
+
+        if (_playerBodySprite.sprite == upwardPoseSprite
+            && _animatorDrivenSpriteBeforeUpwardPose != null)
+        {
+            _playerBodySprite.sprite = _animatorDrivenSpriteBeforeUpwardPose;
+        }
+
+        _animatorDrivenSpriteBeforeUpwardPose = null;
+        _upwardSpriteOverrideActive = false;
     }
 
     private void ProcessRecoilTrigger()
