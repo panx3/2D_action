@@ -135,6 +135,8 @@ public class MorningStarLauncher : MonoBehaviour
     private float airLaunchGravityMultiplier = 0.4f;
     [SerializeField, Min(0f), Tooltip("射出瞬間に弱める下向き速度。上げるほど落下中のふわっと感が強くなります")]
     private float airLaunchFallingVelocityReduction = 1.4f;
+    [SerializeField, Min(0f), Tooltip("降下中の空中射出直後に許可する最大落下速度。0で上限補正なし。軽い降下には影響しません")]
+    private float airLaunchMaxFallSpeedAfterShot = 3f;
 
     [Header("Gamepad（追加入力）")]
     [SerializeField] private bool enableGamepadInput = true;
@@ -518,6 +520,7 @@ public class MorningStarLauncher : MonoBehaviour
         airLaunchAssistDuration = Mathf.Max(0f, airLaunchAssistDuration);
         airLaunchGravityMultiplier = Mathf.Clamp01(airLaunchGravityMultiplier);
         airLaunchFallingVelocityReduction = Mathf.Max(0f, airLaunchFallingVelocityReduction);
+        airLaunchMaxFallSpeedAfterShot = Mathf.Max(0f, airLaunchMaxFallSpeedAfterShot);
         launchPoseMaxHoldTime = Mathf.Max(0.01f, launchPoseMaxHoldTime);
         groundLaunchPoseHoldDuration = Mathf.Max(0.01f, groundLaunchPoseHoldDuration);
         chainAnchorVisualFollowTime = Mathf.Clamp(chainAnchorVisualFollowTime, 0.05f, 0.15f);
@@ -826,11 +829,18 @@ public class MorningStarLauncher : MonoBehaviour
         _airLaunchAssistRemaining = airLaunchAssistDuration;
 
         Vector2 velocity = _playerRb.linearVelocity;
-        if (velocity.y < 0f && airLaunchFallingVelocityReduction > 0f)
+        if (velocity.y < 0f)
         {
-            velocity.y = Mathf.Min(
-                0f,
-                velocity.y + airLaunchFallingVelocityReduction);
+            if (airLaunchFallingVelocityReduction > 0f)
+            {
+                velocity.y = Mathf.Min(
+                    0f,
+                    velocity.y + airLaunchFallingVelocityReduction);
+            }
+
+            if (airLaunchMaxFallSpeedAfterShot > 0f)
+                velocity.y = Mathf.Max(velocity.y, -airLaunchMaxFallSpeedAfterShot);
+
             _playerRb.linearVelocity = velocity;
         }
 

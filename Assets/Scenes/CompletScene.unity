@@ -2092,9 +2092,9 @@ MonoBehaviour:
   maxBallFallSpeed: 24
   spinChargeBallGravityScale: 0
   hookedBallGravityScale: 0
-  throwSpeed: 25
+  throwSpeed: 30
   launchRopeLengthMultiplier: 1.4
-  postThrowDownwardBias: 0.25
+  postThrowDownwardBias: 0.27
   minAimDistance: 0.2
   launchStartOffset: 0.25
   aimLaunchCooldown: 0
@@ -2103,9 +2103,10 @@ MonoBehaviour:
   limitAirThrows: 1
   maxAirThrows: 1
   enableAirLaunchAssist: 1
-  airLaunchAssistDuration: 0.17
-  airLaunchGravityMultiplier: 0.1
-  airLaunchFallingVelocityReduction: 1.5
+  airLaunchAssistDuration: 0.3
+  airLaunchGravityMultiplier: 0
+  airLaunchFallingVelocityReduction: 3
+  airLaunchMaxFallSpeedAfterShot: 2
   enableGamepadInput: 1
   gamepadFireThreshold: 0.7
   gamepadResetThreshold: 0.25
