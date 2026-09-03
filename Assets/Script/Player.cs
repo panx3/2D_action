@@ -190,6 +190,8 @@ public class Player : MonoBehaviour
 
     public float MoveInputX => _moveInput.x;
 
+    public float MoveInputY => _moveInput.y;
+
     public bool FacingRight => _facingRight;
 
     public Rigidbody2D Rigidbody2D => _rigid;
@@ -420,6 +422,7 @@ public class Player : MonoBehaviour
     {
 
         float x = _actionMoveInput.x;
+        float y = _actionMoveInput.y;
 
 
 
@@ -435,9 +438,19 @@ public class Player : MonoBehaviour
 
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) kx += 1f;
 
+            float ky = 0f;
+
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) ky -= 1f;
+
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) ky += 1f;
+
             if (Mathf.Abs(kx) > Mathf.Abs(x))
 
                 x = kx;
+
+            if (Mathf.Abs(ky) > Mathf.Abs(y))
+
+                y = ky;
 
         }
 
@@ -455,12 +468,17 @@ public class Player : MonoBehaviour
 
                 x = stick.x;
 
+            if (Mathf.Abs(stick.y) > Mathf.Abs(y))
+
+                y = stick.y;
+
         }
 
 
 
         x = Mathf.Clamp(x, -1f, 1f);
-        _moveInput = new Vector2(x, 0f);
+        y = Mathf.Clamp(y, -1f, 1f);
+        _moveInput = new Vector2(x, y);
 
     }
 
@@ -886,7 +904,7 @@ public class Player : MonoBehaviour
 
         Vector2 v = context.ReadValue<Vector2>();
 
-        _actionMoveInput = new Vector2(v.x, 0f);
+        _actionMoveInput = v;
 
     }
 

@@ -2184,6 +2184,12 @@ MonoBehaviour:
   chainAnchorVisualFollowTime: 0.08
   upwardPoseSprite: {fileID: 21300000, guid: 7e368b752cf4aff4b9f908c95a820ef9, type: 3}
   upwardPoseChainAnchorLocalPosition: {x: -0.53125, y: 1.79}
+  chainClimbSpeed: 3
+  chainClimbMinimumDistance: 1.25
+  chainClimbInputThreshold: 0.5
+  chainClimbSpriteA: {fileID: -826631738, guid: fee6619f543097a4982bf8295679bfe2, type: 3}
+  chainClimbSpriteB: {fileID: 1907327894, guid: fee6619f543097a4982bf8295679bfe2, type: 3}
+  chainClimbVisualOffset: {x: -0.078125, y: 0}
   debugLog: 0
 --- !u!232 &625955979
 DistanceJoint2D:

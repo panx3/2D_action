@@ -259,6 +259,20 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField, Tooltip("右向きの上投げSpriteで、棒の先端に合わせた鎖の描画始点")]
     private Vector2 upwardPoseChainAnchorLocalPosition = new Vector2(-0.53125f, 1.79f);
 
+    [Header("Chain Climb")]
+    [SerializeField, Min(0.1f), Tooltip("↑入力中に鎖に沿って支点へ近づく速度")]
+    private float chainClimbSpeed = 3f;
+    [SerializeField, Min(0.1f), Tooltip("支点に近づき過ぎないための最小距離")]
+    private float chainClimbMinimumDistance = 1.25f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("よじ登りを開始するMove Y入力のしきい値")]
+    private float chainClimbInputThreshold = 0.5f;
+    [SerializeField, Tooltip("よじ登り中の1フレーム目")]
+    private Sprite chainClimbSpriteA;
+    [SerializeField, Tooltip("よじ登り中の2フレーム目")]
+    private Sprite chainClimbSpriteB;
+    [SerializeField, Tooltip("よじ登りSpriteを鎖中心へ合わせる、回転後のローカル座標オフセット")]
+    private Vector2 chainClimbVisualOffset = new Vector2(-0.078125f, 0f);
+
     [Header("Debug")]
     [SerializeField] private bool debugLog;
 
@@ -324,6 +338,24 @@ public class MorningStarLauncher : MonoBehaviour
     private Sprite _animatorDrivenSpriteBeforeUpwardPose;
     private bool _upwardLaunchPoseSelected;
     private bool _upwardSpriteOverrideActive;
+    private bool _isChainClimbing;
+    private bool _waitingForUpperHangRetension;
+    private float _chainClimbDistance;
+    private float _previousChainClimbSpan;
+    private bool _chainClimbMovedThisFixedStep;
+    private float _chainClimbAnimationTime;
+    private SpriteRenderer _chainClimbSpriteRenderer;
+    private Sprite _animatorDrivenSpriteBeforeChainClimb;
+    private readonly ContactPoint2D[] _physicalUpperHangContacts = new ContactPoint2D[8];
+    private ContactFilter2D _physicalUpperHangContactFilter;
+    private bool _physicalUpperHangDetected;
+    private float _physicalUpperHangCandidateTime;
+    private float _physicalUpperHangGraceRemaining;
+    private const float ChainClimbAnimationFps = 7f;
+    private const float PhysicalUpperHangEnterTime = 0.04f;
+    private const float PhysicalUpperHangGraceTime = 0.12f;
+    private const float PhysicalUpperHangMinimumClearance = 0.1f;
+    private const float PhysicalUpperHangRopeTolerance = 0.08f;
 
     public float LastGroundImpactSpeed { get; private set; }
     public float LastGroundImpactShakeStrength { get; private set; }
@@ -337,7 +369,9 @@ public class MorningStarLauncher : MonoBehaviour
 
     public MorningStarState State => _state;
     public MorningStarState CurrentState => _state;
-    public float MaxRopeLength => GetEffectiveRopeLength();
+    public float MaxRopeLength => _isChainClimbing
+        ? Mathf.Max(0.1f, _chainClimbDistance)
+        : GetEffectiveRopeLength();
     public float BaseMaxRopeLength => Mathf.Max(0.1f, maxRopeLength);
     public float LaunchRopeLengthMultiplier => Mathf.Max(1f, launchRopeLengthMultiplier);
     public bool IsLaunchRopeLengthActive => _launchRopeLengthActive;
@@ -360,6 +394,11 @@ public class MorningStarLauncher : MonoBehaviour
     public Vector2 LaunchAnchorLocalPosition => launchAnchorLocalPosition;
     public float LaunchPoseMaxHoldTime => launchPoseMaxHoldTime;
     public float GroundLaunchPoseHoldDuration => groundLaunchPoseHoldDuration;
+    public bool IsChainClimbing => _isChainClimbing;
+    public bool IsWaitingForUpperHangRetension => _waitingForUpperHangRetension;
+    public float CurrentChainClimbDistance => _chainClimbDistance;
+    public bool IsUpperHanging => IsUpperHangingSupport();
+    public bool IsPhysicalUpperHanging => IsPhysicalUpperHangingSupport();
 
     public Vector2 GetRopeContactPoint(int index)
     {
@@ -495,6 +534,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (handAnchor == null)
             handAnchor = transform;
         ResolvePlayerBodySprite();
+        RefreshPhysicalUpperHangContactFilter();
 
         _hashBackwardAim = Animator.StringToHash(backwardAimParam);
         _hashLaunchCharge = Animator.StringToHash(launchChargeParam);
@@ -536,8 +576,12 @@ public class MorningStarLauncher : MonoBehaviour
         launchPoseMaxHoldTime = Mathf.Max(0.01f, launchPoseMaxHoldTime);
         groundLaunchPoseHoldDuration = Mathf.Max(0.01f, groundLaunchPoseHoldDuration);
         chainAnchorVisualFollowTime = Mathf.Clamp(chainAnchorVisualFollowTime, 0.05f, 0.15f);
+        chainClimbSpeed = Mathf.Max(0.1f, chainClimbSpeed);
+        chainClimbMinimumDistance = Mathf.Max(0.1f, chainClimbMinimumDistance);
+        chainClimbInputThreshold = Mathf.Clamp(chainClimbInputThreshold, 0.1f, 1f);
         if (hookableLayers.value == 0)
             hookableLayers = LayerMask.GetMask("Walls", "Default");
+        RefreshPhysicalUpperHangContactFilter();
         if (enemyLayers.value == 0)
             enemyLayers = LayerMask.GetMask("Enemy");
         if (breakableLayers.value == 0)
@@ -607,6 +651,7 @@ public class MorningStarLauncher : MonoBehaviour
         UnsubscribeFromPlayerDeath();
         StopAirLaunchAssist();
         EndLaunchPose();
+        ResetChainClimbState(false);
         RestoreAnimatorDrivenSprite();
         SetLaunchRopeLengthActive(false);
         SetHookRopeJointActive(false);
@@ -690,10 +735,12 @@ public class MorningStarLauncher : MonoBehaviour
         float dt = Time.fixedDeltaTime;
         Vector2 hand = GetHandWorld();
         UpdateAirLaunchAssist(dt);
+        UpdatePhysicalUpperHangDetection(dt);
         switch (_state)
         {
             case MorningStarState.Dragging:
                 TryRestoreBaseRopeLength();
+                UpdateChainClimb(dt);
                 break;
 
             case MorningStarState.SpinCharging:
@@ -710,6 +757,7 @@ public class MorningStarLauncher : MonoBehaviour
 
             case MorningStarState.Dropping:
                 TryRestoreBaseRopeLength();
+                UpdateChainClimb(dt);
                 break;
 
             case MorningStarState.Returning:
@@ -730,6 +778,10 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (UpdateChainClimbVisual())
+            return;
+
+        RestoreChainClimbVisual();
         UpdateUpwardPoseSprite();
     }
 
@@ -1994,6 +2046,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Hooked || !_isHooked)
             return;
 
+        UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
     }
@@ -2009,9 +2062,11 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Swinging || !_isHooked)
             return;
 
+        UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
-        ApplySwingPullToPlayer();
+        if (!_isChainClimbing)
+            ApplySwingPullToPlayer();
     }
 
     private void PinBallAtHook()
@@ -2126,6 +2181,7 @@ public class MorningStarLauncher : MonoBehaviour
     private void HandlePlayerLanded()
     {
         _airThrowsUsed = 0;
+        ResetChainClimbState(false);
     }
 
     private void SubscribeToPlayerDeath()
@@ -2518,6 +2574,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (!active || !_isHooked || _playerRb == null)
         {
+            ResetChainClimbState(false);
             hookRopeJoint.maxDistanceOnly = true;
             hookRopeJoint.enabled = false;
             return;
@@ -2547,17 +2604,44 @@ public class MorningStarLauncher : MonoBehaviour
             : GetHandWorld();
 
         hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
+
+        if (_isChainClimbing && upperHanging)
+        {
+            // 登り中は短縮中の長さで鎖を張り、慣性で最小距離の内側へ
+            // 入り込むのを防ぐ。入力解除時は下の再張力待ちでMax Distance Onlyへ戻す。
+            hookRopeJoint.maxDistanceOnly = false;
+            hookRopeJoint.distance = Mathf.Max(0.1f, _chainClimbDistance);
+            return;
+        }
+
+        float normalRopeLength = GetEffectiveRopeLength();
+        if (_waitingForUpperHangRetension && upperHanging)
+        {
+            float currentSpan = Vector2.Distance(anchorWorld, _hookPoint);
+            if (currentSpan < normalRopeLength - 0.05f)
+            {
+                hookRopeJoint.maxDistanceOnly = true;
+                hookRopeJoint.distance = normalRopeLength;
+                return;
+            }
+
+            _waitingForUpperHangRetension = false;
+        }
+
+        if (!upperHanging)
+            _waitingForUpperHangRetension = false;
+
         // 上側支点から吊られている間だけ定長にし、見た目と物理のたるみをなくす。
         // それ以外は従来どおり最大長制約に戻す。
         hookRopeJoint.maxDistanceOnly = !upperHanging;
-        hookRopeJoint.distance = GetEffectiveRopeLength();
+        hookRopeJoint.distance = normalRopeLength;
     }
 
     private void SyncRopeLengthToConstraint()
     {
         if (chainConstraint != null)
         {
-            chainConstraint.SetMaxRopeLength(GetEffectiveRopeLength());
+            chainConstraint.SetMaxRopeLength(MaxRopeLength);
             chainConstraint.ConfigureTension(
                 tensionStartRatio,
                 tensionStrength,
@@ -2888,13 +2972,186 @@ public class MorningStarLauncher : MonoBehaviour
         return IsUpperHangingSupport();
     }
 
+    private void UpdateChainClimb(float dt)
+    {
+        bool upperSupport = IsUpperHangingSupport();
+        if (!upperSupport)
+        {
+            ResetChainClimbState(false);
+            return;
+        }
+
+        bool climbInputHeld = player != null
+            && player.MoveInputY >= Mathf.Clamp(chainClimbInputThreshold, 0.1f, 1f);
+        if (!climbInputHeld)
+        {
+            if (_isChainClimbing)
+                ResetChainClimbState(true);
+            return;
+        }
+
+        bool explicitUpperSupport = IsExplicitUpperHangingSupport();
+        Vector2 anchorWorld = GetUpwardPoseChainAnchorWorld();
+        Vector2 supportWorld = GetUpperHangSupportWorld();
+        float currentSpan = explicitUpperSupport
+            ? Vector2.Distance(anchorWorld, supportWorld)
+            : GetCurrentRopeSpan();
+        float normalRopeLength = GetEffectiveRopeLength();
+        float minimumDistance = Mathf.Min(
+            Mathf.Max(0.1f, chainClimbMinimumDistance),
+            normalRopeLength);
+
+        if (!_isChainClimbing)
+        {
+            _isChainClimbing = true;
+            _waitingForUpperHangRetension = false;
+            _chainClimbAnimationTime = 0f;
+            _chainClimbMovedThisFixedStep = false;
+            _previousChainClimbSpan = currentSpan;
+        }
+        else
+        {
+            _chainClimbMovedThisFixedStep = _previousChainClimbSpan - currentSpan > 0.001f;
+        }
+
+        // 実距離から1 physics step分だけ短くする。障害物で止められた時に
+        // 短縮量を蓄積しないため、解消後のSnapやCollider貫通を避けられる。
+        _chainClimbDistance = Mathf.Max(
+            minimumDistance,
+            currentSpan - Mathf.Max(0.1f, chainClimbSpeed) * Mathf.Max(0f, dt));
+
+        if (currentSpan <= minimumDistance + 0.01f)
+        {
+            _chainClimbDistance = minimumDistance;
+            _chainClimbMovedThisFixedStep = false;
+        }
+
+        _previousChainClimbSpan = currentSpan;
+        if (!explicitUpperSupport)
+            SyncRopeLengthToConstraint();
+    }
+
+    private void ResetChainClimbState(bool waitForRetension)
+    {
+        bool wasClimbing = _isChainClimbing;
+        _isChainClimbing = false;
+        _chainClimbMovedThisFixedStep = false;
+        _chainClimbDistance = 0f;
+        _previousChainClimbSpan = 0f;
+        _chainClimbAnimationTime = 0f;
+        _waitingForUpperHangRetension = waitForRetension
+            && wasClimbing
+            && IsUpperHangingSupport();
+        if (wasClimbing)
+            SyncRopeLengthToConstraint();
+        RestoreChainClimbVisual();
+    }
+
     private bool IsUpperHangingSupport()
+    {
+        return IsExplicitUpperHangingSupport() || IsPhysicalUpperHangingSupport();
+    }
+
+    private bool IsExplicitUpperHangingSupport()
     {
         return _isHooked
             && (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
             && player != null
             && !IsPlayerGrounded()
-            && _hookPoint.y > player.transform.position.y + 0.1f;
+            && _hookPoint.y > player.transform.position.y + PhysicalUpperHangMinimumClearance;
+    }
+
+    private bool IsPhysicalUpperHangingSupport()
+    {
+        return _physicalUpperHangDetected && CanUsePhysicalUpperHangFallback();
+    }
+
+    private bool CanUsePhysicalUpperHangFallback()
+    {
+        return !_isHooked
+            && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+            && player != null
+            && morningStarRb != null
+            && !IsPlayerGrounded()
+            && morningStarRb.position.y > player.transform.position.y + PhysicalUpperHangMinimumClearance;
+    }
+
+    private void UpdatePhysicalUpperHangDetection(float dt)
+    {
+        if (!CanUsePhysicalUpperHangFallback())
+        {
+            _physicalUpperHangDetected = false;
+            _physicalUpperHangCandidateTime = 0f;
+            _physicalUpperHangGraceRemaining = 0f;
+            return;
+        }
+
+        float currentSpan = GetCurrentRopeSpan();
+        float expectedLength = _isChainClimbing && _chainClimbDistance > 0f
+            ? _chainClimbDistance
+            : GetEffectiveRopeLength();
+        float ropeTolerance = Mathf.Max(
+            PhysicalUpperHangRopeTolerance,
+            expectedLength * 0.02f);
+        float tensionStartDistance = expectedLength
+            * Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
+        bool ropeTaut = currentSpan >= tensionStartDistance + ropeTolerance;
+        bool touchingTerrain = IsMorningStarTouchingTerrain();
+
+        float normalRetensionDistance = GetEffectiveRopeLength()
+            * Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
+        if (_waitingForUpperHangRetension
+            && touchingTerrain
+            && currentSpan >= normalRetensionDistance + ropeTolerance)
+        {
+            _waitingForUpperHangRetension = false;
+            ropeTaut = true;
+        }
+
+        bool physicallySupported = touchingTerrain
+            && (ropeTaut || _waitingForUpperHangRetension);
+        if (physicallySupported)
+        {
+            _physicalUpperHangCandidateTime += Mathf.Max(0f, dt);
+            if (_physicalUpperHangDetected
+                || _physicalUpperHangCandidateTime >= PhysicalUpperHangEnterTime)
+            {
+                _physicalUpperHangDetected = true;
+                _physicalUpperHangGraceRemaining = PhysicalUpperHangGraceTime;
+            }
+            return;
+        }
+
+        _physicalUpperHangCandidateTime = 0f;
+        _physicalUpperHangGraceRemaining = Mathf.Max(
+            0f,
+            _physicalUpperHangGraceRemaining - Mathf.Max(0f, dt));
+        _physicalUpperHangDetected = _physicalUpperHangGraceRemaining > 0f;
+    }
+
+    private bool IsMorningStarTouchingTerrain()
+    {
+        if (morningStarRb == null)
+            return false;
+
+        Collider2D ballCollider = morningStarRb.GetComponent<Collider2D>();
+        return ballCollider != null
+            && ballCollider.GetContacts(_physicalUpperHangContactFilter, _physicalUpperHangContacts) > 0;
+    }
+
+    private void RefreshPhysicalUpperHangContactFilter()
+    {
+        _physicalUpperHangContactFilter = new ContactFilter2D();
+        _physicalUpperHangContactFilter.SetLayerMask(hookableLayers);
+        _physicalUpperHangContactFilter.useTriggers = false;
+    }
+
+    private Vector2 GetUpperHangSupportWorld()
+    {
+        if (IsExplicitUpperHangingSupport())
+            return _hookPoint;
+
+        return morningStarRb != null ? morningStarRb.position : _hookPoint;
     }
 
     private Vector2 GetUpwardPoseChainAnchorWorld()
@@ -2910,6 +3167,96 @@ public class MorningStarLauncher : MonoBehaviour
     {
         if (_playerBodySprite == null && player != null)
             _playerBodySprite = player.GetComponentInChildren<SpriteRenderer>();
+    }
+
+    private bool UpdateChainClimbVisual()
+    {
+        ResolvePlayerBodySprite();
+        if (!_isChainClimbing || _playerBodySprite == null || chainClimbSpriteA == null)
+            return false;
+
+        RestoreAnimatorDrivenSprite();
+        EnsureChainClimbSpriteRenderer();
+        if (_chainClimbSpriteRenderer == null)
+            return false;
+
+        if (_playerBodySprite.sprite != null)
+            _animatorDrivenSpriteBeforeChainClimb = _playerBodySprite.sprite;
+
+        if (_chainClimbMovedThisFixedStep)
+            _chainClimbAnimationTime += Time.deltaTime;
+
+        bool useSecondFrame = chainClimbSpriteB != null
+            && Mathf.FloorToInt(_chainClimbAnimationTime * ChainClimbAnimationFps) % 2 != 0;
+        _chainClimbSpriteRenderer.sprite = useSecondFrame
+            ? chainClimbSpriteB
+            : chainClimbSpriteA;
+        CopyChainClimbRendererSettings();
+
+        Vector2 ropeAnchor = GetVisualRopeAnchorWorld();
+        Vector2 directionTarget = RopeContactPointCount > 0
+            ? GetRopeContactPoint(0)
+            : GetUpperHangSupportWorld();
+        Vector2 ropeDirection = directionTarget - ropeAnchor;
+        if (ropeDirection.sqrMagnitude > 0.0001f)
+        {
+            float worldAngle = Mathf.Atan2(ropeDirection.y, ropeDirection.x) * Mathf.Rad2Deg - 90f;
+            Quaternion worldRotation = Quaternion.Euler(0f, 0f, worldAngle);
+            Vector3 bodyPosition = _playerBodySprite.transform.position;
+            Vector3 ropeOffsetLocal = Quaternion.Inverse(worldRotation) * (ropeAnchor - (Vector2)bodyPosition);
+            Vector2 resolvedVisualOffset = chainClimbVisualOffset;
+            resolvedVisualOffset.x += ropeOffsetLocal.x;
+            _chainClimbSpriteRenderer.transform.SetPositionAndRotation(
+                bodyPosition + worldRotation * (Vector3)resolvedVisualOffset,
+                worldRotation);
+        }
+
+        _playerBodySprite.sprite = null;
+        return true;
+    }
+
+    private void EnsureChainClimbSpriteRenderer()
+    {
+        if (_chainClimbSpriteRenderer != null || _playerBodySprite == null)
+            return;
+
+        GameObject visual = new GameObject("ChainClimbVisual");
+        visual.hideFlags = HideFlags.DontSave;
+        visual.transform.SetParent(_playerBodySprite.transform, false);
+        _chainClimbSpriteRenderer = visual.AddComponent<SpriteRenderer>();
+    }
+
+    private void CopyChainClimbRendererSettings()
+    {
+        _chainClimbSpriteRenderer.enabled = _playerBodySprite.enabled;
+        _chainClimbSpriteRenderer.color = _playerBodySprite.color;
+        _chainClimbSpriteRenderer.sharedMaterial = _playerBodySprite.sharedMaterial;
+        _chainClimbSpriteRenderer.sortingLayerID = _playerBodySprite.sortingLayerID;
+        _chainClimbSpriteRenderer.sortingOrder = _playerBodySprite.sortingOrder;
+        _chainClimbSpriteRenderer.maskInteraction = _playerBodySprite.maskInteraction;
+        _chainClimbSpriteRenderer.spriteSortPoint = _playerBodySprite.spriteSortPoint;
+        _chainClimbSpriteRenderer.flipX = false;
+        _chainClimbSpriteRenderer.flipY = false;
+    }
+
+    private void RestoreChainClimbVisual()
+    {
+        if (_chainClimbSpriteRenderer != null)
+        {
+            _chainClimbSpriteRenderer.sprite = null;
+            _chainClimbSpriteRenderer.enabled = false;
+            _chainClimbSpriteRenderer.transform.localPosition = Vector3.zero;
+            _chainClimbSpriteRenderer.transform.localRotation = Quaternion.identity;
+        }
+
+        if (_playerBodySprite != null
+            && _playerBodySprite.sprite == null
+            && _animatorDrivenSpriteBeforeChainClimb != null)
+        {
+            _playerBodySprite.sprite = _animatorDrivenSpriteBeforeChainClimb;
+        }
+
+        _animatorDrivenSpriteBeforeChainClimb = null;
     }
 
     private void UpdateUpwardPoseSprite()

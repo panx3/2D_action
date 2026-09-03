@@ -202,7 +202,7 @@ public class ChainLineController : MonoBehaviour
         }
 
         bool hooked = _hookedVisualActive;
-        if (launcher != null && launcher.IsHookedState)
+        if (launcher != null && (launcher.IsHookedState || launcher.IsUpperHanging))
             hooked = true;
 
         Color normalStart = _visualConfigured ? _configuredNormalColor : _defaultStartColor;
@@ -244,7 +244,9 @@ public class ChainLineController : MonoBehaviour
 
         int count = Mathf.Max(2, sagSegments);
         float directDistance = Vector3.Distance(start, end);
-        float resolvedSag = CalculateSagForDistance(directDistance);
+        float resolvedSag = launcher != null && launcher.IsChainClimbing
+            ? 0f
+            : CalculateSagForDistance(directDistance);
 
         LastDirectDistance = directDistance;
         LastSagAmount = resolvedSag;
