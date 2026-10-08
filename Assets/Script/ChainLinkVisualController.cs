@@ -172,9 +172,20 @@ public class ChainLinkVisualController : MonoBehaviour
     {
         _pathPoints.Clear();
 
-        Vector3 start = launcher != null ? (Vector3)launcher.RopeAnchorWorld : startPoint.position;
+        Vector3 start = launcher != null ? (Vector3)launcher.VisualRopeAnchorWorld : startPoint.position;
         Vector3 end = endPoint.position;
-        if (wrapPoints.Count == 0)
+        int physicsContactCount = launcher != null ? launcher.RopeContactPointCount : 0;
+        if (physicsContactCount > 0)
+        {
+            _pathPoints.Add(start);
+            for (int i = 0; i < physicsContactCount; i++)
+                _pathPoints.Add(launcher.GetRopeContactPoint(i));
+            _pathPoints.Add(end);
+            LastCollisionAdjustedPointCount = physicsContactCount;
+            return;
+        }
+
+        if (launcher != null || wrapPoints.Count == 0)
         {
             int count = avoidGroundPenetration ? Mathf.Max(3, sagSegments) : Mathf.Max(2, sagSegments);
             float sag = useSag ? CalculateSagAmount(start, end) : 0f;

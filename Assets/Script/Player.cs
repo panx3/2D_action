@@ -154,7 +154,6 @@ public class Player : MonoBehaviour
 
     private Rigidbody2D _rigid;
     private MorningStarLauncher _morningStarLauncher;
-
     private bool _bjump;
 
     private Animator _anim;
@@ -190,6 +189,8 @@ public class Player : MonoBehaviour
 
 
     public float MoveInputX => _moveInput.x;
+
+    public float MoveInputY => _moveInput.y;
 
     public bool FacingRight => _facingRight;
 
@@ -400,19 +401,7 @@ public class Player : MonoBehaviour
 
         {
 
-            _rigid.AddForce(Vector2.up * _jumpSpeed, ForceMode2D.Impulse);
-
-            StopFootstepAudio();
-
-            PlayJumpSound();
-
-            _bjump = true;
-
-            ClearGroundedStateForJump();
-
-            _jumpBufferTimer = 0f;
-
-            _coyoteTimer = 0f;
+            PerformJump(false);
 
         }
 
@@ -433,6 +422,7 @@ public class Player : MonoBehaviour
     {
 
         float x = _actionMoveInput.x;
+        float y = _actionMoveInput.y;
 
 
 
@@ -448,9 +438,19 @@ public class Player : MonoBehaviour
 
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) kx += 1f;
 
+            float ky = 0f;
+
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) ky -= 1f;
+
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) ky += 1f;
+
             if (Mathf.Abs(kx) > Mathf.Abs(x))
 
                 x = kx;
+
+            if (Mathf.Abs(ky) > Mathf.Abs(y))
+
+                y = ky;
 
         }
 
@@ -468,12 +468,17 @@ public class Player : MonoBehaviour
 
                 x = stick.x;
 
+            if (Mathf.Abs(stick.y) > Mathf.Abs(y))
+
+                y = stick.y;
+
         }
 
 
 
         x = Mathf.Clamp(x, -1f, 1f);
-        _moveInput = new Vector2(x, 0f);
+        y = Mathf.Clamp(y, -1f, 1f);
+        _moveInput = new Vector2(x, y);
 
     }
 
@@ -487,17 +492,17 @@ public class Player : MonoBehaviour
 
         float moveF = grounded ? _groundMoveForce : _groundMoveForce * _airMoveFactor;
 
-        float drag = grounded ? _groundLinearDragX : _airLinearDragX;
-
-
+        float baseDrag = grounded ? _groundLinearDragX : _airLinearDragX;
 
         if (Mathf.Abs(h) > 0.01f)
 
-            _rigid.AddForce(new Vector2(h * moveF, 0f), ForceMode2D.Force);
+            _rigid.AddForce(
+                new Vector2(h * moveF, 0f),
+                ForceMode2D.Force);
 
 
 
-        _rigid.AddForce(new Vector2(-_rigid.linearVelocity.x * drag, 0f), ForceMode2D.Force);
+        _rigid.AddForce(new Vector2(-_rigid.linearVelocity.x * baseDrag, 0f), ForceMode2D.Force);
 
     }
 
@@ -899,7 +904,7 @@ public class Player : MonoBehaviour
 
         Vector2 v = context.ReadValue<Vector2>();
 
-        _actionMoveInput = new Vector2(v.x, 0f);
+        _actionMoveInput = v;
 
     }
 
@@ -915,6 +920,12 @@ public class Player : MonoBehaviour
 
             _jumpHeld = true;
 
+            if (_morningStarLauncher != null && _morningStarLauncher.TryReleaseMagnetForJump())
+            {
+                PerformJump(true);
+                return;
+            }
+
             _jumpBufferTimer = _jumpBufferTime;
 
         }
@@ -927,6 +938,23 @@ public class Player : MonoBehaviour
 
         }
 
+    }
+
+    private void PerformJump(bool clearExistingVelocity)
+    {
+        if (_rigid == null)
+            return;
+
+        if (clearExistingVelocity)
+            _rigid.linearVelocity = Vector2.zero;
+
+        _rigid.AddForce(Vector2.up * _jumpSpeed, ForceMode2D.Impulse);
+        StopFootstepAudio();
+        PlayJumpSound();
+        _bjump = true;
+        ClearGroundedStateForJump();
+        _jumpBufferTimer = 0f;
+        _coyoteTimer = 0f;
     }
 
 
