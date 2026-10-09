@@ -80,6 +80,10 @@ public class ChainConstraint2D : MonoBehaviour
 
     private Player _player;
     private MorningStarRollingVisual _rollingVisual;
+    private bool _playerClimbActive;
+    private Vector2 _playerClimbAnchorLocal;
+    private float _playerClimbSpeed;
+    private float _playerClimbMinimumLength;
 
     public float MaxRopeLength => maxRopeLength;
     public float TensionStartRatio => tensionStartRatio;
@@ -89,6 +93,24 @@ public class ChainConstraint2D : MonoBehaviour
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
+
+    public void ConfigurePlayerClimb(Vector2 anchorLocal, float speed, float minimumLength)
+    {
+        _playerClimbActive = true;
+        _playerClimbAnchorLocal = anchorLocal;
+        _playerClimbSpeed = Mathf.Max(0f, speed);
+        _playerClimbMinimumLength = Mathf.Max(0.1f, minimumLength);
+        ResetGroundPullEase();
+        _runJumpMomentumGraceRemaining = 0f;
+    }
+
+    public void StopPlayerClimb()
+    {
+        if (!_playerClimbActive)
+            return;
+        _playerClimbActive = false;
+        _physicsAnchorInitialized = false;
+    }
 
     public Vector2 GetRopeContactPoint(int index)
     {
@@ -175,6 +197,7 @@ public class ChainConstraint2D : MonoBehaviour
 
     private void OnDisable()
     {
+        StopPlayerClimb();
         _ropePathPoints.Clear();
         _ropeContactPoints.Clear();
         _ropeContacts.Clear();
@@ -214,6 +237,12 @@ public class ChainConstraint2D : MonoBehaviour
 
         Vector2 physicsAnchor = UpdatePhysicsAnchorWorld();
         RebuildRopePath(physicsAnchor, morningStarRb.position);
+        if (_playerClimbActive)
+        {
+            ApplyPlayerClimbMotion(physicsAnchor);
+            ClampBallSpeed();
+            return;
+        }
         physicsAnchor = EnforceSafetyLimit(physicsAnchor);
         UpdateRunJumpMomentumGrace(physicsAnchor, GetRopePathLength());
         ApplyRopeTension(physicsAnchor);
@@ -245,6 +274,8 @@ public class ChainConstraint2D : MonoBehaviour
     private Vector2 UpdatePhysicsAnchorWorld()
     {
         Transform playerTransform = playerRb.transform;
+        if (_playerClimbActive)
+            return playerRb.position + (Vector2)playerTransform.TransformVector(_playerClimbAnchorLocal);
         Vector2 targetLocalPosition = playerTransform.InverseTransformPoint(handAnchor.position);
         if (!_physicsAnchorInitialized)
         {
@@ -265,6 +296,24 @@ public class ChainConstraint2D : MonoBehaviour
 
         // Player本体の移動は即時反映し、Animation/Facing由来の局所Anchor差分だけを補間する。
         return playerTransform.TransformPoint(_smoothedAnchorLocalPosition);
+    }
+
+    private void ApplyPlayerClimbMotion(Vector2 anchor)
+    {
+        float distance = GetRopePathLength();
+        float dt = Mathf.Max(Time.fixedDeltaTime, 0.0001f);
+        float shortening = Mathf.Min(_playerClimbSpeed * dt,
+            Mathf.Max(0f, distance - _playerClimbMinimumLength));
+        maxRopeLength = Mathf.Max(_playerClimbMinimumLength, distance - shortening);
+
+        // 地形に支えられたBallを引き戻すSafetyLimit/反作用は使わない。
+        // Playerだけを最初の巻き付き点へ進め、衝突解決はPhysicsに任せる。
+        // 毎stepの実距離から速度を決めるので、障害物で止まっても短縮を蓄積しない。
+        Vector2 direction = GetPlayerPathDirection(anchor);
+        if (direction.sqrMagnitude <= 0.0001f)
+            return;
+        float currentSpeed = Vector2.Dot(playerRb.linearVelocity, direction);
+        playerRb.linearVelocity += direction * (shortening / dt - currentSpeed);
     }
 
     private void RebuildRopePath(Vector2 start, Vector2 end)
