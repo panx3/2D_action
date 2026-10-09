@@ -18,7 +18,9 @@ public class WeightSwitch : MonoBehaviour
     [SerializeField, Min(0f)] private float visualMoveSpeed = 0.5f;
 
     [Header("Events")]
+    [Tooltip("スイッチがONに切り替わったときに呼ばれます。")]
     [SerializeField] private UnityEvent onPressed;
+    [Tooltip("スイッチがOFFに切り替わったときに呼ばれます。離れただけでは呼ばれません。")]
     [SerializeField] private UnityEvent onReleased;
 
     private readonly HashSet<Collider2D> detectedObjects = new HashSet<Collider2D>();
@@ -55,8 +57,10 @@ public class WeightSwitch : MonoBehaviour
     {
         if (!other.CompareTag(targetTag)) return;
 
-        detectedObjects.Add(other);
-        UpdateSwitchState();
+        bool wasOccupied = detectedObjects.Count > 0;
+        if (!detectedObjects.Add(other) || wasOccupied) return;
+
+        ToggleSwitchState();
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -64,16 +68,11 @@ public class WeightSwitch : MonoBehaviour
         if (!other.CompareTag(targetTag)) return;
 
         detectedObjects.Remove(other);
-        UpdateSwitchState();
     }
 
-    private void UpdateSwitchState()
+    private void ToggleSwitchState()
     {
-        bool shouldBePressed = detectedObjects.Count > 0;
-
-        if (isPressed == shouldBePressed) return;
-
-        isPressed = shouldBePressed;
+        isPressed = !isPressed;
         UpdateVisual();
 
         if (isPressed)

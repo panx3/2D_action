@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// モーニングスター：状態管理・発射・回収・壁刺し・スイング・鎖解除。
+/// モーニングスター：状態管理・発射・回収・磁石固定・スイング・鎖解除。
 /// 通常時は ChainConstraint2D、Hook/Swing中は既存 DistanceJoint2D を
 /// Max Distance Only のロープとして使い、手元と固定支点の最大距離を守る。
 /// </summary>
@@ -163,14 +163,10 @@ public class MorningStarLauncher : MonoBehaviour
     private float returnSpeed = 21f;
     [SerializeField] private float returnFinishDistance = 0.25f;
 
-    [Header("Hook 判定")]
-    [SerializeField] private bool allowFloorHook = false;
-    [SerializeField] private bool allowWallHook = true;
-    [SerializeField] private bool allowCeilingHook = true;
+    [Header("地形接触判定")]
     [SerializeField, Range(0f, 1f)] private float floorNormalThreshold = 0.5f;
 
     [Header("Hooked")]
-    [SerializeField] private float hookMinSpeed = 2f;
     [SerializeField] private float releaseBoost = 3f;
     [FormerlySerializedAs("leftClickReThrowFromHook")]
     [SerializeField] private bool shortClickRethrowFromHook = true;
@@ -272,6 +268,8 @@ public class MorningStarLauncher : MonoBehaviour
     private Sprite chainClimbSpriteB;
     [SerializeField, Tooltip("よじ登りSpriteを鎖中心へ合わせる、回転後のローカル座標オフセット")]
     private Vector2 chainClimbVisualOffset = new Vector2(-0.078125f, 0f);
+    [SerializeField, Min(1f), Tooltip("鎖登り中のアニメーション切り替え回数/秒。小さいほどゆっくり動きます")]
+    private float chainClimbAnimationFps = 5f;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog;
@@ -351,7 +349,6 @@ public class MorningStarLauncher : MonoBehaviour
     private bool _physicalUpperHangDetected;
     private float _physicalUpperHangCandidateTime;
     private float _physicalUpperHangGraceRemaining;
-    private const float ChainClimbAnimationFps = 7f;
     private const float PhysicalUpperHangEnterTime = 0.04f;
     private const float PhysicalUpperHangGraceTime = 0.12f;
     private const float PhysicalUpperHangMinimumClearance = 0.1f;
@@ -579,6 +576,7 @@ public class MorningStarLauncher : MonoBehaviour
         chainClimbSpeed = Mathf.Max(0.1f, chainClimbSpeed);
         chainClimbMinimumDistance = Mathf.Max(0.1f, chainClimbMinimumDistance);
         chainClimbInputThreshold = Mathf.Clamp(chainClimbInputThreshold, 0.1f, 1f);
+        chainClimbAnimationFps = Mathf.Max(1f, chainClimbAnimationFps);
         if (hookableLayers.value == 0)
             hookableLayers = LayerMask.GetMask("Walls", "Default");
         RefreshPhysicalUpperHangContactFilter();
@@ -1645,27 +1643,9 @@ public class MorningStarLauncher : MonoBehaviour
         if (TryProcessCombatHit(collision))
             return;
 
-        if (_state != MorningStarState.Thrown)
-            return;
-        if (_rehookLockoutTimer > 0f)
-            return;
-
-        if (HasFloorContact(collision) && !allowFloorHook)
-        {
+        // 地形への衝突では固定しない。固定支点への移行はMagnet経由だけ。
+        if (_state == MorningStarState.Thrown && HasFloorContact(collision))
             BeginDropAfterThrow();
-            return;
-        }
-
-        if (!ShouldHookFromContact(collision))
-            return;
-
-        float speed = morningStarRb.linearVelocity.magnitude;
-        if (speed < hookMinSpeed)
-            return;
-
-        // 接触点は鉄球の表面。中心をそこへ固定するとColliderが壁にめり込み、
-        // PinBallAtHookと物理Solverの押し戻しが毎step競合する。
-        BeginHook(morningStarRb.position);
     }
 
     private bool CanStateDealCombatDamage()
@@ -1782,33 +1762,6 @@ public class MorningStarLauncher : MonoBehaviour
         _hitStopRoutine = StartCoroutine(HitStopRoutine(duration));
     }
 
-    private bool ShouldHookFromContact(Collision2D collision)
-    {
-        if (_state != MorningStarState.Thrown)
-            return false;
-        if (_rehookLockoutTimer > 0f)
-            return false;
-        if (collision.collider == null)
-            return false;
-        if (collision.collider.CompareTag("Player"))
-            return false;
-
-        int otherLayerMask = 1 << collision.gameObject.layer;
-        if ((hookableLayers.value & otherLayerMask) == 0)
-            return false;
-
-        if (collision.contactCount == 0)
-            return allowWallHook || allowCeilingHook;
-
-        foreach (ContactPoint2D contact in collision.contacts)
-        {
-            if (IsHookableContactNormal(contact.normal))
-                return true;
-        }
-
-        return false;
-    }
-
     private void TryPlayGroundImpactCameraShake(Collision2D collision)
     {
         if (!IsFloorTagged(collision.collider)
@@ -1878,26 +1831,6 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         return false;
-    }
-
-    private bool IsHookableContactNormal(Vector2 normal)
-    {
-        if (normal.sqrMagnitude < 1e-6f)
-            return false;
-
-        Vector2 n = normal.normalized;
-        bool isFloor = n.y > floorNormalThreshold;
-        bool isCeiling = n.y < -floorNormalThreshold;
-        bool isWall = Mathf.Abs(n.x) > 0.5f;
-
-        if (isFloor && !allowFloorHook)
-            return false;
-        if (isCeiling && !allowCeilingHook)
-            return false;
-        if (isWall && !allowWallHook)
-            return false;
-
-        return isFloor || isCeiling || isWall;
     }
 
     public bool HasFloorContact(Collision2D collision)
@@ -2389,7 +2322,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         float dist = Vector2.Distance(hand, morningStarRb.position);
         float flightEndDistance = Mathf.Max(maxThrowDistance, GetEffectiveRopeLength());
-        if (dist >= flightEndDistance && !IsMorningStarTouchingHookable())
+        if (dist >= flightEndDistance)
         {
             BeginDropAfterThrow();
             return;
@@ -2406,31 +2339,6 @@ public class MorningStarLauncher : MonoBehaviour
 
         // 飛翔終了後は履歴依存のDropping物理を残さず、その場で共通Restへ戻る。
         EnterDraggingState(false);
-    }
-
-    private bool IsMorningStarTouchingHookable()
-    {
-        if (morningStarRb == null)
-            return false;
-
-        Collider2D ballCol = morningStarRb.GetComponent<Collider2D>();
-        if (ballCol == null)
-            return false;
-
-        ContactFilter2D filter = new ContactFilter2D();
-        filter.useLayerMask = true;
-        filter.layerMask = hookableLayers;
-        filter.useTriggers = false;
-
-        ContactPoint2D[] contacts = new ContactPoint2D[8];
-        int count = ballCol.GetContacts(filter, contacts);
-        for (int i = 0; i < count; i++)
-        {
-            if (IsHookableContactNormal(contacts[i].normal))
-                return true;
-        }
-
-        return false;
     }
 
     private void BeginReturn()
@@ -2686,8 +2594,11 @@ public class MorningStarLauncher : MonoBehaviour
 
     private float GetCurrentRopeSpan()
     {
+        Vector2 anchor = _isChainClimbing && !_isHooked
+            ? GetUpwardPoseChainAnchorWorld()
+            : GetHandWorld();
         float directDistance = morningStarRb != null
-            ? Vector2.Distance(GetHandWorld(), morningStarRb.position)
+            ? Vector2.Distance(anchor, morningStarRb.position)
             : 0f;
         float pathDistance = chainConstraint != null
             ? chainConstraint.CurrentRopeLength
@@ -3014,11 +2925,19 @@ public class MorningStarLauncher : MonoBehaviour
 
         _previousChainClimbSpan = currentSpan;
         if (!explicitUpperSupport)
+        {
             SyncRopeLengthToConstraint();
+            if (chainConstraint != null && _playerRb != null)
+                chainConstraint.ConfigurePlayerClimb(
+                    _playerRb.transform.InverseTransformPoint(anchorWorld),
+                    chainClimbSpeed, minimumDistance);
+        }
     }
 
     private void ResetChainClimbState(bool waitForRetension)
     {
+        if (chainConstraint != null)
+            chainConstraint.StopPlayerClimb();
         bool wasClimbing = _isChainClimbing;
         _isChainClimbing = false;
         _chainClimbMovedThisFixedStep = false;
@@ -3173,7 +3092,7 @@ public class MorningStarLauncher : MonoBehaviour
             _chainClimbAnimationTime += Time.deltaTime;
 
         bool useSecondFrame = chainClimbSpriteB != null
-            && Mathf.FloorToInt(_chainClimbAnimationTime * ChainClimbAnimationFps) % 2 != 0;
+            && Mathf.FloorToInt(_chainClimbAnimationTime * Mathf.Max(1f, chainClimbAnimationFps)) % 2 != 0;
         _chainClimbSpriteRenderer.sprite = useSecondFrame
             ? chainClimbSpriteB
             : chainClimbSpriteA;
