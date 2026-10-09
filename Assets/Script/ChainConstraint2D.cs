@@ -37,7 +37,7 @@ public class ChainConstraint2D : MonoBehaviour
     private const float WrapRouteHysteresis = 0.08f;
     private const float UnwrapClearanceMargin = 0.01f;
     private const int UnwrapClearFixedSteps = 2;
-    private const int MaxBallTerrainContactCount = 8;
+    private const int MaxBallContactCount = 8;
     private const float MinPathSegmentLength = 0.001f;
 
     private struct RopeContact
@@ -66,7 +66,8 @@ public class ChainConstraint2D : MonoBehaviour
     private float _collisionSkin = 0.01f;
     private ContactFilter2D _terrainFilter;
     private readonly RaycastHit2D[] _ropeCastHits = new RaycastHit2D[16];
-    private readonly ContactPoint2D[] _ballTerrainContacts = new ContactPoint2D[MaxBallTerrainContactCount];
+    private readonly ContactPoint2D[] _ballContacts = new ContactPoint2D[MaxBallContactCount];
+    private readonly List<RaycastHit2D> _bodyCastHits = new List<RaycastHit2D>(16);
     private readonly List<Vector2> _ropePathPoints = new List<Vector2>(MaxWrapPointCount + 2);
     private readonly List<Vector2> _ropeContactPoints = new List<Vector2>(MaxWrapPointCount);
     private readonly List<RopeContact> _ropeContacts = new List<RopeContact>(MaxWrapPointCount);
@@ -1175,30 +1176,28 @@ public class ChainConstraint2D : MonoBehaviour
 
     private void AddBallTerrainAwareForce(Vector2 force)
     {
-        Vector2 allowedForce = RemoveTerrainInwardComponent(force);
+        Vector2 allowedForce = RemoveCollisionInwardComponent(force);
         if (allowedForce.sqrMagnitude > 0.000001f)
             morningStarRb.AddForce(allowedForce, ForceMode2D.Force);
     }
 
-    private Vector2 RemoveTerrainInwardComponent(Vector2 value)
+    private Vector2 RemoveCollisionInwardComponent(Vector2 value)
     {
-        if (morningStarRb == null || value.sqrMagnitude <= 0.000001f)
+        return RemoveBodyCollisionInwardComponent(morningStarRb, value);
+    }
+
+    private Vector2 RemoveBodyCollisionInwardComponent(Rigidbody2D body, Vector2 value)
+    {
+        if (body == null || value.sqrMagnitude <= 0.000001f)
             return value;
 
-        int contactCount = morningStarRb.GetContacts(_terrainFilter, _ballTerrainContacts);
-        Vector2 ballCenter = morningStarRb.worldCenterOfMass;
+        // ロープ経路用の地形Maskでは絞らない。敵・仕掛けなども含め、
+        // 実際の接触面へ押し込む補正だけを除き、接線方向の移動は残す。
+        int contactCount = body.GetContacts(_ballContacts);
+        Vector2 ballCenter = body.worldCenterOfMass;
         for (int i = 0; i < contactCount; i++)
         {
-            ContactPoint2D contact = _ballTerrainContacts[i];
-            Collider2D terrainCollider = contact.collider;
-            if (terrainCollider == null || terrainCollider.attachedRigidbody == morningStarRb)
-                terrainCollider = contact.otherCollider;
-            if (terrainCollider == null
-                || (_terrainLayerMask.value & (1 << terrainCollider.gameObject.layer)) == 0)
-            {
-                continue;
-            }
-
+            ContactPoint2D contact = _ballContacts[i];
             Vector2 normal = contact.normal;
             if (normal.sqrMagnitude <= MinPathSegmentLength * MinPathSegmentLength)
                 continue;
@@ -1215,6 +1214,47 @@ public class ChainConstraint2D : MonoBehaviour
         return value;
     }
 
+    private Vector2 GetSafeEndpointCorrection(
+        Rigidbody2D body, Vector2 endpoint, Vector2 target, float excessLength)
+    {
+        Vector2 toTarget = target - endpoint;
+        float segmentLength = toTarget.magnitude;
+        if (segmentLength <= MinPathSegmentLength || excessLength <= 0f)
+            return Vector2.zero;
+
+        Vector2 direction = RemoveBodyCollisionInwardComponent(body, toTarget / segmentLength);
+        if (direction.sqrMagnitude <= 0.000001f)
+            return Vector2.zero;
+        direction.Normalize();
+
+        // 接触面に沿って動ける場合、その方向で実際に短くなる距離を解く。
+        // 法線成分を消しただけの残量をPlayerへ転嫁して跳ね上げない。
+        float along = Mathf.Max(0f, Vector2.Dot(toTarget, direction));
+        float perpendicularSquared = Mathf.Max(0f, toTarget.sqrMagnitude - along * along);
+        float targetLength = Mathf.Max(0f, segmentLength - excessLength);
+        float distance = along - Mathf.Sqrt(Mathf.Max(0f,
+            targetLength * targetLength - perpendicularSquared));
+        if (distance <= MinPathSegmentLength)
+            return Vector2.zero;
+
+        // 接触履歴だけでは、まだ接触していない壁を跨ぐ位置補正を防げない。
+        // 実際のCollider形状を移動先までCastし、貫通する手前で止める。
+        int hitCount = body.Cast(direction, _bodyCastHits, distance);
+        float skin = Mathf.Max(_collisionSkin, 0.001f);
+        for (int i = 0; i < hitCount; i++)
+        {
+            RaycastHit2D hit = _bodyCastHits[i];
+            if (hit.collider == null || hit.collider.isTrigger)
+                continue;
+            // 接線方向・接触面から離れる方向の移動は妨げない。
+            if (Vector2.Dot(direction, hit.normal) >= -0.0001f)
+                continue;
+            distance = Mathf.Min(distance, Mathf.Max(0f, hit.distance - skin));
+        }
+
+        return direction * distance;
+    }
+
     private Vector2 EnforceSafetyLimit(Vector2 handPosition)
     {
         float distance = GetRopePathLength();
@@ -1226,20 +1266,20 @@ public class ChainConstraint2D : MonoBehaviour
 
         if (distance > maxRopeLength)
         {
-            // 既に超過している分はForceで戻さず、そのFixed step内で長さだけを解消する。
-            // 通常はBall側を戻し、地形に阻まれた残量だけPlayer側をBall方向へ戻す。
+            // 衝突を守れる範囲でBall側から超過を解消する。
+            // 両端が阻まれている場合、最大長へ瞬間移動して地形内へ押し込まない。
             float overshoot = distance - maxRopeLength;
-            Vector2 ballCorrection = RemoveTerrainInwardComponent(-ballPathDirection * overshoot);
+            Vector2 ballTarget = _ropePathPoints[_ropePathPoints.Count - 2];
+            Vector2 ballCorrection = GetSafeEndpointCorrection(
+                morningStarRb, morningStarRb.position, ballTarget, overshoot);
             morningStarRb.position += ballCorrection;
 
-            float correctedByBall = Mathf.Clamp(
-                -Vector2.Dot(ballCorrection, ballPathDirection),
-                0f,
-                overshoot);
-            float blockedRemainder = overshoot - correctedByBall;
+            RebuildRopePath(handPosition, morningStarRb.position);
+            float blockedRemainder = GetRopePathLength() - maxRopeLength;
             if (blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
-                Vector2 playerCorrection = playerPathDirection * blockedRemainder;
+                Vector2 playerCorrection = GetSafeEndpointCorrection(
+                    playerRb, handPosition, _ropePathPoints[1], blockedRemainder);
                 playerRb.position += playerCorrection;
                 handPosition += playerCorrection;
             }
@@ -1260,7 +1300,7 @@ public class ChainConstraint2D : MonoBehaviour
             // 次のPhysics stepで最大長を越える外向き相対速度だけを除去する。
             // Ballが自由ならPlayerの速度は変えず、Ballが地形に阻まれた残量だけ
             // Player側の「さらに離れる成分」を止める。
-            Vector2 ballVelocityCorrection = RemoveTerrainInwardComponent(
+            Vector2 ballVelocityCorrection = RemoveCollisionInwardComponent(
                 -ballPathDirection * excessSeparatingSpeed);
             morningStarRb.linearVelocity += ballVelocityCorrection;
 
@@ -1270,7 +1310,12 @@ public class ChainConstraint2D : MonoBehaviour
                 excessSeparatingSpeed);
             float blockedRemainder = excessSeparatingSpeed - correctedByBall;
             if (blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
-                playerRb.linearVelocity += playerPathDirection * blockedRemainder;
+            {
+                // 補正差分でなく最終速度を接触面へ投影する。
+                // 壁から離れる速度の打ち消しまで禁止すると鎖が伸び続けてしまう。
+                Vector2 correctedVelocity = playerRb.linearVelocity + playerPathDirection * blockedRemainder;
+                playerRb.linearVelocity = RemoveBodyCollisionInwardComponent(playerRb, correctedVelocity);
+            }
         }
 
         return handPosition;
