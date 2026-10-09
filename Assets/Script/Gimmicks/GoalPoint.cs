@@ -81,6 +81,9 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             _visualInitialLocalPosition = visual.localPosition;
 
         _hitCollider = GetComponent<Collider2D>();
+        // 結晶は命中検出専用。鉄球を止めたり、鎖の巻き付き支点にしない。
+        // 既存Scene/Prefabに残る固体Collider設定にも適用する。
+        _hitCollider.isTrigger = true;
         if (crystalAudioSource == null)
             crystalAudioSource = GetComponent<AudioSource>();
         if (crystalAudioSource != null)
@@ -101,21 +104,19 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         ApplyCrystalStage(0);
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (_isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
+        if (_isBroken || !TryGetMorningStarBody(other, out Rigidbody2D morningStarBody))
             return;
 
-        // BreakableWall と同じ実衝突経路を使う。
-        // Launcher の combat LayerMask に含まれない GoalPoint でも、
-        // morningstar Tag と衝突転送Componentを持つ鉄球だけを受け付ける。
-        float impactSpeed = Mathf.Max(
-            collision.relativeVelocity.magnitude,
-            morningStarBody.linearVelocity.magnitude);
-        Vector2 impactDirection = GetCollisionDirection(collision, morningStarBody);
-        Vector2 impactPoint = collision.contactCount > 0
-            ? collision.GetContact(0).point
-            : morningStarBody.position;
+        // Enterだけで数え、結晶内に滞在している間は追加Hitにしない。
+        // combat LayerMask外でも、従来どおり鉄球だけを受け付ける。
+        Vector2 velocity = morningStarBody.linearVelocity;
+        float impactSpeed = velocity.magnitude;
+        Vector2 impactDirection = velocity.sqrMagnitude > 1e-6f
+            ? velocity.normalized
+            : ((Vector2)_hitCollider.bounds.center - morningStarBody.position).normalized;
+        Vector2 impactPoint = _hitCollider.ClosestPoint(morningStarBody.position);
 
         OnMorningStarHit(new MorningStarHitContext(
             1,
@@ -228,21 +229,6 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 
         return morningStarBody.CompareTag("morningstar")
             && morningStarBody.GetComponent<MorningStarCollisionReporter>() != null;
-    }
-
-    private static Vector2 GetCollisionDirection(Collision2D collision, Rigidbody2D morningStarBody)
-    {
-        if (collision.contactCount > 0)
-        {
-            Vector2 direction = -collision.GetContact(0).normal;
-            if (direction.sqrMagnitude > 1e-6f)
-                return direction.normalized;
-        }
-
-        if (morningStarBody.linearVelocity.sqrMagnitude > 1e-6f)
-            return morningStarBody.linearVelocity.normalized;
-
-        return Vector2.right;
     }
 
     private void BeginGoalSequence()

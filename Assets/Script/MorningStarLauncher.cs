@@ -203,6 +203,15 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float maxChargedThrowMultiplier = 2.2f;
     [SerializeField] private Collider2D spinGuardCollider;
 
+    [Header("Charged Attack")]
+    [SerializeField, Min(1f), Tooltip("最大チャージ時の飛翔速度上限倍率。通常時の速度上限は変えません")]
+    private float chargedSpeedLimitMultiplier = 1.8f;
+    [SerializeField, Min(1f), Tooltip("最大チャージ時のダメージ倍率。途中で離すとチャージ量に応じて補間します")]
+    private float fullChargeDamageMultiplier = 2.5f;
+    [SerializeField, Min(1f), Tooltip("最大チャージ時のノックバックとその上限の倍率")]
+    private float fullChargeKnockbackMultiplier = 1.35f;
+    [SerializeField] private bool enableChargeFeedback = true;
+
     [Header("Ground Impact Camera Shake")]
     [SerializeField] private CameraShake2D cameraShake;
     [SerializeField, Min(0f)] private float minimumGroundImpactSpeed = 7f;
@@ -309,6 +318,10 @@ public class MorningStarLauncher : MonoBehaviour
     private bool _gamepadFirePressedThisFrame;
     private float _lastCharge01;
     private float _lastSpeedMultiplier = 1f;
+    private float _pendingCharge01;
+    private float _activeThrowCharge01;
+    private bool _powerImpactPlayed;
+    private MorningStarChargeFeedback _chargeFeedback;
     private float _nextGroundImpactShakeTime;
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
@@ -378,6 +391,11 @@ public class MorningStarLauncher : MonoBehaviour
     public bool IsAirLaunchAssistActive => _airLaunchAssistRemaining > 0f;
     public float AirTensionMultiplier => airTensionMultiplier;
     public float LastCharge01 => _lastCharge01;
+    public float ChargeProgress => maxChargeTime > 0f ? Mathf.Clamp01(_chargeTime / maxChargeTime) : 1f;
+    public bool IsChargeReady => _state == MorningStarState.SpinCharging && ChargeProgress >= 1f;
+    public bool IsPowerThrow => _state == MorningStarState.Thrown && _activeThrowCharge01 >= 1f;
+    public float EffectiveBallSpeedLimit => maxBallLinearSpeed * Mathf.Lerp(
+        1f, Mathf.Max(1f, chargedSpeedLimitMultiplier), _activeThrowCharge01);
     public float LastSpeedMultiplier => _lastSpeedMultiplier;
     public Transform HandAnchor => handAnchor;
     public Vector2 RopeAnchorWorld => GetPlayerRopeAnchorWorld();
@@ -423,6 +441,8 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        if (_chargeFeedback != null)
+            _chargeFeedback.ResetFeedback();
         EndLaunchPose();
         SetChainConstraintActive(false);
         SetLaunchRopeLengthActive(false);
@@ -615,6 +635,13 @@ public class MorningStarLauncher : MonoBehaviour
             _restBallInterpolation = morningStarRb.interpolation;
             IgnorePlayerBallCollision();
             EnsureCollisionReporter();
+            if (enableChargeFeedback)
+            {
+                _chargeFeedback = morningStarRb.GetComponent<MorningStarChargeFeedback>();
+                if (_chargeFeedback == null)
+                    _chargeFeedback = morningStarRb.gameObject.AddComponent<MorningStarChargeFeedback>();
+                _chargeFeedback.Initialize(sfxAudioSource);
+            }
         }
 
         SyncRopeLengthToConstraint();
@@ -645,6 +672,9 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        _activeThrowCharge01 = 0f;
+        if (_chargeFeedback != null)
+            _chargeFeedback.ResetFeedback();
         UnsubscribeFromPlayerLanding();
         UnsubscribeFromPlayerDeath();
         StopAirLaunchAssist();
@@ -788,6 +818,17 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     private void TransitionToState(MorningStarState nextState)
     {
+        if (nextState != MorningStarState.Thrown)
+            _activeThrowCharge01 = 0f;
+        if (_chargeFeedback != null)
+        {
+            if (nextState == MorningStarState.SpinCharging)
+                _chargeFeedback.BeginCharge();
+            else if (nextState == MorningStarState.RecallBeforeThrow)
+                _chargeFeedback.PrepareThrow(_pendingCharge01);
+            else if (nextState != MorningStarState.Thrown)
+                _chargeFeedback.StopChargeAndFlight();
+        }
         if (nextState != MorningStarState.Thrown)
             StopAirLaunchAssist();
 
@@ -950,6 +991,7 @@ public class MorningStarLauncher : MonoBehaviour
         _recallHoldTimer = 0f;
         _recallDelayTimer = 0f;
         _pendingThrowSpeedMultiplier = 1f;
+        _pendingCharge01 = 0f;
         _pendingLaunchDir = Vector2.zero;
         _thrownElapsed = 0f;
         _lastCharge01 = 0f;
@@ -1325,6 +1367,8 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         _chargeTime = Mathf.Min(_chargeTime + dt, maxChargeTime);
+        if (_chargeFeedback != null)
+            _chargeFeedback.SetCharge(ChargeProgress);
         _spinAngle += spinAngularSpeed * dt * Mathf.Deg2Rad;
 
         Vector2 center = GetHandWorld();
@@ -1339,7 +1383,7 @@ public class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.SpinCharging || morningStarRb == null)
             return;
 
-        float charge01 = maxChargeTime > 0f ? Mathf.Clamp01(_chargeTime / maxChargeTime) : 1f;
+        float charge01 = ChargeProgress;
         _lastCharge01 = charge01;
         _lastSpeedMultiplier = Mathf.Lerp(minChargedThrowMultiplier, maxChargedThrowMultiplier, charge01);
 
@@ -1349,7 +1393,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         SetSpinGuardActive(false);
         LogDebug("MorningStar Charged Throw");
-        BeginRecallBeforeThrow(aimDir, chargedRecallTimeMultiplier, _lastSpeedMultiplier);
+        BeginRecallBeforeThrow(aimDir, chargedRecallTimeMultiplier, _lastSpeedMultiplier, charge01);
     }
 
     private void SetSpinGuardActive(bool active)
@@ -1632,6 +1676,17 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         TryPlayGroundImpactCameraShake(collision);
+        if (IsPowerThrow && !_powerImpactPlayed
+            && Mathf.Max(collision.relativeVelocity.magnitude, morningStarRb.linearVelocity.magnitude) >= minCombatHitSpeed)
+        {
+            _powerImpactPlayed = true;
+            Vector2 point = collision.contactCount > 0 ? collision.GetContact(0).point : morningStarRb.position;
+            Vector2 direction = collision.contactCount > 0 ? -collision.GetContact(0).normal : _pendingLaunchDir;
+            if (_chargeFeedback != null)
+                _chargeFeedback.PlayImpact(point, direction);
+            if (cameraShake != null)
+                cameraShake.Shake(0.12f, maximumShakeStrength);
+        }
 
         if ((_state == MorningStarState.Thrown || _state == MorningStarState.Dropping)
             && HasFloorContact(collision)
@@ -1674,7 +1729,8 @@ public class MorningStarLauncher : MonoBehaviour
         if (!AllowsCombatHitOnLayer(other.gameObject.layer))
             return false;
 
-        float impactSpeed = morningStarRb.linearVelocity.magnitude;
+        // 衝突解決後に速度が落ちていても、命中直前の勢いでダメージを評価する。
+        float impactSpeed = Mathf.Max(morningStarRb.linearVelocity.magnitude, collision.relativeVelocity.magnitude);
         if (impactSpeed < minCombatHitSpeed)
             return false;
 
@@ -1717,17 +1773,20 @@ public class MorningStarLauncher : MonoBehaviour
                 impactDir = -normal.normalized;
         }
 
-        float chargeMult = Mathf.Max(1f, _lastSpeedMultiplier);
-        float scaledSpeed = impactSpeed * chargeMult;
+        float chargeMult = Mathf.Lerp(1f, Mathf.Max(1f, fullChargeDamageMultiplier), _activeThrowCharge01);
 
-        int damage = Mathf.RoundToInt(baseDamage + scaledSpeed * damagePerSpeed);
+        int damage = Mathf.RoundToInt((baseDamage + impactSpeed * damagePerSpeed) * chargeMult);
         damage = Mathf.Clamp(damage, minDamage, maxDamage);
 
-        float knockbackMag = Mathf.Clamp(baseKnockback + scaledSpeed * knockbackPerSpeed, 0f, maxKnockback);
+        float knockbackMult = Mathf.Lerp(1f, Mathf.Max(1f, fullChargeKnockbackMultiplier), _activeThrowCharge01);
+        float knockbackMag = Mathf.Clamp((baseKnockback + impactSpeed * knockbackPerSpeed) * knockbackMult,
+            0f, maxKnockback * knockbackMult);
         Vector2 knockback = impactDir * knockbackMag;
 
         float hitStop = Mathf.Clamp(damage * hitStopPerDamage, minCombatHitStop, maxCombatHitStop);
         hitStop *= Mathf.Lerp(0.85f, 1.15f, Mathf.InverseLerp(minDamage, maxDamage, damage));
+        if (IsPowerThrow)
+            hitStop = Mathf.Max(hitStop, maxCombatHitStop);
 
         Vector2 impactPoint = collision.contactCount > 0
             ? collision.GetContact(0).point
@@ -2129,6 +2188,9 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerDead()
     {
+        _activeThrowCharge01 = 0f;
+        if (_chargeFeedback != null)
+            _chargeFeedback.ResetFeedback();
         StopAirLaunchAssist();
         EndLaunchPose();
         SetChainConstraintActive(false);
@@ -2179,7 +2241,8 @@ public class MorningStarLauncher : MonoBehaviour
     private void BeginRecallBeforeThrow(
         Vector2 launchDir,
         float recallTimeMultiplier = 1f,
-        float throwSpeedMultiplier = 1f)
+        float throwSpeedMultiplier = 1f,
+        float charge01 = 0f)
     {
         if (launchDir.sqrMagnitude < 1e-6f || morningStarRb == null)
             return;
@@ -2202,6 +2265,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         _pendingLaunchDir = d;
         _pendingThrowSpeedMultiplier = throwSpeedMultiplier;
+        _pendingCharge01 = Mathf.Clamp01(charge01);
 
         if (!useVisibleRecallBeforeThrow)
         {
@@ -2271,24 +2335,32 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
 
+        _activeThrowCharge01 = _pendingCharge01;
+        _lastCharge01 = _pendingCharge01;
+        _powerImpactPlayed = false;
         TransitionToState(MorningStarState.Thrown);
 
         float speed = throwSpeed * _pendingThrowSpeedMultiplier;
-        if (maxBallLinearSpeed > 0f)
-            speed = Mathf.Min(speed, maxBallLinearSpeed);
+        float speedLimit = EffectiveBallSpeedLimit;
+        if (speedLimit > 0f)
+            speed = Mathf.Min(speed, speedLimit);
 
         float offset = Mathf.Max(0f, launchStartOffset);
         morningStarRb.position = origin + d * offset;
         Vector2 launchVelocity = d * speed;
         if (postThrowDownwardBias > 0f)
             launchVelocity += Vector2.down * postThrowDownwardBias;
-        if (maxBallLinearSpeed > 0f && launchVelocity.sqrMagnitude > maxBallLinearSpeed * maxBallLinearSpeed)
-            launchVelocity = launchVelocity.normalized * maxBallLinearSpeed;
+        if (speedLimit > 0f && launchVelocity.sqrMagnitude > speedLimit * speedLimit)
+            launchVelocity = launchVelocity.normalized * speedLimit;
 
         morningStarRb.linearVelocity = launchVelocity;
         morningStarRb.WakeUp();
         BeginAirLaunchAssist(launchedInAir);
         PlayMorningStarLaunchSound();
+        if (_chargeFeedback != null)
+            _chargeFeedback.PlayLaunch(d, _activeThrowCharge01);
+        if (IsPowerThrow && cameraShake != null)
+            cameraShake.Shake(0.07f, minimumShakeStrength * 0.7f);
 
         _thrownElapsed = 0f;
         _lastSpeedMultiplier = _pendingThrowSpeedMultiplier;
@@ -2555,7 +2627,7 @@ public class MorningStarLauncher : MonoBehaviour
                     chainLineController.ChainCollisionRadius,
                     chainLineController.CollisionSkin);
             }
-            chainConstraint.MaxBallSpeed = maxBallLinearSpeed;
+            chainConstraint.MaxBallSpeed = EffectiveBallSpeedLimit;
         }
     }
 
