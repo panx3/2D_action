@@ -216,7 +216,7 @@ public static class GoalCelebrationCheckpointSetup
             renderer.sortingOrder = 5;
 
             BoxCollider2D collider = root.GetComponent<BoxCollider2D>();
-            collider.isTrigger = true;
+            collider.isTrigger = false;
             collider.size = new Vector2(0.66f, 1.82f);
             collider.offset = new Vector2(0f, -0.02f);
 

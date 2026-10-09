@@ -326,6 +326,8 @@ public class MorningStarLauncher : MonoBehaviour
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
     private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
+    private readonly List<(Collider2D Ball, Collider2D Goal)> _recallGoalCollisionPairs =
+        new List<(Collider2D Ball, Collider2D Goal)>();
     private Color _defaultLineColor = Color.white;
     private float _defaultLineWidth;
     private bool _lineVisualDefaultsCached;
@@ -441,6 +443,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        SetGoalCollisionIgnoredForRecall(false);
         if (_chargeFeedback != null)
             _chargeFeedback.ResetFeedback();
         EndLaunchPose();
@@ -672,6 +675,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        SetGoalCollisionIgnoredForRecall(false);
         _activeThrowCharge01 = 0f;
         if (_chargeFeedback != null)
             _chargeFeedback.ResetFeedback();
@@ -818,6 +822,8 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     private void TransitionToState(MorningStarState nextState)
     {
+        SetGoalCollisionIgnoredForRecall(nextState == MorningStarState.RecallBeforeThrow
+            || nextState == MorningStarState.Returning);
         if (nextState != MorningStarState.Thrown)
             _activeThrowCharge01 = 0f;
         if (_chargeFeedback != null)
@@ -1695,6 +1701,17 @@ public class MorningStarLauncher : MonoBehaviour
             LogDebug("MorningStar Heavy Land");
         }
 
+        GoalPoint goal = collision.collider.GetComponentInParent<GoalPoint>();
+        if (goal != null)
+        {
+            // Goal自身が命中回数を数える。combat Layer設定による二重処理を避ける。
+            // 衝突前の法線方向の勢いだけを返し、接線方向の滑りは残す。
+            if (!goal.IsBroken && (_state == MorningStarState.Thrown
+                || _state == MorningStarState.Dragging || _state == MorningStarState.Dropping))
+                ApplyGoalBallRebound(collision, goal.BallRestitution);
+            return;
+        }
+
         if (TryProcessCombatHit(collision))
             return;
 
@@ -1711,6 +1728,58 @@ public class MorningStarLauncher : MonoBehaviour
             || _state == MorningStarState.Dropping
             || _state == MorningStarState.Hooked
             || _state == MorningStarState.Swinging;
+    }
+
+    private void ApplyGoalBallRebound(Collision2D collision, float restitution)
+    {
+        Vector2 velocity = morningStarRb.linearVelocity;
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            ContactPoint2D contact = collision.GetContact(i);
+            Vector2 normal = contact.normal;
+            if (Vector2.Dot(normal, morningStarRb.position - contact.point) < 0f)
+                normal = -normal;
+            // Ball側のCollision2D.relativeVelocityは相手から見た接近速度。
+            float approachSpeed = Mathf.Max(0f, Vector2.Dot(collision.relativeVelocity, normal));
+            float outwardSpeed = Vector2.Dot(velocity, normal);
+            float reboundSpeed = approachSpeed * Mathf.Clamp01(restitution);
+            if (outwardSpeed < reboundSpeed)
+                velocity += normal * (reboundSpeed - outwardSpeed);
+        }
+        morningStarRb.linearVelocity = velocity;
+    }
+
+    private void SetGoalCollisionIgnoredForRecall(bool ignore)
+    {
+        if (!ignore)
+        {
+            foreach (var pair in _recallGoalCollisionPairs)
+            {
+                if (pair.Ball != null && pair.Goal != null)
+                    Physics2D.IgnoreCollision(pair.Ball, pair.Goal, false);
+            }
+            _recallGoalCollisionPairs.Clear();
+            return;
+        }
+        if (morningStarRb == null || _recallGoalCollisionPairs.Count > 0)
+            return;
+
+        // 回収中の手元への移動とGoalの接触解決を競合させない。
+        // 自分が変更したPairだけを記録し、次の状態・死亡・無効化で戻す。
+        Collider2D[] ballColliders = morningStarRb.GetComponentsInChildren<Collider2D>();
+        foreach (GoalPoint goal in FindObjectsByType<GoalPoint>(FindObjectsSortMode.None))
+        {
+            Collider2D goalCollider = goal.GetComponent<Collider2D>();
+            if (goalCollider == null || !goalCollider.enabled)
+                continue;
+            foreach (Collider2D ballCollider in ballColliders)
+            {
+                if (!ballCollider.enabled || Physics2D.GetIgnoreCollision(ballCollider, goalCollider))
+                    continue;
+                Physics2D.IgnoreCollision(ballCollider, goalCollider, true);
+                _recallGoalCollisionPairs.Add((ballCollider, goalCollider));
+            }
+        }
     }
 
     private bool TryProcessCombatHit(Collision2D collision)
@@ -2188,6 +2257,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerDead()
     {
+        SetGoalCollisionIgnoredForRecall(false);
         _activeThrowCharge01 = 0f;
         if (_chargeFeedback != null)
             _chargeFeedback.ResetFeedback();

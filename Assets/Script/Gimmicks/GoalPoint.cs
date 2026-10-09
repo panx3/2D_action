@@ -15,6 +15,10 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0f)] private float hitCooldown = 0.15f;
     [SerializeField] private Sprite[] crystalStages;
 
+    [Header("Ball Contact")]
+    [SerializeField, Range(0f, 1f), Tooltip("鉄球が命中した面から離れる反発率。Playerには反発を加えません")]
+    private float ballRestitution = 0.4f;
+
     [Header("Fragments")]
     [SerializeField] private CrystalFragment fragmentPrefab;
     [SerializeField, Min(0)] private int fragmentsPerHit = 3;
@@ -50,6 +54,8 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 
     private SpriteRenderer _spriteRenderer;
     private Collider2D _hitCollider;
+    private PhysicsMaterial2D _contactMaterial;
+    private PhysicsMaterial2D _originalMaterial;
     private int _hitCount;
     private float _nextHitTime;
     private bool _isBroken;
@@ -62,6 +68,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     public int RequiredHits => requiredHits;
     public bool IsBroken => _isBroken;
     public bool IsCleared => _isCleared;
+    public float BallRestitution => ballRestitution;
     public int CrackSoundPlayCount { get; private set; }
     public int ShatterSoundPlayCount { get; private set; }
 
@@ -81,9 +88,18 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             _visualInitialLocalPosition = visual.localPosition;
 
         _hitCollider = GetComponent<Collider2D>();
-        // 結晶は命中検出専用。鉄球を止めたり、鎖の巻き付き支点にしない。
-        // 既存Scene/Prefabに残る固体Collider設定にも適用する。
-        _hitCollider.isTrigger = true;
+        _hitCollider.isTrigger = false;
+        // 接触面に摩擦で貼り付かない。鉄球だけの反発はLauncherで処理し、
+        // Playerを弾ませたり、他の地形へMaterial設定を持ち越したりしない。
+        _originalMaterial = _hitCollider.sharedMaterial;
+        _contactMaterial = new PhysicsMaterial2D("Goal Crystal Contact (Runtime)")
+        {
+            friction = 0f,
+            bounciness = 0f,
+            frictionCombine = PhysicsMaterialCombine2D.Minimum,
+            bounceCombine = PhysicsMaterialCombine2D.Minimum
+        };
+        _hitCollider.sharedMaterial = _contactMaterial;
         if (crystalAudioSource == null)
             crystalAudioSource = GetComponent<AudioSource>();
         if (crystalAudioSource != null)
@@ -104,19 +120,20 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         ApplyCrystalStage(0);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (_isBroken || !TryGetMorningStarBody(other, out Rigidbody2D morningStarBody))
+        if (_isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
             return;
 
-        // Enterだけで数え、結晶内に滞在している間は追加Hitにしない。
-        // combat LayerMask外でも、従来どおり鉄球だけを受け付ける。
-        Vector2 velocity = morningStarBody.linearVelocity;
-        float impactSpeed = velocity.magnitude;
-        Vector2 impactDirection = velocity.sqrMagnitude > 1e-6f
-            ? velocity.normalized
+        // 衝突解決後に速度が落ちていても、命中直前の勢いを使う。
+        // Enterだけで数え、接触し続けている間は追加Hitにしない。
+        float impactSpeed = Mathf.Max(collision.relativeVelocity.magnitude, morningStarBody.linearVelocity.magnitude);
+        Vector2 impactDirection = collision.relativeVelocity.sqrMagnitude > 1e-6f
+            ? collision.relativeVelocity.normalized
             : ((Vector2)_hitCollider.bounds.center - morningStarBody.position).normalized;
-        Vector2 impactPoint = _hitCollider.ClosestPoint(morningStarBody.position);
+        Vector2 impactPoint = collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : _hitCollider.ClosestPoint(morningStarBody.position);
 
         OnMorningStarHit(new MorningStarHitContext(
             1,
@@ -166,6 +183,14 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         ResetVisualPosition();
     }
 
+    private void OnDestroy()
+    {
+        if (_hitCollider != null)
+            _hitCollider.sharedMaterial = _originalMaterial;
+        if (_contactMaterial != null)
+            Destroy(_contactMaterial);
+    }
+
     private void PlayHitFeedback(bool finalHit)
     {
         AudioClip clip = finalHit ? shatterClip : crackClip;
@@ -186,7 +211,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 
     private void StartVisualShake(bool finalHit)
     {
-        if (visual == null)
+        if (visual == null || visual == transform)
             return;
 
         if (_visualShakeRoutine != null)

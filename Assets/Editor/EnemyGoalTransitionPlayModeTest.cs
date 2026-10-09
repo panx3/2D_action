@@ -271,7 +271,7 @@ public static class EnemyGoalTransitionPlayModeTest
     {
         Time.timeScale = 1f;
         Collider2D goalCollider = goalPoint.GetComponent<Collider2D>();
-        Require(goalCollider != null && goalCollider.isTrigger, "Goal crystal must use a non-blocking hit trigger");
+        Require(goalCollider != null && !goalCollider.isTrigger, "Goal crystal must use a solid collision collider");
         playerBody.linearVelocity = Vector2.zero;
         playerBody.angularVelocity = 0f;
         playerBody.position = goalCollider.bounds.center;
