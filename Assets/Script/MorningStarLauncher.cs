@@ -1663,11 +1663,9 @@ public class MorningStarLauncher : MonoBehaviour
         if (speed < hookMinSpeed)
             return;
 
-        Vector2 hookPoint = GetBestHookPoint(collision);
-        if (hookPoint.sqrMagnitude < 1e-8f)
-            hookPoint = morningStarRb.position;
-
-        BeginHook(hookPoint);
+        // 接触点は鉄球の表面。中心をそこへ固定するとColliderが壁にめり込み、
+        // PinBallAtHookと物理Solverの押し戻しが毎step競合する。
+        BeginHook(morningStarRb.position);
     }
 
     private bool CanStateDealCombatDamage()
@@ -1914,18 +1912,6 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         return false;
-    }
-
-    private static Vector2 GetBestHookPoint(Collision2D collision)
-    {
-        if (collision.contactCount == 0)
-            return Vector2.zero;
-
-        Vector2 hookPoint = collision.GetContact(0).point;
-        if (hookPoint.sqrMagnitude < 1e-8f && collision.rigidbody != null)
-            hookPoint = collision.rigidbody.position;
-
-        return hookPoint;
     }
 
     private void BeginHook(Vector2 hookPoint)
