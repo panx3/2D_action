@@ -612,8 +612,6 @@ public static class PlayableSampleStageBuilderV7
         if (hitSwitch == null || door == null)
             return;
 
-        SetFloat(hitSwitch, "activeDuration", 60f);
-        SetBool(hitSwitch, "flashBeforeOff", false);
         LinkUnityEvent(hitSwitch, "onHit", door.Open);
     }
 
@@ -623,7 +621,7 @@ public static class PlayableSampleStageBuilderV7
             return;
 
         LinkUnityEvent(weightSwitch, "onPressed", door.Open);
-        // onReleasedにはCloseを登録しない。1回開いたら進行不能にならない。
+        LinkUnityEvent(weightSwitch, "onReleased", door.Close);
     }
 
     private static void ConfigureDoorStartsOpen(GimmickDoor door, bool startsOpen)
