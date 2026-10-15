@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>着地後に壁・崖で折り返す、攻撃処理を持たない巡回。</summary>
+/// <summary>壁・崖で折り返す巡回と身体接触。被弾・撃破はEnemyHealthが担当。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
+[RequireComponent(typeof(EnemyHealth))]
 public sealed class WrenchCrab : MonoBehaviour
 {
     public enum InitialDirection { Left = -1, Right = 1 }
@@ -18,17 +19,25 @@ public sealed class WrenchCrab : MonoBehaviour
     [SerializeField] private SpriteRenderer _visualRenderer;
     [SerializeField] private Animator _visualAnimator;
 
+    [Header("Contact Damage")]
+    [SerializeField, Min(0)] private int _contactDamage = 1;
+    [SerializeField, Min(0f)] private float _contactKnockback = 5f;
+    [SerializeField, Min(0f)] private float _contactCooldown = 0.7f;
+
     private const float Skin = 0.02f;
     private const float GroundContactDistance = 0.04f;
     private readonly RaycastHit2D[] _hits = new RaycastHit2D[16];
     private Rigidbody2D _body;
     private BoxCollider2D _collider;
     private int _direction;
+    private EnemyHealth _health;
+    private float _lastContactDamageTime = float.NegativeInfinity;
 
     private void Awake()
     {
         _body = GetComponent<Rigidbody2D>();
         _collider = GetComponent<BoxCollider2D>();
+        _health = GetComponent<EnemyHealth>();
         if (_visualRenderer == null)
             _visualRenderer = GetComponentInChildren<SpriteRenderer>();
         if (_visualAnimator == null)
@@ -39,6 +48,13 @@ public sealed class WrenchCrab : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (_health != null && (_health.IsDeathHandled || _health.IsHitStunned))
+        {
+            // 被弾中の速度はEnemyHealthに任せ、巡回でノックバックを上書きしない。
+            UpdateVisual(false);
+            return;
+        }
+
         ContactFilter2D filter = new ContactFilter2D();
         filter.SetLayerMask(_terrainLayers);
         filter.useTriggers = false;
@@ -60,6 +76,33 @@ public sealed class WrenchCrab : MonoBehaviour
         // 垂直速度と重力は物理エンジンに任せ、空中では巡回を開始しない。
         _body.linearVelocity = new Vector2(speed, _body.linearVelocity.y);
         UpdateVisual(Mathf.Abs(speed) > 0.001f);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        TryContactDamage(collision.collider);
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        TryContactDamage(collision.collider);
+    }
+
+    private void TryContactDamage(Collider2D other)
+    {
+        if (_contactDamage <= 0 || !PlayerColliderUtility.IsPlayerBody(other)
+            || (_health != null && _health.CurrentHp <= 0)
+            || Time.time - _lastContactDamageTime < _contactCooldown)
+            return;
+
+        PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
+        if (playerHealth == null || playerHealth.IsDead || playerHealth.IsInvincible)
+            return;
+
+        Vector2 direction = (Vector2)other.bounds.center - (Vector2)_collider.bounds.center;
+        direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
+        playerHealth.TakeDamage(_contactDamage, direction * _contactKnockback);
+        _lastContactDamageTime = Time.time;
     }
 
     private bool IsGrounded(ContactFilter2D filter)
