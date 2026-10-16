@@ -420,8 +420,14 @@ public static class TekkyuEnemyPlayModeTest
         EnemyFragment[] spawned = fragments.Skip(fragmentBaseline).ToArray();
         Check(spawned.Select(fragment => fragment.CurrentSprite).Where(sprite => sprite != null).Distinct().Count() >= 4,
             "EnemyFragment did not mix multiple fragment sprites");
-        Check(spawned.All(fragment => fragment.GetComponent<Collider2D>() == null),
-            "EnemyFragment has a Collider2D and can obstruct Player");
+        int excludedLayers = LayerMask.GetMask("player", "Enemy", "morningstar", "chain", "WallFragment");
+        Check(spawned.All(fragment =>
+        {
+            Collider2D collider = fragment.GetComponent<Collider2D>();
+            return collider != null && !collider.isTrigger
+                && fragment.gameObject.layer == LayerMask.NameToLayer("WallFragment")
+                && (collider.excludeLayers.value & excludedLayers) == excludedLayers;
+        }), "EnemyFragment must collide only with terrain and not obstruct actors or other fragments");
         Check(spawned.All(fragment => fragment.GetComponent<Rigidbody2D>() != null),
             "EnemyFragment Rigidbody2D is missing");
         Check(spawned.Any(fragment => Mathf.Abs(fragment.GetComponent<Rigidbody2D>().angularVelocity) > 1f),

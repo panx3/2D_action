@@ -56,8 +56,6 @@ public static class FragmentBurst2D
             EnemyFragment enemyFragment = fragment.GetComponent<EnemyFragment>();
             if (enemyFragment != null)
             {
-                if (body != null)
-                    body.angularVelocity = Random.Range(-180f, 180f);
                 enemyFragment.Initialize(i, lifeTime);
             }
             else

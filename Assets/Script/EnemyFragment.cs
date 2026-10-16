@@ -2,16 +2,27 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Enemy専用の演出破片。見た目だけを担当し、Colliderは持たない。
+/// 敵共通の物理破片。地形だけに衝突し、Sprite選択・回転・寿命を担当する。
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(SpriteRenderer), typeof(Rigidbody2D))]
+[RequireComponent(typeof(BoxCollider2D))]
 public sealed class EnemyFragment : MonoBehaviour
 {
     [SerializeField] private Sprite[] fragmentSprites;
     [SerializeField, Min(0f)] private float fadeDuration = 0.4f;
 
+    [Header("Fragment Physics")]
+    [SerializeField, Tooltip("地面・壁のみを指定。Player / Enemy / WallFragmentは含めない")]
+    private LayerMask terrainLayers = (1 << 0) | (1 << 6);
+    [SerializeField, Min(0f), Tooltip("生成時の角速度を±この値から選ぶ（度/秒）")]
+    private float maxAngularSpeed = 180f;
+    [SerializeField, Tooltip("選ばれたSpriteのサイズ・PivotにBoxCollider2Dを合わせる")]
+    private bool fitColliderToSprite = true;
+
     private SpriteRenderer _spriteRenderer;
+    private BoxCollider2D _collider;
+    private Rigidbody2D _body;
     private Coroutine _lifetimeRoutine;
 
     public int FragmentSpriteCount => CountValidSprites();
@@ -19,7 +30,45 @@ public sealed class EnemyFragment : MonoBehaviour
 
     private void Awake()
     {
+        ConfigurePhysics();
+    }
+
+    /// <summary>Prefab設定時と実行時で同じ設定を使う。壁破片の設定や衝突表は変更しない。</summary>
+    [ContextMenu("Configure Fragment Physics")]
+    public void ConfigurePhysics()
+    {
         _spriteRenderer = GetComponent<SpriteRenderer>();
+        _collider = GetComponent<BoxCollider2D>();
+        _body = GetComponent<Rigidbody2D>();
+
+        int fragmentLayer = LayerMask.NameToLayer("WallFragment");
+        if (fragmentLayer >= 0)
+            gameObject.layer = fragmentLayer;
+
+        if (_body != null)
+            _body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        if (_collider != null)
+        {
+            _collider.isTrigger = false;
+            // Collider側だけで接触先を限定し、既存のLayer Collision Matrixは維持する。
+            _collider.includeLayers = terrainLayers;
+            _collider.excludeLayers = ~terrainLayers.value;
+            _collider.layerOverridePriority = 1;
+            FitCollider();
+        }
+    }
+
+    private void FitCollider()
+    {
+        if (!fitColliderToSprite || _collider == null || _spriteRenderer == null || _spriteRenderer.sprite == null)
+            return;
+
+        Bounds bounds = _spriteRenderer.sprite.bounds;
+        Vector2 center = bounds.center;
+        if (_spriteRenderer.flipX) center.x = -center.x;
+        if (_spriteRenderer.flipY) center.y = -center.y;
+        _collider.offset = center;
+        _collider.size = new Vector2(Mathf.Max(0.01f, bounds.size.x), Mathf.Max(0.01f, bounds.size.y));
     }
 
     /// <summary>
@@ -41,6 +90,13 @@ public sealed class EnemyFragment : MonoBehaviour
             Color color = _spriteRenderer.color;
             color.a = 1f;
             _spriteRenderer.color = color;
+        }
+
+        FitCollider();
+        if (_body != null)
+        {
+            float speed = Mathf.Max(0f, maxAngularSpeed);
+            _body.angularVelocity = Random.Range(-speed, speed);
         }
 
         if (_lifetimeRoutine != null)

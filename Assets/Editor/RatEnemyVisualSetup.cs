@@ -59,8 +59,12 @@ public static class RatEnemyVisualSetup
             "EnemyFragment does not contain multiple fragment sprites");
         Check(fragmentPrefab.GetComponent<SpriteRenderer>() != null, "EnemyFragment SpriteRenderer is missing");
         Check(fragmentPrefab.GetComponent<Rigidbody2D>() != null, "EnemyFragment Rigidbody2D is missing");
-        Check(fragmentPrefab.GetComponent<Collider2D>() == null,
-            "EnemyFragment must not collide with Player or other fragments");
+        BoxCollider2D fragmentCollider = fragmentPrefab.GetComponent<BoxCollider2D>();
+        Check(fragmentCollider != null && !fragmentCollider.isTrigger,
+            "EnemyFragment terrain collider is missing");
+        int excludedLayers = LayerMask.GetMask("player", "Enemy", "morningstar", "chain", "WallFragment");
+        Check((fragmentCollider.excludeLayers.value & excludedLayers) == excludedLayers,
+            "EnemyFragment must exclude Player, Enemy, Morning Star and other fragments");
     }
 
     private static void ConfigureSpriteSheet(string path, float pixelsPerUnit, float pivotY)
@@ -105,14 +109,13 @@ public static class RatEnemyVisualSetup
         GameObject root = PrefabUtility.LoadPrefabContents(FragmentPrefabPath);
         try
         {
-            foreach (Collider2D collider in root.GetComponents<Collider2D>())
-                UnityEngine.Object.DestroyImmediate(collider);
-
             SpriteRenderer renderer = Require<SpriteRenderer>(root);
             renderer.sprite = sprites[0];
             EnemyFragment fragment = root.GetComponent<EnemyFragment>();
             if (fragment == null)
                 fragment = root.AddComponent<EnemyFragment>();
+            Require<BoxCollider2D>(root);
+            fragment.ConfigurePhysics();
 
             SerializedObject serialized = new SerializedObject(fragment);
             SerializedProperty array = serialized.FindProperty("fragmentSprites");

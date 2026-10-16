@@ -56,7 +56,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -86,7 +86,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Shadow
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.3}
   m_EffectDistance: {x: 2, y: -2}
@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -200,16 +200,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 857467e7e97b9ba4d98ab9542850a986, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageTitleUI
   startIntro: {fileID: 0}
   titleImage: {fileID: 4687117173049782952}
   canvasGroup: {fileID: 2198544181152009785}
   stageSprite: {fileID: -313556916361090079, guid: 4631ee6e4c1a24644bc12794876942af, type: 3}
   baseSize: {x: 630, y: 141}
-  sizeMultiplier: 1.5
-  slideDistance: 48
+  sizeMultiplier: 1.3
+  slideDistance: 60
   showDelayAfterIntro: 2
-  fadeInDuration: 0.4
-  fadeOutStart: 4
-  totalDuration: 5
+  fadeInDuration: 3
+  fadeOutStart: 5
+  totalDuration: 8
