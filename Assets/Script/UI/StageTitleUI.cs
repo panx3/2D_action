@@ -35,6 +35,7 @@ public sealed class StageTitleUI : MonoBehaviour
     public bool HasPlayed { get; private set; }
     public bool IsShowing { get; private set; }
     private Canvas _canvas;
+    private CRTFilterController _crtFilter;
     private RectTransform _titleRect;
     private Vector2 _restPosition;
     // 0 = 上方で透明、1 = 定位置で不透明。位置と透明度で同じ表示率を使用する。
@@ -43,6 +44,13 @@ public sealed class StageTitleUI : MonoBehaviour
     private void Awake()
     {
         _canvas = GetComponent<Canvas>();
+        foreach (CRTFilterController candidate in FindObjectsByType<CRTFilterController>(FindObjectsSortMode.None))
+        {
+            if (candidate.gameObject.scene != gameObject.scene)
+                continue;
+            _crtFilter = candidate;
+            break;
+        }
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
         if (titleImage == null)
@@ -60,9 +68,10 @@ public sealed class StageTitleUI : MonoBehaviour
 
     private void LateUpdate()
     {
-        // CRTは起動時にOverlayをCamera描画へ取り込む。このUIだけはOverlayを維持し、
-        // カメラ追従・揺れによるずれを避ける。既存カメラや他Canvasの設定は変更しない。
-        if (_canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+        // 通常時は画面固定。ポーズ・リザルト中はCRT側のCamera描画を維持し、
+        // ステージ名も停止背景に含めてメニューの裏へ回す。
+        if ((_crtFilter == null || !_crtFilter.IsOverlayActive)
+            && _canvas.renderMode != RenderMode.ScreenSpaceOverlay)
         {
             _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             _canvas.worldCamera = null;

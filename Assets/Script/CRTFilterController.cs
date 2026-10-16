@@ -67,6 +67,7 @@ public sealed class CRTFilterController : MonoBehaviour
     private bool ownsCameraRenderer;
     private CRTOverlayController overlayOwner;
     private readonly Dictionary<Canvas, CanvasState> convertedCanvases = new Dictionary<Canvas, CanvasState>();
+    public bool IsOverlayActive => overlayOwner != null;
 
     private struct CanvasState
     {
@@ -297,16 +298,18 @@ public sealed class CRTFilterController : MonoBehaviour
             || targetCamera == null
             || canvas.gameObject.scene != gameObject.scene
             || !canvas.isRootCanvas
-            || canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            || convertedCanvases.ContainsKey(canvas))
+            || canvas.renderMode != RenderMode.ScreenSpaceOverlay)
             return;
 
-        convertedCanvases.Add(canvas, new CanvasState
-        {
-            RenderMode = canvas.renderMode,
-            WorldCamera = canvas.worldCamera,
-            PlaneDistance = canvas.planeDistance
-        });
+        // A screen-fixed UI may return to Overlay between menus. Reconvert it on
+        // the next acquisition while retaining the original state for restoration.
+        if (!convertedCanvases.ContainsKey(canvas))
+            convertedCanvases.Add(canvas, new CanvasState
+            {
+                RenderMode = canvas.renderMode,
+                WorldCamera = canvas.worldCamera,
+                PlaneDistance = canvas.planeDistance
+            });
 
         canvas.renderMode = RenderMode.ScreenSpaceCamera;
         canvas.worldCamera = targetCamera;
