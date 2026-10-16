@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -14,6 +15,17 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private bool freezeRotationOnHit = true;
     [SerializeField] private bool stopAngularVelocityOnHit = true;
     [SerializeField] private bool debugLog;
+
+    [Header("Hit Feedback (Optional)")]
+    [SerializeField, Min(0f), Tooltip("0なら既存どおり。鉄球側の命中間隔に加える受信側の連続被弾防止。")]
+    private float hitInvincibleDuration;
+    [SerializeField, Min(0f)] private float hitFlashDuration;
+    [SerializeField, Min(0.01f)] private float hitFlashInterval = 0.06f;
+    [SerializeField] private SpriteRenderer hitFlashRenderer;
+
+    [Header("Death Behaviour")]
+    [SerializeField, Tooltip("撃破時に停止する巡回などのComponent。Enemyは従来どおり自動停止。")]
+    private Behaviour[] disableOnDeath;
 
     [Header("Hit SFX")]
     [SerializeField] private AudioSource hitAudioSource;
@@ -33,6 +45,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     private float _hitStunTimer;
     private bool _deathHandled;
     private Vector2 _lastImpactDirection = Vector2.right;
+    private float _lastDamageTime = float.NegativeInfinity;
+    private Coroutine _hitFlashRoutine;
+    private bool _rendererWasEnabled;
 
     public int CurrentHp => _currentHp;
     public int MaxHp => maxHp;
@@ -44,6 +59,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     {
         _currentHp = maxHp;
         _rigidbody2D = GetComponent<Rigidbody2D>();
+        if (hitFlashRenderer == null && hitFlashDuration > 0f)
+            hitFlashRenderer = GetComponentInChildren<SpriteRenderer>();
         if (hitAudioSource == null)
             hitAudioSource = OneShotAudioUtility.FindWorldImpactSource();
         if (_rigidbody2D != null)
@@ -67,9 +84,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     public void OnMorningStarHit(MorningStarHitContext context)
     {
-        if (_currentHp <= 0 || context.Damage <= 0)
+        if (_currentHp <= 0 || context.Damage <= 0
+            || Time.time - _lastDamageTime < hitInvincibleDuration)
             return;
 
+        _lastDamageTime = Time.time;
         _currentHp = Mathf.Max(0, _currentHp - context.Damage);
         if (OneShotAudioUtility.Play2D(hitAudioSource, morningStarHitClip, morningStarHitVolume, transform.position))
             HitSoundPlayCount++;
@@ -103,6 +122,41 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
         if (_currentHp <= 0)
             HandleDeath();
+        else if (hitFlashDuration > 0f && hitFlashRenderer != null)
+        {
+            StopHitFlash();
+            _rendererWasEnabled = hitFlashRenderer.enabled;
+            _hitFlashRoutine = StartCoroutine(HitFlash());
+        }
+    }
+
+    private IEnumerator HitFlash()
+    {
+        float elapsed = 0f;
+        float interval = Mathf.Max(0.01f, hitFlashInterval);
+        while (elapsed < hitFlashDuration)
+        {
+            hitFlashRenderer.enabled = !hitFlashRenderer.enabled;
+            yield return new WaitForSeconds(interval);
+            elapsed += interval;
+        }
+        hitFlashRenderer.enabled = _rendererWasEnabled;
+        _hitFlashRoutine = null;
+    }
+
+    private void StopHitFlash()
+    {
+        if (_hitFlashRoutine == null)
+            return;
+        StopCoroutine(_hitFlashRoutine);
+        _hitFlashRoutine = null;
+        if (hitFlashRenderer != null)
+            hitFlashRenderer.enabled = _rendererWasEnabled;
+    }
+
+    private void OnDisable()
+    {
+        StopHitFlash();
     }
 
     private void ClampKnockbackSpeed()
@@ -121,6 +175,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             return;
 
         _deathHandled = true;
+        StopHitFlash();
 
         if (debugLog)
             Debug.Log($"[EnemyHealth] HandleDeath on {name}", this);
@@ -151,6 +206,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         if (movement != null)
             movement.enabled = false;
 
+        SetDeathBehavioursEnabled(false);
+
         foreach (Collider2D col in GetComponentsInChildren<Collider2D>(true))
         {
             if (col != null)
@@ -173,14 +230,18 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     public void ResetHealth()
     {
+        StopHitFlash();
         _currentHp = maxHp;
         _hitStunTimer = 0f;
         _deathHandled = false;
         _lastImpactDirection = Vector2.right;
+        _lastDamageTime = float.NegativeInfinity;
 
         Enemy movement = GetComponent<Enemy>();
         if (movement != null)
             movement.enabled = true;
+
+        SetDeathBehavioursEnabled(true);
 
         foreach (Collider2D col in GetComponentsInChildren<Collider2D>(true))
         {
@@ -199,6 +260,17 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _rigidbody2D.simulated = true;
             _rigidbody2D.freezeRotation = true;
             _rigidbody2D.angularVelocity = 0f;
+        }
+    }
+
+    private void SetDeathBehavioursEnabled(bool value)
+    {
+        if (disableOnDeath == null)
+            return;
+        foreach (Behaviour behaviour in disableOnDeath)
+        {
+            if (behaviour != null && behaviour != this)
+                behaviour.enabled = value;
         }
     }
 }
