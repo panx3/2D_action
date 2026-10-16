@@ -37,7 +37,8 @@ public sealed class StageTitleUI : MonoBehaviour
     private Canvas _canvas;
     private RectTransform _titleRect;
     private Vector2 _restPosition;
-    private float _slideOffset;
+    // 0 = 上方で透明、1 = 定位置で不透明。位置と透明度で同じ表示率を使用する。
+    private float _visibilityProgress;
 
     private void Awake()
     {
@@ -121,31 +122,35 @@ public sealed class StageTitleUI : MonoBehaviour
             if (fadeIn > 0f && elapsed < fadeIn)
             {
                 float progress = EaseOut(elapsed / fadeIn);
-                canvasGroup.alpha = progress;
-                _slideOffset = Mathf.Lerp(slideDistance, 0f, progress);
+                SetProgress(progress);
             }
             else if (elapsed >= fadeOut && duration > fadeOut)
             {
                 float progress = EaseOut((elapsed - fadeOut) / (duration - fadeOut));
-                canvasGroup.alpha = 1f - progress;
-                _slideOffset = Mathf.Lerp(0f, slideDistance, progress);
+                SetProgress(1f - progress);
             }
             else
             {
-                canvasGroup.alpha = 1f;
-                _slideOffset = 0f;
+                SetProgress(1f);
             }
-            UpdateLayout();
             yield return null;
             elapsed += Time.deltaTime;
         }
+        SetProgress(0f);
         Hide();
+    }
+
+    private void SetProgress(float progress)
+    {
+        _visibilityProgress = Mathf.Clamp01(progress);
+        canvasGroup.alpha = _visibilityProgress;
+        UpdateLayout();
     }
 
     private void Hide()
     {
         IsShowing = false;
-        _slideOffset = 0f;
+        _visibilityProgress = 0f;
         if (titleImage != null)
             titleImage.enabled = false;
         UpdateLayout();
@@ -182,7 +187,12 @@ public sealed class StageTitleUI : MonoBehaviour
         Vector2 rest = new Vector2(
             -Mathf.Min(rightMargin, Mathf.Max(0f, viewport.x - size.x)),
             -Mathf.Min(topMargin, Mathf.Max(0f, viewport.y - size.y)));
-        _titleRect.anchoredPosition = rest + Vector2.up * Mathf.Min(Mathf.Max(0f, _slideOffset), -rest.y);
+        // 補間後に移動量だけを切り詰めると、透明度と実移動の進行率がずれる。
+        // 先に移動可能な距離を確定し、透明度と同じ表示率で終点まで補間する。
+        float distance = Mathf.Min(Mathf.Max(0f, slideDistance), -rest.y);
+        _titleRect.anchoredPosition = IsShowing
+            ? Vector2.Lerp(rest + Vector2.up * distance, rest, _visibilityProgress)
+            : rest;
     }
 
     private void OnDisable()
