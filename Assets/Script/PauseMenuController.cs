@@ -2,280 +2,146 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
-/// <summary>
-/// CompletSceneのPause状態とUI遷移を一元管理する。
-/// Pause Actionは既存InputActionAsset内のPlayer/Pauseを使用する。
-/// </summary>
+/// <summary>Owns pause input/time and scene actions. CRTOverlayController owns the presentation.</summary>
 [DisallowMultipleComponent]
 public sealed class PauseMenuController : MonoBehaviour
 {
     [Header("Input")]
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private string pauseActionName = "Player/Pause";
-
-    [Header("UI")]
-    [SerializeField] private GameObject presentationRoot;
+    [Header("CRT UI")]
+    [SerializeField] private CRTOverlayController overlay;
     [SerializeField] private GameObject menuPanel;
     [SerializeField] private ControlsPanelController controlsPanel;
-    [SerializeField] private Button resumeButton;
-    [SerializeField] private Button controlsButton;
-    [SerializeField] private Button titleButton;
-
+    [SerializeField] private UnityEngine.UI.Button resumeButton;
+    [SerializeField] private UnityEngine.UI.Button retryButton;
+    [SerializeField] private UnityEngine.UI.Button controlsButton;
+    [SerializeField] private UnityEngine.UI.Button titleButton;
     [Header("Scene Flow")]
     [SerializeField] private string titleSceneName = "TitleScene";
 
-    private InputAction _pauseAction;
-    private bool _externallyBlocked;
-
+    private InputAction pauseAction;
+    private bool enabledPauseAction;
+    private float previousTimeScale = 1f;
+    private bool externallyBlocked;
+    private bool transitioning;
+    private int controlsBackFrame = -1;
+    private GameBgmController pausedBgm;
     public bool IsPaused { get; private set; }
     public bool IsShowingControls => controlsPanel != null && controlsPanel.IsVisible;
-    public bool IsExternallyBlocked => _externallyBlocked;
+    public bool IsExternallyBlocked => externallyBlocked;
 
     private void Awake()
     {
-        ValidateReferences();
-        RegisterButtonListeners();
-        ConfigureButtonNavigation();
-
-        if (controlsPanel != null)
-            controlsPanel.BackRequested += HandleControlsBack;
-
-        if (presentationRoot != null)
-            presentationRoot.SetActive(false);
-        if (controlsPanel != null)
-            controlsPanel.Hide();
+        resumeButton.onClick.AddListener(ClosePause);
+        retryButton.onClick.AddListener(RetryStage);
+        controlsButton.onClick.AddListener(ShowControls);
+        titleButton.onClick.AddListener(ReturnToTitle);
+        controlsPanel.BackRequested += HandleControlsBack;
+        controlsPanel.Hide();
+        CRTMenuNavigation.Configure(resumeButton, retryButton, controlsButton, titleButton);
     }
-
-    private void Start()
-    {
-        EventSystem eventSystem = EventSystem.current;
-        if (eventSystem == null)
-        {
-            Debug.LogError("[PauseMenu] EventSystemがSceneに存在しません。", this);
-            return;
-        }
-
-        InputSystemUIInputModule inputModule = eventSystem.GetComponent<InputSystemUIInputModule>();
-        if (inputModule == null || !inputModule.enabled || inputModule.actionsAsset == null)
-            Debug.LogError("[PauseMenu] 有効なInputSystemUIInputModuleまたはUI Input Actionsが設定されていません。", eventSystem);
-    }
-
     private void OnEnable()
     {
-        _pauseAction = inputActions != null
-            ? inputActions.FindAction(pauseActionName, false)
-            : null;
-
-        if (_pauseAction != null)
-        {
-            _pauseAction.performed += HandlePausePerformed;
-            _pauseAction.Enable();
-        }
-        else
-        {
-            Debug.LogError($"[PauseMenu] Pause Actionが見つかりません: {pauseActionName}", this);
-        }
+        pauseAction = inputActions != null ? inputActions.FindAction(pauseActionName, false) : null;
+        if (pauseAction == null) { Debug.LogError("[PauseMenu] Player/Pause is not assigned.", this); return; }
+        enabledPauseAction = !pauseAction.enabled;
+        pauseAction.performed += HandlePause;
+        pauseAction.Enable();
     }
-
     private void OnDisable()
     {
-        if (_pauseAction != null)
+        if (pauseAction != null)
         {
-            _pauseAction.performed -= HandlePausePerformed;
-            _pauseAction.Disable();
+            pauseAction.performed -= HandlePause;
+            if (enabledPauseAction) pauseAction.Disable();
         }
+        if (IsPaused) ClosePauseImmediately();
     }
-
-    private void OnDestroy()
+    private void Update()
     {
-        if (resumeButton != null)
-            resumeButton.onClick.RemoveListener(ClosePause);
-        if (controlsButton != null)
-            controlsButton.onClick.RemoveListener(ShowControls);
-        if (titleButton != null)
-            titleButton.onClick.RemoveListener(ReturnToTitle);
-        if (controlsPanel != null)
-            controlsPanel.BackRequested -= HandleControlsBack;
-
-        if (IsPaused)
-            Time.timeScale = 1f;
-    }
-
-    private void RegisterButtonListeners()
-    {
-        if (resumeButton != null)
-        {
-            resumeButton.onClick.RemoveListener(ClosePause);
-            resumeButton.onClick.AddListener(ClosePause);
-        }
-
-        if (controlsButton != null)
-        {
-            controlsButton.onClick.RemoveListener(ShowControls);
-            controlsButton.onClick.AddListener(ShowControls);
-        }
-
-        if (titleButton != null)
-        {
-            titleButton.onClick.RemoveListener(ReturnToTitle);
-            titleButton.onClick.AddListener(ReturnToTitle);
-        }
-    }
-
-    private void ConfigureButtonNavigation()
-    {
-        if (resumeButton == null || controlsButton == null || titleButton == null)
-            return;
-
-        resumeButton.navigation = CreateNavigation(titleButton, controlsButton);
-        controlsButton.navigation = CreateNavigation(resumeButton, titleButton);
-        titleButton.navigation = CreateNavigation(controlsButton, resumeButton);
-    }
-
-    private static Navigation CreateNavigation(Selectable up, Selectable down)
-    {
-        return new Navigation
-        {
-            mode = Navigation.Mode.Explicit,
-            selectOnUp = up,
-            selectOnDown = down
-        };
-    }
-
-    private void ValidateReferences()
-    {
-        ValidateReference(inputActions, nameof(inputActions));
-        ValidateReference(presentationRoot, nameof(presentationRoot));
-        ValidateReference(menuPanel, nameof(menuPanel));
-        ValidateReference(controlsPanel, nameof(controlsPanel));
-        ValidateReference(resumeButton, nameof(resumeButton));
-        ValidateReference(controlsButton, nameof(controlsButton));
-        ValidateReference(titleButton, nameof(titleButton));
-    }
-
-    private void ValidateReference(Object value, string fieldName)
-    {
-        if (value == null)
-            Debug.LogError($"[PauseMenu] 必須参照が未設定です: {fieldName}", this);
-    }
-
-    private void HandlePausePerformed(InputAction.CallbackContext context)
-    {
-        if (_externallyBlocked)
-            return;
-
-        if (IsShowingControls)
-        {
-            HandleControlsBack();
-            return;
-        }
-
-        if (IsPaused)
+        if (IsPaused && !IsShowingControls && controlsBackFrame != Time.frameCount
+            && Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
             ClosePause();
-        else
-            OpenPause();
     }
-
+    private void HandlePause(InputAction.CallbackContext context)
+    {
+        if (externallyBlocked || transitioning || overlay.IsClosing) return;
+        if (IsShowingControls) HandleControlsBack();
+        else if (IsPaused) ClosePause();
+        else OpenPause();
+    }
     public void OpenPause()
     {
-        if (IsPaused || _externallyBlocked)
-            return;
-
+        if (IsPaused || externallyBlocked || transitioning || Time.timeScale <= 0f) return;
+        controlsPanel.Hide();
+        menuPanel.SetActive(true);
+        overlay.SetMessage("PAUSE", "TAKE A BREATHER");
+        if (!overlay.Show()) return;
+        previousTimeScale = Time.timeScale;
         IsPaused = true;
         Time.timeScale = 0f;
-
-        if (presentationRoot != null)
-            presentationRoot.SetActive(true);
-        if (menuPanel != null)
-            menuPanel.SetActive(true);
-        if (controlsPanel != null)
-            controlsPanel.Hide();
-
-        SelectButton(resumeButton);
+        pausedBgm = GameBgmController.Instance;
+        if (pausedBgm != null) pausedBgm.SetPauseMuffled(true);
+        StartCoroutine(SelectWhenReady(resumeButton));
     }
-
     public void ClosePause()
     {
-        if (controlsPanel != null)
-            controlsPanel.Hide();
-        if (presentationRoot != null)
-            presentationRoot.SetActive(false);
-
-        IsPaused = false;
-        Time.timeScale = 1f;
-        ClearSelection();
+        if (!IsPaused || overlay.IsClosing) return;
+        CRTMenuNavigation.ClearSelection();
+        if (pausedBgm != null) pausedBgm.SetPauseMuffled(false);
+        overlay.HideAnimated(FinishPause);
     }
-
+    private void ClosePauseImmediately()
+    {
+        overlay.Hide();
+        FinishPause();
+    }
+    private void FinishPause()
+    {
+        controlsPanel.Hide();
+        IsPaused = false;
+        Time.timeScale = previousTimeScale;
+        if (pausedBgm != null) pausedBgm.SetPauseMuffled(false);
+        pausedBgm = null;
+        CRTMenuNavigation.ClearSelection();
+    }
     public void ShowControls()
     {
-        if (!IsPaused || controlsPanel == null)
-            return;
-
-        if (menuPanel != null)
-            menuPanel.SetActive(false);
+        if (!IsPaused || !overlay.IsReady) return;
+        menuPanel.SetActive(false);
+        overlay.SetMessage("CONTROLS", "GAMEPAD / KEYBOARD");
         controlsPanel.Show();
     }
-
-    public void ReturnToTitle()
-    {
-        IsPaused = false;
-        Time.timeScale = 1f;
-
-        if (presentationRoot != null)
-            presentationRoot.SetActive(false);
-
-        ClearSelection();
-
-        SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
-    }
-
-    /// <summary>Goal等の優先UI表示中はPause入力とPause表示を停止する。</summary>
-    public void SetExternalPauseBlocked(bool blocked)
-    {
-        _externallyBlocked = blocked;
-        if (!blocked || !IsPaused)
-            return;
-
-        if (controlsPanel != null)
-            controlsPanel.Hide();
-        if (presentationRoot != null)
-            presentationRoot.SetActive(false);
-        IsPaused = false;
-        ClearSelection();
-    }
-
     private void HandleControlsBack()
     {
-        if (!IsPaused)
-            return;
-
-        if (controlsPanel != null)
-            controlsPanel.Hide();
-        if (menuPanel != null)
-            menuPanel.SetActive(true);
-        SelectButton(controlsButton);
+        if (!IsPaused || overlay.IsClosing) return;
+        controlsBackFrame = Time.frameCount;
+        controlsPanel.Hide();
+        overlay.SetMessage("PAUSE", "TAKE A BREATHER");
+        menuPanel.SetActive(true);
+        EventSystem.current?.SetSelectedGameObject(controlsButton.gameObject);
     }
-
-    private void SelectButton(Button button)
+    public void RetryStage() => LoadScene(SceneManager.GetActiveScene().name);
+    public void ReturnToTitle() => LoadScene(titleSceneName);
+    private void LoadScene(string scene)
     {
-        if (button != null)
-            StartCoroutine(SelectButtonNextFrame(button));
+        if (!IsPaused || !overlay.IsReady || transitioning || !Application.CanStreamedLevelBeLoaded(scene)) return;
+        transitioning = true;
+        ClosePauseImmediately();
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(scene, LoadSceneMode.Single);
     }
-
-    private static void ClearSelection()
+    public void SetExternalPauseBlocked(bool blocked)
     {
-        if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(null);
+        externallyBlocked = blocked;
+        if (blocked && IsPaused) ClosePauseImmediately();
     }
-
-    private static IEnumerator SelectButtonNextFrame(Button button)
+    private IEnumerator SelectWhenReady(UnityEngine.UI.Button button)
     {
-        yield return null;
-        if (button != null && button.isActiveAndEnabled && button.interactable && EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(button.gameObject);
+        while (IsPaused && !overlay.IsClosing && !overlay.IsReady) yield return null;
+        if (IsPaused && overlay.IsReady) EventSystem.current?.SetSelectedGameObject(button.gameObject);
     }
 }

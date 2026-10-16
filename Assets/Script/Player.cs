@@ -151,6 +151,7 @@ public class Player : MonoBehaviour
 
     private Vector2 _moveInput;
     private Vector2 _actionMoveInput;
+    private bool _goalInputBlocked;
 
     private Rigidbody2D _rigid;
     private MorningStarLauncher _morningStarLauncher;
@@ -193,6 +194,25 @@ public class Player : MonoBehaviour
     public float MoveInputY => _moveInput.y;
 
     public bool FacingRight => _facingRight;
+    public bool IsGoalInputBlocked => _goalInputBlocked;
+
+    public void SetGoalInputBlocked(bool blocked)
+    {
+        if (_goalInputBlocked == blocked)
+            return;
+        _goalInputBlocked = blocked;
+        if (_morningStarLauncher == null)
+            _morningStarLauncher = GetComponent<MorningStarLauncher>();
+        if (_morningStarLauncher != null)
+            _morningStarLauncher.SetGoalInputBlocked(blocked);
+        if (!blocked)
+            return;
+        _moveInput = Vector2.zero;
+        _actionMoveInput = Vector2.zero;
+        _jumpBufferTimer = 0f;
+        _jumpHeld = false;
+        StopFootstepAudio();
+    }
 
     public Rigidbody2D Rigidbody2D => _rigid;
 
@@ -420,6 +440,11 @@ public class Player : MonoBehaviour
     private void PollMovementInput()
 
     {
+        if (_goalInputBlocked)
+        {
+            _moveInput = Vector2.zero;
+            return;
+        }
 
         float x = _actionMoveInput.x;
         float y = _actionMoveInput.y;
@@ -579,6 +604,7 @@ public class Player : MonoBehaviour
         bool isAlive = _playerHealth == null || !_playerHealth.IsDead;
 
         bool shouldPlay = grounded
+            && !_goalInputBlocked
 
             && !_bjump
 
@@ -901,6 +927,8 @@ public class Player : MonoBehaviour
     public void _OnMove(InputAction.CallbackContext context)
 
     {
+        if (_goalInputBlocked)
+            return;
 
         Vector2 v = context.ReadValue<Vector2>();
 
@@ -913,6 +941,8 @@ public class Player : MonoBehaviour
     public void _OnJump(InputAction.CallbackContext context)
 
     {
+        if (_goalInputBlocked)
+            return;
 
         if (context.performed)
 
