@@ -22,7 +22,8 @@ public class MorningStarLauncher : MonoBehaviour
         Dropping, // 旧テストScene/API互換。物理はDragging(Rest)と同一。
         Returning,
         Hooked,
-        Swinging
+        Swinging,
+        StartIntro
     }
 
     [Header("参照")]
@@ -381,6 +382,39 @@ public class MorningStarLauncher : MonoBehaviour
 
     public MorningStarState State => _state;
     public MorningStarState CurrentState => _state;
+    private bool _simulatedBeforeStartIntro;
+
+    /// <summary>開始演出も中央の状態遷移を通し、鎖と鉄球の物理を一時停止する。</summary>
+    public void BeginStartIntro()
+    {
+        if (_state == MorningStarState.StartIntro)
+            return;
+        _simulatedBeforeStartIntro = morningStarRb != null && morningStarRb.simulated;
+        ResetForRespawn();
+        TransitionToState(MorningStarState.StartIntro);
+        if (aimGuideLineRenderer != null)
+            aimGuideLineRenderer.enabled = false;
+        if (aimMark != null)
+            aimMark.gameObject.SetActive(false);
+    }
+
+    public void SetStartIntroBallPosition(Vector2 position)
+    {
+        if (_state != MorningStarState.StartIntro || morningStarRb == null)
+            return;
+        morningStarRb.position = position;
+        morningStarRb.transform.position = new Vector3(position.x, position.y, morningStarRb.transform.position.z);
+    }
+
+    public void EndStartIntro()
+    {
+        if (_state != MorningStarState.StartIntro)
+            return;
+        if (morningStarRb != null)
+            morningStarRb.simulated = _simulatedBeforeStartIntro;
+        // 初回・Recall完了・Respawnと同じRest設定へ戻す。
+        ResetForRespawn();
+    }
     public float MaxRopeLength => _isChainClimbing
         ? Mathf.Max(0.1f, _chainClimbDistance)
         : GetEffectiveRopeLength();
@@ -425,7 +459,8 @@ public class MorningStarLauncher : MonoBehaviour
     }
 
     public bool IsRopeLineVisible =>
-        _state == MorningStarState.Dragging
+        _state == MorningStarState.StartIntro
+        || _state == MorningStarState.Dragging
         || _state == MorningStarState.SpinCharging
         || _state == MorningStarState.RecallBeforeThrow
         || _state == MorningStarState.Thrown
@@ -489,6 +524,8 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public bool TryAttachToMagnet(MagnetPoint magnet, Rigidbody2D targetBody, Vector2 anchorPosition)
     {
+        if (_state == MorningStarState.StartIntro)
+            return false;
         if (magnet == null || targetBody == null || targetBody != morningStarRb)
             return false;
 
@@ -691,6 +728,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void Update()
     {
+        if (_state == MorningStarState.StartIntro)
+            return;
         if (morningStarRb == null)
             return;
 
@@ -759,6 +798,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (_state == MorningStarState.StartIntro)
+            return;
         if (_playerRb == null || morningStarRb == null)
             return;
         if (Time.timeScale < 0.01f)
@@ -810,6 +851,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (_state == MorningStarState.StartIntro)
+            return;
         if (UpdateChainClimbVisual())
             return;
 
@@ -892,6 +935,12 @@ public class MorningStarLauncher : MonoBehaviour
 
         switch (state)
         {
+            case MorningStarState.StartIntro:
+                morningStarRb.simulated = false;
+                morningStarRb.linearVelocity = Vector2.zero;
+                morningStarRb.angularVelocity = 0f;
+                break;
+
             case MorningStarState.SpinCharging:
                 morningStarRb.gravityScale = spinChargeBallGravityScale;
                 morningStarRb.linearDamping = 0f;
