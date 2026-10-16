@@ -44,6 +44,14 @@ public class SegmentHpBarUI : MonoBehaviour
     [SerializeField, Tooltip("被弾時の最大揺れ幅（UI Pixel）")]
     private Vector2 _damageShakeAmount = new Vector2(4f, 1.5f);
 
+    [Header("Heal Flash")]
+    [SerializeField, Min(0f)] private float _healFlashDuration = 0.22f;
+    [SerializeField, Range(0f, 1f)] private float _healFlashStrength = 0.45f;
+    [SerializeField] private Color _healFlashColor = new Color(1f, 0.8f, 0.94f, 1f);
+
+    private UnityEngine.UI.Image _healFlash;
+    private float _healFlashRemaining;
+
     private Vector2 _hpMaskFullSize;
     private Vector2 _damageMaskFullSize;
     private float _targetHpNormalized = 1f;
@@ -101,6 +109,8 @@ public class SegmentHpBarUI : MonoBehaviour
     {
         UnbindHealthEvents();
         FinishDamageShake();
+        _healFlashRemaining = 0f;
+        if (_healFlash != null) _healFlash.color = Color.clear;
     }
 
     private void OnValidate()
@@ -119,6 +129,54 @@ public class SegmentHpBarUI : MonoBehaviour
         UpdateDisplayedHp(dt);
         UpdateDamageFill(dt);
         UpdateDamageShake(dt);
+        if (_healFlashRemaining > 0f)
+        {
+            _healFlashRemaining = Mathf.Max(0f, _healFlashRemaining - dt);
+            ApplyHealFlash();
+        }
+    }
+
+    /// <summary>回復アイテム取得時だけ発光。HP変更通知や既存UIの見た目は変更しない。</summary>
+    public void PlayHealFlash(PlayerHealth source)
+    {
+        if (_playerHealth != source || _healFlashDuration <= 0f)
+            return;
+        RectTransform parent = _hpMask;
+        bool legacyBar = parent == null;
+        if (legacyBar)
+        {
+            // 旧SampleSceneはHpBarImageのみ。既存の同じSprite内ゲージ領域を使う。
+            UnityEngine.UI.Image image = FindImage("HpBarImage");
+            if (image == null) return;
+            parent = image.rectTransform;
+        }
+        if (_healFlash == null)
+        {
+            var go = new GameObject("HealFlash", typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            go.layer = parent.gameObject.layer;
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            _healFlash = go.GetComponent<UnityEngine.UI.Image>();
+            _healFlash.raycastTarget = false;
+        }
+        var flashRect = _healFlash.rectTransform;
+        flashRect.anchorMin = legacyBar
+            ? new Vector2(GaugeRegionNormalized.x, 1f - GaugeRegionNormalized.y - GaugeRegionNormalized.w)
+            : Vector2.zero;
+        flashRect.anchorMax = legacyBar
+            ? new Vector2(GaugeRegionNormalized.x + GaugeRegionNormalized.z * _targetHpNormalized, 1f - GaugeRegionNormalized.y)
+            : Vector2.one;
+        flashRect.offsetMin = flashRect.offsetMax = Vector2.zero;
+        _healFlashRemaining = _healFlashDuration;
+        ApplyHealFlash();
+    }
+
+    private void ApplyHealFlash()
+    {
+        Color color = _healFlashColor;
+        float progress = Mathf.Clamp01(_healFlashRemaining / Mathf.Max(0.001f, _healFlashDuration));
+        color.a *= _healFlashStrength * progress * progress;
+        _healFlash.color = color;
     }
 
     private void ResolvePlayerHealth()
