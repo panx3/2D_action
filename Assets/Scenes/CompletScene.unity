@@ -813,7 +813,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 600
+  m_SortingOrder: 710
   m_TargetDisplay: 0
 --- !u!224 &285320161
 RectTransform:
@@ -971,7 +971,7 @@ PrefabInstance:
     - target: {fileID: 7097362106042386384, guid: de12d061094795e479bbed4167a076ce, type: 3}
       propertyPath: pauseMenu
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 323132962}
     - target: {fileID: 7148905432942213728, guid: de12d061094795e479bbed4167a076ce, type: 3}
       propertyPath: m_Name
       value: GoalMenu
@@ -1153,6 +1153,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3069249818702466933, guid: 3b54be94576924740b9ed75cd20160c1, type: 3}
   m_PrefabInstance: {fileID: 323132960}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &323132962 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 92486886591716454, guid: 3b54be94576924740b9ed75cd20160c1, type: 3}
+  m_PrefabInstance: {fileID: 323132960}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e002be59b064586adcd328d35247b02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PauseMenuController
 --- !u!1 &429986598
 GameObject:
   m_ObjectHideFlags: 0
@@ -3721,7 +3732,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 500
+  m_SortingOrder: 700
   m_TargetDisplay: 0
 --- !u!224 &827863605
 RectTransform:
@@ -11739,6 +11750,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CrystalAcquiredUI
       objectReference: {fileID: 0}
+    - target: {fileID: 9171310566084331580, guid: f0aad4b22a807f04296a4dc77f3cf4a2, type: 3}
+      propertyPath: pauseMenu
+      value: 
+      objectReference: {fileID: 323132962}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

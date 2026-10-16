@@ -32,7 +32,17 @@ public sealed class GameBgmController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float goalVolume = 0.15f;
     [SerializeField, Min(0f)] private float switchFadeDuration = 0.5f;
 
+    [Header("Pause Tone")]
+    [SerializeField, Range(10f, 22000f)] private float pauseCutoffFrequency = 2200f;
+    [SerializeField, Min(0f)] private float pauseToneFadeDuration = 0.18f;
+
     private Coroutine _transitionRoutine;
+    private AudioLowPassFilter pauseFilter;
+    private bool ownsPauseTone;
+    private bool pauseToneRequested;
+    private bool previousFilterEnabled;
+    private float previousCutoff;
+    private float pauseToneBlend;
 
     public static GameBgmController Instance { get; private set; }
     public BgmState CurrentState { get; private set; } = BgmState.None;
@@ -65,6 +75,65 @@ public sealed class GameBgmController : MonoBehaviour
             Instance = null;
     }
 
+    /// <summary>Pause alone owns the muffled tone. Clip playback, pitch and volume stay with the existing BGM flow.</summary>
+    public void SetPauseMuffled(bool muffled)
+    {
+        if (!muffled)
+        {
+            pauseToneRequested = false;
+            return;
+        }
+        if (CurrentState == BgmState.Goal || bgmSource == null)
+            return;
+        if (!ownsPauseTone)
+        {
+            if (pauseFilter == null)
+            {
+                pauseFilter = bgmSource.GetComponent<AudioLowPassFilter>();
+                if (pauseFilter == null)
+                {
+                    pauseFilter = bgmSource.gameObject.AddComponent<AudioLowPassFilter>();
+                    pauseFilter.enabled = false;
+                }
+            }
+            previousFilterEnabled = pauseFilter.enabled;
+            previousCutoff = pauseFilter.cutoffFrequency;
+            pauseToneBlend = 0f;
+            ownsPauseTone = true;
+        }
+        pauseToneRequested = true;
+    }
+
+    private void Update()
+    {
+        if (!ownsPauseTone || pauseFilter == null)
+            return;
+        float target = pauseToneRequested ? 1f : 0f;
+        pauseToneBlend = pauseToneFadeDuration > 0f
+            ? Mathf.MoveTowards(pauseToneBlend, target, Time.unscaledDeltaTime / pauseToneFadeDuration)
+            : target;
+        float openCutoff = previousFilterEnabled ? previousCutoff : 22000f;
+        float closedCutoff = Mathf.Min(openCutoff, pauseCutoffFrequency);
+        pauseFilter.enabled = true;
+        pauseFilter.cutoffFrequency = Mathf.Exp(Mathf.Lerp(Mathf.Log(openCutoff), Mathf.Log(closedCutoff), pauseToneBlend));
+        if (!pauseToneRequested && pauseToneBlend <= 0f)
+            RestorePauseTone();
+    }
+
+    private void RestorePauseTone()
+    {
+        if (ownsPauseTone && pauseFilter != null)
+        {
+            pauseFilter.cutoffFrequency = previousCutoff;
+            pauseFilter.enabled = previousFilterEnabled;
+        }
+        ownsPauseTone = false;
+        pauseToneRequested = false;
+        pauseToneBlend = 0f;
+    }
+
+    private void OnDisable() => RestorePauseTone();
+
     public void PlayTitle() => Play(BgmState.Title);
     public void PlayStage() => Play(BgmState.Stage);
     public void PlayGoal() => Play(BgmState.Goal);
@@ -82,6 +151,8 @@ public sealed class GameBgmController : MonoBehaviour
             return;
         }
 
+        if (state == BgmState.Goal)
+            RestorePauseTone();
         if (CurrentState == state)
             return;
 

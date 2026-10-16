@@ -311,76 +311,7 @@ public static class GoalCelebrationCheckpointSetup
 
     private static void ConfigureGoalMenuPrefab()
     {
-        GameObject root = PrefabUtility.LoadPrefabContents(GoalMenuPrefabPath);
-        try
-        {
-            RectTransform panel = RequireRect(root.transform, "GoalStonePanel");
-            RectTransform title = RequireRect(root.transform, "GoalTitle");
-            Graphic overlay = RequireRect(root.transform, "DarkOverlay").GetComponent<Graphic>();
-            if (overlay == null)
-                throw new InvalidOperationException("Goal DarkOverlay graphic is missing.");
-            Color overlayColor = overlay.color;
-            overlayColor.a = 0.72f;
-            overlay.color = overlayColor;
-
-            Transform old = FindDeep(panel, "GoalCelebration");
-            if (old != null)
-                UnityEngine.Object.DestroyImmediate(old.gameObject);
-
-            RectTransform celebration = CreateRect("GoalCelebration", panel);
-            Stretch(celebration);
-            celebration.SetSiblingIndex(title.GetSiblingIndex());
-
-            Vector2[] positions =
-            {
-                new Vector2(-300f, 310f), new Vector2(-235f, 245f), new Vector2(-150f, 330f),
-                new Vector2(-82f, 205f), new Vector2(85f, 205f), new Vector2(150f, 330f),
-                new Vector2(235f, 245f), new Vector2(300f, 310f), new Vector2(-345f, 195f),
-                new Vector2(345f, 195f), new Vector2(-350f, 365f), new Vector2(350f, 365f),
-                new Vector2(-24f, 360f), new Vector2(28f, 185f)
-            };
-            Color[] colors =
-            {
-                new Color(1f, .27f, .75f, .95f), new Color(1f, .93f, 1f, .9f),
-                new Color(.68f, .42f, 1f, .85f)
-            };
-            List<RectTransform> sparkles = new List<RectTransform>();
-            for (int i = 0; i < positions.Length; i++)
-            {
-                RectTransform sparkle = CreateRect($"CrystalSpark_{i + 1:00}", celebration);
-                sparkle.anchorMin = sparkle.anchorMax = new Vector2(0.5f, 0.5f);
-                sparkle.pivot = new Vector2(0.5f, 0.5f);
-                sparkle.anchoredPosition = positions[i];
-                float width = i >= 8 ? 8f + (i % 3) * 3f : 13f + (i % 4) * 4f;
-                float height = i % 3 == 0 ? width * 1.8f : width;
-                sparkle.sizeDelta = new Vector2(width, height);
-                sparkle.localRotation = Quaternion.Euler(0f, 0f, 45f + (i % 2) * 45f);
-                Image image = sparkle.gameObject.AddComponent<Image>();
-                image.color = colors[i % colors.Length];
-                image.raycastTarget = false;
-                sparkles.Add(sparkle);
-            }
-
-            GoalMenuController controller = root.GetComponent<GoalMenuController>();
-            SerializedObject serialized = new SerializedObject(controller);
-            serialized.FindProperty("darkOverlay").objectReferenceValue = overlay;
-            serialized.FindProperty("goalTitle").objectReferenceValue = title;
-            SetObjectArray(serialized.FindProperty("sparkleVisuals"), sparkles.Cast<UnityEngine.Object>().ToArray());
-            serialized.FindProperty("showDuration").floatValue = 0.24f;
-            serialized.FindProperty("titlePopDuration").floatValue = 0.32f;
-            serialized.FindProperty("buttonRevealDuration").floatValue = 0.1f;
-            serialized.FindProperty("buttonStagger").floatValue = 0.055f;
-            serialized.FindProperty("sparkleRotationSpeed").floatValue = 12f;
-            serialized.FindProperty("sparklePulseSpeed").floatValue = 1.15f;
-            serialized.FindProperty("sparkleDriftPixels").floatValue = 3f;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            PrefabUtility.SaveAsPrefabAsset(root, GoalMenuPrefabPath);
-        }
-        finally
-        {
-            PrefabUtility.UnloadPrefabContents(root);
-        }
+        CRTOverlayInstaller.RebuildResultPrefab();
     }
 
     private static void ConfigureScene()

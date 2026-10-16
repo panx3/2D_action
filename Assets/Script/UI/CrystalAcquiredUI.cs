@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>
@@ -21,22 +22,25 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     [SerializeField] private PauseMenuController pauseMenu;
 
     [Header("Logo (Unscaled Time)")]
-    [SerializeField, Min(0f)] private float logoStartDelay = 0.16f;
-    [SerializeField, Min(0f)] private float popDuration = 0.42f;
-    [SerializeField, Min(0f)] private float logoDisplayDuration = 1.15f;
-    [SerializeField, Min(0f)] private float fadeOutDuration = 0.16f;
-    [SerializeField, Min(0f)] private float clearScreenDelay = 0.08f;
-    [SerializeField, Min(0f)] private float logoFinalScale = 1f;
-    [SerializeField, Min(0f)] private float logoStartScale = 0.25f;
-    [SerializeField, Min(0f)] private float overshootScale = 1.16f;
-    [SerializeField, Min(0f)] private float undershootScale = 0.95f;
-    [SerializeField] private float logoStartYOffset = -34f;
-    [SerializeField] private float logoStartRotation = -4f;
+    [SerializeField, Min(0f)] private float logoStartDelay = 0.08f;
+    [SerializeField, Min(0f)] private float popDuration = 0.34f;
+    [SerializeField, Min(0f)] private float logoDisplayDuration = 1.25f;
+    [SerializeField, Min(0f)] private float fadeOutDuration = 0.24f;
+    [SerializeField, Min(0f)] private float clearScreenDelay = 1.1f;
+    [SerializeField, Min(0f)] private float logoFinalScale = 1.12f;
+    [SerializeField, Min(0f)] private float logoStartScale = 0.6f;
+    [SerializeField, Min(0f)] private float overshootScale = 1.12f;
+    [SerializeField, Min(0f)] private float undershootScale = 0.985f;
+    [SerializeField] private float logoStartYOffset = -20f;
+    [SerializeField] private float logoStartRotation = -2f;
+    [SerializeField, Range(0f, 0.1f)] private float impactStretch = 0.035f;
 
     [Header("Impact")]
-    [SerializeField, Min(0f)] private float flashDuration = 0.1f;
-    [SerializeField, Range(0.01f, 1f)] private float slowMotionScale = 0.18f;
-    [SerializeField, Min(0f)] private float slowMotionDuration = 0.24f;
+    [SerializeField, Min(0f)] private float flashDuration = 0.075f;
+    [SerializeField, Range(0f, 1f)] private float flashStrength = 0.38f;
+    [FormerlySerializedAs("slowMotionDuration")]
+    [SerializeField, Min(0f), Tooltip("Unscaled seconds to ease gameplay from its current speed to a full stop.")]
+    private float goalStopDuration = 0.24f;
 
     [Header("Background")]
     [SerializeField, Range(0f, 1f)] private float darkenAlpha = 0.42f;
@@ -45,10 +49,10 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     [Header("Pixel Sparkles")]
     [SerializeField] private bool particlesEnabled = true;
-    [SerializeField, Min(0f)] private float sparkleBurstDuration = 0.46f;
-    [SerializeField, Min(0f)] private float sparkleRotationSpeed = 95f;
-    [SerializeField, Min(0f)] private float sparklePulseSpeed = 3.2f;
-    [SerializeField, Range(0f, 0.5f)] private float sparklePulseAmount = 0.18f;
+    [SerializeField, Min(0f)] private float sparkleBurstDuration = 0.34f;
+    [SerializeField, Min(0f)] private float sparkleRotationSpeed = 55f;
+    [SerializeField, Min(0f)] private float sparklePulseSpeed = 2.2f;
+    [SerializeField, Range(0f, 0.5f)] private float sparklePulseAmount = 0.12f;
 
     private Coroutine _playRoutine;
     private Action _onComplete;
@@ -58,9 +62,12 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     private CanvasGroup[] _sparkleGroups = Array.Empty<CanvasGroup>();
     private Vector2 _logoFinalPosition;
     private Quaternion _logoFinalRotation = Quaternion.identity;
-    private float _timeScaleBeforeSlowMotion = 1f;
-    private float _ownedSlowMotionScale = 1f;
+    private float _timeScaleBeforeGoalStop = 1f;
+    private float _ownedGoalTimeScale = 1f;
     private bool _ownsTimeScale;
+    private Player _goalPlayer;
+    private bool _previousInputBlocked;
+    private bool _ownsGameplayInput;
     private bool _ownsPauseBlock;
     private bool _hasPlayed;
 
@@ -83,8 +90,9 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         _hasPlayed = true;
         _onComplete = onComplete;
         BlockPauseMenu();
+        BlockGameplayInput();
         PreparePresentation();
-        BeginSlowMotion();
+        BeginGoalStop();
         _playRoutine = StartCoroutine(PlayRoutine());
         return true;
     }
@@ -98,7 +106,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         while (elapsed < sequenceEnd)
         {
             elapsed += Time.unscaledDeltaTime;
-            UpdateSlowMotion(elapsed);
+            UpdateGoalStop(elapsed);
             AnimateFlash(elapsed);
             AnimateDarkOverlay(elapsed);
             AnimateLogo(elapsed);
@@ -115,7 +123,6 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
             yield return null;
         }
 
-        RestoreTimeScaleIfOwned();
         HideImmediate(false);
 
         if (clearScreenDelay > 0f)
@@ -125,6 +132,18 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         Action callback = _onComplete;
         _onComplete = null;
         callback?.Invoke();
+        GoalMenuController goalMenu = FindAnyObjectByType<GoalMenuController>(FindObjectsInactive.Include);
+        if (goalMenu != null && goalMenu.IsGoalReached)
+        {
+            // The result owns the stopped game and input from this point onward.
+            _ownsTimeScale = false;
+            _ownsGameplayInput = false;
+        }
+        else
+        {
+            RestoreTimeScaleIfOwned();
+            ReleaseGameplayInput();
+        }
         ReleasePauseBlockUnlessGoalMenuOwnsIt();
     }
 
@@ -140,7 +159,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         }
 
         SetImageAlpha(darkOverlay, 0f);
-        SetImageAlpha(flashOverlay, 1f);
+        SetImageAlpha(flashOverlay, flashStrength);
         SetImageAlpha(logoImage, 0f);
 
         if (celebrationLogo != null)
@@ -167,7 +186,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     private void AnimateFlash(float elapsed)
     {
         float t = flashDuration > 0f ? Mathf.Clamp01(elapsed / flashDuration) : 1f;
-        SetImageAlpha(flashOverlay, 1f - t * t);
+        SetImageAlpha(flashOverlay, flashStrength * (1f - t) * (1f - t));
     }
 
     private void AnimateDarkOverlay(float elapsed)
@@ -187,7 +206,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         if (localTime < 0f)
             return;
 
-        SetImageAlpha(logoImage, 1f);
+        SetImageAlpha(logoImage, Smooth01(Mathf.Clamp01(localTime / 0.045f)));
         float t = popDuration > 0f ? Mathf.Clamp01(localTime / popDuration) : 1f;
         float scale;
         float y;
@@ -197,25 +216,26 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         {
             float rise = EaseOutCubic(t / 0.52f);
             scale = Mathf.Lerp(logoStartScale, overshootScale, rise);
-            y = Mathf.Lerp(logoStartYOffset, 12f, rise);
+            y = Mathf.Lerp(logoStartYOffset, 8f, rise);
             angle = Mathf.Lerp(logoStartRotation, 1.2f, rise);
         }
         else if (t < 0.76f)
         {
             float settle = Smooth01((t - 0.52f) / 0.24f);
             scale = Mathf.Lerp(overshootScale, undershootScale, settle);
-            y = Mathf.Lerp(12f, -4f, settle);
+            y = Mathf.Lerp(8f, -2f, settle);
             angle = Mathf.Lerp(1.2f, -0.35f, settle);
         }
         else
         {
             float land = Smooth01((t - 0.76f) / 0.24f);
             scale = Mathf.Lerp(undershootScale, 1f, land);
-            y = Mathf.Lerp(-4f, 0f, land);
+            y = Mathf.Lerp(-2f, 0f, land);
             angle = Mathf.Lerp(-0.35f, 0f, land);
         }
 
-        celebrationLogo.localScale = Vector3.one * (logoFinalScale * scale);
+        float stretch = Mathf.Sin(Mathf.PI * Mathf.Clamp01(t / 0.52f)) * impactStretch;
+        celebrationLogo.localScale = new Vector3(1f - stretch, 1f + stretch, 1f) * (logoFinalScale * scale);
         celebrationLogo.anchoredPosition = _logoFinalPosition + Vector2.up * y;
         celebrationLogo.localRotation = _logoFinalRotation * Quaternion.Euler(0f, 0f, angle);
     }
@@ -225,7 +245,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         if (sparkleVisuals == null)
             return;
 
-        float localTime = elapsed - logoStartDelay - 0.035f;
+        float localTime = elapsed - logoStartDelay - popDuration * 0.38f;
         bool visible = particlesEnabled && localTime >= 0f;
         float burst = sparkleBurstDuration > 0f
             ? Mathf.Clamp01(localTime / sparkleBurstDuration)
@@ -255,31 +275,56 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
             float appearScale = Mathf.Sin(Mathf.Clamp01(stagger) * Mathf.PI * 0.5f);
             sparkle.localScale = _sparkleBaseScales[i] * (appearScale * pulse);
             sparkle.localRotation = _sparkleBaseRotations[i]
-                * Quaternion.Euler(0f, 0f, sparkleRotationSpeed * localTime * (i % 2 == 0 ? 1f : -1f));
+                * Quaternion.Euler(0f, 0f, sparkleRotationSpeed * Mathf.Min(localTime, sparkleBurstDuration) * (i % 2 == 0 ? 1f : -1f));
 
             if (group != null)
             {
                 float twinkle = Mathf.Lerp(0.55f, 1f, (Mathf.Sin(phase * Mathf.PI * 2f) + 1f) * 0.5f);
-                group.alpha = Smooth01(stagger) * twinkle;
+                float afterglow = 1f - 0.6f * Smooth01((localTime - sparkleBurstDuration) / Mathf.Max(0.2f, logoDisplayDuration));
+                group.alpha = Smooth01(stagger) * twinkle * afterglow;
             }
         }
     }
 
-    private void BeginSlowMotion()
+    private void BlockGameplayInput()
     {
-        if (slowMotionDuration <= 0f || Time.timeScale <= 0f)
+        _goalPlayer = FindAnyObjectByType<Player>(FindObjectsInactive.Include);
+        if (_goalPlayer == null)
             return;
-
-        _timeScaleBeforeSlowMotion = Time.timeScale;
-        _ownedSlowMotionScale = Mathf.Max(0.0001f, _timeScaleBeforeSlowMotion * slowMotionScale);
-        Time.timeScale = _ownedSlowMotionScale;
-        _ownsTimeScale = true;
+        _previousInputBlocked = _goalPlayer.IsGoalInputBlocked;
+        _goalPlayer.SetGoalInputBlocked(true);
+        _ownsGameplayInput = true;
     }
 
-    private void UpdateSlowMotion(float elapsed)
+    private void ReleaseGameplayInput()
     {
-        if (_ownsTimeScale && elapsed >= slowMotionDuration)
-            RestoreTimeScaleIfOwned();
+        if (_ownsGameplayInput && _goalPlayer != null)
+            _goalPlayer.SetGoalInputBlocked(_previousInputBlocked);
+        _ownsGameplayInput = false;
+    }
+
+    private void BeginGoalStop()
+    {
+        _timeScaleBeforeGoalStop = Time.timeScale;
+        _ownedGoalTimeScale = Time.timeScale;
+        _ownsTimeScale = true;
+        if (goalStopDuration <= 0f)
+            UpdateGoalStop(0f);
+    }
+
+    private void UpdateGoalStop(float elapsed)
+    {
+        if (!_ownsTimeScale)
+            return;
+        if (!Mathf.Approximately(Time.timeScale, _ownedGoalTimeScale))
+        {
+            _ownsTimeScale = false;
+            return;
+        }
+        float t = goalStopDuration > 0f ? Mathf.Clamp01(elapsed / goalStopDuration) : 1f;
+        float remaining = 1f - t;
+        _ownedGoalTimeScale = _timeScaleBeforeGoalStop * remaining * remaining * remaining;
+        Time.timeScale = _ownedGoalTimeScale;
     }
 
     private void RestoreTimeScaleIfOwned()
@@ -288,8 +333,8 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
             return;
 
         // Pause等が別の値へ変更した場合は、その新しい状態を上書きしない。
-        if (Mathf.Approximately(Time.timeScale, _ownedSlowMotionScale))
-            Time.timeScale = _timeScaleBeforeSlowMotion;
+        if (Mathf.Approximately(Time.timeScale, _ownedGoalTimeScale))
+            Time.timeScale = _timeScaleBeforeGoalStop;
         _ownsTimeScale = false;
     }
 
@@ -502,12 +547,19 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private void OnDisable()
     {
-        RestoreTimeScaleIfOwned();
+        if (_playRoutine != null)
+            StopCoroutine(_playRoutine);
+        _playRoutine = null;
+        _onComplete = null;
+        HideImmediate();
+        ReleaseGameplayInput();
+        ReleasePauseBlockUnlessGoalMenuOwnsIt();
     }
 
     private void OnDestroy()
     {
         RestoreTimeScaleIfOwned();
+        ReleaseGameplayInput();
         ReleasePauseBlockUnlessGoalMenuOwnsIt();
     }
 
@@ -523,7 +575,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         overshootScale = Mathf.Max(0f, overshootScale);
         undershootScale = Mathf.Max(0f, undershootScale);
         flashDuration = Mathf.Max(0f, flashDuration);
-        slowMotionDuration = Mathf.Max(0f, slowMotionDuration);
+        goalStopDuration = Mathf.Max(0f, goalStopDuration);
         darkenDelay = Mathf.Max(0f, darkenDelay);
         darkenFadeDuration = Mathf.Max(0f, darkenFadeDuration);
         sparkleBurstDuration = Mathf.Max(0f, sparkleBurstDuration);

@@ -326,6 +326,24 @@ public class MorningStarLauncher : MonoBehaviour
     private float _nextGroundImpactShakeTime;
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
+    private bool _goalInputBlocked;
+
+    public void SetGoalInputBlocked(bool blocked)
+    {
+        _goalInputBlocked = blocked;
+        if (!blocked)
+            return;
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        // Let the goal presentation acquire time after any earlier combat hit stop.
+        if (_hitStopRoutine != null)
+        {
+            StopCoroutine(_hitStopRoutine);
+            _hitStopRoutine = null;
+            if (Mathf.Approximately(Time.timeScale, 0f))
+                Time.timeScale = _savedTimeScale;
+        }
+    }
     private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
     private readonly List<(Collider2D Ball, Collider2D Goal)> _recallGoalCollisionPairs =
         new List<(Collider2D Ball, Collider2D Goal)>();
@@ -735,6 +753,12 @@ public class MorningStarLauncher : MonoBehaviour
 
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
+
+        if (_goalInputBlocked)
+        {
+            UpdateFallbackLineRenderer();
+            return;
+        }
 
         UpdateGamepadInputState();
         ProcessRecoilTrigger();
@@ -1930,7 +1954,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void PlayCombatHitStop(float duration)
     {
-        if (duration <= 0f)
+        if (_goalInputBlocked || duration <= 0f)
             return;
 
         if (_hitStopRoutine != null)
@@ -2971,7 +2995,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -2983,6 +3007,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
+        if (_goalInputBlocked)
+            return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
             || (_state == MorningStarState.Dragging && !IsBallAtReturnSocket()))
