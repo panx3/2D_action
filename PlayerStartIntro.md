@@ -42,7 +42,10 @@ Prefabルートの **Stage Title UI** で調整します。
 |---|---|---|
 | Start Intro | CompletSceneのPlayer | 完了通知元。未設定なら同じScene内から自動取得 |
 | Stage Sprite | ステージ名sprite_0 | ステージごとに割り当てるSprite |
-| Fade In Duration | 0.3秒 | 透明から通常表示まで |
+| Base Size | (630, 141) | 拡大前の基準サイズ |
+| Size Multiplier | 1.5 | 基準サイズに対する表示倍率。拡大は累積しない |
+| Slide Distance | 48 | 上から登場・上へ退出する距離（基準解像度でのpx） |
+| Fade In Duration | 0.4秒 | 下降スライドとフェードインの時間 |
 | Fade Out Start | 4秒 | 表示開始から透明にし始めるまで |
 | Total Duration | 5秒 | フェードアウト完了までの合計時間 |
 
@@ -55,7 +58,8 @@ Prefabルートの **Stage Title UI** で調整します。
 | ステージ名sprite_2 | ステージ3「月影の水晶古城」 |
 
 - 将来Sceneを分けても、Prefabを配置してStage SpriteとStart Introを指定するだけで利用できます。参照未指定時の探索は同じScene内に限定します。
-- 子の **StageTitle > RectTransform** は右上アンカー・右上Pivot、余白48、表示サイズ630×141（1920×1080基準）。Imageは縦横比を維持します。
+- 子の **StageTitle > RectTransform** は右上アンカー・右上Pivot、余白48、表示サイズ945×211.5（基準630×141の1.5倍、1920×1080基準）。Imageは縦横比を維持します。狭い解像度では画面内へ収まる倍率に制限します。
+- 0〜0.4秒で定位置より上から下降しながらフェードイン、0.4〜4秒で定位置・透明度1を維持、4〜5秒で上昇しながらフェードアウトします。移動はanchoredPositionを使い、移動と透明度をEaseOut Cubicで補間します。上端を越えるスライド量は制限し、完全に消えたらImageを非表示にします。
 - このCanvasだけScreen Space - Overlayを維持します。既存CRTが有効な場合も、カメラ追従や揺れによるずれが出ない画面固定配置です。他のCanvas・カメラ・CRTの設定は変更しません。
 - ポーズ中は表示時間も停止します。UIはraycastを遮らず、入力・物理・カメラ・ゴールの制御を持ちません。
 - `PlayerStartIntro.Completed`を操作解放後に受け取り、`ShowOnce()`で一度だけ再生します。チェックポイント復帰・重複通知・再有効化では再表示せず、Sceneの再ロードで再表示します。

@@ -124,6 +124,8 @@ public static class PlayerStartIntroPlayModeTest
                     && titleRect.pivot == Vector2.one, "ステージ名の右上アンカーが不正");
                 Require(!image.raycastTarget && !titleGroup.blocksRaycasts, "ステージ名UIが入力を遮断する");
                 Require(image.sprite != null && image.sprite.name == "ステージ名sprite_0", "指定Spriteを使用していない");
+                Require(image.preserveAspect && Vector2.Distance(titleRect.sizeDelta, new Vector2(945f, 211.5f)) < 0.1f,
+                    "基準サイズの1.5倍・縦横比維持が不正");
                 player.Landed += CountLanding;
                 pad = InputSystem.AddDevice<Gamepad>();
                 // 演出中に入力を保持しても、Jump/発射バッファへ漏れないことを確認する。
@@ -172,7 +174,7 @@ public static class PlayerStartIntroPlayModeTest
                 Require(player.IsGrounded, "停止位置で接地していない");
                 Require(stageTitleUI.HasPlayed && stageTitleUI.IsShowing, "完了通知から表示が開始されていない");
                 titleStartedAt = Time.time;
-                titleScreenPosition = TitleScreenPosition();
+                // 登場中は意図的に上下へ移動するため、固定位置は保持フェーズで測る。
                 completedAt = Time.time;
                 stopPosition = player.transform.position;
                 InputSystem.QueueStateEvent(pad, new GamepadState());
@@ -181,7 +183,9 @@ public static class PlayerStartIntroPlayModeTest
             else if (step == 1 && Time.time - completedAt > 0.12f)
             {
                 Require(player.IsGrounded, "演出中のJump入力が復帰後に漏れた");
-                Require(stageTitleUI.IsShowing && titleGroup.alpha > 0f && titleGroup.alpha < 1f, "0.3秒フェードインが不正");
+                Require(stageTitleUI.IsShowing && titleGroup.alpha > 0f && titleGroup.alpha < 1f, "0.4秒フェードインが不正");
+                Require(titleRect.anchoredPosition.y > -48f && titleRect.anchoredPosition.y <= 0f,
+                    "登場時の上から下へのスライドが不正");
                 sawFadeIn = true;
                 Capture("fade-in");
                 Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "Rest復帰が不正");
@@ -218,9 +222,9 @@ public static class PlayerStartIntroPlayModeTest
                 float titleElapsed = Time.time - titleStartedAt;
                 if (titleElapsed > 0.8f && titleElapsed < 3.9f && !sawHold)
                 {
-                    Vector2 currentScreenPosition = TitleScreenPosition();
-                    Require(Vector2.Distance(titleScreenPosition, currentScreenPosition) < 0.5f,
-                        "カメラ移動でステージ名が移動した: " + titleScreenPosition + " -> " + currentScreenPosition);
+                    titleScreenPosition = TitleScreenPosition();
+                    Require(Vector2.Distance(titleRect.anchoredPosition, new Vector2(-48f, -48f)) < 0.1f,
+                        "保持中に右上の定位置で停止していない");
                     Require(stageTitleUI.IsShowing && Mathf.Approximately(titleGroup.alpha, 1f), "保持中の透明度が不正");
                     sawHold = true;
                     Capture("stage-title");
@@ -228,17 +232,25 @@ public static class PlayerStartIntroPlayModeTest
                 if (titleElapsed > 4.3f && titleElapsed < 4.8f && !sawFadeOut)
                 {
                     Require(stageTitleUI.IsShowing && titleGroup.alpha > 0f && titleGroup.alpha < 1f, "4秒以降のフェードアウトが不正");
+                    Require(titleRect.anchoredPosition.y > -48f && titleRect.anchoredPosition.y <= 0f,
+                        "退出時の下から上へのスライドが不正");
                     sawFadeOut = true;
                     Capture("fade-out");
                 }
+                if (sawHold && titleElapsed > 3.5f && titleElapsed < 3.9f)
+                    Require(Vector2.Distance(titleScreenPosition, TitleScreenPosition()) < 0.5f,
+                        "保持中の画面上の位置が変化した");
                 if (titleElapsed > 5.15f)
                 {
                     Require(sawFadeIn && sawHold && sawFadeOut, "フェードの確認フェーズが欠落");
-                    Require(!stageTitleUI.IsShowing && titleGroup.alpha == 0f, "約5秒で表示が消えない");
+                    Require(!stageTitleUI.IsShowing && titleGroup.alpha == 0f
+                        && !titleRect.GetComponent<UnityEngine.UI.Image>().enabled, "約5秒で表示が非表示にならない");
                     stageTitleUI.ShowOnce();
                     stageTitleUI.enabled = false;
                     stageTitleUI.enabled = true;
                     Require(!stageTitleUI.IsShowing && titleGroup.alpha == 0f, "再通知・再有効化で二重表示された");
+                    Require(Vector2.Distance(titleRect.sizeDelta, new Vector2(945f, 211.5f)) < 0.1f,
+                        "再有効化で拡大が累積した");
                     Require(errors == 0, "新規Console Error/Exception: " + errors);
                     Finish("PASS: intro + sprite top-right; fade-in/hold/fade-out 5s; input active during title; "
                         + "move/jump/right-stick/respawn restored; no duplicate/re-enable replay. Animations=" + string.Join(",", animations));

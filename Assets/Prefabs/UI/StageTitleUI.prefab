@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -48, y: -48}
-  m_SizeDelta: {x: 630, y: 141}
+  m_SizeDelta: {x: 945, y: 211.5}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &705543306449180750
 CanvasRenderer:
@@ -190,6 +190,9 @@ MonoBehaviour:
   titleImage: {fileID: 4687117173049782952}
   canvasGroup: {fileID: 2198544181152009785}
   stageSprite: {fileID: -313556916361090079, guid: 4631ee6e4c1a24644bc12794876942af, type: 3}
-  fadeInDuration: 0.3
+  baseSize: {x: 630, y: 141}
+  sizeMultiplier: 1.5
+  slideDistance: 48
+  fadeInDuration: 0.4
   fadeOutStart: 4
   totalDuration: 5
