@@ -24,6 +24,8 @@ public sealed class StageTitleUI : MonoBehaviour
     private float slideDistance = 48f;
 
     [Header("表示時間（ゲーム内秒。ポーズ中は停止）")]
+    [SerializeField, Min(0f), Tooltip("開始演出完了・操作解放後の待機時間。Total Durationには含めない")]
+    private float showDelayAfterIntro = 2f;
     [SerializeField, Min(0f)] private float fadeInDuration = 0.4f;
     [SerializeField, Min(0f), Tooltip("表示開始からフェードアウトを始めるまでの時間")]
     private float fadeOutStart = 4f;
@@ -99,12 +101,16 @@ public sealed class StageTitleUI : MonoBehaviour
             return;
         }
         titleImage.sprite = stageSprite;
-        titleImage.enabled = true;
+        // HasPlayedは待機前に立てるため、待機中の重複通知でも予約は増えない。
         StartCoroutine(Show());
     }
 
     private IEnumerator Show()
     {
+        // WaitForSecondsはゲーム内時間を使うので、ポーズ中は待機も進まない。
+        if (showDelayAfterIntro > 0f)
+            yield return new WaitForSeconds(showDelayAfterIntro);
+        titleImage.enabled = true;
         IsShowing = true;
         float duration = Mathf.Max(0.1f, totalDuration);
         float fadeIn = Mathf.Clamp(fadeInDuration, 0f, duration);
@@ -192,6 +198,7 @@ public sealed class StageTitleUI : MonoBehaviour
         baseSize = new Vector2(Mathf.Max(1f, baseSize.x), Mathf.Max(1f, baseSize.y));
         sizeMultiplier = Mathf.Max(0.01f, sizeMultiplier);
         slideDistance = Mathf.Max(0f, slideDistance);
+        showDelayAfterIntro = Mathf.Max(0f, showDelayAfterIntro);
         totalDuration = Mathf.Max(0.1f, totalDuration);
         fadeInDuration = Mathf.Clamp(fadeInDuration, 0f, totalDuration);
         fadeOutStart = Mathf.Clamp(fadeOutStart, fadeInDuration, totalDuration);

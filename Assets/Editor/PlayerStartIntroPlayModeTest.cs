@@ -24,6 +24,11 @@ public static class PlayerStartIntroPlayModeTest
     private static float jumpStartedAt;
     private static float completedAt;
     private static float titleStartedAt;
+    private static float introCompletedAt;
+    private static double pauseStartedAt;
+    private static float pausedGameTime;
+    private static int pauseStep;
+    private static PauseMenuController pauseMenu;
     private static Vector2 stopPosition;
     private static int step;
     private static int landings;
@@ -68,8 +73,9 @@ public static class PlayerStartIntroPlayModeTest
         {
             Application.runInBackground = true;
             startedAt = EditorApplication.timeSinceStartup;
-            jumpStartedAt = completedAt = titleStartedAt = -1f;
+            jumpStartedAt = completedAt = titleStartedAt = introCompletedAt = -1f;
             step = landings = errors = 0;
+            pauseStep = 0;
             titleStarted = sawWalk = sawFadeIn = sawHold = sawFadeOut = sawJump = false;
             animations.Clear();
             Application.logMessageReceived += CountErrors;
@@ -124,6 +130,12 @@ public static class PlayerStartIntroPlayModeTest
                     && titleRect.pivot == Vector2.one, "ステージ名の右上アンカーが不正");
                 Require(!image.raycastTarget && !titleGroup.blocksRaycasts, "ステージ名UIが入力を遮断する");
                 Require(image.sprite != null && image.sprite.name == "ステージ名sprite_0", "指定Spriteを使用していない");
+                UnityEngine.UI.Shadow shadow = image.GetComponent<UnityEngine.UI.Shadow>();
+                Require(shadow != null && image.GetComponents<UnityEngine.UI.Shadow>().Length == 1
+                    && shadow.effectColor == new Color(0f, 0f, 0f, 0.3f)
+                    && shadow.effectDistance == new Vector2(2f, -2f) && shadow.useGraphicAlpha,
+                    "共通PrefabのShadow設定が不正");
+                pauseMenu = UnityEngine.Object.FindAnyObjectByType<PauseMenuController>();
                 Require(image.preserveAspect && Vector2.Distance(titleRect.sizeDelta, new Vector2(945f, 211.5f)) < 0.1f,
                     "基準サイズの1.5倍・縦横比維持が不正");
                 player.Landed += CountLanding;
@@ -172,8 +184,9 @@ public static class PlayerStartIntroPlayModeTest
                 Require(Time.time - jumpStartedAt >= 1.1f && Time.time - jumpStartedAt <= 2f, "登場後に余分な操作禁止時間がある");
                 Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "保持した右スティックで即発射した");
                 Require(player.IsGrounded, "停止位置で接地していない");
-                Require(stageTitleUI.HasPlayed && stageTitleUI.IsShowing, "完了通知から表示が開始されていない");
-                titleStartedAt = Time.time;
+                Require(stageTitleUI.HasPlayed && !stageTitleUI.IsShowing && titleGroup.alpha == 0f
+                    && !titleRect.GetComponent<UnityEngine.UI.Image>().enabled, "完了通知後の2秒待機がない");
+                introCompletedAt = Time.time;
                 // 登場中は意図的に上下へ移動するため、固定位置は保持フェーズで測る。
                 completedAt = Time.time;
                 stopPosition = player.transform.position;
@@ -183,11 +196,7 @@ public static class PlayerStartIntroPlayModeTest
             else if (step == 1 && Time.time - completedAt > 0.12f)
             {
                 Require(player.IsGrounded, "演出中のJump入力が復帰後に漏れた");
-                Require(stageTitleUI.IsShowing && titleGroup.alpha > 0f && titleGroup.alpha < 1f, "0.4秒フェードインが不正");
-                Require(titleRect.anchoredPosition.y > -48f && titleRect.anchoredPosition.y <= 0f,
-                    "登場時の上から下へのスライドが不正");
-                sawFadeIn = true;
-                Capture("fade-in");
+                Require(!stageTitleUI.IsShowing && titleGroup.alpha == 0f, "待機中に表示された");
                 Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "Rest復帰が不正");
                 InputSystem.QueueStateEvent(pad, new GamepadState { leftStick = Vector2.right }.WithButton(GamepadButton.South));
                 completedAt = Time.time;
@@ -215,11 +224,46 @@ public static class PlayerStartIntroPlayModeTest
                     && Mathf.Approximately(ball.linearDamping, launcher.RestBallLinearDamping), "Rest物理値が漏れた");
                 // 再通知されても5秒の表示を最初からやり直さない。
                 stageTitleUI.ShowOnce();
+                Require(pauseMenu != null, "Pause Menuがない");
+                pauseMenu.OpenPause();
+                Require(pauseMenu.IsPaused, "待機中にポーズできない");
+                pauseStartedAt = EditorApplication.timeSinceStartup;
+                pausedGameTime = Time.time;
                 step = 4;
             }
             else if (step == 4)
             {
+                if (pauseStep == 0 || pauseStep == 2)
+                {
+                    if (EditorApplication.timeSinceStartup - pauseStartedAt < 0.35d)
+                        return;
+                    Require(Mathf.Abs(Time.time - pausedGameTime) < 0.03f, "ポーズ中に時間が進んだ");
+                    Require(pauseStep == 0 ? !stageTitleUI.IsShowing && titleGroup.alpha == 0f
+                        : stageTitleUI.IsShowing && Mathf.Approximately(titleGroup.alpha, 1f), "ポーズ中に待機・表示が進んだ");
+                    pauseMenu.ClosePause();
+                    pauseStep++;
+                    return;
+                }
+                if (titleStartedAt < 0f)
+                {
+                    float delayElapsed = Time.time - introCompletedAt;
+                    if (!stageTitleUI.IsShowing)
+                    {
+                        Require(delayElapsed < 2.2f && titleGroup.alpha == 0f, "2秒後に表示が開始されない");
+                        return;
+                    }
+                    Require(delayElapsed >= 1.95f && delayElapsed < 2.2f, "待機時間が演出完了から2秒ではない: " + delayElapsed);
+                    titleStartedAt = Time.time;
+                }
                 float titleElapsed = Time.time - titleStartedAt;
+                if (titleElapsed > 0.12f && titleElapsed < 0.35f && !sawFadeIn)
+                {
+                    Require(titleGroup.alpha > 0f && titleGroup.alpha < 1f, "0.4秒フェードインが不正");
+                    Require(titleRect.anchoredPosition.y > -48f && titleRect.anchoredPosition.y <= 0f,
+                        "登場時の上から下へのスライドが不正");
+                    sawFadeIn = true;
+                    Capture("fade-in");
+                }
                 if (titleElapsed > 0.8f && titleElapsed < 3.9f && !sawHold)
                 {
                     titleScreenPosition = TitleScreenPosition();
@@ -228,6 +272,10 @@ public static class PlayerStartIntroPlayModeTest
                     Require(stageTitleUI.IsShowing && Mathf.Approximately(titleGroup.alpha, 1f), "保持中の透明度が不正");
                     sawHold = true;
                     Capture("stage-title");
+                    pauseMenu.OpenPause();
+                    pauseStartedAt = EditorApplication.timeSinceStartup;
+                    pausedGameTime = Time.time;
+                    pauseStep = 2;
                 }
                 if (titleElapsed > 4.3f && titleElapsed < 4.8f && !sawFadeOut)
                 {
@@ -252,7 +300,7 @@ public static class PlayerStartIntroPlayModeTest
                     Require(Vector2.Distance(titleRect.sizeDelta, new Vector2(945f, 211.5f)) < 0.1f,
                         "再有効化で拡大が累積した");
                     Require(errors == 0, "新規Console Error/Exception: " + errors);
-                    Finish("PASS: intro + sprite top-right; fade-in/hold/fade-out 5s; input active during title; "
+                    Finish("PASS: 2s delay after intro, input active while waiting; pause freezes delay/display; Shadow; fade/slide 5s; "
                         + "move/jump/right-stick/respawn restored; no duplicate/re-enable replay. Animations=" + string.Join(",", animations));
                 }
             }

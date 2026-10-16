@@ -3,7 +3,7 @@
 `Assets/Scenes/CompletScene.unity` に設定済みです。直接再生、TitleSceneのSTART経由の両方で動作します。
 
 左上の画面外 → 放物線ジャンプ → 着地 → 右へ歩行 → 停止 → 操作解放。
-停止後は右上にステージ名Spriteを5秒表示します。表示中も通常操作できます。
+停止・操作解放から2秒待機した後、右上にステージ名Spriteを5秒表示します。待機中・表示中も通常操作できます。
 既存のJumpUp / JumpFall / JumpLand / Walk / Idle、着地音、足音を使用します。
 土煙エフェクトは追加していません。
 
@@ -45,6 +45,7 @@ Prefabルートの **Stage Title UI** で調整します。
 | Base Size | (630, 141) | 拡大前の基準サイズ |
 | Size Multiplier | 1.5 | 基準サイズに対する表示倍率。拡大は累積しない |
 | Slide Distance | 48 | 上から登場・上へ退出する距離（基準解像度でのpx） |
+| Show Delay After Intro | 2秒 | 開始演出完了通知からの待機時間。Total Durationには含めない |
 | Fade In Duration | 0.4秒 | 下降スライドとフェードインの時間 |
 | Fade Out Start | 4秒 | 表示開始から透明にし始めるまで |
 | Total Duration | 5秒 | フェードアウト完了までの合計時間 |
@@ -62,6 +63,8 @@ Prefabルートの **Stage Title UI** で調整します。
 - 0〜0.4秒で定位置より上から下降しながらフェードイン、0.4〜4秒で定位置・透明度1を維持、4〜5秒で上昇しながらフェードアウトします。移動はanchoredPositionを使い、移動と透明度をEaseOut Cubicで補間します。上端を越えるスライド量は制限し、完全に消えたらImageを非表示にします。
 - このCanvasだけScreen Space - Overlayを維持します。既存CRTが有効な場合も、カメラ追従や揺れによるずれが出ない画面固定配置です。他のCanvas・カメラ・CRTの設定は変更しません。
 - ポーズ中は表示時間も停止します。UIはraycastを遮らず、入力・物理・カメラ・ゴールの制御を持ちません。
+- ポーズ中は表示前の待機時間も停止します。待機前に一度だけの再生予約を行うため、待機中の重複通知でもコルーチンは増えません。
+- 子の **StageTitle > Shadow** で影を調整できます。初期値はEffect Color=黒・Alpha 0.3、Effect Distance=(2, -2)、Use Graphic Alpha=ON。既存Imageと同じCanvasGroupのフェード・RectTransformのスライドへ追従します。
 - `PlayerStartIntro.Completed`を操作解放後に受け取り、`ShowOnce()`で一度だけ再生します。チェックポイント復帰・重複通知・再有効化では再表示せず、Sceneの再ロードで再表示します。
 - 画像が未設定なら警告を出して表示を省略します。代替画像やCanvasの自動生成は行いません。
 
