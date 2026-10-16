@@ -191,6 +191,43 @@ public class Player : MonoBehaviour
 
     public float MoveInputX => _moveInput.x;
 
+    public bool InputEnabled { get; private set; } = true;
+    private bool _startIntroControlled;
+    private bool _introGrounded;
+    private Vector2 _introVelocity;
+
+    /// <summary>入力だけを禁止する。演出中の物理所有権はSetStartIntroControlで切り替える。</summary>
+    public void SetInputEnabled(bool enabled)
+    {
+        InputEnabled = enabled;
+        _actionMoveInput = Vector2.zero;
+        _moveInput = Vector2.zero;
+        _jumpHeld = false;
+        _jumpBufferTimer = 0f;
+        _coyoteTimer = 0f;
+    }
+
+    public void SetStartIntroControl(bool active)
+    {
+        _startIntroControlled = active;
+        _bjump = false;
+        _moveInput = Vector2.zero;
+        if (!active)
+        {
+            RefreshGroundedState();
+            _wasGrounded = IsGrounded;
+            _groundStateInitialized = true;
+            StopFootstepAudio();
+        }
+    }
+
+    /// <summary>既存Animator・着地音・足音に演出の移動状態を渡す。</summary>
+    public void SetStartIntroMotion(bool grounded, Vector2 velocity)
+    {
+        _introGrounded = grounded;
+        _introVelocity = velocity;
+    }
+
     public float MoveInputY => _moveInput.y;
 
     public bool FacingRight => _facingRight;
@@ -216,7 +253,7 @@ public class Player : MonoBehaviour
 
     public Rigidbody2D Rigidbody2D => _rigid;
 
-    public bool IsGrounded => _isGrounded;
+    public bool IsGrounded => _startIntroControlled ? _introGrounded : _isGrounded;
 
     public event System.Action Landed;
 
@@ -355,11 +392,14 @@ public class Player : MonoBehaviour
 
     {
 
-        PollMovementInput();
+        if (_startIntroControlled)
+            _moveInput = _introGrounded ? new Vector2(Mathf.Clamp(_introVelocity.x, -1f, 1f), 0f) : Vector2.zero;
+        else
+            PollMovementInput();
 
 
 
-        bool grounded = IsGrounded;
+        bool grounded = _startIntroControlled ? _introGrounded : IsGrounded;
 
         bool landedThisFrame = _groundStateInitialized
             && !_wasGrounded
@@ -369,7 +409,7 @@ public class Player : MonoBehaviour
         {
             _anim.SetBool("Walk", Mathf.Abs(_moveInput.x) > 0.01f);
             _anim.SetBool("Jump", !grounded);
-            _anim.SetFloat("VerticalSpeed", _rigid != null ? _rigid.linearVelocity.y : 0f);
+            _anim.SetFloat("VerticalSpeed", _startIntroControlled ? _introVelocity.y : (_rigid != null ? _rigid.linearVelocity.y : 0f));
 
             if (landedThisFrame)
                 _anim.SetTrigger("Land");
@@ -409,6 +449,9 @@ public class Player : MonoBehaviour
 
     {
 
+        if (_startIntroControlled)
+            return;
+
         RefreshGroundedState();
 
         bool grounded = IsGrounded;
@@ -441,6 +484,12 @@ public class Player : MonoBehaviour
 
     {
         if (_goalInputBlocked)
+        {
+            _moveInput = Vector2.zero;
+            return;
+        }
+
+        if (!InputEnabled)
         {
             _moveInput = Vector2.zero;
             return;
@@ -610,7 +659,7 @@ public class Player : MonoBehaviour
 
             && isAlive
 
-            && Mathf.Abs(_rigid.linearVelocity.x) > _footstepMinHorizontalSpeed;
+            && Mathf.Abs(_startIntroControlled ? _introVelocity.x : _rigid.linearVelocity.x) > _footstepMinHorizontalSpeed;
 
 
 
@@ -930,6 +979,9 @@ public class Player : MonoBehaviour
         if (_goalInputBlocked)
             return;
 
+        if (!InputEnabled)
+            return;
+
         Vector2 v = context.ReadValue<Vector2>();
 
         _actionMoveInput = v;
@@ -942,6 +994,9 @@ public class Player : MonoBehaviour
 
     {
         if (_goalInputBlocked)
+            return;
+
+        if (!InputEnabled)
             return;
 
         if (context.performed)
