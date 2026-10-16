@@ -2,7 +2,8 @@
 
 `Assets/Scenes/CompletScene.unity` に設定済みです。直接再生、TitleSceneのSTART経由の両方で動作します。
 
-左上の画面外 → 放物線ジャンプ → 着地 → 右へ歩行 → 停止 → STAGE 1 → 操作解放。
+左上の画面外 → 放物線ジャンプ → 着地 → 右へ歩行 → 停止 → 操作解放。
+停止後は右上にステージ名Spriteを5秒表示します。表示中も通常操作できます。
 既存のJumpUp / JumpFall / JumpLand / Walk / Idle、着地音、足音を使用します。
 土煙エフェクトは追加していません。
 
@@ -19,21 +20,46 @@ CompletSceneの **Player > Player Start Intro** を調整してください。
 | Intro Jump Duration | 0.85秒 | ジャンプ登場時間 |
 | Jump Arc Height | 2.5 | 開始点と着地点を結ぶ直線に加える放物線の高さ |
 | Walk Speed | 3 | 演出中の歩行速度（units/秒） |
-| Stage Title Delay | 0.12秒 | 停止からタイトル表示まで |
-| Stage Title Duration | 0.8秒 | タイトル表示時間 |
-| Stage Title | STAGE 1 | 表示テキスト |
 | Morning Star Offset | (-2, -1.15) | 演出中だけの鉄球の相対位置 |
 
-合計約2.3秒（ロード・ポーズ中を除く）。最終X座標は元の開始位置と同じ-16.1です。
+登場から操作解放までは約1.4秒（ロード・ポーズ中を除く）。最終X座標は元の開始位置と同じ-16.1です。
 
 - Jump Start Point / Landing Point / Final Stop PointにTransformを指定すると、その座標を優先します。開始時に座標を取得するため、経路用Transformは演出中に追従しません。
 - 座標は足元ではなく**Playerルート**です。Align To GroundがONの場合、Landing / FinalのYは床に合わせます。床LayerはDefault / Wallsです。
 - 開始区間は障害物のない床を使ってください。演出は決めた経路を移動し、壁との衝突による経路変更は行いません。
 - Playerを別の位置へ移した場合はLanding Position、またはPoint参照も調整してください。
 - Camera Followは演出中だけ現在位置で停止し、完了後に既存の追従を再開します。
-- StageIntroCanvas > TitleBand > StageTitleで文字の見た目を調整できます。CanvasGroupは通常alpha=0です。
-- UI参照が未設定の場合は、実行時に簡易CanvasとTMP文字を生成します。
 - 別Sceneに追加する場合はPlayerにPlayerStartIntroを追加し、Camera Followと着地点を設定してください。
+
+## ステージ名Sprite（ステージ1〜3共通）
+
+`Assets/Prefabs/UI/StageTitleUI.prefab` を各ステージのSceneに一つ配置してください。
+CompletSceneでは既存CanvasをこのPrefabへ移行済みです。ステージ2・3のSceneは作成していません。
+
+Prefabルートの **Stage Title UI** で調整します。
+
+| Inspectorフィールド | 現在値 | 用途 |
+|---|---|---|
+| Start Intro | CompletSceneのPlayer | 完了通知元。未設定なら同じScene内から自動取得 |
+| Stage Sprite | ステージ名sprite_0 | ステージごとに割り当てるSprite |
+| Fade In Duration | 0.3秒 | 透明から通常表示まで |
+| Fade Out Start | 4秒 | 表示開始から透明にし始めるまで |
+| Total Duration | 5秒 | フェードアウト完了までの合計時間 |
+
+用意済みの`Assets/image_/ステージ名sprite.png`は分割済みのため、そのまま使用しています。
+
+| Sprite | 使用先 |
+|---|---|
+| ステージ名sprite_0 | ステージ1「蒼天の浮遊王都」 |
+| ステージ名sprite_1 | ステージ2「紅蓮の機巧都市」 |
+| ステージ名sprite_2 | ステージ3「月影の水晶古城」 |
+
+- 将来Sceneを分けても、Prefabを配置してStage SpriteとStart Introを指定するだけで利用できます。参照未指定時の探索は同じScene内に限定します。
+- 子の **StageTitle > RectTransform** は右上アンカー・右上Pivot、余白48、表示サイズ630×141（1920×1080基準）。Imageは縦横比を維持します。
+- このCanvasだけScreen Space - Overlayを維持します。既存CRTが有効な場合も、カメラ追従や揺れによるずれが出ない画面固定配置です。他のCanvas・カメラ・CRTの設定は変更しません。
+- ポーズ中は表示時間も停止します。UIはraycastを遮らず、入力・物理・カメラ・ゴールの制御を持ちません。
+- `PlayerStartIntro.Completed`を操作解放後に受け取り、`ShowOnce()`で一度だけ再生します。チェックポイント復帰・重複通知・再有効化では再表示せず、Sceneの再ロードで再表示します。
+- 画像が未設定なら警告を出して表示を省略します。代替画像やCanvasの自動生成は行いません。
 
 ## 制御・保守
 
@@ -49,5 +75,5 @@ CompletSceneの **Player > Player Start Intro** を調整してください。
 Editor検証用の`PlayerStartIntroPlayModeTest.Run()`と`Run(true)`で、直接開始／タイトル経由を確認できます。
 検証は仮想ゲームパッドを使い、終了時に取り除いてPlay Modeを終了します。通常のゲーム開始時には実行されません。
 
-確認済み: 5種類の既存アニメーション、着地イベント1回、操作禁止、タイトル表示、演出時間、操作復帰後の移動／ジャンプ／右スティック発射、リスポーン、Rest物理値復帰。
+検証内容: 5種類の既存アニメーション、着地イベント1回、登場中の操作禁止、右上Sprite表示とフェード、表示中の移動／ジャンプ／右スティック発射、リスポーン、Rest物理値復帰、重複通知と再有効化での再表示防止。
 最終的な登場速度・歩数・重量感は実際のゲームパッドで確認してください。

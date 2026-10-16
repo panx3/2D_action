@@ -1,5 +1,4 @@
 using System.Linq;
-using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -8,6 +7,8 @@ using UnityEngine.SceneManagement;
 /// <summary>既存の調整値を上書きせず、CompletSceneに開始演出を設定する。</summary>
 public static class PlayerStartIntroSetup
 {
+    private const string TitlePrefabPath = "Assets/Prefabs/UI/StageTitleUI.prefab";
+
     [MenuItem("鉄球少女/Player/スタート演出を設定")]
     public static void Apply()
     {
@@ -28,14 +29,32 @@ public static class PlayerStartIntroSetup
         if (settings.FindProperty("cameraFollow").objectReferenceValue == null)
             settings.FindProperty("cameraFollow").objectReferenceValue = camera;
 
-        if (settings.FindProperty("stageTitleGroup").objectReferenceValue == null)
+        settings.ApplyModifiedProperties();
+
+        // 既存Canvasを移行する。UIが無いSceneでは共通Prefabを一つ配置する。
+        GameObject root = scene.GetRootGameObjects().FirstOrDefault(candidate =>
+            candidate.GetComponent<StageTitleUI>() != null || candidate.name == "StageIntroCanvas");
+        if (root == null)
         {
-            GameObject root = new GameObject("StageIntroCanvas", typeof(RectTransform), typeof(Canvas),
-                typeof(UnityEngine.UI.CanvasScaler), typeof(CanvasGroup));
-            SceneManager.MoveGameObjectToScene(root, scene);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TitlePrefabPath);
+            if (prefab != null)
+                root = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            else
+            {
+                root = new GameObject("StageIntroCanvas", typeof(RectTransform), typeof(Canvas),
+                    typeof(UnityEngine.UI.CanvasScaler), typeof(CanvasGroup));
+                SceneManager.MoveGameObjectToScene(root, scene);
+            }
             Undo.RegisterCreatedObjectUndo(root, "Create stage intro UI");
+        }
+        StageTitleUI title = root.GetComponent<StageTitleUI>();
+        if (title == null)
+        {
+            Sprite sprite = AssetDatabase.LoadAllAssetsAtPath("Assets/image_/ステージ名sprite.png")
+                .OfType<Sprite>().Single(candidate => candidate.name == "ステージ名sprite_0");
             Canvas canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.worldCamera = null;
             canvas.sortingOrder = 400;
             UnityEngine.UI.CanvasScaler scaler = root.GetComponent<UnityEngine.UI.CanvasScaler>();
             scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -45,35 +64,52 @@ public static class PlayerStartIntroSetup
             group.alpha = 0f;
             group.interactable = group.blocksRaycasts = false;
 
-            GameObject panel = new GameObject("TitleBand", typeof(RectTransform), typeof(UnityEngine.UI.Image));
-            panel.transform.SetParent(root.transform, false);
-            RectTransform rect = panel.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0.65f);
-            rect.anchorMax = new Vector2(1f, 0.85f);
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            UnityEngine.UI.Image background = panel.GetComponent<UnityEngine.UI.Image>();
-            background.color = new Color(0.02f, 0.02f, 0.03f, 0.8f);
-            background.raycastTarget = false;
+            Transform oldLabel = root.transform.Find("TitleBand/StageTitle");
+            GameObject label = oldLabel != null ? oldLabel.gameObject
+                : new GameObject("StageTitle", typeof(RectTransform));
+            Undo.SetTransformParent(label.transform, root.transform, "Move stage title to corner");
+            TMPro.TMP_Text oldText = label.GetComponent<TMPro.TMP_Text>();
+            if (oldText != null)
+                Undo.DestroyObjectImmediate(oldText);
+            Transform oldBand = root.transform.Find("TitleBand");
+            if (oldBand != null)
+                Undo.DestroyObjectImmediate(oldBand.gameObject);
 
-            GameObject label = new GameObject("StageTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
-            label.transform.SetParent(panel.transform, false);
-            TextMeshProUGUI text = label.GetComponent<TextMeshProUGUI>();
-            text.font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/NotoSansJP-Bold SDF.asset");
-            text.text = "STAGE 1";
-            text.fontSize = 72f;
-            text.characterSpacing = 8f;
-            text.color = Color.white;
-            text.alignment = TextAlignmentOptions.Center;
-            text.raycastTarget = false;
-            text.rectTransform.anchorMin = Vector2.zero;
-            text.rectTransform.anchorMax = Vector2.one;
-            text.rectTransform.offsetMin = text.rectTransform.offsetMax = Vector2.zero;
-            settings.FindProperty("stageTitleGroup").objectReferenceValue = group;
-            settings.FindProperty("stageTitleText").objectReferenceValue = text;
+            UnityEngine.UI.Image image = label.GetComponent<UnityEngine.UI.Image>();
+            if (image == null)
+                image = Undo.AddComponent<UnityEngine.UI.Image>(label);
+            image.sprite = sprite;
+            image.color = Color.white;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            RectTransform rect = image.rectTransform;
+            rect.anchorMin = rect.anchorMax = Vector2.one;
+            rect.pivot = Vector2.one;
+            rect.anchoredPosition = new Vector2(-48f, -48f);
+            rect.sizeDelta = new Vector2(630f, 141f);
+
+            title = Undo.AddComponent<StageTitleUI>(root);
+            SerializedObject view = new SerializedObject(title);
+            view.FindProperty("titleImage").objectReferenceValue = image;
+            view.FindProperty("canvasGroup").objectReferenceValue = group;
+            view.FindProperty("stageSprite").objectReferenceValue = sprite;
+            view.ApplyModifiedProperties();
         }
-        settings.ApplyModifiedProperties();
+
+        // PrefabにはScene内Playerへの参照を保存しない。Sceneインスタンス側だけに設定する。
+        if (!PrefabUtility.IsPartOfPrefabInstance(root))
+        {
+            SerializedObject prefabSettings = new SerializedObject(title);
+            prefabSettings.FindProperty("startIntro").objectReferenceValue = null;
+            prefabSettings.ApplyModifiedProperties();
+            PrefabUtility.SaveAsPrefabAssetAndConnect(root, TitlePrefabPath, InteractionMode.AutomatedAction);
+        }
+        SerializedObject sceneSettings = new SerializedObject(title);
+        sceneSettings.FindProperty("startIntro").objectReferenceValue = intro;
+        sceneSettings.ApplyModifiedProperties();
+        PrefabUtility.RecordPrefabInstancePropertyModifications(title);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log("[PlayerStartIntroSetup] CompletSceneに開始演出とSTAGE 1表示を設定しました。");
+        Debug.Log("[PlayerStartIntroSetup] 既存Canvasを右上ステージ名Spriteの共通Prefabへ設定しました。");
     }
 }

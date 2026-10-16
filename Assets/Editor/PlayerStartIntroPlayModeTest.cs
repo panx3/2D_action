@@ -16,16 +16,23 @@ public static class PlayerStartIntroPlayModeTest
     private static PlayerStartIntro intro;
     private static Player player;
     private static MorningStarLauncher launcher;
+    private static StageTitleUI stageTitleUI;
+    private static CanvasGroup titleGroup;
+    private static RectTransform titleRect;
+    private static Vector2 titleScreenPosition;
     private static double startedAt;
     private static float jumpStartedAt;
     private static float completedAt;
+    private static float titleStartedAt;
     private static Vector2 stopPosition;
     private static int step;
     private static int landings;
     private static int errors;
     private static bool titleStarted;
     private static bool sawWalk;
-    private static bool sawTitle;
+    private static bool sawFadeIn;
+    private static bool sawHold;
+    private static bool sawFadeOut;
     private static bool sawJump;
     private static readonly HashSet<string> animations = new HashSet<string>();
 
@@ -61,9 +68,9 @@ public static class PlayerStartIntroPlayModeTest
         {
             Application.runInBackground = true;
             startedAt = EditorApplication.timeSinceStartup;
-            jumpStartedAt = completedAt = -1f;
+            jumpStartedAt = completedAt = titleStartedAt = -1f;
             step = landings = errors = 0;
-            titleStarted = sawWalk = sawTitle = sawJump = false;
+            titleStarted = sawWalk = sawFadeIn = sawHold = sawFadeOut = sawJump = false;
             animations.Clear();
             Application.logMessageReceived += CountErrors;
             EditorApplication.update += Tick;
@@ -105,6 +112,18 @@ public static class PlayerStartIntroPlayModeTest
                     return;
                 player = intro.GetComponent<Player>();
                 launcher = intro.GetComponent<MorningStarLauncher>();
+                stageTitleUI = UnityEngine.Object.FindAnyObjectByType<StageTitleUI>();
+                Require(stageTitleUI != null, "共通ステージ名UIがない");
+                titleGroup = stageTitleUI.GetComponent<CanvasGroup>();
+                UnityEngine.UI.Image image = stageTitleUI.GetComponentInChildren<UnityEngine.UI.Image>();
+                titleRect = image.rectTransform;
+                Canvas canvas = stageTitleUI.GetComponent<Canvas>();
+                // CRTがOverlayを一時的にScreenSpaceCameraへ変換する既存仕様にも対応する。
+                Require(canvas.renderMode != RenderMode.WorldSpace, "ステージ名が画面固定ではない");
+                Require(titleRect.anchorMin == Vector2.one && titleRect.anchorMax == Vector2.one
+                    && titleRect.pivot == Vector2.one, "ステージ名の右上アンカーが不正");
+                Require(!image.raycastTarget && !titleGroup.blocksRaycasts, "ステージ名UIが入力を遮断する");
+                Require(image.sprite != null && image.sprite.name == "ステージ名sprite_0", "指定Spriteを使用していない");
                 player.Landed += CountLanding;
                 pad = InputSystem.AddDevice<Gamepad>();
                 // 演出中に入力を保持しても、Jump/発射バッファへ漏れないことを確認する。
@@ -125,6 +144,7 @@ public static class PlayerStartIntroPlayModeTest
                 Require(!player.InputEnabled, "演出中に入力が解放された");
                 Require(!player.Rigidbody2D.simulated, "演出中にPlayer物理が動いている");
                 Require(launcher.State == MorningStarLauncher.MorningStarState.StartIntro, "演出中に鉄球状態が変化した");
+                Require(!stageTitleUI.HasPlayed && titleGroup.alpha == 0f, "登場完了前にステージ名が表示された");
                 if (intro.Phase == PlayerStartIntro.IntroPhase.Jump && !sawJump)
                 {
                     sawJump = true;
@@ -137,28 +157,22 @@ public static class PlayerStartIntroPlayModeTest
                     sawWalk = true;
                     Capture("walk");
                 }
-                if (intro.Phase == PlayerStartIntro.IntroPhase.StageTitle)
-                {
-                    sawTitle = true;
-                    SerializedObject settings = new SerializedObject(intro);
-                    CanvasGroup group = (CanvasGroup)settings.FindProperty("stageTitleGroup").objectReferenceValue;
-                    Require(group != null && group.alpha == 1f, "ステージ名が表示されていない");
-                    if (!File.Exists(CapturePath("title")))
-                        Capture("title");
-                }
                 return;
             }
 
             Require(player.InputEnabled && player.Rigidbody2D.simulated, "演出後に通常操作・物理へ戻らない");
             if (step == 0)
             {
-                Require(sawJump && sawWalk && sawTitle, "シーケンスが欠落");
+                Require(sawJump && sawWalk, "シーケンスが欠落");
                 Require(animations.Contains("JumpUp") && animations.Contains("JumpFall")
                     && animations.Contains("Walk") && animations.Contains("Idle"), "既存アニメーションへの遷移が欠落");
                 Require(landings == 1, "着地イベントが1回ではない: " + landings);
-                Require(Time.time - jumpStartedAt >= 1.5f && Time.time - jumpStartedAt <= 2.6f, "演出時間が想定外");
+                Require(Time.time - jumpStartedAt >= 1.1f && Time.time - jumpStartedAt <= 2f, "登場後に余分な操作禁止時間がある");
                 Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "保持した右スティックで即発射した");
                 Require(player.IsGrounded, "停止位置で接地していない");
+                Require(stageTitleUI.HasPlayed && stageTitleUI.IsShowing, "完了通知から表示が開始されていない");
+                titleStartedAt = Time.time;
+                titleScreenPosition = TitleScreenPosition();
                 completedAt = Time.time;
                 stopPosition = player.transform.position;
                 InputSystem.QueueStateEvent(pad, new GamepadState());
@@ -167,6 +181,9 @@ public static class PlayerStartIntroPlayModeTest
             else if (step == 1 && Time.time - completedAt > 0.12f)
             {
                 Require(player.IsGrounded, "演出中のJump入力が復帰後に漏れた");
+                Require(stageTitleUI.IsShowing && titleGroup.alpha > 0f && titleGroup.alpha < 1f, "0.3秒フェードインが不正");
+                sawFadeIn = true;
+                Capture("fade-in");
                 Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "Rest復帰が不正");
                 InputSystem.QueueStateEvent(pad, new GamepadState { leftStick = Vector2.right }.WithButton(GamepadButton.South));
                 completedAt = Time.time;
@@ -192,9 +209,40 @@ public static class PlayerStartIntroPlayModeTest
                 Require(ball.simulated && Mathf.Approximately(ball.mass, launcher.RestBallMass)
                     && Mathf.Approximately(ball.gravityScale, launcher.RestBallGravityScale)
                     && Mathf.Approximately(ball.linearDamping, launcher.RestBallLinearDamping), "Rest物理値が漏れた");
-                Require(errors == 0, "新規Console Error/Exception: " + errors);
-                Finish("PASS: jump→land→walk→idle→title→input; held input blocked; move/jump/right-stick/respawn restored. Animations="
-                    + string.Join(",", animations));
+                // 再通知されても5秒の表示を最初からやり直さない。
+                stageTitleUI.ShowOnce();
+                step = 4;
+            }
+            else if (step == 4)
+            {
+                float titleElapsed = Time.time - titleStartedAt;
+                if (titleElapsed > 0.8f && titleElapsed < 3.9f && !sawHold)
+                {
+                    Vector2 currentScreenPosition = TitleScreenPosition();
+                    Require(Vector2.Distance(titleScreenPosition, currentScreenPosition) < 0.5f,
+                        "カメラ移動でステージ名が移動した: " + titleScreenPosition + " -> " + currentScreenPosition);
+                    Require(stageTitleUI.IsShowing && Mathf.Approximately(titleGroup.alpha, 1f), "保持中の透明度が不正");
+                    sawHold = true;
+                    Capture("stage-title");
+                }
+                if (titleElapsed > 4.3f && titleElapsed < 4.8f && !sawFadeOut)
+                {
+                    Require(stageTitleUI.IsShowing && titleGroup.alpha > 0f && titleGroup.alpha < 1f, "4秒以降のフェードアウトが不正");
+                    sawFadeOut = true;
+                    Capture("fade-out");
+                }
+                if (titleElapsed > 5.15f)
+                {
+                    Require(sawFadeIn && sawHold && sawFadeOut, "フェードの確認フェーズが欠落");
+                    Require(!stageTitleUI.IsShowing && titleGroup.alpha == 0f, "約5秒で表示が消えない");
+                    stageTitleUI.ShowOnce();
+                    stageTitleUI.enabled = false;
+                    stageTitleUI.enabled = true;
+                    Require(!stageTitleUI.IsShowing && titleGroup.alpha == 0f, "再通知・再有効化で二重表示された");
+                    Require(errors == 0, "新規Console Error/Exception: " + errors);
+                    Finish("PASS: intro + sprite top-right; fade-in/hold/fade-out 5s; input active during title; "
+                        + "move/jump/right-stick/respawn restored; no duplicate/re-enable replay. Animations=" + string.Join(",", animations));
+                }
             }
         }
         catch (Exception exception)
@@ -204,6 +252,14 @@ public static class PlayerStartIntroPlayModeTest
     }
 
     private static void CountLanding() => landings++;
+    private static Vector2 TitleScreenPosition()
+    {
+        // Editor.updateは描画前にも呼ばれるため、Camera描画Canvasの更新を確定してから測る。
+        Canvas.ForceUpdateCanvases();
+        Canvas canvas = stageTitleUI.GetComponent<Canvas>();
+        return RectTransformUtility.WorldToScreenPoint(
+            canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, titleRect.position);
+    }
     private static void Require(bool condition, string message)
     {
         if (!condition)

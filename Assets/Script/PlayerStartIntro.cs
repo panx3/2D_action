@@ -1,7 +1,5 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 演出中だけPlayerと鉄球の物理所有権を借りる。初期位置は停止位置として扱う。
@@ -39,15 +37,10 @@ public sealed class PlayerStartIntro : MonoBehaviour
     [SerializeField, Min(0f)] private float groundProbeHeight = 3f;
     [SerializeField, Min(0.1f)] private float groundProbeDistance = 12f;
 
-    [Header("ステージ名（UI未設定時は簡易Canvasを自動生成）")]
-    [SerializeField] private string stageTitle = "STAGE 1";
-    [SerializeField] private CanvasGroup stageTitleGroup;
-    [SerializeField] private TMP_Text stageTitleText;
-    [SerializeField, Min(0f)] private float stageTitleDelay = 0.12f;
-    [SerializeField, Min(0f)] private float stageTitleDuration = 0.8f;
-
     public bool IsPlaying { get; private set; }
     public IntroPhase Phase { get; private set; } = IntroPhase.WaitingForStage;
+    /// <summary>停止・通常操作への復帰が完了した後に一度だけ通知する。</summary>
+    public event System.Action Completed;
 
     private Player _player;
     private Rigidbody2D _body;
@@ -59,7 +52,6 @@ public sealed class PlayerStartIntro : MonoBehaviour
     private bool _bodyWasSimulated;
     private bool _cameraWasEnabled;
     private Vector2 _finalPosition;
-    private GameObject _generatedTitle;
 
     private void Reset()
     {
@@ -78,7 +70,6 @@ public sealed class PlayerStartIntro : MonoBehaviour
             _inputCaptured = true;
             _player.SetInputEnabled(false);
         }
-        SetTitleVisible(false);
     }
 
     private IEnumerator Start()
@@ -106,7 +97,6 @@ public sealed class PlayerStartIntro : MonoBehaviour
             cameraFollow.enabled = false;
         if (_launcher != null)
             _launcher.BeginStartIntro();
-        EnsureTitleView();
         MoveTo(start);
         _player.SetStartIntroMotion(false, Vector2.up);
 
@@ -149,13 +139,6 @@ public sealed class PlayerStartIntro : MonoBehaviour
         MoveTo(_finalPosition);
         _player.SetStartIntroMotion(true, Vector2.zero);
         yield return null;
-        if (stageTitleDelay > 0f)
-            yield return new WaitForSeconds(stageTitleDelay);
-
-        Phase = IntroPhase.StageTitle;
-        SetTitleVisible(true);
-        if (stageTitleDuration > 0f)
-            yield return new WaitForSeconds(stageTitleDuration);
         Finish(true);
     }
 
@@ -189,7 +172,6 @@ public sealed class PlayerStartIntro : MonoBehaviour
 
     private void Finish(bool completed)
     {
-        SetTitleVisible(false);
         if (_physicsCaptured)
         {
             MoveTo(_finalPosition);
@@ -213,50 +195,11 @@ public sealed class PlayerStartIntro : MonoBehaviour
             _inputCaptured = false;
         }
         IsPlaying = false;
-        if (completed)
+        if (completed && Phase != IntroPhase.Complete)
+        {
             Phase = IntroPhase.Complete;
-    }
-
-    private void SetTitleVisible(bool visible)
-    {
-        if (stageTitleText != null)
-            stageTitleText.text = stageTitle;
-        if (stageTitleGroup == null)
-            return;
-        stageTitleGroup.alpha = visible ? 1f : 0f;
-        stageTitleGroup.interactable = false;
-        stageTitleGroup.blocksRaycasts = false;
-    }
-
-    private void EnsureTitleView()
-    {
-        if (stageTitleGroup != null)
-            return;
-        _generatedTitle = new GameObject("StageIntroCanvas", typeof(RectTransform), typeof(Canvas),
-            typeof(UnityEngine.UI.CanvasScaler), typeof(CanvasGroup));
-        SceneManager.MoveGameObjectToScene(_generatedTitle, gameObject.scene);
-        Canvas canvas = _generatedTitle.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 400;
-        UnityEngine.UI.CanvasScaler scaler = _generatedTitle.GetComponent<UnityEngine.UI.CanvasScaler>();
-        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
-        stageTitleGroup = _generatedTitle.GetComponent<CanvasGroup>();
-
-        GameObject label = new GameObject("StageTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
-        label.transform.SetParent(_generatedTitle.transform, false);
-        stageTitleText = label.GetComponent<TextMeshProUGUI>();
-        stageTitleText.font = TMP_Settings.defaultFontAsset;
-        stageTitleText.fontSize = 72f;
-        stageTitleText.fontStyle = FontStyles.Bold;
-        stageTitleText.alignment = TextAlignmentOptions.Center;
-        stageTitleText.color = Color.white;
-        stageTitleText.raycastTarget = false;
-        stageTitleText.rectTransform.anchorMin = new Vector2(0.15f, 0.65f);
-        stageTitleText.rectTransform.anchorMax = new Vector2(0.85f, 0.85f);
-        stageTitleText.rectTransform.offsetMin = stageTitleText.rectTransform.offsetMax = Vector2.zero;
-        SetTitleVisible(false);
+            Completed?.Invoke();
+        }
     }
 
     private void OnDisable()
@@ -265,9 +208,4 @@ public sealed class PlayerStartIntro : MonoBehaviour
         Finish(false);
     }
 
-    private void OnDestroy()
-    {
-        if (_generatedTitle != null)
-            Destroy(_generatedTitle);
-    }
 }
