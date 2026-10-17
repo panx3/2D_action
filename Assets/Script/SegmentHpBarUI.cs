@@ -44,6 +44,10 @@ public class SegmentHpBarUI : MonoBehaviour
     [SerializeField, Tooltip("被弾時の最大揺れ幅（UI Pixel）")]
     private Vector2 _damageShakeAmount = new Vector2(4f, 1.5f);
 
+    [Header("Healing Feedback")]
+    [SerializeField, Min(0f)] private float _healHighlightDuration = 0.45f;
+    [SerializeField] private Color _healHighlightColor = new Color(1f, 0.78f, 0.92f, 0.65f);
+
     private Vector2 _hpMaskFullSize;
     private Vector2 _damageMaskFullSize;
     private float _targetHpNormalized = 1f;
@@ -58,6 +62,10 @@ public class SegmentHpBarUI : MonoBehaviour
     private float _shakeElapsed;
     private bool _isShaking;
     private bool _shakeBaseCached;
+    private UnityEngine.UI.Image _healHighlight;
+    private float _healStartNormalized;
+    private float _healElapsed;
+    private bool _isHealing;
 
     public float TargetHpNormalized => _targetHpNormalized;
     public float DisplayHpNormalized => _displayHpNormalized;
@@ -73,6 +81,7 @@ public class SegmentHpBarUI : MonoBehaviour
     public float HpMaskWidth => _hpMask != null ? _hpMask.sizeDelta.x : 0f;
     public float DamageMaskWidth => _damageMask != null ? _damageMask.sizeDelta.x : 0f;
     public float FullMaskWidth => _hpMaskFullSize.x;
+    public bool IsHealing => _isHealing;
 
     private void Awake()
     {
@@ -101,6 +110,7 @@ public class SegmentHpBarUI : MonoBehaviour
     {
         UnbindHealthEvents();
         FinishDamageShake();
+        FinishHealingHighlight();
     }
 
     private void OnValidate()
@@ -109,6 +119,7 @@ public class SegmentHpBarUI : MonoBehaviour
         _damageDelay = Mathf.Max(0f, _damageDelay);
         _damageSmoothDuration = Mathf.Max(0f, _damageSmoothDuration);
         _damageShakeDuration = Mathf.Max(0f, _damageShakeDuration);
+        _healHighlightDuration = Mathf.Max(0f, _healHighlightDuration);
         _damageShakeAmount.x = Mathf.Max(0f, _damageShakeAmount.x);
         _damageShakeAmount.y = Mathf.Max(0f, _damageShakeAmount.y);
     }
@@ -119,6 +130,7 @@ public class SegmentHpBarUI : MonoBehaviour
         UpdateDisplayedHp(dt);
         UpdateDamageFill(dt);
         UpdateDamageShake(dt);
+        UpdateHealingHighlight(dt);
     }
 
     private void ResolvePlayerHealth()
@@ -326,6 +338,10 @@ public class SegmentHpBarUI : MonoBehaviour
         }
 
         bool lostHp = normalized < _targetHpNormalized - 0.0001f;
+        bool gainedHp = normalized > _targetHpNormalized + 0.0001f;
+        if (lostHp) FinishHealingHighlight();
+        else if (gainedHp && Application.isPlaying && isActiveAndEnabled)
+            StartHealingHighlight(_targetHpNormalized);
         _targetHpNormalized = normalized;
 
         float hpDistance = Mathf.Abs(_displayHpNormalized - _targetHpNormalized);
@@ -426,6 +442,53 @@ public class SegmentHpBarUI : MonoBehaviour
 
         _initialAnchoredPosition = _hpBarRoot.anchoredPosition;
         _shakeBaseCached = true;
+    }
+
+    private void StartHealingHighlight(float previousHp)
+    {
+        if (_hpMask == null || _healHighlightDuration <= 0f) return;
+        if (_healHighlight == null)
+        {
+            // 既存のマスク内に追加する。元画像・Frame・レイアウトには触れない。
+            var go = new GameObject("HealingHighlight", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            go.transform.SetParent(_hpMask, false);
+            _healHighlight = go.GetComponent<UnityEngine.UI.Image>();
+            _healHighlight.raycastTarget = false;
+            RectTransform rect = _healHighlight.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 0.5f);
+            rect.pivot = new Vector2(0f, 0.5f);
+        }
+        _healStartNormalized = _isHealing ? Mathf.Min(_healStartNormalized, previousHp) : previousHp;
+        _healElapsed = 0f;
+        _isHealing = true;
+        _healHighlight.enabled = true;
+        _healHighlight.color = Color.clear;
+    }
+
+    private void UpdateHealingHighlight(float dt)
+    {
+        if (!_isHealing || _healHighlight == null) return;
+        _healElapsed += dt;
+        float t = Mathf.Clamp01(_healElapsed / _healHighlightDuration);
+        if (t >= 1f)
+        {
+            FinishHealingHighlight();
+            return;
+        }
+        float width = Mathf.Max(0f, _displayHpNormalized - _healStartNormalized) * _hpMaskFullSize.x;
+        RectTransform rect = _healHighlight.rectTransform;
+        rect.anchoredPosition = new Vector2(_healStartNormalized * _hpMaskFullSize.x, 0f);
+        rect.sizeDelta = new Vector2(width, _hpMaskFullSize.y);
+        Color color = _healHighlightColor;
+        color.a *= Mathf.Sin(t * Mathf.PI);
+        _healHighlight.color = color;
+    }
+
+    private void FinishHealingHighlight()
+    {
+        _isHealing = false;
+        if (_healHighlight != null) _healHighlight.enabled = false;
     }
 
     private void StartDamageShake()

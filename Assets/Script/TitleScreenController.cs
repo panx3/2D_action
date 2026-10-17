@@ -33,6 +33,9 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Button controlsButton;
     [SerializeField] private ControlsPanelController controlsPanel;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private TitleAtmosphere atmosphere;
+    [SerializeField, Min(0f)] private float confirmResponseDuration = 0.32f;
     [SerializeField] private TitleChainDisplay chainDisplay;
     [SerializeField] private RectTransform[] backgroundLayers;
     [SerializeField] private Graphic[] ambientGlowGraphics;
@@ -67,6 +70,8 @@ public sealed class TitleScreenController : MonoBehaviour
     private Color[] _ambientBaseColors;
     private bool _inputReady;
     private bool _isStarting;
+    private AudioClip _navigationClip;
+    private float _lastNavigationSound;
 
     public bool InputReady => _inputReady;
     public bool IsStarting => _isStarting;
@@ -79,6 +84,7 @@ public sealed class TitleScreenController : MonoBehaviour
         ValidateReferences();
         RegisterButtonListeners();
         ConfigureButtonNavigation();
+        CreateNavigationSound();
 
         _sceneOrigin = sceneRoot != null ? sceneRoot.anchoredPosition : Vector2.zero;
         _heroOrigin = heroMotionRoot != null ? heroMotionRoot.anchoredPosition : Vector2.zero;
@@ -97,6 +103,8 @@ public sealed class TitleScreenController : MonoBehaviour
             startButton.interactable = false;
         if (controlsButton != null)
             controlsButton.interactable = false;
+        if (exitButton != null)
+            exitButton.interactable = false;
         if (controlsPanel != null)
         {
             controlsPanel.BackRequested += HandleControlsBack;
@@ -119,6 +127,9 @@ public sealed class TitleScreenController : MonoBehaviour
     {
         if (!_isStarting)
             UpdateIdlePresentation();
+        if (_inputReady && !_isStarting && (controlsPanel == null || !controlsPanel.IsVisible)
+            && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+            startButton.Select();
     }
 
     public void OnStartPressed()
@@ -130,10 +141,8 @@ public sealed class TitleScreenController : MonoBehaviour
         _inputReady = false;
         if (startButton != null)
             startButton.interactable = false;
-        if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(null);
-
-        StartSequence();
+        if (startGroup != null) startGroup.interactable = false;
+        StartCoroutine(ConfirmThenStart());
     }
 
     public void OnControlsPressed()
@@ -150,6 +159,54 @@ public sealed class TitleScreenController : MonoBehaviour
         controlsPanel.Show();
     }
 
+    public void OnExitPressed()
+    {
+        if (!_inputReady || _isStarting || (controlsPanel != null && controlsPanel.IsVisible)) return;
+#if UNITY_EDITOR
+        // Never close the editor from a runtime menu.
+        Debug.Log("[TitleScreen] EXIT: standalone builds quit here.");
+#else
+        Application.Quit();
+#endif
+    }
+
+    private IEnumerator ConfirmThenStart()
+    {
+        startButton.GetComponent<TitleMenuItem>()?.Confirm();
+        atmosphere?.Confirm();
+        if (sfxSource != null && startConfirmClip != null)
+            sfxSource.PlayOneShot(startConfirmClip, startConfirmVolume);
+        float elapsed = 0f;
+        while (elapsed < confirmResponseDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+        StartSequence();
+    }
+
+    public void PlayNavigationSound()
+    {
+        if (sfxSource == null || _navigationClip == null || Time.unscaledTime - _lastNavigationSound < 0.09f) return;
+        _lastNavigationSound = Time.unscaledTime;
+        sfxSource.PlayOneShot(_navigationClip, 0.1f);
+    }
+
+    private void CreateNavigationSound()
+    {
+        // Original, short bell-like tick; no external recording or asset dependency.
+        const int rate = 22050;
+        float[] samples = new float[2205];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float t = i / (float)rate;
+            float envelope = Mathf.Exp(-t * 55f) * Mathf.Min(1f, t * 800f) * (1f - i / (float)samples.Length);
+            samples[i] = (Mathf.Sin(t * 880f * Mathf.PI * 2f) + 0.2f * Mathf.Sin(t * 2376f * Mathf.PI * 2f)) * envelope * 0.3f;
+        }
+        _navigationClip = AudioClip.Create("Title navigation tick", samples.Length, 1, rate, false);
+        _navigationClip.SetData(samples, 0);
+    }
+
     private void OnDestroy()
     {
         if (startButton != null)
@@ -158,6 +215,8 @@ public sealed class TitleScreenController : MonoBehaviour
             controlsButton.onClick.RemoveListener(OnControlsPressed);
         if (controlsPanel != null)
             controlsPanel.BackRequested -= HandleControlsBack;
+        if (exitButton != null) exitButton.onClick.RemoveListener(OnExitPressed);
+        if (_navigationClip != null) Destroy(_navigationClip);
     }
 
     private void RegisterButtonListeners()
@@ -173,6 +232,11 @@ public sealed class TitleScreenController : MonoBehaviour
             controlsButton.onClick.RemoveListener(OnControlsPressed);
             controlsButton.onClick.AddListener(OnControlsPressed);
         }
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveListener(OnExitPressed);
+            exitButton.onClick.AddListener(OnExitPressed);
+        }
     }
 
     private void ConfigureButtonNavigation()
@@ -180,21 +244,7 @@ public sealed class TitleScreenController : MonoBehaviour
         if (startButton == null || controlsButton == null)
             return;
 
-        Navigation startNavigation = new Navigation
-        {
-            mode = Navigation.Mode.Explicit,
-            selectOnUp = controlsButton,
-            selectOnDown = controlsButton
-        };
-        startButton.navigation = startNavigation;
-
-        Navigation controlsNavigation = new Navigation
-        {
-            mode = Navigation.Mode.Explicit,
-            selectOnUp = startButton,
-            selectOnDown = startButton
-        };
-        controlsButton.navigation = controlsNavigation;
+        CRTMenuNavigation.Configure(startButton, controlsButton, exitButton);
     }
 
     private void ValidateReferences()
@@ -234,8 +284,8 @@ public sealed class TitleScreenController : MonoBehaviour
             startGroup.blocksRaycasts = true;
         }
 
-        if (startButton != null && EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(startButton.gameObject);
+        if (controlsButton != null && EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(controlsButton.gameObject);
     }
 
     private IEnumerator IntroRoutine()
@@ -272,6 +322,8 @@ public sealed class TitleScreenController : MonoBehaviour
         }
         if (controlsButton != null)
             controlsButton.interactable = true;
+        if (exitButton != null)
+            exitButton.interactable = true;
     }
 
     private void UpdateIdlePresentation()
@@ -314,9 +366,6 @@ public sealed class TitleScreenController : MonoBehaviour
 
     private void StartSequence()
     {
-        if (sfxSource != null && startConfirmClip != null)
-            sfxSource.PlayOneShot(startConfirmClip, startConfirmVolume);
-
         if (string.IsNullOrWhiteSpace(stageSceneName))
         {
             Debug.LogError("[TitleScreen] Stage Sceneが設定されていません。", this);
@@ -349,7 +398,11 @@ public sealed class TitleScreenController : MonoBehaviour
     {
         _inputReady = true;
         if (startButton != null)
+        {
             startButton.interactable = true;
+            startButton.Select();
+        }
+        if (startGroup != null) startGroup.interactable = true;
     }
 
     private void CacheAmbientState()

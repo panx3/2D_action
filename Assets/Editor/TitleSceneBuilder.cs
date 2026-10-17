@@ -67,6 +67,7 @@ public static class TitleSceneBuilder
 
             SceneManager.SetActiveScene(titleScene);
             CreateTitleScene(Path.GetFileNameWithoutExtension(StageScenePath));
+            TitleAtmosphereSetup.Apply(titleScene);
 
             if (!EditorSceneManager.SaveScene(titleScene, TitleScenePath))
                 throw new InvalidOperationException("TitleSceneを保存できませんでした。");
