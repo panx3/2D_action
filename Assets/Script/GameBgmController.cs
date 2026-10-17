@@ -164,6 +164,11 @@ public sealed class GameBgmController : MonoBehaviour
         }
 
         float targetVolume = GetVolume(state);
+        if (state == BgmState.Stage && TitleStageTransition.IsTransitioning)
+        {
+            _transitionRoutine = StartCoroutine(EnterStageAfterTitle(nextClip, targetVolume));
+            return;
+        }
         if (immediate || !bgmSource.isPlaying || switchFadeDuration <= 0f)
         {
             StartClip(nextClip, targetVolume);
@@ -182,6 +187,15 @@ public sealed class GameBgmController : MonoBehaviour
         if (_transitionRoutine != null)
             StopCoroutine(_transitionRoutine);
         _transitionRoutine = StartCoroutine(FadeOutRoutine(Mathf.Max(0f, duration)));
+    }
+
+    private IEnumerator EnterStageAfterTitle(AudioClip clip, float volume)
+    {
+        // The existing intro starts when the veil clears. Bring its music in on that same gate.
+        while (TitleStageTransition.IsTransitioning) yield return null;
+        StartClip(clip, 0);
+        yield return FadeVolume(0, volume, Mathf.Max(.1f, switchFadeDuration));
+        _transitionRoutine = null;
     }
 
     private IEnumerator SwitchRoutine(AudioClip nextClip, float targetVolume)

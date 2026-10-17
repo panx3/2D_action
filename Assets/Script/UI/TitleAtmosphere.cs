@@ -17,12 +17,15 @@ public sealed class TitleAtmosphere : MaskableGraphic
     private Material originalMaterial;
     private float response;
     private double startedAt;
+    private bool departing;
+    private float menuVisibility = 1f;
     private static readonly int ClockId = Shader.PropertyToID("_TitleTime");
     private static readonly int AspectId = Shader.PropertyToID("_ViewAspect");
     private static readonly int MotionId = Shader.PropertyToID("_Motion");
     private static readonly int ScanId = Shader.PropertyToID("_Scanlines");
     private static readonly int GrainId = Shader.PropertyToID("_Grain");
     private static readonly int ResponseId = Shader.PropertyToID("_Response");
+    private static readonly int MenuVisibilityId = Shader.PropertyToID("_MenuVisibility");
 
     protected override void Awake()
     {
@@ -36,6 +39,12 @@ public sealed class TitleAtmosphere : MaskableGraphic
     }
 
     public void Confirm() => response = 1f;
+    public void SetDeparting(bool value) => departing = value;
+    public void SetMenuVisibility(float value)
+    {
+        menuVisibility = Mathf.Clamp01(value);
+        if (backgroundMaterial != null) backgroundMaterial.SetFloat(MenuVisibilityId, menuVisibility);
+    }
 
     private void Update()
     {
@@ -52,10 +61,11 @@ public sealed class TitleAtmosphere : MaskableGraphic
             backgroundMaterial.SetFloat(ClockId, (float)((Time.unscaledTimeAsDouble - startedAt) % 12240d));
             Rect view = background.rectTransform.rect;
             backgroundMaterial.SetFloat(AspectId, view.width / Mathf.Max(1f, view.height));
-            backgroundMaterial.SetFloat(MotionId, motionStrength);
+            backgroundMaterial.SetFloat(MotionId, departing ? 0 : motionStrength);
             backgroundMaterial.SetFloat(ScanId, scanlineStrength);
             backgroundMaterial.SetFloat(GrainId, grainStrength);
             backgroundMaterial.SetFloat(ResponseId, response);
+            backgroundMaterial.SetFloat(MenuVisibilityId, menuVisibility);
         }
         SetVerticesDirty();
     }

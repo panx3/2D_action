@@ -118,6 +118,7 @@ public static class TitleAtmosphereSetup
 
         // The design remains 16:9 inside wider/taller windows, while the painting fills the frame.
         var composition = Rect("Composition", root);
+        var compositionGroup = composition.gameObject.AddComponent<CanvasGroup>();
         var fitter = composition.gameObject.AddComponent<UnityEngine.UI.AspectRatioFitter>();
         fitter.aspectMode = UnityEngine.UI.AspectRatioFitter.AspectMode.FitInParent;
         fitter.aspectRatio = 16f / 9f;
@@ -159,21 +160,102 @@ public static class TitleAtmosphereSetup
         SetReference(serialized, "controlsPanel", controls);
         SetReference(serialized, "exitButton", exit);
         SetReference(serialized, "atmosphere", atmosphere);
+        SetReference(serialized, "titleCompositionGroup", compositionGroup);
+        SetReference(serialized, "transitionShader", AssetDatabase.LoadAssetAtPath<Shader>("Assets/TitleDotWipe.shader"));
+        SetReference(serialized, "loadingBallSprite", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/image_/TitleLoadingSilhouette.png"));
+        SetReference(serialized, "loadingFont", font);
         foreach (string field in new[] { "characterGroup", "heroMotionRoot", "ballRoot", "startGlow", "chainDisplay" }) SetReference(serialized, field, null);
         serialized.FindProperty("backgroundLayers").arraySize = 0;
         serialized.FindProperty("ambientGlowGraphics").arraySize = 0;
         serialized.FindProperty("startPulseScale").floatValue = 0;
         serialized.FindProperty("backgroundDrift").floatValue = 0;
         serialized.FindProperty("startConfirmVolume").floatValue = .22f;
-        serialized.FindProperty("confirmResponseDuration").floatValue = .32f;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         var eventSystem = Find<EventSystem>();
         if (eventSystem != null) eventSystem.firstSelectedGameObject = start.gameObject;
 
         UnityEngine.Object.DestroyImmediate(previousControls.gameObject);
         controls.gameObject.SetActive(false);
+        ApplyQuietPresentation(controller);
         Canvas.ForceUpdateCanvases();
         EditorSceneManager.MarkSceneDirty(scene);
+    }
+
+    /// <summary>Refines existing objects in place, preserving button events and scene ownership.</summary>
+    public static void ApplyQuietPresentation(TitleScreenController controller)
+    {
+        var serif = CreateEtherealFont();
+        var serialized = new SerializedObject(controller);
+        var menu = (RectTransform)serialized.FindProperty("startPanel").objectReferenceValue;
+        var composition = ((CanvasGroup)serialized.FindProperty("titleCompositionGroup").objectReferenceValue).transform;
+        menu.sizeDelta = new Vector2(380, 240);
+        int row = 0;
+        foreach (var item in menu.GetComponentsInChildren<TitleMenuItem>(true))
+        {
+            var rect = (RectTransform)item.transform;
+            rect.sizeDelta = new Vector2(380, 64); rect.anchoredPosition = new Vector2(0, 80 - row++ * 80);
+            QuietButton(item, serif);
+        }
+        var controls = (ControlsPanelController)serialized.FindProperty("controlsPanel").objectReferenceValue;
+        foreach (var item in controls.GetComponentsInChildren<TitleMenuItem>(true)) QuietButton(item, serif);
+        foreach (Transform child in composition)
+            if (child.name == "MenuCaption" || child.name == "PressStart" || child.name == "Footer" || child.name == "MonitorCorner")
+                child.gameObject.SetActive(false);
+        var hint = composition.Find("InputHint").GetComponent<TMP_Text>();
+        hint.text = "D-PAD / ARROWS     A / ENTER"; hint.font = serif; hint.fontSize = 18; hint.characterSpacing = 5;
+        hint.color = new Color(.84f, .86f, .88f, .6f);
+        Place(hint.rectTransform, new Vector2(.745f, .11f), new Vector2(560, 30));
+        var atmosphere = (TitleAtmosphere)serialized.FindProperty("atmosphere").objectReferenceValue;
+        Set(atmosphere, "idlePrompt", null);
+        SetReference(serialized, "loadingFont", serif);
+        SetReference(serialized, "loadingBackdrop", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/image_/TitleInterludeRuins.png"));
+        var profile = serialized.FindProperty("transitionSettings");
+        profile.FindPropertyRelative("minimumLoadingDuration").floatValue = 1.8f;
+        profile.FindPropertyRelative("loadingUiFadeDuration").floatValue = .18f;
+        profile.FindPropertyRelative("revealDirection").enumValueIndex = (int)TitleStageTransition.WipeDirection.LeftToRight;
+        profile.FindPropertyRelative("pendulumPeriod").floatValue = 2.15f;
+        profile.FindPropertyRelative("pendulumAmplitude").floatValue = 18f;
+        profile.FindPropertyRelative("patternStrength").floatValue = .85f;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        EditorSceneManager.MarkSceneDirty(controller.gameObject.scene);
+    }
+
+    private static void QuietButton(TitleMenuItem item, TMP_FontAsset font)
+    {
+        foreach (string name in new[] { "Description", "Number", "SelectionFill", "SelectionLine" })
+        {
+            var old = item.transform.Find(name);
+            if (old != null) old.gameObject.SetActive(false);
+        }
+        var label = item.transform.Find("Label").GetComponent<TMP_Text>();
+        label.font = font; label.fontSize = 34; label.characterSpacing = 10; label.margin = Vector4.zero;
+        label.alignment = TextAlignmentOptions.Center;
+        label.color = new Color(.80f, .83f, .86f);
+        Stretch(label.rectTransform);
+        var cursor = (RectTransform)item.transform.Find("Cursor");
+        cursor.anchoredPosition = new Vector2(-154, 0); cursor.sizeDelta = new Vector2(10, 1.5f);
+        cursor.localRotation = Quaternion.identity; cursor.localScale = Vector3.one;
+        cursor.GetComponent<UnityEngine.UI.Image>().color = new Color(.94f, .93f, .88f, 0);
+    }
+
+    private static TMP_FontAsset CreateEtherealFont()
+    {
+        const string path = "Assets/Fonts/Title Ethereal Latin.asset";
+        var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+        if (font != null) return font;
+        var source = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Spectral-Light.ttf");
+        if (source == null) throw new InvalidOperationException("Spectral Light is missing.");
+        font = TMP_FontAsset.CreateFontAsset(source, 64, 6, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic);
+        font.name = "Title Ethereal Latin";
+        font.TryAddCharacters(new string(Enumerable.Range(32, 95).Select(c => (char)c).ToArray()), out string missing);
+        if (!string.IsNullOrEmpty(missing)) throw new InvalidOperationException("Latin font is missing glyphs: " + missing);
+        font.atlasPopulationMode = AtlasPopulationMode.Static;
+        AssetDatabase.CreateAsset(font, path);
+        foreach (var texture in font.atlasTextures)
+        { texture.filterMode = FilterMode.Bilinear; AssetDatabase.AddObjectToAsset(texture, font); }
+        AssetDatabase.AddObjectToAsset(font.material, font);
+        AssetDatabase.SaveAssetIfDirty(font);
+        return font;
     }
 
     private static ControlsPanelController BuildControls(Transform parent, TMP_FontAsset font, TMP_FontAsset jp, TitleScreenController owner)

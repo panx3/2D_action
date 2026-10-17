@@ -9,6 +9,7 @@ Shader "UI/Title Atmosphere"
         _Scanlines ("Scanlines", Range(0,0.1)) = 0.025
         _Grain ("Grain", Range(0,0.04)) = 0.009
         _Response ("Confirm", Range(0,1)) = 0
+        _MenuVisibility ("Menu shadow visibility", Range(0,1)) = 1
     }
     SubShader
     {
@@ -25,7 +26,7 @@ Shader "UI/Title Atmosphere"
             struct v2f { float4 vertex:SV_POSITION; float2 uv:TEXCOORD0; fixed4 color:COLOR; };
             sampler2D _MainTex;
             float4 _MainTex_TexelSize;
-            float _TitleTime, _ViewAspect, _Motion, _Scanlines, _Grain, _Response;
+            float _TitleTime, _ViewAspect, _Motion, _Scanlines, _Grain, _Response, _MenuVisibility;
             v2f vert(appdata v) { v2f o; o.vertex=UnityObjectToClipPos(v.vertex); o.uv=v.uv; o.color=v.color; return o; }
             fixed4 frag(v2f i):SV_Target
             {
@@ -56,7 +57,7 @@ Shader "UI/Title Atmosphere"
                 c+=ball*pow(saturate(c.r+c.g+c.b-1.3),2)*(.008+.008*sin(t*6.283185/18));
                 // A feathered indigo veil gives small type stable contrast over the white ruins.
                 float veil=exp(-pow((screen.x-.745)/.235,4)-pow((screen.y-.31)/.235,4));
-                c=lerp(c,float3(.018,.044,.082),veil*.88);
+                c=lerp(c,float3(.018,.044,.082),veil*.88*_MenuVisibility);
                 float vignette=smoothstep(.32,.78,length((screen-.5)*float2(.87,1)));
                 c*=1-vignette*.15;
                 c+=_Response*.018;

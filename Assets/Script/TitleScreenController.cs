@@ -35,7 +35,7 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField] private ControlsPanelController controlsPanel;
     [SerializeField] private Button exitButton;
     [SerializeField] private TitleAtmosphere atmosphere;
-    [SerializeField, Min(0f)] private float confirmResponseDuration = 0.32f;
+    [SerializeField] private CanvasGroup titleCompositionGroup;
     [SerializeField] private TitleChainDisplay chainDisplay;
     [SerializeField] private RectTransform[] backgroundLayers;
     [SerializeField] private Graphic[] ambientGlowGraphics;
@@ -48,11 +48,9 @@ public sealed class TitleScreenController : MonoBehaviour
     [Header("Stage Loading Transition")]
     [SerializeField] private Sprite loadingBallSprite;
     [SerializeField] private TMP_FontAsset loadingFont;
-    [SerializeField, Min(0f)] private float fadeOutDuration = 0.25f;
-    [SerializeField, Min(0f)] private float minimumLoadingDuration = 0.6f;
-    [SerializeField, Min(0f)] private float loadingFadeOutDuration = 0.18f;
-    [SerializeField, Min(0f)] private float stageFadeInDuration = 0.3f;
-    [SerializeField, Min(0f)] private float loadingRotationSpeed = 220f;
+    [SerializeField] private Shader transitionShader;
+    [SerializeField] private Texture2D loadingBackdrop;
+    [SerializeField] private TitleStageTransition.Settings transitionSettings = new TitleStageTransition.Settings();
 
     [Header("Audio")]
     [SerializeField] private AudioSource bgmSource;
@@ -72,11 +70,13 @@ public sealed class TitleScreenController : MonoBehaviour
     private bool _isStarting;
     private AudioClip _navigationClip;
     private float _lastNavigationSound;
+    private TitleMenuItem[] _menuItems;
+    private Vector3 _backgroundScale;
 
     public bool InputReady => _inputReady;
     public bool IsStarting => _isStarting;
     public string StageSceneName => stageSceneName;
-    public float MinimumLoadingDuration => minimumLoadingDuration;
+    public float MinimumLoadingDuration => transitionSettings.minimumLoadingDuration;
 
     private void Awake()
     {
@@ -85,6 +85,14 @@ public sealed class TitleScreenController : MonoBehaviour
         RegisterButtonListeners();
         ConfigureButtonNavigation();
         CreateNavigationSound();
+        _menuItems = startPanel != null ? startPanel.GetComponentsInChildren<TitleMenuItem>(true) : new TitleMenuItem[0];
+        _backgroundScale = backgroundGroup != null ? backgroundGroup.transform.localScale : Vector3.one;
+        if (titleCompositionGroup == null && logoGroup != null && logoGroup.transform.parent != null)
+        {
+            titleCompositionGroup = logoGroup.transform.parent.GetComponent<CanvasGroup>();
+            if (titleCompositionGroup == null)
+                titleCompositionGroup = logoGroup.transform.parent.gameObject.AddComponent<CanvasGroup>();
+        }
 
         _sceneOrigin = sceneRoot != null ? sceneRoot.anchoredPosition : Vector2.zero;
         _heroOrigin = heroMotionRoot != null ? heroMotionRoot.anchoredPosition : Vector2.zero;
@@ -142,7 +150,9 @@ public sealed class TitleScreenController : MonoBehaviour
         if (startButton != null)
             startButton.interactable = false;
         if (startGroup != null) startGroup.interactable = false;
-        StartCoroutine(ConfirmThenStart());
+        startButton.GetComponent<TitleMenuItem>()?.Confirm();
+        atmosphere?.Confirm();
+        StartSequence();
     }
 
     public void OnControlsPressed()
@@ -170,19 +180,36 @@ public sealed class TitleScreenController : MonoBehaviour
 #endif
     }
 
-    private IEnumerator ConfirmThenStart()
+    internal void PlayTransitionConfirm(AudioSource destination)
     {
-        startButton.GetComponent<TitleMenuItem>()?.Confirm();
-        atmosphere?.Confirm();
-        if (sfxSource != null && startConfirmClip != null)
-            sfxSource.PlayOneShot(startConfirmClip, startConfirmVolume);
-        float elapsed = 0f;
-        while (elapsed < confirmResponseDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            yield return null;
-        }
-        StartSequence();
+        if (sfxSource != null) destination.outputAudioMixerGroup = sfxSource.outputAudioMixerGroup;
+        if (startConfirmClip != null) destination.PlayOneShot(startConfirmClip, startConfirmVolume);
+    }
+
+    internal void PresentStartTransition(float elapsed)
+    {
+        float zoom = SmoothRange(elapsed, transitionSettings.confirmDuration, transitionSettings.DepartureDuration);
+        if (backgroundGroup != null)
+            backgroundGroup.transform.localScale = _backgroundScale * Mathf.Lerp(1, transitionSettings.backgroundZoom, zoom);
+        if (logoGroup != null) logoGroup.alpha = 1 - SmoothRange(elapsed, 0, .30f);
+        if (titleCompositionGroup != null) titleCompositionGroup.alpha = 1 - SmoothRange(elapsed, .18f, transitionSettings.DepartureDuration);
+        foreach (var item in _menuItems)
+            item.SetTransitionAlpha(1 - SmoothRange(elapsed, item.gameObject == startButton.gameObject ? .18f : 0, .34f));
+        // The backdrop is drawn by the background shader, outside the menu CanvasGroup.
+        atmosphere?.SetMenuVisibility(1 - SmoothRange(elapsed, .18f, .34f));
+        atmosphere?.SetDeparting(true);
+    }
+
+    internal void RestoreAfterTransitionFailure()
+    {
+        _isStarting = false;
+        if (backgroundGroup != null) backgroundGroup.transform.localScale = _backgroundScale;
+        SetCanvasAlpha(logoGroup, 1); SetCanvasAlpha(titleCompositionGroup, 1);
+        foreach (var item in _menuItems) item.SetTransitionAlpha(1);
+        atmosphere?.SetMenuVisibility(1);
+        atmosphere?.SetDeparting(false);
+        RestoreStartInput();
+        GameBgmController.Instance?.PlayTitle();
     }
 
     public void PlayNavigationSound()
@@ -378,11 +405,10 @@ public sealed class TitleScreenController : MonoBehaviour
                 stageSceneName,
                 loadingBallSprite,
                 loadingFont,
-                fadeOutDuration,
-                minimumLoadingDuration,
-                loadingFadeOutDuration,
-                stageFadeInDuration,
-                loadingRotationSpeed))
+                transitionShader,
+                loadingBackdrop,
+                transitionSettings,
+                this))
         {
             Debug.LogError("[TitleScreen] Stage Loading Transitionを開始できませんでした。", this);
             _isStarting = false;
@@ -390,8 +416,7 @@ public sealed class TitleScreenController : MonoBehaviour
             return;
         }
 
-        // Loading表示中にタイトル曲だけを短くフェードアウトする。
-        GameBgmController.Instance?.FadeOut(fadeOutDuration);
+        GameBgmController.Instance?.FadeOut(transitionSettings.DepartureDuration + transitionSettings.coverDuration);
     }
 
     private void RestoreStartInput()

@@ -18,11 +18,14 @@ public sealed class TitleMenuItem : MonoBehaviour, IPointerEnterHandler
     private float selection;
     private float response;
     private bool wasSelected;
+    private CanvasGroup transitionGroup;
 
     private void Awake()
     {
         button = GetComponent<UnityEngine.UI.Button>();
         origin = label.rectTransform.anchoredPosition;
+        transitionGroup = GetComponent<CanvasGroup>();
+        if (transitionGroup == null) transitionGroup = gameObject.AddComponent<CanvasGroup>();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -32,21 +35,24 @@ public sealed class TitleMenuItem : MonoBehaviour, IPointerEnterHandler
     }
 
     public void Confirm() => response = 1f;
+    public void SetTransitionAlpha(float value)
+    {
+        if (transitionGroup != null) transitionGroup.alpha = Mathf.Clamp01(value);
+    }
 
     private void Update()
     {
         bool selected = EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject;
         if (selected && !wasSelected && owner.InputReady) owner.PlayNavigationSound();
         wasSelected = selected;
-        selection = Mathf.MoveTowards(selection, selected ? 1f : 0f, Time.unscaledDeltaTime * 7f);
+        selection = Mathf.Lerp(selection, selected ? 1f : 0f, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 9f));
         response = Mathf.MoveTowards(response, 0f, Time.unscaledDeltaTime * 2.4f);
-        label.color = Color.Lerp(new Color(0.72f, 0.80f, 0.88f), new Color(1f, 0.97f, 0.90f), selection);
-        label.rectTransform.anchoredPosition = origin + Vector2.right * (selection * 6f + response * 3f);
-        cursor.color = new Color(1f, 0.79f, 0.86f, Mathf.Max(selection, response));
-        cursor.rectTransform.localScale = Vector3.one * (1f + selection * Mathf.Sin(Time.unscaledTime * 2.2f) * .12f);
-        line.color = new Color(0.89f, 0.91f, 1f, Mathf.Max(selection * 0.55f, response));
-        line.rectTransform.localScale = new Vector3(0.22f + selection * 0.48f + response * 0.3f, 1f, 1f);
-        if (highlight != null) highlight.color = new Color(.65f, .75f, .98f, selection * .13f + response * .09f);
+        label.color = Color.Lerp(new Color(.70f, .75f, .79f, .88f), new Color(1f, .98f, .93f), selection);
+        label.rectTransform.anchoredPosition = origin;
+        cursor.color = new Color(.94f, .93f, .88f, Mathf.Max(selection * (.72f + .12f * Mathf.Sin(Time.unscaledTime * 1.4f)), response));
+        cursor.rectTransform.localScale = Vector3.one;
+        if (line != null) line.color = Color.clear;
+        if (highlight != null) highlight.color = Color.clear;
         if (description != null) description.color = Color.Lerp(new Color(.55f, .67f, .78f), new Color(.89f, .91f, .95f), selection);
         if (number != null) number.color = Color.Lerp(new Color(.47f, .6f, .72f), new Color(1f, .7f, .82f), selection);
     }
