@@ -11,6 +11,8 @@ public sealed class TitleAtmosphere : MaskableGraphic
     [SerializeField, Range(0f, 0.04f)] private float grainStrength;
     [SerializeField, Range(0, 40)] private int moteCount = 26;
     [SerializeField, Range(0, 10)] private int petalCount = 9;
+    [SerializeField, Tooltip("16px四方の花びら4種類を下段に並べた64x32のPointフィルタ画像")]
+    private Texture2D petalAtlas;
     [SerializeField, Range(0, 8)] private int birdCount = 4;
     [SerializeField] private TMPro.TMP_Text idlePrompt;
     private Material backgroundMaterial;
@@ -26,6 +28,9 @@ public sealed class TitleAtmosphere : MaskableGraphic
     private static readonly int GrainId = Shader.PropertyToID("_Grain");
     private static readonly int ResponseId = Shader.PropertyToID("_Response");
     private static readonly int MenuVisibilityId = Shader.PropertyToID("_MenuVisibility");
+
+    public override Texture mainTexture => petalAtlas != null ? petalAtlas : Texture2D.whiteTexture;
+    private Vector2 WhiteUv => petalAtlas != null ? new Vector2(1.5f / 64f, 25.5f / 32f) : Vector2.zero;
 
     protected override void Awake()
     {
@@ -75,31 +80,30 @@ public sealed class TitleAtmosphere : MaskableGraphic
         vh.Clear();
         Rect r = rectTransform.rect;
         double time = Application.isPlaying ? Time.unscaledTimeAsDouble - startedAt : 3d;
-        int count = moteCount + petalCount;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < moteCount; i++)
         {
-            bool petal = i >= moteCount;
             float seed = Mathf.Repeat(i * 0.618034f + 0.17f, 1f);
-            float period = petal ? 16f + i % 5 : 12f + i % 7;
+            float period = 12f + i % 7;
             float phase = (float)((time / period + seed) % 1d);
             float fade = Mathf.SmoothStep(0f, 1f, Mathf.Min(phase, 1f - phase) * 7f);
             float x = Mathf.Lerp(-0.06f, 1.06f, phase);
-            float y = Mathf.Repeat(seed * 7.31f, 1f) + Mathf.Sin(phase * Mathf.PI * 2f) * (petal ? 0.045f : 0.016f);
+            float y = Mathf.Repeat(seed * 7.31f, 1f) + Mathf.Sin(phase * Mathf.PI * 2f) * 0.016f;
             Vector2 center = new Vector2(r.xMin + x * r.width, r.yMin + y * r.height);
-            float size = (petal ? 8f + seed * 12f : 1.5f + seed * 2.2f) * r.height / 1080f;
+            float size = (1.5f + seed * 2.2f) * r.height / 1080f;
             float angle = phase * Mathf.PI * 2f + seed * 6f;
             Vector2 axis = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * size;
-            Vector2 side = new Vector2(-axis.y, axis.x) * (petal ? 0.38f : 1f);
-            Color tint = petal ? new Color(1f, 0.67f, 0.82f, 0.7f * fade) : new Color(1f, 0.97f, 0.83f, 0.5f * fade);
-            // Four-point petals retain the small, pixel-like silhouette of the UI.
+            Vector2 side = new Vector2(-axis.y, axis.x);
+            Color tint = new Color(1f, 0.97f, 0.83f, 0.5f * fade);
             int n = vh.currentVertCount;
-            vh.AddVert(center - axis, tint, Vector2.zero);
-            vh.AddVert(center + side, tint, Vector2.zero);
-            vh.AddVert(center + axis, tint, Vector2.zero);
-            vh.AddVert(center - side, tint, Vector2.zero);
+            vh.AddVert(center - axis, tint, WhiteUv);
+            vh.AddVert(center + side, tint, WhiteUv);
+            vh.AddVert(center + axis, tint, WhiteUv);
+            vh.AddVert(center - side, tint, WhiteUv);
             vh.AddTriangle(n, n + 1, n + 2);
             vh.AddTriangle(n, n + 2, n + 3);
         }
+        if (petalAtlas != null)
+            for (int i = 0; i < petalCount; i++) AddPetal(vh, r, time, i);
         // Distant silhouettes cross the open sky in small, staggered groups.
         for (int i = 0; i < birdCount; i++)
         {
@@ -115,13 +119,45 @@ public sealed class TitleAtmosphere : MaskableGraphic
         }
     }
 
-    private static void Stroke(VertexHelper vh, Vector2 from, Vector2 to, float width, Color tint)
+    private void AddPetal(VertexHelper vh, Rect r, double time, int index)
+    {
+        float seed = Mathf.Repeat(index * 0.618034f + 0.29f, 1f);
+        float period = 17f + index % 5 * 2.3f;
+        float phase = (float)((time / period + seed) % 1d);
+        float flutter = (float)(time % 120d) * (1.1f + seed * 0.65f) + index * 2.4f;
+        float fade = Mathf.SmoothStep(0f, 1f, Mathf.Min(phase, 1f - phase) * 10f);
+        float x = Mathf.Lerp(-0.06f, 1.06f, phase);
+        float y = Mathf.Repeat(seed * 4.31f, 1f) + 0.09f * (0.5f - phase) + Mathf.Sin(flutter * 0.75f) * 0.024f;
+        float pixel = Mathf.Max(0.5f, r.height / 540f);
+        Vector2 center = new Vector2(r.xMin + x * r.width, r.yMin + y * r.height);
+        center.x = Mathf.Round(center.x / pixel) * pixel;
+        center.y = Mathf.Round(center.y / pixel) * pixel;
+        float size = (26f + seed * 16f) * r.height / 1080f;
+        float angle = (Mathf.Sin(flutter * 0.55f) * 0.75f + seed * 2f - 1f);
+        Vector2 axis = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+        // 平面の回転に加えて幅を変え、表裏が返る瞬間の細いシルエットを作る。
+        Vector2 halfX = axis * (size * 0.5f * Mathf.Lerp(0.22f, 1f, Mathf.Abs(Mathf.Cos(flutter))));
+        Vector2 halfY = new Vector2(-axis.y, axis.x) * (size * 0.5f);
+        int variant = index % 4;
+        float u0 = variant * 0.25f;
+        float u1 = u0 + 0.25f;
+        Color tint = new Color(1f, Mathf.Lerp(0.85f, 1f, seed), 1f, fade * Mathf.Lerp(0.72f, 0.94f, seed));
+        int n = vh.currentVertCount;
+        vh.AddVert(center - halfX - halfY, tint, new Vector2(u0, 0f));
+        vh.AddVert(center - halfX + halfY, tint, new Vector2(u0, 0.5f));
+        vh.AddVert(center + halfX + halfY, tint, new Vector2(u1, 0.5f));
+        vh.AddVert(center + halfX - halfY, tint, new Vector2(u1, 0f));
+        vh.AddTriangle(n, n + 1, n + 2);
+        vh.AddTriangle(n, n + 2, n + 3);
+    }
+
+    private void Stroke(VertexHelper vh, Vector2 from, Vector2 to, float width, Color tint)
     {
         Vector2 d = (to - from).normalized;
         Vector2 side = new Vector2(-d.y, d.x) * width * .5f;
         int n = vh.currentVertCount;
-        vh.AddVert(from - side, tint, Vector2.zero); vh.AddVert(from + side, tint, Vector2.zero);
-        vh.AddVert(to + side, tint, Vector2.zero); vh.AddVert(to - side, tint, Vector2.zero);
+        vh.AddVert(from - side, tint, WhiteUv); vh.AddVert(from + side, tint, WhiteUv);
+        vh.AddVert(to + side, tint, WhiteUv); vh.AddVert(to - side, tint, WhiteUv);
         vh.AddTriangle(n, n + 1, n + 2); vh.AddTriangle(n, n + 2, n + 3);
     }
 

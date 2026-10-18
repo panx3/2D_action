@@ -587,6 +587,7 @@ MonoBehaviour:
   grainStrength: 0
   moteCount: 26
   petalCount: 9
+  petalAtlas: {fileID: 2800000, guid: d2d683e92ee34db498dd82f1f3f1ae5e, type: 3}
   birdCount: 4
   idlePrompt: {fileID: 0}
 --- !u!224 &51020139

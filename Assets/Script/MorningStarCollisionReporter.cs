@@ -8,16 +8,22 @@ using UnityEngine;
 public class MorningStarCollisionReporter : MonoBehaviour
 {
     private MorningStarLauncher _launcher;
+    private MorningStarImpactSparks _impactSparks;
 
     public void Initialize(MorningStarLauncher launcher)
     {
         _launcher = launcher;
+        _impactSparks = GetComponent<MorningStarImpactSparks>();
+        if (_impactSparks != null)
+            _impactSparks.Initialize(launcher);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (_launcher == null)
             return;
+        if (_impactSparks != null)
+            _impactSparks.TryPlay(collision, _launcher);
         _launcher.OnMorningStarCollision(collision);
     }
 }

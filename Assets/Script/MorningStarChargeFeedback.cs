@@ -12,6 +12,8 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
     private LineRenderer burstRing;
     private readonly LineRenderer[] streaks = new LineRenderer[8];
     private TrailRenderer trail;
+    private MotionSpriteEcho motionEcho;
+    private Rigidbody2D body;
     private Gradient normalTrailGradient;
     private Gradient chargedTrailGradient;
     private Material material;
@@ -93,6 +95,8 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
         normalTrailGradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Ice, 0.45f) },
             new[] { new GradientAlphaKey(0.18f, 0f), new GradientAlphaKey(0f, 1f) });
         trail.colorGradient = normalTrailGradient;
+        body = GetComponent<Rigidbody2D>();
+        motionEcho = new MotionSpriteEcho(source, effectRoot, 0.075f, 0.14f);
 
         audioSource = effectRoot.gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
@@ -125,6 +129,7 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
         charging = false;
         flying = false;
         progress = value;
+        motionEcho?.Clear();
         if (trail != null)
         {
             trail.emitting = false;
@@ -139,6 +144,7 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
         flying = true;
         if (effectRoot == null)
             return;
+        motionEcho?.Clear();
         trail.Clear();
         bool charged = charge01 > 0f;
         trail.widthMultiplier = radius * (charge01 >= 1f ? 1.15f : charged ? 0.6f : 0.35f);
@@ -165,6 +171,7 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
         progress = 0f;
         charging = false;
         flying = false;
+        motionEcho?.Clear();
         if (trail != null)
             trail.emitting = false;
     }
@@ -212,6 +219,8 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
     {
         if (effectRoot == null || source == null)
             return;
+        float speed = body != null ? body.linearVelocity.magnitude : 0f;
+        motionEcho?.Tick(Time.deltaTime, flying ? Mathf.InverseLerp(8f, 22f, speed) : 0f);
         clock += Time.deltaTime;
         float pulse = progress >= 1f ? 0.88f + Mathf.Sin(clock * 9f) * 0.12f : 1f;
         whiteOverlay.sprite = source.sprite;

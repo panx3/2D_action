@@ -114,6 +114,7 @@ public static class TitleAtmosphereSetup
         var particles = Rect("DriftingLightAndPetals", backgroundRoot); Stretch(particles);
         var atmosphere = particles.gameObject.AddComponent<TitleAtmosphere>();
         atmosphere.raycastTarget = false;
+        AtmosphereEffectsSetup.ConfigureTitle(atmosphere);
         Set(atmosphere, "background", raw);
 
         // The design remains 16:9 inside wider/taller windows, while the painting fills the frame.
