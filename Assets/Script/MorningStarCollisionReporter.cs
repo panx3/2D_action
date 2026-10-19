@@ -10,6 +10,8 @@ public class MorningStarCollisionReporter : MonoBehaviour
     private MorningStarLauncher _launcher;
     private MorningStarImpactSparks _impactSparks;
 
+    public MorningStarLauncher Launcher => _launcher;
+
     public void Initialize(MorningStarLauncher launcher)
     {
         _launcher = launcher;

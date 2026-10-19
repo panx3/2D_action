@@ -29,12 +29,14 @@ public sealed class PauseMenuController : MonoBehaviour
     private bool transitioning;
     private int controlsBackFrame = -1;
     private GameBgmController pausedBgm;
+    private MorningStarLauncher hitStopOwner;
     public bool IsPaused { get; private set; }
     public bool IsShowingControls => controlsPanel != null && controlsPanel.IsVisible;
     public bool IsExternallyBlocked => externallyBlocked;
 
     private void Awake()
     {
+        hitStopOwner = FindAnyObjectByType<MorningStarLauncher>();
         resumeButton.onClick.AddListener(ClosePause);
         retryButton.onClick.AddListener(RetryStage);
         controlsButton.onClick.AddListener(ShowControls);
@@ -75,11 +77,14 @@ public sealed class PauseMenuController : MonoBehaviour
     }
     public void OpenPause()
     {
-        if (IsPaused || externallyBlocked || transitioning || Time.timeScale <= 0f) return;
+        if (IsPaused || externallyBlocked || transitioning) return;
+        if (Time.timeScale <= 0f && (hitStopOwner == null || !hitStopOwner.IsHitStopping)) return;
         controlsPanel.Hide();
         menuPanel.SetActive(true);
         overlay.SetMessage("PAUSE", "TAKE A BREATHER");
         if (!overlay.Show()) return;
+        // 命中直後のPause入力も受け取り、停止コルーチンにPauseを解除させない。
+        if (hitStopOwner != null) hitStopOwner.CancelHitStop();
         previousTimeScale = Time.timeScale;
         IsPaused = true;
         Time.timeScale = 0f;

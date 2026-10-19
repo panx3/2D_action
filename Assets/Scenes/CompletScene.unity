@@ -12577,16 +12577,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   _target: {fileID: 625955984}
-  _offset: {x: 0, y: 1.5}
-  _smoothTimeX: 0.16
+  _offset: {x: 0, y: 0.45}
+  _normalViewExpansion: 0.1
+  _smoothTimeX: 0.25
   _smoothTimeY: 0.176
-  _followDeadZoneX: 2.5
-  _followDeadZoneY: 1.5
+  _followDeadZoneX: 0.1
+  _followDeadZoneY: 0.5
+  _upwardFollowDeadZone: 4
   _maxFollowSpeed: 12.5
-  _horizontalLookAhead: 2.2
-  _lookAheadSmoothTime: 0.15
-  _lookAheadVelocityThreshold: 0.1
-  _swingLookAheadMultiplier: 0.35
+  _forwardViewportX: 0.4
+  _lookAheadSmoothTime: 0.65
+  _lookAheadVelocityThreshold: 0.75
+  _directionChangeDelay: 0.12
+  _jumpLookAhead: 0
+  _fallLookAhead: 1
+  _jumpLookAheadFullSpeed: 8
+  _fallLookAheadFullSpeed: 22
+  _verticalVelocityThreshold: 4
+  _verticalLookAheadSmoothTime: 0.35
+  _airborneLookAheadDelay: 0.08
+  _highSpeedThreshold: 14
+  _fullZoomSpeed: 28
+  _maxZoomOut: 0
+  _zoomSmoothTime: 0.5
+  _zoomHoldTime: 0.18
+  _zoomSpeedHysteresis: 2
   _useBounds: 0
   _minX: -100
   _maxX: 100
@@ -12701,6 +12716,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 784fe751290e0264e9389a8a415ffa29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShake2D
+  _intensity: 1
+  _maximumStrength: 0.18
+  _maximumDuration: 0.18
+  _decayPower: 2
+  _mergeInterval: 0.05
 --- !u!1001 &1364472715
 PrefabInstance:
   m_ObjectHideFlags: 0
