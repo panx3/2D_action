@@ -154,6 +154,12 @@ public sealed class GameplayPixelCursor : MonoBehaviour
             previousOSVisibility = Cursor.visible;
             ownsOSCursor = true;
         }
+#if UNITY_EDITOR
+        // GameView disables cursor hiding on ESC until its next click, separately
+        // from Cursor.visible. LateUpdate already requires focused GameView content;
+        // restore hiding only, leaving the Editor's escape/unlock behavior intact.
+        UnityEditor.Unsupported.SetAllowCursorHide(true);
+#endif
         Cursor.visible = false;
 
         UpdateView(point, reset);

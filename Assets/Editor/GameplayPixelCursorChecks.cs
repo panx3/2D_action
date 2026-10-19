@@ -46,9 +46,16 @@ public static class GameplayPixelCursorChecks
         if (EditorSceneManager.GetActiveScene().path != "Assets/Scenes/CompletScene.unity")
             throw new InvalidOperationException("Open CompletScene first.");
         SessionState.SetBool(Key, true);
+        SessionState.SetBool(Key + ".EscapeOnly", false);
         SessionState.EraseString(Key + ".Result");
         Subscribe();
         EditorApplication.isPlaying = true;
+    }
+
+    public static void RunEscapeCheck()
+    {
+        Run();
+        SessionState.SetBool(Key + ".EscapeOnly", true);
     }
 
     private static void Subscribe()
@@ -68,7 +75,7 @@ public static class GameplayPixelCursorChecks
             Application.runInBackground = true;
             Application.logMessageReceived += OnLog;
             EditorWindow.GetWindow(Type.GetType("UnityEditor.GameView,UnityEditor")).Focus();
-            routine = Check();
+            routine = SessionState.GetBool(Key + ".EscapeOnly", false) ? CheckEscape() : Check();
             new GameObject("CursorCheckDriver").AddComponent<GameplayPixelCursorCheckDriver>();
             EditorApplication.update += Watchdog;
         }
@@ -96,6 +103,60 @@ public static class GameplayPixelCursorChecks
     {
         if (routine != null && EditorApplication.timeSinceStartup - started > 60d)
             Finish(false, "Play check timed out.");
+    }
+
+    private static IEnumerator CheckEscape()
+    {
+        cursor = Object.FindAnyObjectByType<GameplayPixelCursor>();
+        var player = Object.FindAnyObjectByType<Player>();
+        var pause = Object.FindAnyObjectByType<PauseMenuController>();
+        while (!player.InputEnabled) yield return null;
+        var gameView = EditorWindow.GetWindow(Type.GetType("UnityEditor.GameView,UnityEditor"));
+        cursor.enabled = false;
+        Cursor.visible = true;
+        Vector2 point = new Vector2(Screen.width * 0.58f, Screen.height * 0.55f);
+        originalKeyboard = Keyboard.current;
+        keyboard = InputSystem.AddDevice<Keyboard>("CursorEscapeCheckKeyboard");
+        keyboardState = new KeyboardState();
+        InputSystem.onBeforeUpdate += FeedInput;
+        yield return null;
+        for (int cycle = 0; cycle < 3; cycle++)
+        {
+            Call("ShowCursor", point);
+            // Send to the actual Editor GameView handler as well as the Input System.
+            // A synthetic Input System key alone never hits the Editor's ESC override.
+            gameView.SendEvent(Event.KeyboardEvent("escape"));
+            keyboardState = new KeyboardState(UnityEngine.InputSystem.Key.Escape);
+            yield return null;
+            keyboardState = new KeyboardState();
+            Require(pause.IsPaused, "ESC opens existing pause action");
+            for (float end = Time.unscaledTime + 0.3f; Time.unscaledTime < end;)
+            {
+                Call("ShowCursor", point);
+                Require(cursor.IsShowing && !Cursor.visible, "ESC pause keeps canvas visible and requests OS cursor hidden without clicking");
+                Require(Cursor.lockState == CursorLockMode.None, "No cursor locking introduced");
+                yield return null;
+            }
+            Call("ShowCursor", point);
+            Require(!cursor.IsChainStyle, "Pause uses menu design after ESC");
+            gameView.SendEvent(Event.KeyboardEvent("escape"));
+            keyboardState = new KeyboardState(UnityEngine.InputSystem.Key.Escape);
+            yield return null;
+            keyboardState = new KeyboardState();
+            for (float end = Time.unscaledTime + 0.5f; Time.unscaledTime < end;)
+            { Call("ShowCursor", point); yield return null; }
+            Call("ShowCursor", point);
+            Require(!pause.IsPaused && cursor.IsChainStyle && !Cursor.visible, "ESC resumes with custom cursor without clicking");
+        }
+        Call("OnApplicationFocus", false);
+        Require(!cursor.IsShowing && Cursor.visible, "Focus loss still restores OS cursor");
+        Call("OnApplicationFocus", true);
+        Call("ShowCursor", point);
+        Call("OnApplicationQuit");
+        Require(Cursor.visible && !cursor.IsShowing, "Quit still restores OS cursor");
+        Require(errors == 0, "Runtime Errors/Exceptions=" + errors);
+        Report.AppendLine("PASS three ESC pause/resume cycles through GameView events and Input System; no mouse clicks; canvas visible and OS-hide requested; both designs; no cursor lock; focus/quit restore; Errors/Exceptions=0");
+        Report.AppendLine("Native Editor cursor rendering after a physical ESC still requires visual confirmation; Cursor.visible reports the game request, not the Editor hide permission.");
     }
 
     private static IEnumerator Check()
@@ -321,9 +382,9 @@ public static class GameplayPixelCursorChecks
     private static void FeedInput()
     {
         if (InputState.currentUpdateType != InputUpdateType.Dynamic) return;
-        InputSystem.QueueStateEvent(mouse, mouseState);
-        InputSystem.QueueStateEvent(keyboard, keyboardState);
-        InputSystem.QueueStateEvent(pad, padState);
+        if (mouse != null) InputSystem.QueueStateEvent(mouse, mouseState);
+        if (keyboard != null) InputSystem.QueueStateEvent(keyboard, keyboardState);
+        if (pad != null) InputSystem.QueueStateEvent(pad, padState);
     }
 
     private static void CaptureGameView(string filename = "cursor-game-view.png")
