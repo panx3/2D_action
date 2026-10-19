@@ -121,7 +121,7 @@ public static class GameplayPixelCursorChecks
         cursor.enabled = false;
         Cursor.visible = true;
         Vector2 point = new Vector2(Screen.width * 0.58f, Screen.height * 0.55f);
-        foreach (float scale in new[] { 1f, 1.5f, 2f })
+        foreach (float scale in new[] { 1f, 1.5f, 2f, 3f })
         {
             Set("cursorScale", scale);
             Call("ShowCursor", point);
@@ -129,11 +129,11 @@ public static class GameplayPixelCursorChecks
                 arrow.rectTransform.TransformPoint(new Vector3(16f * scale, -14f * scale)));
             Require(Vector2.Distance(tip, point) < 0.01f, "Tip/click alignment at scale " + scale);
             Vector2 connection = RectTransformUtility.WorldToScreenPoint(null, chain.position);
-            Require(Vector2.Distance(connection, point + new Vector2(3.5f, -17.5f) * scale) < 0.01f, "Root attachment");
+            Require(Vector2.Distance(connection, point + new Vector2(8f, -14.5f) * scale) < 0.01f, "Root attachment at inner notch");
             Require(root.localRotation == Quaternion.identity && arrow.rectTransform.localRotation == Quaternion.identity,
                 "Arrow unaffected by physics");
         }
-        Set("cursorScale", 1f);
+        Set("cursorScale", 3f);
         Call("ShowCursor", point);
         Require(cursor.IsShowing && !Cursor.visible, "OS hidden only while owned");
         yield return null;
@@ -153,14 +153,14 @@ public static class GameplayPixelCursorChecks
         var duplicate = Object.Instantiate(cursor.gameObject);
         Require(!duplicate.GetComponent<GameplayPixelCursor>().enabled, "Duplicate display prevented");
         Object.Destroy(duplicate);
-        Report.AppendLine("PASS source sprites, nonblocking UI, exact hotspot at 1/1.5/2x, anchored root, focus/pause/disable, duplicate guard");
+        Report.AppendLine("PASS source sprites, nonblocking UI, exact hotspot at 1/1.5/2/3x, inner-notch attachment, focus/pause/disable, duplicate guard");
 
         for (int fpsIndex = 0; fpsIndex < 3; fpsIndex++)
         {
             int fps = new[] { 30, 60, 144 }[fpsIndex];
             float dt = 1f / fps;
             Call("UpdateView", point, true);
-            Vector2 anchor = point + new Vector2(3.5f, -17.5f);
+            Vector2 anchor = point + new Vector2(24f, -43.5f);
             for (int i = 0; i < fps; i++) { anchor.x += 100f * dt; Call("SimulateChain", anchor, dt); }
             Require(Get<float[]>("angles")[0] < -0.005f, "Slow motion trails at " + fps);
             for (int i = 0; i < fps / 5; i++) { anchor.x -= 900f * dt; Call("SimulateChain", anchor, dt); }

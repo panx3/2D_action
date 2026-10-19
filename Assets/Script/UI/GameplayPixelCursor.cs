@@ -14,11 +14,11 @@ public sealed class GameplayPixelCursor : MonoBehaviour
 
     [Header("Arrow (source image pixels, including transparent margins)")]
     [SerializeField, Min(0.25f), Tooltip("1 = original pixels; visible arrow is 16 x 20 px.")]
-    private float cursorScale = 1f;
+    private float cursorScale = 3f;
     [SerializeField, Tooltip("From the source image's top-left, NOT the opaque bounds.")]
     private Vector2 hotspot = new Vector2(16f, 14f);
     [SerializeField, Tooltip("Attachment point from the source image's top-left.")]
-    private Vector2 connectionOffset = new Vector2(19.5f, 31.5f);
+    private Vector2 connectionOffset = new Vector2(24f, 28.5f);
 
     [Header("Short chain (screen pixels at Cursor Scale = 1)")]
     [SerializeField, Min(2f)] private float chainLength = 18f;

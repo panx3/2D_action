@@ -108,16 +108,16 @@ public static class GameplayPixelCursorSetup
             {
                 links[i] = NewImage("Link" + i, chain, source[i]);
                 links[i].rectTransform.pivot = new Vector2(0f, 0.5f);
-                links[i].rectTransform.sizeDelta = new Vector2(9.5f, 5f);
-                links[i].rectTransform.anchoredPosition = Vector2.down * (9f * i);
+                links[i].rectTransform.sizeDelta = new Vector2(28.5f, 15f);
+                links[i].rectTransform.anchoredPosition = Vector2.down * (27f * i);
                 links[i].rectTransform.localRotation = Quaternion.Euler(0f, 0f, -90f);
             }
-            // Draw the arrow over the attachment so the root enters its rear connection cleanly.
+            // Draw the arrow over the attachment so the root enters the inner notch cleanly.
             var arrow = NewImage("ArrowSprite", root, AssetDatabase.LoadAssetAtPath<Sprite>(ArrowPath));
             arrow.rectTransform.pivot = Vector2.up;
-            arrow.rectTransform.sizeDelta = new Vector2(47f, 48f);
-            arrow.rectTransform.anchoredPosition = new Vector2(-16f, 14f);
-            chain.anchoredPosition = new Vector2(3.5f, -17.5f);
+            arrow.rectTransform.sizeDelta = new Vector2(141f, 144f);
+            arrow.rectTransform.anchoredPosition = new Vector2(-48f, 42f);
+            chain.anchoredPosition = new Vector2(24f, -43.5f);
             var cursor = host.AddComponent<GameplayPixelCursor>();
             var data = new SerializedObject(cursor);
             data.FindProperty("cursorRoot").objectReferenceValue = root;
