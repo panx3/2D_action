@@ -4,12 +4,14 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>Explicit, repeatable setup. Never runs automatically or changes existing cursor tuning.</summary>
 public static class GameplayPixelCursorSetup
 {
     public const string ArrowPath = "Assets/image_/UI/Cursor/PixelArrow.png";
     public const string ChainPath = "Assets/image_/UI/Cursor/PixelChain.png";
+    public const string MenuPath = "Assets/image_/UI/Cursor/PixelMenuArrow.png";
     public const string PrefabPath = "Assets/Prefabs/UI/GameplayPixelCursor.prefab";
 
     public static string Install()
@@ -25,6 +27,7 @@ public static class GameplayPixelCursorSetup
         {
             ConfigureTexture(ArrowPath, SpriteImportMode.Single);
             ConfigureTexture(ChainPath, SpriteImportMode.Multiple);
+            ConfigureTexture(MenuPath, SpriteImportMode.Single);
             SliceChain();
             prefab = CreatePrefab();
         }
@@ -34,6 +37,85 @@ public static class GameplayPixelCursorSetup
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         return "Saved GameplayPixelCursor prefab and CompletScene. Existing gameplay and UI untouched.";
+    }
+
+    public static string UpgradeDesigns()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+            throw new InvalidOperationException("Exit Play Mode first.");
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+            if (SceneManager.GetSceneAt(i).isDirty)
+                throw new InvalidOperationException("Save open scenes before upgrading cursor assets.");
+        ConfigureTexture(MenuPath, SpriteImportMode.Single);
+        var contents = PrefabUtility.LoadPrefabContents(PrefabPath);
+        try
+        {
+            DecoratePrefab(contents);
+            PrefabUtility.SaveAsPrefabAsset(contents, PrefabPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(contents); }
+        AssetDatabase.SaveAssets();
+
+        // Scene-local seeds support direct Play from either scene. At runtime the
+        // component persists and removes duplicate seeds after scene changes.
+        const string titlePath = "Assets/Scenes/TitleScene.unity";
+        Scene previous = SceneManager.GetActiveScene();
+        Scene title = SceneManager.GetSceneByPath(titlePath);
+        bool wasOpen = title.isLoaded;
+        if (!wasOpen) title = EditorSceneManager.OpenScene(titlePath, OpenSceneMode.Additive);
+        try
+        {
+            bool exists = title.GetRootGameObjects().Any(root => root.GetComponentInChildren<GameplayPixelCursor>(true) != null);
+            if (!exists)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, title);
+                Undo.RegisterCreatedObjectUndo(instance, "Add title cursor");
+                EditorSceneManager.MarkSceneDirty(title);
+                EditorSceneManager.SaveScene(title);
+            }
+        }
+        finally
+        {
+            SceneManager.SetActiveScene(previous);
+            if (!wasOpen) EditorSceneManager.CloseScene(title, true);
+        }
+        return "Saved shared shadows, menu cursor, switch noise, and TitleScene seed; existing cursor tuning preserved.";
+    }
+
+    private static void DecoratePrefab(GameObject host)
+    {
+        var cursor = host.GetComponent<GameplayPixelCursor>();
+        var data = new SerializedObject(cursor);
+        var root = host.transform.Find("CursorRoot");
+        foreach (string path in new[] { "ArrowSprite", "ChainRoot/Link0", "ChainRoot/Link1" })
+        {
+            var image = root.Find(path).GetComponent<UnityEngine.UI.Image>();
+            var shadow = image.GetComponent<UnityEngine.UI.Shadow>();
+            if (shadow == null) shadow = image.gameObject.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = data.FindProperty("shadowColor").colorValue;
+            shadow.effectDistance = data.FindProperty("shadowOffset").vector2Value;
+            shadow.useGraphicAlpha = true;
+        }
+        var noise = root.Find("SwitchNoise") as RectTransform;
+        if (noise == null) noise = NewRect("SwitchNoise", root);
+        noise.SetAsLastSibling();
+        var pixels = data.FindProperty("noisePixels");
+        pixels.arraySize = 5;
+        for (int i = 0; i < pixels.arraySize; i++)
+        {
+            var child = noise.Find("Pixel" + i);
+            var image = child != null ? child.GetComponent<UnityEngine.UI.Image>() : NewImage("Pixel" + i, noise, null);
+            image.rectTransform.pivot = Vector2.up;
+            image.raycastTarget = false;
+            pixels.GetArrayElementAtIndex(i).objectReferenceValue = image;
+        }
+        noise.gameObject.SetActive(false);
+        data.FindProperty("noiseRoot").objectReferenceValue = noise;
+        data.FindProperty("menuSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(MenuPath);
+        data.ApplyModifiedPropertiesWithoutUndo();
+        host.GetComponent<Canvas>().sortingOrder = short.MaxValue;
+        host.transform.localScale = Vector3.one;
     }
 
     private static void ConfigureTexture(string path, SpriteImportMode mode)
@@ -127,6 +209,7 @@ public static class GameplayPixelCursorSetup
             list.arraySize = 2;
             for (int i = 0; i < 2; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = links[i];
             data.ApplyModifiedPropertiesWithoutUndo();
+            DecoratePrefab(host);
             return PrefabUtility.SaveAsPrefabAsset(host, PrefabPath);
         }
         finally { UnityEngine.Object.DestroyImmediate(host); }

@@ -8,6 +8,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 /// <summary>Explicit Play Mode checks; synthetic input exists only during this check.</summary>
@@ -105,6 +106,11 @@ public static class GameplayPixelCursorChecks
         Require(player != null && launcher != null && cursor != null, "Required scene objects");
         while (!player.InputEnabled) yield return null;
         Require((bool)Call("IsGameplay"), "Gameplay gate after intro");
+        cursor.enabled = false;
+        Cursor.visible = true;
+        Vector2 point = new Vector2(Screen.width * 0.58f, Screen.height * 0.55f);
+        for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
+        { Call("ShowCursor", point); yield return null; }
         var arrow = Get<UnityEngine.UI.Image>("arrowSprite");
         var root = Get<RectTransform>("cursorRoot");
         var chain = Get<RectTransform>("chainRoot");
@@ -112,15 +118,15 @@ public static class GameplayPixelCursorChecks
         Require(cursor.GetComponentsInChildren<Rigidbody2D>(true).Length == 0, "No physics bodies");
         Require(cursor.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null && !arrow.raycastTarget
             && !links[0].raycastTarget && !links[1].raycastTarget, "Does not intercept clicks");
+        foreach (var graphic in cursor.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+            Require(!graphic.raycastTarget, "Noise and cursors do not intercept clicks");
+        Require(cursor.GetComponentsInChildren<UnityEngine.UI.Shadow>(true).Length == 3, "Arrow and both chain pieces have shadows");
         Require(AssetDatabase.GetAssetPath(arrow.sprite) == GameplayPixelCursorSetup.ArrowPath
             && AssetDatabase.GetAssetPath(links[0].sprite) == GameplayPixelCursorSetup.ChainPath
             && AssetDatabase.GetAssetPath(links[1].sprite) == GameplayPixelCursorSetup.ChainPath, "Supplied textures only");
 
         // Force only the display method while testing geometry; desktop pointer focus is
         // deliberately independent of synthetic Input System coordinates.
-        cursor.enabled = false;
-        Cursor.visible = true;
-        Vector2 point = new Vector2(Screen.width * 0.58f, Screen.height * 0.55f);
         foreach (float scale in new[] { 1f, 1.5f, 2f, 3f })
         {
             Set("cursorScale", scale);
@@ -178,17 +184,39 @@ public static class GameplayPixelCursorChecks
         Report.AppendLine("PASS slow/fast movement, reversal, stop overshoot and settling at 30/60/144 Hz; swing <= 32 degrees");
 
         var pause = Object.FindAnyObjectByType<PauseMenuController>();
+        cursor.enabled = false;
         pause.OpenPause();
         Require(pause.IsPaused && !(bool)Call("IsGameplay"), "Pause gate");
-        Call("LateUpdate");
-        Require(!cursor.IsShowing && Cursor.visible, "Menu restores OS cursor");
-        for (float end = Time.unscaledTime + 0.5f; Time.unscaledTime < end;) yield return null;
-        pause.ClosePause();
-        while (pause.IsPaused) yield return null;
+        bool sawNoise = false;
+        for (float end = Time.unscaledTime + 0.35f; Time.unscaledTime < end;)
+        {
+            Call("ShowCursor", point);
+            sawNoise |= Get<RectTransform>("noiseRoot").gameObject.activeSelf
+                && Get<UnityEngine.UI.Image[]>("noisePixels")[0].color.a > 0f;
+            Require(Vector2.Distance(RectTransformUtility.WorldToScreenPoint(null,
+                arrow.rectTransform.TransformPoint(new Vector3(48f, -42f))), point) < 0.01f, "No tip jitter during switch");
+            yield return null;
+        }
         Call("ShowCursor", point);
+        Require(sawNoise && !cursor.IsChangingDesign && cursor.IsShowing && !Cursor.visible,
+            $"Paused noise: saw={sawNoise}, changing={cursor.IsChangingDesign}, showing={cursor.IsShowing}, OS={Cursor.visible}");
+        Require(!cursor.IsChainStyle && !chain.gameObject.activeSelf
+            && AssetDatabase.GetAssetPath(arrow.sprite) == GameplayPixelCursorSetup.MenuPath, "Pause uses supplied menu design");
+        Require(arrow.rectTransform.sizeDelta == new Vector2(141f, 144f), "Identical display size for both source images");
+        Require(arrow.GetComponent<UnityEngine.UI.Shadow>().effectColor.a > 0.7f, "Menu shadow remains visible");
+        Require(!Get<RectTransform>("noiseRoot").gameObject.activeSelf, "No residual noise");
+        CaptureGameView("pause-cursor.png");
+        pause.ClosePause();
+        while (pause.IsPaused) { Call("ShowCursor", point); yield return null; }
+        for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
+        { Call("ShowCursor", point); yield return null; }
+        Call("ShowCursor", point);
+        Require(cursor.IsChainStyle && chain.gameObject.activeSelf, "Resume restores chain design");
         Require(cursor.GetComponent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay, "Resume bypasses CRT conversion");
         Require((bool)Call("IsGameplay"), "Gameplay resumes");
         Call("ReleaseCursor");
+        cursor.enabled = true;
+        Report.AppendLine("PASS both shadows, paused menu sprite, 0.14s unscaled noise, exact tip throughout switch, no residual noise, chain on Resume");
 
         originalMouse = Mouse.current; originalKeyboard = Keyboard.current; originalPad = Gamepad.current;
         mouse = InputSystem.AddDevice<Mouse>("CursorCheckMouse");
@@ -201,12 +229,20 @@ public static class GameplayPixelCursorChecks
         padState = new GamepadState { leftStick = new Vector2(0.5f, 0f) };
         yield return null; yield return null;
         Call("LateUpdate");
-        Require(Get<bool>("usingGamepad"), "Gamepad hides custom pointer");
+        Require(Get<bool>("usingGamepad"), "Gamepad presentation detected");
+        for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
+        { Call("ShowCursor", point); yield return null; }
+        Call("ShowCursor", point);
+        Require(!cursor.IsChainStyle && cursor.IsShowing && !Cursor.visible, "Gamepad fallback uses new custom pointer");
         padState = new GamepadState();
         mouseState.position += Vector2.right * 10f;
         yield return null; yield return null;
         Call("LateUpdate");
         Require(!Get<bool>("usingGamepad"), "Mouse restores custom pointer mode");
+        for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
+        { Call("ShowCursor", point); yield return null; }
+        Call("ShowCursor", point);
+        Require(cursor.IsChainStyle, "Mouse restores chain design");
         Report.AppendLine("PASS pause/resume, CRT overlay isolation and gamepad/mouse presentation switching");
 
         var body = player.GetComponent<Rigidbody2D>();
@@ -252,6 +288,29 @@ public static class GameplayPixelCursorChecks
         }
         Require(launched, "Existing charged release launches");
         Report.AppendLine("PASS existing move/jump, short-click launch, long-hold spin charge and charged release through Input System");
+
+        var originalCursor = cursor;
+        Object.DontDestroyOnLoad(GameObject.Find("CursorCheckDriver"));
+        SceneManager.LoadScene("TitleScene");
+        yield return null; yield return null;
+        Require(Object.FindObjectsByType<GameplayPixelCursor>(FindObjectsInactive.Include).Length == 1
+            && Object.FindAnyObjectByType<GameplayPixelCursor>() == originalCursor, "One persistent cursor after loading TitleScene");
+        for (float end = Time.unscaledTime + 0.3f; Time.unscaledTime < end;)
+        { Call("ShowCursor", point); yield return null; }
+        Call("ShowCursor", point);
+        Require(cursor.IsShowing && !cursor.IsChainStyle && arrow.sprite == Get<Sprite>("menuSprite"), "Title always uses menu design");
+        Require(cursor.GetComponent<Canvas>().sortingOrder == short.MaxValue, "Cursor above full-screen overlays");
+        CaptureGameView("title-cursor.png");
+        SceneManager.LoadScene("CompletScene");
+        yield return null; yield return null;
+        player = Object.FindAnyObjectByType<Player>();
+        while (!player.InputEnabled) yield return null;
+        for (float end = Time.unscaledTime + 0.3f; Time.unscaledTime < end;)
+        { Call("ShowCursor", point); yield return null; }
+        Call("ShowCursor", point);
+        Require(cursor.IsChainStyle && Object.FindObjectsByType<GameplayPixelCursor>(FindObjectsInactive.Include).Length == 1,
+            "Reload refreshes scene owners without duplicate cursors");
+        Report.AppendLine("PASS TitleScene menu cursor, one persistent owner, CompletScene reload and refreshed gameplay bindings");
         Call("ShowCursor", point);
         Call("OnApplicationQuit");
         Require(Cursor.visible && !cursor.IsShowing, "Quit restores OS cursor");
@@ -267,7 +326,7 @@ public static class GameplayPixelCursorChecks
         InputSystem.QueueStateEvent(pad, padState);
     }
 
-    private static void CaptureGameView()
+    private static void CaptureGameView(string filename = "cursor-game-view.png")
     {
         var game = EditorWindow.GetWindow(Type.GetType("UnityEditor.GameView,UnityEditor"));
         var texture = game.GetType().GetField("m_RenderTexture", Private)?.GetValue(game) as RenderTexture;
@@ -287,7 +346,7 @@ public static class GameplayPixelCursorChecks
                 copy.SetPixels32(upright);
             }
             copy.Apply();
-            File.WriteAllBytes(Path.Combine(Output, "cursor-game-view.png"), copy.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(Output, filename), copy.EncodeToPNG());
         }
         finally { RenderTexture.active = old; Object.DestroyImmediate(copy); }
     }

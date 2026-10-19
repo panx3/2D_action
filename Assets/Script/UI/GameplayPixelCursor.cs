@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.SceneManagement;
 
-/// <summary>Presentation only: an exact screen-space pointer and two small simulated chain joints.</summary>
+/// <summary>Presentation only: two exact screen-space pointers, shared shadows and a short cosmetic chain.</summary>
 [DefaultExecutionOrder(10000), DisallowMultipleComponent, RequireComponent(typeof(Canvas))]
 public sealed class GameplayPixelCursor : MonoBehaviour
 {
@@ -11,6 +12,17 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Image arrowSprite;
     [SerializeField] private RectTransform chainRoot;
     [SerializeField] private UnityEngine.UI.Image[] chainLinks;
+    [SerializeField] private Sprite menuSprite;
+    [SerializeField] private RectTransform noiseRoot;
+    [SerializeField] private UnityEngine.UI.Image[] noisePixels;
+
+    [Header("Both cursor designs")]
+    [SerializeField] private Vector2 menuHotspot = new Vector2(16f, 14f);
+    [SerializeField] private Color shadowColor = new Color(0f, 0f, 0f, 0.72f);
+    [SerializeField, Tooltip("Constant screen pixels; independent of cursor size.")]
+    private Vector2 shadowOffset = new Vector2(3f, -3f);
+    [SerializeField, Range(0.05f, 0.4f)] private float transitionDuration = 0.14f;
+    [SerializeField, Range(0f, 1f)] private float transitionNoiseOpacity = 0.38f;
 
     [Header("Arrow (source image pixels, including transparent margins)")]
     [SerializeField, Min(0.25f), Tooltip("1 = original pixels; visible arrow is 16 x 20 px.")]
@@ -38,6 +50,8 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     private GoalMenuController goalMenu;
     private CrystalAcquiredUI celebration;
     private CRTFilterController crt;
+    private Sprite chainSprite;
+    private UnityEngine.UI.Shadow[] shadows;
     private readonly float[] angles = new float[2];
     private readonly float[] angularVelocities = new float[2];
     private Vector2 previousAnchor, filteredVelocity, lastMousePosition;
@@ -45,7 +59,11 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     private float previousScale;
     private bool pointerKnown, usingGamepad, ownsOSCursor, previousOSVisibility;
     private bool focused = true, applicationPaused;
+    private bool styleKnown, chainStyle, targetChainStyle;
+    private float styleChangedAt = float.NegativeInfinity;
     public bool IsShowing => view != null && view.enabled;
+    public bool IsChainStyle => styleKnown && chainStyle;
+    public bool IsChangingDesign => styleKnown && Time.unscaledTime - styleChangedAt < transitionDuration;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetOwner() => owner = null;
@@ -54,7 +72,14 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     {
         view = GetComponent<Canvas>();
         view.enabled = false;
-        // Discover existing owners once. No new input actions, subscriptions, or weapon references.
+        chainSprite = arrowSprite != null ? arrowSprite.sprite : null;
+        shadows = GetComponentsInChildren<UnityEngine.UI.Shadow>(true);
+        CacheSceneOwners();
+    }
+
+    private void CacheSceneOwners()
+    {
+        // Only scene changes refresh these references; no gameplay/input subscriptions.
         player = FindAnyObjectByType<Player>();
         pauseMenu = FindAnyObjectByType<PauseMenuController>();
         goalMenu = FindAnyObjectByType<GoalMenuController>();
@@ -67,12 +92,17 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         if (owner != null && owner != this)
         {
             enabled = false;
+            Destroy(gameObject);
             return;
         }
         owner = this;
+        DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
         focused = Application.isFocused;
         pointerKnown = false;
     }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => CacheSceneOwners();
 
     private void LateUpdate()
     {
@@ -94,8 +124,7 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         pointerKnown = true;
 
         bool inside = point.x >= 0f && point.y >= 0f && point.x < Screen.width && point.y < Screen.height;
-        if (!HasGameViewFocus() || applicationPaused || !inside || usingGamepad
-            || Cursor.lockState == CursorLockMode.Locked || !IsGameplay())
+        if (!HasGameViewFocus() || applicationPaused || !inside || Cursor.lockState == CursorLockMode.Locked)
         {
             ReleaseCursor();
             return;
@@ -106,15 +135,19 @@ public sealed class GameplayPixelCursor : MonoBehaviour
 
     private void ShowCursor(Vector2 point)
     {
+        bool styleChanged = UpdateStyle(IsGameplay() && !usingGamepad);
         bool reset = !IsShowing || lastResolution != new Vector2Int(Screen.width, Screen.height)
-            || !Mathf.Approximately(previousScale, cursorScale);
+            || !Mathf.Approximately(previousScale, cursorScale) || styleChanged;
         // CRTFilterController can convert all scene canvases. The cursor must always stay
         // outside that camera's low-resolution render and distortion, including on Resume.
         view.renderMode = RenderMode.ScreenSpaceOverlay;
         view.worldCamera = null;
         view.scaleFactor = 1f;
         view.pixelPerfect = false; // Do not round the arrow away from the actual mouse coordinate.
-        view.sortingOrder = 32000;
+        // The loading veil also uses the maximum order. Keeping this persistent root
+        // last draws the pointer above it without changing the scene/transition owners.
+        view.sortingOrder = short.MaxValue;
+        transform.SetAsLastSibling();
         view.enabled = true;
         if (!ownsOSCursor)
         {
@@ -124,22 +157,85 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         Cursor.visible = false;
 
         UpdateView(point, reset);
+        UpdateNoise();
         lastResolution = new Vector2Int(Screen.width, Screen.height);
         previousScale = cursorScale;
     }
 
-    private bool HasView() => cursorRoot != null && arrowSprite != null && arrowSprite.sprite != null
+    private bool HasView() => cursorRoot != null && arrowSprite != null && chainSprite != null && menuSprite != null
         && chainRoot != null && chainLinks != null && chainLinks.Length == 2
         && chainLinks[0] != null && chainLinks[0].sprite != null
         && chainLinks[1] != null && chainLinks[1].sprite != null;
 
-    private bool IsGameplay() => gameObject.scene.name == "CompletScene"
+    private bool IsGameplay() => SceneManager.GetActiveScene().name == "CompletScene"
         && Time.timeScale > 0f && !TitleStageTransition.IsTransitioning
         && player != null && player.isActiveAndEnabled && player.InputEnabled && !player.IsGoalInputBlocked
         && (pauseMenu == null || !pauseMenu.IsPaused)
         && (goalMenu == null || !goalMenu.IsGoalReached)
         && (celebration == null || !celebration.IsPlaying)
         && (crt == null || !crt.IsOverlayActive);
+
+    private bool UpdateStyle(bool wantsChain)
+    {
+        bool changed = false;
+        if (!styleKnown)
+        {
+            styleKnown = true;
+            targetChainStyle = wantsChain;
+            ApplyStyle(wantsChain);
+            return true;
+        }
+        if (targetChainStyle != wantsChain)
+        {
+            targetChainStyle = wantsChain;
+            styleChangedAt = Time.unscaledTime;
+        }
+        // Change the design in the middle of the short noise burst. Keep the actual
+        // pointer and its shadow visible throughout, even while timeScale is zero.
+        if (chainStyle != targetChainStyle && Time.unscaledTime - styleChangedAt >= transitionDuration * 0.45f)
+        {
+            ApplyStyle(targetChainStyle);
+            changed = true;
+        }
+        return changed;
+    }
+
+    private void ApplyStyle(bool withChain)
+    {
+        chainStyle = withChain;
+        arrowSprite.sprite = withChain ? chainSprite : menuSprite;
+        chainRoot.gameObject.SetActive(withChain);
+    }
+
+    private void UpdateNoise()
+    {
+        if (noiseRoot == null || noisePixels == null)
+            return;
+        bool visible = IsShowing && IsChangingDesign;
+        noiseRoot.gameObject.SetActive(visible);
+        if (!visible)
+            return;
+        float age = Time.unscaledTime - styleChangedAt;
+        // The first frame must already show a faint signal: opening the CRT menu can
+        // spend most of this short duration capturing its frozen background.
+        float pulse = 0.35f + 0.65f * Mathf.Sin(Mathf.Clamp01(age / transitionDuration) * Mathf.PI);
+        int tick = Mathf.FloorToInt(age * 50f);
+        for (int i = 0; i < noisePixels.Length; i++)
+        {
+            // Small horizontal fragments inside the shared arrowhead, in source pixels
+            // measured from the tip. Neither image nor hotspot is jittered.
+            int seed = i * 17 + tick * 7;
+            float row = 6f + seed % 8;
+            float x = 1f + seed % 3;
+            float width = Mathf.Max(1f, Mathf.Min(3f + seed % 4, row * 0.75f - x));
+            var pixel = noisePixels[i];
+            pixel.rectTransform.anchoredPosition = new Vector2(x, -row) * cursorScale;
+            pixel.rectTransform.sizeDelta = new Vector2(width, i % 2 == 0 ? 0.5f : 1f) * cursorScale;
+            Color color = i % 3 == 0 ? new Color(0.95f, 0.66f, 0.82f) : i % 3 == 1 ? Color.white : new Color(0.18f, 0.2f, 0.28f);
+            color.a = transitionNoiseOpacity * pulse;
+            pixel.color = color;
+        }
+    }
 
     private bool HasGameViewFocus()
     {
@@ -176,9 +272,15 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         // Constant-pixel overlay coordinates are identical to Input System screen coordinates.
         cursorRoot.position = new Vector3(point.x, point.y, 0f);
         RectTransform arrow = arrowSprite.rectTransform;
+        Vector2 displayHotspot = chainStyle ? hotspot : menuHotspot;
         arrow.pivot = Vector2.up;
         arrow.sizeDelta = arrowSprite.sprite.rect.size * cursorScale;
-        arrow.anchoredPosition = new Vector2(-hotspot.x, hotspot.y) * cursorScale;
+        arrow.anchoredPosition = new Vector2(-displayHotspot.x, displayHotspot.y) * cursorScale;
+        foreach (var shadow in shadows)
+        {
+            if (shadow.effectColor != shadowColor) shadow.effectColor = shadowColor;
+            if (shadow.effectDistance != shadowOffset) shadow.effectDistance = shadowOffset;
+        }
         Vector2 attachment = new Vector2(connectionOffset.x - hotspot.x, hotspot.y - connectionOffset.y) * cursorScale;
         chainRoot.anchoredPosition = attachment;
         Vector2 anchor = point + attachment;
@@ -188,8 +290,11 @@ public sealed class GameplayPixelCursor : MonoBehaviour
             filteredVelocity = Vector2.zero;
             previousAnchor = anchor;
         }
-        SimulateChain(anchor, Time.unscaledDeltaTime);
-        DrawChain();
+        if (chainStyle)
+        {
+            SimulateChain(anchor, Time.unscaledDeltaTime);
+            DrawChain();
+        }
     }
 
     private void SimulateChain(Vector2 anchor, float deltaTime)
@@ -247,6 +352,8 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     {
         if (view != null)
             view.enabled = false;
+        if (noiseRoot != null)
+            noiseRoot.gameObject.SetActive(false);
         if (!ownsOSCursor)
             return;
         Cursor.visible = previousOSVisibility;
@@ -268,6 +375,7 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     private void OnDisable()
     {
         ReleaseCursor();
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         if (owner == this) owner = null;
     }
 
