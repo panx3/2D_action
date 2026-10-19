@@ -101,7 +101,7 @@ public static class GameplayPixelCursorSetup
         if (noise == null) noise = NewRect("SwitchNoise", root);
         noise.SetAsLastSibling();
         var pixels = data.FindProperty("noisePixels");
-        pixels.arraySize = 5;
+        pixels.arraySize = 16;
         for (int i = 0; i < pixels.arraySize; i++)
         {
             var child = noise.Find("Pixel" + i);

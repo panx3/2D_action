@@ -22,12 +22,13 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     [SerializeField] private PauseMenuController pauseMenu;
 
     [Header("Logo (Unscaled Time)")]
-    [SerializeField, Min(0f)] private float logoStartDelay = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Logo appears after this delay and the gameplay stop, whichever is later.")]
+    private float logoStartDelay = 0.24f;
     [SerializeField, Min(0f)] private float popDuration = 0.34f;
     [SerializeField, Min(0f)] private float logoDisplayDuration = 1.25f;
     [SerializeField, Min(0f)] private float fadeOutDuration = 0.24f;
     [SerializeField, Min(0f)] private float clearScreenDelay = 1.1f;
-    [SerializeField, Min(0f)] private float logoFinalScale = 1.12f;
+    [SerializeField, Min(0f)] private float logoFinalScale = 1.6f;
     [SerializeField, Min(0f)] private float logoStartScale = 0.6f;
     [SerializeField, Min(0f)] private float overshootScale = 1.12f;
     [SerializeField, Min(0f)] private float undershootScale = 0.985f;
@@ -70,6 +71,9 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     private bool _ownsGameplayInput;
     private bool _ownsPauseBlock;
     private bool _hasPlayed;
+    private CameraShake2D _goalCameraShake;
+    private bool _goalShakeStopped;
+    private float LogoRevealDelay => Mathf.Max(logoStartDelay, goalStopDuration);
 
     public bool IsPlaying => _playRoutine != null;
     public bool HasPlayed => _hasPlayed;
@@ -88,6 +92,8 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
             return false;
 
         _hasPlayed = true;
+        _goalCameraShake = Camera.main != null ? Camera.main.GetComponent<CameraShake2D>() : null;
+        _goalShakeStopped = false;
         _onComplete = onComplete;
         BlockPauseMenu();
         BlockGameplayInput();
@@ -99,7 +105,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private IEnumerator PlayRoutine()
     {
-        float fadeStart = logoStartDelay + popDuration + logoDisplayDuration;
+        float fadeStart = LogoRevealDelay + popDuration + logoDisplayDuration;
         float sequenceEnd = fadeStart + fadeOutDuration;
         float elapsed = 0f;
 
@@ -202,7 +208,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         if (celebrationLogo == null)
             return;
 
-        float localTime = elapsed - logoStartDelay;
+        float localTime = elapsed - LogoRevealDelay;
         if (localTime < 0f)
             return;
 
@@ -245,7 +251,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         if (sparkleVisuals == null)
             return;
 
-        float localTime = elapsed - logoStartDelay - popDuration * 0.38f;
+        float localTime = elapsed - LogoRevealDelay - popDuration * 0.38f;
         bool visible = particlesEnabled && localTime >= 0f;
         float burst = sparkleBurstDuration > 0f
             ? Mathf.Clamp01(localTime / sparkleBurstDuration)
@@ -314,6 +320,13 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private void UpdateGoalStop(float elapsed)
     {
+        if (!_goalShakeStopped && elapsed >= goalStopDuration)
+        {
+            // End the impact on the same frame as the stop/logo reveal. A scaled
+            // shake timer otherwise retains duration throughout the stopped result.
+            if (_goalCameraShake != null) _goalCameraShake.ResetShake();
+            _goalShakeStopped = true;
+        }
         if (!_ownsTimeScale)
             return;
         if (!Mathf.Approximately(Time.timeScale, _ownedGoalTimeScale))

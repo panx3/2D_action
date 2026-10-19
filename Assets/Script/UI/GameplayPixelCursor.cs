@@ -21,8 +21,8 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     [SerializeField] private Color shadowColor = new Color(0f, 0f, 0f, 0.72f);
     [SerializeField, Tooltip("Constant screen pixels; independent of cursor size.")]
     private Vector2 shadowOffset = new Vector2(3f, -3f);
-    [SerializeField, Range(0.05f, 0.4f)] private float transitionDuration = 0.14f;
-    [SerializeField, Range(0f, 1f)] private float transitionNoiseOpacity = 0.38f;
+    [SerializeField, Range(0.05f, 0.4f)] private float transitionDuration = 0.28f;
+    [SerializeField, Range(0f, 1f)] private float transitionNoiseOpacity = 0.85f;
 
     [Header("Arrow (source image pixels, including transparent margins)")]
     [SerializeField, Min(0.25f), Tooltip("1 = original pixels; visible arrow is 16 x 20 px.")]
@@ -228,15 +228,15 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         int tick = Mathf.FloorToInt(age * 50f);
         for (int i = 0; i < noisePixels.Length; i++)
         {
-            // Small horizontal fragments inside the shared arrowhead, in source pixels
-            // measured from the tip. Neither image nor hotspot is jittered.
-            int seed = i * 17 + tick * 7;
-            float row = 6f + seed % 8;
-            float x = 1f + seed % 3;
-            float width = Mathf.Max(1f, Mathf.Min(3f + seed % 4, row * 0.75f - x));
+            // Dense horizontal tears around the shared arrowhead, in source pixels
+            // measured from the tip. Only the fragments jitter; the click tip stays exact.
+            int seed = i * 11 + tick * 7;
+            float row = 3f + seed % 17;
+            float x = i % 4 == 0 ? -2f : Mathf.Max(0f, Mathf.Min(row * 0.5f - 2f, seed % 10));
+            float width = 5f + seed % 8;
             var pixel = noisePixels[i];
             pixel.rectTransform.anchoredPosition = new Vector2(x, -row) * cursorScale;
-            pixel.rectTransform.sizeDelta = new Vector2(width, i % 2 == 0 ? 0.5f : 1f) * cursorScale;
+            pixel.rectTransform.sizeDelta = new Vector2(width, i % 3 == 0 ? 1.5f : 0.75f) * cursorScale;
             Color color = i % 3 == 0 ? new Color(0.95f, 0.66f, 0.82f) : i % 3 == 1 ? Color.white : new Color(0.18f, 0.2f, 0.28f);
             color.a = transitionNoiseOpacity * pulse;
             pixel.color = color;

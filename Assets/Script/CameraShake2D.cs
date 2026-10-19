@@ -43,7 +43,9 @@ public class CameraShake2D : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_remainingDuration <= 0f)
+        // Update removes the previous offset even while paused. Do not add a new
+        // random offset when the scaled timer cannot advance (pause/clear/hit stop).
+        if (_remainingDuration <= 0f || Time.deltaTime <= 0f)
             return;
 
         Vector2 randomOffset = Random.insideUnitCircle * _strength;

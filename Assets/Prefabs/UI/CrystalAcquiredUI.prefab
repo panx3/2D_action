@@ -3679,12 +3679,12 @@ MonoBehaviour:
   - {fileID: 8190566906253989440}
   - {fileID: 2869286370945502293}
   pauseMenu: {fileID: 0}
-  logoStartDelay: 0.08
+  logoStartDelay: 0.24
   popDuration: 0.34
   logoDisplayDuration: 1.25
   fadeOutDuration: 0.24
   clearScreenDelay: 0.6
-  logoFinalScale: 1.12
+  logoFinalScale: 1.6
   logoStartScale: 0.6
   overshootScale: 1.12
   undershootScale: 0.985

@@ -277,7 +277,7 @@ public static class GameplayPixelCursorChecks
         Require((bool)Call("IsGameplay"), "Gameplay resumes");
         Call("ReleaseCursor");
         cursor.enabled = true;
-        Report.AppendLine("PASS both shadows, paused menu sprite, 0.14s unscaled noise, exact tip throughout switch, no residual noise, chain on Resume");
+        Report.AppendLine("PASS both shadows, paused menu sprite, unscaled switch noise, exact tip throughout switch, no residual noise, chain on Resume");
 
         originalMouse = Mouse.current; originalKeyboard = Keyboard.current; originalPad = Gamepad.current;
         mouse = InputSystem.AddDevice<Mouse>("CursorCheckMouse");
