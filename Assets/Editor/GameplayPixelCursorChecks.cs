@@ -47,6 +47,7 @@ public static class GameplayPixelCursorChecks
             throw new InvalidOperationException("Open CompletScene first.");
         SessionState.SetBool(Key, true);
         SessionState.SetBool(Key + ".EscapeOnly", false);
+        SessionState.SetBool(Key + ".HitStopOnly", false);
         SessionState.EraseString(Key + ".Result");
         Subscribe();
         EditorApplication.isPlaying = true;
@@ -56,6 +57,13 @@ public static class GameplayPixelCursorChecks
     {
         Run();
         SessionState.SetBool(Key + ".EscapeOnly", true);
+    }
+
+    public static void RunHitStopCheck(bool baseline = false)
+    {
+        Run();
+        SessionState.SetBool(Key + ".HitStopOnly", true);
+        SessionState.SetBool(Key + ".HitStopBaseline", baseline);
     }
 
     private static void Subscribe()
@@ -75,7 +83,9 @@ public static class GameplayPixelCursorChecks
             Application.runInBackground = true;
             Application.logMessageReceived += OnLog;
             EditorWindow.GetWindow(Type.GetType("UnityEditor.GameView,UnityEditor")).Focus();
-            routine = SessionState.GetBool(Key + ".EscapeOnly", false) ? CheckEscape() : Check();
+            routine = SessionState.GetBool(Key + ".HitStopOnly", false)
+                ? CheckHitStop(SessionState.GetBool(Key + ".HitStopBaseline", false))
+                : SessionState.GetBool(Key + ".EscapeOnly", false) ? CheckEscape() : Check();
             new GameObject("CursorCheckDriver").AddComponent<GameplayPixelCursorCheckDriver>();
             EditorApplication.update += Watchdog;
         }
@@ -103,6 +113,76 @@ public static class GameplayPixelCursorChecks
     {
         if (routine != null && EditorApplication.timeSinceStartup - started > 60d)
             Finish(false, "Play check timed out.");
+    }
+
+    private static IEnumerator CheckHitStop(bool baseline)
+    {
+        cursor = Object.FindAnyObjectByType<GameplayPixelCursor>();
+        var player = Object.FindAnyObjectByType<Player>();
+        var launcher = Object.FindAnyObjectByType<MorningStarLauncher>();
+        var pause = Object.FindAnyObjectByType<PauseMenuController>();
+        var wall = Object.FindAnyObjectByType<BreakableWall>();
+        var enemy = Object.FindAnyObjectByType<EnemyHealth>();
+        Require(cursor != null && player != null && launcher != null && pause != null && wall != null && enemy != null,
+            "Required production scene owners and hit receivers");
+        while (!player.InputEnabled) yield return null;
+        cursor.enabled = false;
+        Vector2 point = new Vector2(Screen.width * 0.58f, Screen.height * 0.55f);
+        var hitStop = typeof(MorningStarLauncher).GetMethod("PlayCombatHitStop", Private);
+        string[] cases = { "Block destruction", "Enemy death", "Hook hit stop" };
+        for (int test = 0; test < cases.Length; test++)
+        {
+            for (float end = Time.unscaledTime + 0.4f; Time.unscaledTime < end;)
+            { Call("ShowCursor", point); yield return null; }
+            Call("ShowCursor", point);
+            Require(cursor.IsChainStyle && !cursor.IsChangingDesign, "Stable gameplay cursor before impact");
+            float before = Get<float>("styleChangedAt");
+            float duration = test == 2 ? 0.04f : 0.1f;
+            var context = new MorningStarHitContext(1000, Vector2.zero, duration,
+                Vector2.zero, Vector2.right, test == 0 ? wall.BreakSpeedThreshold + 1f : 12f, 1f);
+            if (test == 0)
+            {
+                wall.OnMorningStarHit(context);
+                Require(wall.IsBroken, "Production block destruction");
+            }
+            else if (test == 1)
+            {
+                enemy.OnMorningStarHit(context);
+                Require(enemy.IsDeathHandled, "Production enemy death");
+            }
+            // The same hit-stop method called immediately after a combat receiver.
+            // Invoke it without changing combat input, ball state or physics.
+            hitStop.Invoke(launcher, new object[] { duration });
+            Require(Time.timeScale == 0f, "Existing hit stop pauses scaled time");
+            bool sawNoise = false;
+            for (float end = Time.unscaledTime + 0.45f; Time.unscaledTime < end;)
+            {
+                Call("ShowCursor", point);
+                sawNoise |= cursor.IsChangingDesign || Get<RectTransform>("noiseRoot").gameObject.activeSelf;
+                if (!baseline)
+                    Require(cursor.IsChainStyle && Get<float>("styleChangedAt").Equals(before),
+                        "Combat never requests a design change");
+                yield return null;
+            }
+            Require(sawNoise == baseline && Time.timeScale > 0f, "Hit stop noise and time restoration");
+            Report.AppendLine(cases[test] + ": noise=" + sawNoise + ", time restored=True");
+        }
+        if (!baseline)
+        {
+            pause.OpenPause();
+            Require(pause.IsPaused, "Actual pause opens");
+            bool sawNoise = false;
+            for (float end = Time.unscaledTime + 0.4f; Time.unscaledTime < end;)
+            { Call("ShowCursor", point); sawNoise |= cursor.IsChangingDesign; yield return null; }
+            Require(sawNoise && !cursor.IsChainStyle, "Pause still switches to menu with noise");
+            pause.ClosePause(); sawNoise = false;
+            for (float end = Time.unscaledTime + 0.9f; Time.unscaledTime < end;)
+            { Call("ShowCursor", point); sawNoise |= cursor.IsChangingDesign; yield return null; }
+            Require(!pause.IsPaused && sawNoise && cursor.IsChainStyle, "Resume still switches back with noise");
+            Report.AppendLine("PASS pause/resume retain the requested design-switch noise");
+        }
+        Require(errors == 0, "Runtime Errors/Exceptions=" + errors);
+        Report.AppendLine("Runtime Errors/Exceptions=0");
     }
 
     private static IEnumerator CheckEscape()
@@ -432,7 +512,10 @@ public static class GameplayPixelCursorChecks
         EditorApplication.update -= Watchdog;
         Application.logMessageReceived -= OnLog;
         string result = (pass ? "PASS\n" : "FAIL\n") + Report + detail;
-        File.WriteAllText(Path.Combine(Output, "result.txt"), result);
+        string filename = SessionState.GetBool(Key + ".HitStopOnly", false)
+            ? SessionState.GetBool(Key + ".HitStopBaseline", false) ? "hitstop-baseline.txt" : "hitstop.txt"
+            : "result.txt";
+        File.WriteAllText(Path.Combine(Output, filename), result);
         SessionState.SetString(Key + ".Result", result);
         Debug.Log("[PixelCursorChecks] " + result);
         routine = null;
