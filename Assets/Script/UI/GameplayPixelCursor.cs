@@ -140,27 +140,32 @@ public sealed class GameplayPixelCursor : MonoBehaviour
             || !Mathf.Approximately(previousScale, cursorScale) || styleChanged;
         // CRTFilterController can convert all scene canvases. The cursor must always stay
         // outside that camera's low-resolution render and distortion, including on Resume.
-        view.renderMode = RenderMode.ScreenSpaceOverlay;
-        view.worldCamera = null;
-        view.scaleFactor = 1f;
-        view.pixelPerfect = false; // Do not round the arrow away from the actual mouse coordinate.
+        // These are native Canvas setters, not cursor movement. Repair state only
+        // when another presentation owner changed it; keep the moving path small.
+        if (view.renderMode != RenderMode.ScreenSpaceOverlay) view.renderMode = RenderMode.ScreenSpaceOverlay;
+        if (view.worldCamera != null) view.worldCamera = null;
+        if (view.scaleFactor != 1f) view.scaleFactor = 1f;
+        if (view.pixelPerfect) view.pixelPerfect = false; // Keep the exact mouse coordinate.
         // The loading veil also uses the maximum order. Keeping this persistent root
         // last draws the pointer above it without changing the scene/transition owners.
-        view.sortingOrder = short.MaxValue;
-        transform.SetAsLastSibling();
-        view.enabled = true;
-        if (!ownsOSCursor)
+        if (view.sortingOrder != short.MaxValue) view.sortingOrder = short.MaxValue;
+        if (transform.GetSiblingIndex() < gameObject.scene.rootCount - 1) transform.SetAsLastSibling();
+        if (!view.enabled) view.enabled = true;
+        bool acquiringCursor = !ownsOSCursor;
+        if (acquiringCursor)
         {
             previousOSVisibility = Cursor.visible;
             ownsOSCursor = true;
         }
 #if UNITY_EDITOR
-        // GameView disables cursor hiding on ESC until its next click, separately
-        // from Cursor.visible. LateUpdate already requires focused GameView content;
-        // restore hiding only, leaving the Editor's escape/unlock behavior intact.
-        UnityEditor.Unsupported.SetAllowCursorHide(true);
+        // ESC revokes the Editor's hiding permission separately from Cursor.visible.
+        // Re-arm it on acquisition / ESC, not on every moving frame. Reading this
+        // key does not consume or change the pause owner's existing input.
+        if (acquiringCursor || (Keyboard.current != null
+            && (Keyboard.current.escapeKey.isPressed || Keyboard.current.escapeKey.wasPressedThisFrame)))
+            UnityEditor.Unsupported.SetAllowCursorHide(true);
 #endif
-        Cursor.visible = false;
+        if (Cursor.visible) Cursor.visible = false;
 
         UpdateView(point, reset);
         UpdateNoise();
@@ -358,13 +363,13 @@ public sealed class GameplayPixelCursor : MonoBehaviour
 
     private void ReleaseCursor()
     {
-        if (view != null)
+        if (view != null && view.enabled)
             view.enabled = false;
-        if (noiseRoot != null)
+        if (noiseRoot != null && noiseRoot.gameObject.activeSelf)
             noiseRoot.gameObject.SetActive(false);
         if (!ownsOSCursor)
             return;
-        Cursor.visible = previousOSVisibility;
+        if (Cursor.visible != previousOSVisibility) Cursor.visible = previousOSVisibility;
         ownsOSCursor = false;
     }
 
