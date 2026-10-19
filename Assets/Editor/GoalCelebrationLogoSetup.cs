@@ -19,6 +19,7 @@ public static class GoalCelebrationLogoSetup
     {
         ConfigureLogoImporter();
         ConfigurePrefab();
+        GoalCelebrationRewardSetup.Apply();
         AssetDatabase.Refresh();
         Debug.Log("[GoalCelebrationLogoSetup] Goal logo, flash, dimmer and pixel sparkles applied.");
     }
@@ -129,10 +130,10 @@ public static class GoalCelebrationLogoSetup
             serialized.FindProperty("pauseMenu").objectReferenceValue = null;
 
             serialized.FindProperty("logoStartDelay").floatValue = 0.24f;
-            serialized.FindProperty("popDuration").floatValue = 0.34f;
-            serialized.FindProperty("logoDisplayDuration").floatValue = 1.25f;
-            serialized.FindProperty("fadeOutDuration").floatValue = 0.24f;
-            serialized.FindProperty("clearScreenDelay").floatValue = 1.1f;
+            serialized.FindProperty("popDuration").floatValue = 0.26f;
+            serialized.FindProperty("logoDisplayDuration").floatValue = 1.15f;
+            serialized.FindProperty("fadeOutDuration").floatValue = 0.16f;
+            serialized.FindProperty("clearScreenDelay").floatValue = 0.08f;
             serialized.FindProperty("logoFinalScale").floatValue = 1.6f;
             serialized.FindProperty("logoStartScale").floatValue = 0.6f;
             serialized.FindProperty("overshootScale").floatValue = 1.12f;

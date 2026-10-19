@@ -131,12 +131,35 @@ public static class GoalPresentationPlayModeChecks
         bool sawImpactShake = shake.IsShaking;
         var logo = Get<RectTransform>(ui, "celebrationLogo");
         var image = Get<UnityEngine.UI.Image>(ui, "logoImage");
+        var burst = Get<GoalCelebrationBurstGraphic>(ui, "burstGraphic");
+        bool capturedImpact = false, capturedReward = false;
+        if (!baseline)
+            Require(burst != null && !burst.raycastTarget && burst.GetComponent<Collider2D>() == null,
+                "Reward accents are presentation-only and do not intercept input");
         while (Time.unscaledTime - finalHitAt < 0.65f)
         {
             if (!baseline && image.color.a > 0.01f)
+            {
                 Require(!shake.IsShaking && Time.timeScale == 0f, "Shake and gameplay stop before the logo appears");
+                Require(ui.RewardSoundPlayCount == 1, "Reward chime starts exactly once with the logo");
+            }
+            float age = Time.unscaledTime - finalHitAt;
+            if (!baseline && !capturedImpact && age >= 0.07f)
+            {
+                Require(burst.IsAnimating, "Impact burst runs before reward reveal");
+                // Saving a full-resolution PNG can stall long enough to skip the
+                // next beat. Prioritize the reward frame for the live capture.
+                capturedImpact = true;
+            }
+            if (!baseline && !capturedReward && age >= 0.36f)
+            {
+                Require(burst.IsAnimating && Get<float>(burst, "age") >= 0.24f, "Pixel burst advances during stopped time");
+                Require(Get<AudioSource>(ui, "rewardAudioSource").isPlaying, "Assigned reward chime plays while stopped");
+                Capture("crystal-reward-burst.png"); capturedReward = true;
+            }
             yield return null;
         }
+        if (!baseline) Require(capturedImpact && capturedReward, "Both impact/reward beats were observed");
         Vector3 frozenPosition = shake.transform.position;
         float maxMovement = 0f;
         for (float end = Time.unscaledTime + 0.35f; Time.unscaledTime < end;)
@@ -149,8 +172,18 @@ public static class GoalPresentationPlayModeChecks
         { Report.AppendLine("BASELINE: scaled shake timer remains active while random offsets still render at timeScale=0."); yield break; }
         Require(sawImpactShake && !shake.IsShaking && maxMovement < 0.00001f, "Impact then exact camera stop");
         Require(logo.localScale.x >= 1.55f, "Acquisition logo is larger");
+        Require(!ui.Play(null) && ui.RewardSoundPlayCount == 1, "Duplicate clear requests never replay reward audio");
         Capture("crystal-acquired.png");
-        while (!menu.IsGoalReached) yield return null;
+        while (!menu.IsGoalReached)
+        {
+            Require(Get<GameObject>(ui, "presentationRoot").activeSelf, "No empty frame/wait before the result");
+            yield return null;
+        }
+        Require(Time.unscaledTime - finalHitAt < 2.7f, "Reward handoff remains brisk");
+        Require(!burst.IsAnimating && !Get<GameObject>(ui, "presentationRoot").activeSelf, "Burst cleaned up before the CRT result");
+        Require(player.IsGoalInputBlocked && Time.timeScale == 0f, "Result retains stopped time and gameplay input ownership");
+        Require(GameBgmController.Instance == null || GameBgmController.Instance.CurrentState == GameBgmController.BgmState.Goal,
+            "Existing goal BGM flow is preserved");
         var overlay = Get<CRTOverlayController>(menu, "overlay");
         while (!overlay.IsReady) yield return null;
         frozenPosition = shake.transform.position;
@@ -166,7 +199,7 @@ public static class GoalPresentationPlayModeChecks
         }
         Capture("clear-crt.png");
         Require(errors == 0, "Runtime Errors/Exceptions=" + errors);
-        Report.AppendLine("PASS final hit -> brief impact -> exact stop before enlarged acquisition logo -> stable CRT result; Errors/Exceptions=0");
+        Report.AppendLine("PASS impact burst -> exact stop -> pixel reward burst + one chime -> continuous CRT result; input/BGM ownership preserved; Errors/Exceptions=0");
     }
 
     private static object Call(object target, string name, params object[] args) => target.GetType().GetMethod(name, Private).Invoke(target, args);
