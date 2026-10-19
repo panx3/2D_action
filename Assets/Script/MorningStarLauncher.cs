@@ -23,7 +23,8 @@ public class MorningStarLauncher : MonoBehaviour
         Returning,
         Hooked,
         Swinging,
-        StartIntro
+        StartIntro,
+        Respawning
     }
 
     [Header("参照")]
@@ -401,6 +402,32 @@ public class MorningStarLauncher : MonoBehaviour
     public MorningStarState State => _state;
     public MorningStarState CurrentState => _state;
     private bool _simulatedBeforeStartIntro;
+    private bool _respawnPresentation;
+    private bool _simulatedBeforeRespawn;
+    public Rigidbody2D BallBody => morningStarRb;
+    public Transform ChainVisualRoot => chainLineController != null ? chainLineController.transform : null;
+
+    /// <summary>位置を変えず中央State経由で停止。見た目はFeedback側で分解する。</summary>
+    public void BeginRespawnPresentation()
+    {
+        if (_respawnPresentation) return;
+        _respawnPresentation = true;
+        _simulatedBeforeRespawn = morningStarRb != null && morningStarRb.simulated;
+        EndLaunchPose();
+        ResetChainClimbState(false);
+        SetSpinGuardActive(false);
+        TransitionToState(MorningStarState.Respawning);
+        if (aimGuideLineRenderer != null) aimGuideLineRenderer.enabled = false;
+        if (aimMark != null) aimMark.gameObject.SetActive(false);
+    }
+
+    public void EndRespawnPresentation()
+    {
+        if (!_respawnPresentation) return;
+        _respawnPresentation = false;
+        if (morningStarRb != null) morningStarRb.simulated = _simulatedBeforeRespawn;
+        ResetForRespawn();
+    }
 
     /// <summary>開始演出も中央の状態遷移を通し、鎖と鉄球の物理を一時停止する。</summary>
     public void BeginStartIntro()
@@ -524,6 +551,10 @@ public class MorningStarLauncher : MonoBehaviour
 
         EnterDraggingState(true);
 
+        // 共通Restで位置・ラッチを復元した後も、再構築が済むまで物理を開始しない。
+        if (_respawnPresentation)
+            TransitionToState(MorningStarState.Respawning);
+
         if (animator != null)
         {
             if (HasAnimatorParam(_hashLaunchFire, AnimatorControllerParameterType.Trigger))
@@ -542,7 +573,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public bool TryAttachToMagnet(MagnetPoint magnet, Rigidbody2D targetBody, Vector2 anchorPosition)
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return false;
         if (magnet == null || targetBody == null || targetBody != morningStarRb)
             return false;
@@ -746,7 +777,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void Update()
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (morningStarRb == null)
             return;
@@ -822,7 +853,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (_playerRb == null || morningStarRb == null)
             return;
@@ -875,7 +906,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (UpdateChainClimbVisual())
             return;
@@ -960,6 +991,7 @@ public class MorningStarLauncher : MonoBehaviour
         switch (state)
         {
             case MorningStarState.StartIntro:
+            case MorningStarState.Respawning:
                 morningStarRb.simulated = false;
                 morningStarRb.linearVelocity = Vector2.zero;
                 morningStarRb.angularVelocity = 0f;
@@ -2995,7 +3027,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3007,7 +3039,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked)
+        if (_goalInputBlocked || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping

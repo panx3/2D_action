@@ -57,6 +57,23 @@ public class CameraFollow : MonoBehaviour
     [SerializeField, Tooltip("カメラ Y の最大値")]
     private float _maxY = 100f;
 
+    [Header("暗転なしリスポーン移動")]
+    [SerializeField, Min(0.1f)] private float _respawnMinDuration = 0.42f;
+    [SerializeField, Min(0.1f)] private float _respawnMaxDuration = 0.68f;
+    [SerializeField, Min(1f), Tooltip("最大移動時間に達する距離（units）")]
+    private float _respawnMaxDurationDistance = 45f;
+
+    private bool _respawnHeld;
+    private bool _respawnTravelling;
+    private Vector3 _respawnFrom;
+    private Vector3 _respawnTo;
+    private float _respawnElapsed;
+    private float _respawnDuration;
+
+    public bool IsRespawnTravelling => _respawnTravelling;
+    public float RespawnTravelProgress => _respawnDuration > 0f
+        ? Mathf.Clamp01(_respawnElapsed / _respawnDuration) : 0f;
+
     private const float FixedZ = -10f;
     private float _velocityX;
     private float _velocityY;
@@ -86,6 +103,20 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (_respawnHeld)
+        {
+            if (_respawnTravelling)
+            {
+                _respawnElapsed = Mathf.Min(_respawnDuration, _respawnElapsed + Time.deltaTime);
+                float t = RespawnTravelProgress;
+                // SmootherStep: 両端の速度と加速度が0。通常追従への引継ぎで急停止しない。
+                float eased = t * t * t * (t * (t * 6f - 15f) + 10f);
+                transform.position = Vector3.LerpUnclamped(_respawnFrom, _respawnTo, eased);
+                _respawnTravelling = t < 1f;
+            }
+            return;
+        }
+
         if (_target == null)
             return;
 
@@ -183,6 +214,8 @@ public class CameraFollow : MonoBehaviour
     /// </summary>
     public void SnapToTarget()
     {
+        if (_respawnHeld)
+            return;
         if (_target == null)
             return;
 
@@ -204,5 +237,40 @@ public class CameraFollow : MonoBehaviour
     {
         _lookAheadOffset = 0f;
         _lookAheadVelocity = 0f;
+    }
+
+    public void HoldForRespawn()
+    {
+        var shake = GetComponent<CameraShake2D>();
+        if (shake != null) shake.ResetShake();
+        _respawnHeld = true;
+        _respawnTravelling = false;
+        _respawnElapsed = _respawnDuration = 0f;
+        _velocityX = _velocityY = 0f;
+        ResetLookAhead();
+    }
+
+    public float BeginRespawnTravel(Vector3 playerPosition)
+    {
+        HoldForRespawn();
+        _respawnFrom = transform.position;
+        _respawnTo = new Vector3(playerPosition.x + _offset.x, playerPosition.y + _offset.y, FixedZ);
+        if (_useBounds)
+        {
+            _respawnTo.x = Mathf.Clamp(_respawnTo.x, _minX, _maxX);
+            _respawnTo.y = Mathf.Clamp(_respawnTo.y, _minY, _maxY);
+        }
+        float min = Mathf.Max(0.1f, _respawnMinDuration);
+        _respawnDuration = Mathf.Lerp(min, Mathf.Max(min, _respawnMaxDuration),
+            Mathf.Clamp01(Vector2.Distance(_respawnFrom, _respawnTo) / Mathf.Max(1f, _respawnMaxDurationDistance)));
+        _respawnTravelling = true;
+        return _respawnDuration;
+    }
+
+    public void EndRespawnTravel()
+    {
+        _respawnHeld = _respawnTravelling = false;
+        _velocityX = _velocityY = 0f;
+        ResetLookAhead();
     }
 }

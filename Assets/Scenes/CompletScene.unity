@@ -12495,6 +12495,9 @@ MonoBehaviour:
   _maxX: 100
   _minY: -100
   _maxY: 100
+  _respawnMinDuration: 0.42
+  _respawnMaxDuration: 0.68
+  _respawnMaxDurationDistance: 45
 --- !u!114 &1360393369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13001,6 +13004,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1431518858}
   - component: {fileID: 1431518859}
+  - component: {fileID: 1431518860}
   m_Layer: 0
   m_Name: SpawnPoint
   m_TagString: Untagged
@@ -13038,9 +13042,31 @@ MonoBehaviour:
   _defaultSpawnPoint: {fileID: 0}
   _player: {fileID: 625955976}
   _playerHealth: {fileID: 625955975}
-  _gimmickRespawnController: {fileID: 0}
-  _cameraFollow: {fileID: 0}
-  _delaySeconds: 1.5
+  _gimmickRespawnController: {fileID: 658964097}
+  _cameraFollow: {fileID: 1360393368}
+  _feedback: {fileID: 1431518860}
+  _dissolveDuration: 0.24
+  _rebuildDuration: 0.22
+  _rebuildStartProgress: 0.58
+--- !u!114 &1431518860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1431518857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ef5b3a5b1c82c4e82f0b1309b5a4f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeathRespawnFeedback
+  _pink: {r: 1, g: 0.18, b: 0.58, a: 1}
+  _cyan: {r: 0.2, g: 0.94, b: 1, a: 1}
+  _pixelsPerHeight: 40
+  _bodyPixelCount: 44
+  _dissolveSound: {fileID: 0}
+  _rebuildSound: {fileID: 0}
+  _volume: 0.5
 --- !u!1 &1445724495
 GameObject:
   m_ObjectHideFlags: 0
