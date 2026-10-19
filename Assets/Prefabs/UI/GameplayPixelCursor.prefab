@@ -174,7 +174,6 @@ MonoBehaviour:
   - {fileID: 203717222088336775}
   - {fileID: 7772659544303106081}
   - {fileID: 6923625659472611598}
-  useNativeCursor: 1
   menuHotspot: {x: 16, y: 14}
   shadowColor: {r: 0, g: 0, b: 0, a: 0.72}
   shadowOffset: {x: 3, y: -3}

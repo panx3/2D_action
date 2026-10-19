@@ -17,8 +17,6 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Image[] noisePixels;
 
     [Header("Both cursor designs")]
-    [SerializeField, Tooltip("Move the entire custom cursor with the desktop pointer, independently of game FPS. Oversized/unsupported textures use the UI fallback.")]
-    private bool useNativeCursor = true;
     [SerializeField] private Vector2 menuHotspot = new Vector2(16f, 14f);
     [SerializeField] private Color shadowColor = new Color(0f, 0f, 0f, 0.72f);
     [SerializeField, Tooltip("Constant screen pixels; independent of cursor size.")]
@@ -63,11 +61,7 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     private bool focused = true, applicationPaused;
     private bool styleKnown, chainStyle, targetChainStyle;
     private float styleChangedAt = float.NegativeInfinity;
-    private GameplayNativeCursorRaster nativeRaster;
     public bool IsShowing => view != null && view.enabled;
-    public bool IsUsingNativeCursor { get; private set; }
-    public Texture2D NativeCursorTexture => nativeRaster?.Texture;
-    public Vector2 NativeCursorHotspot => nativeRaster != null ? nativeRaster.Hotspot : Vector2.zero;
     public bool IsChainStyle => styleKnown && chainStyle;
     public bool IsChangingDesign => styleKnown && Time.unscaledTime - styleChangedAt < transitionDuration;
 
@@ -146,15 +140,15 @@ public sealed class GameplayPixelCursor : MonoBehaviour
             || !Mathf.Approximately(previousScale, cursorScale) || styleChanged;
         // CRTFilterController can convert all scene canvases. The cursor must always stay
         // outside that camera's low-resolution render and distortion, including on Resume.
-        if (view.renderMode != RenderMode.ScreenSpaceOverlay) view.renderMode = RenderMode.ScreenSpaceOverlay;
-        if (view.worldCamera != null) view.worldCamera = null;
-        if (view.scaleFactor != 1f) view.scaleFactor = 1f;
-        if (view.pixelPerfect) view.pixelPerfect = false; // Keep the actual mouse coordinate.
+        view.renderMode = RenderMode.ScreenSpaceOverlay;
+        view.worldCamera = null;
+        view.scaleFactor = 1f;
+        view.pixelPerfect = false; // Do not round the arrow away from the actual mouse coordinate.
         // The loading veil also uses the maximum order. Keeping this persistent root
         // last draws the pointer above it without changing the scene/transition owners.
-        if (view.sortingOrder != short.MaxValue) view.sortingOrder = short.MaxValue;
-        if (transform.GetSiblingIndex() != gameObject.scene.rootCount - 1) transform.SetAsLastSibling();
-        if (!view.enabled) view.enabled = true;
+        view.sortingOrder = short.MaxValue;
+        transform.SetAsLastSibling();
+        view.enabled = true;
         if (!ownsOSCursor)
         {
             previousOSVisibility = Cursor.visible;
@@ -166,41 +160,12 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         // restore hiding only, leaving the Editor's escape/unlock behavior intact.
         UnityEditor.Unsupported.SetAllowCursorHide(true);
 #endif
+        Cursor.visible = false;
+
         UpdateView(point, reset);
         UpdateNoise();
-        RenderPointer();
         lastResolution = new Vector2Int(Screen.width, Screen.height);
         previousScale = cursorScale;
-    }
-
-    private void RenderPointer()
-    {
-        bool native = false;
-        if (useNativeCursor && !Application.isMobilePlatform)
-        {
-            if (nativeRaster == null) nativeRaster = new GameplayNativeCursorRaster();
-            native = nativeRaster.Render(cursorRoot, arrowSprite, chainLinks, noisePixels,
-                chainStyle, noiseRoot != null && noiseRoot.gameObject.activeSelf, cursorScale,
-                chainLength, swingAmplitude, chainRoot.anchoredPosition, shadowColor, shadowOffset);
-        }
-        if (!native && IsUsingNativeCursor)
-        {
-            Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-            nativeRaster.Invalidate();
-        }
-        IsUsingNativeCursor = native;
-        // Keep the existing editable hierarchy/simulation, but never draw a second
-        // frame-bound arrow or chain beneath the native cursor.
-        SetImageEnabled(arrowSprite, !native);
-        foreach (var image in chainLinks) SetImageEnabled(image, !native);
-        if (noisePixels != null)
-            foreach (var image in noisePixels) SetImageEnabled(image, !native);
-        Cursor.visible = native;
-    }
-
-    private static void SetImageEnabled(UnityEngine.UI.Image image, bool enabled)
-    {
-        if (image != null && image.enabled != enabled) image.enabled = enabled;
     }
 
     private bool HasView() => cursorRoot != null && arrowSprite != null && chainSprite != null && menuSprite != null
@@ -399,9 +364,6 @@ public sealed class GameplayPixelCursor : MonoBehaviour
             noiseRoot.gameObject.SetActive(false);
         if (!ownsOSCursor)
             return;
-        if (IsUsingNativeCursor) Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-        IsUsingNativeCursor = false;
-        nativeRaster?.Invalidate();
         Cursor.visible = previousOSVisibility;
         ownsOSCursor = false;
     }
@@ -426,10 +388,4 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     }
 
     private void OnApplicationQuit() => ReleaseCursor();
-
-    private void OnDestroy()
-    {
-        ReleaseCursor();
-        nativeRaster?.Dispose();
-    }
 }
