@@ -48,6 +48,7 @@ public static class GameplayPixelCursorChecks
         SessionState.SetBool(Key, true);
         SessionState.SetBool(Key + ".EscapeOnly", false);
         SessionState.SetBool(Key + ".HitStopOnly", false);
+        SessionState.SetBool(Key + ".FastMotionOnly", false);
         SessionState.EraseString(Key + ".Result");
         Subscribe();
         EditorApplication.isPlaying = true;
@@ -64,6 +65,12 @@ public static class GameplayPixelCursorChecks
         Run();
         SessionState.SetBool(Key + ".HitStopOnly", true);
         SessionState.SetBool(Key + ".HitStopBaseline", baseline);
+    }
+
+    public static void RunFastMotionCheck()
+    {
+        Run();
+        SessionState.SetBool(Key + ".FastMotionOnly", true);
     }
 
     private static void Subscribe()
@@ -83,7 +90,8 @@ public static class GameplayPixelCursorChecks
             Application.runInBackground = true;
             Application.logMessageReceived += OnLog;
             EditorWindow.GetWindow(Type.GetType("UnityEditor.GameView,UnityEditor")).Focus();
-            routine = SessionState.GetBool(Key + ".HitStopOnly", false)
+            routine = SessionState.GetBool(Key + ".FastMotionOnly", false) ? CheckFastMotion()
+                : SessionState.GetBool(Key + ".HitStopOnly", false)
                 ? CheckHitStop(SessionState.GetBool(Key + ".HitStopBaseline", false))
                 : SessionState.GetBool(Key + ".EscapeOnly", false) ? CheckEscape() : Check();
             new GameObject("CursorCheckDriver").AddComponent<GameplayPixelCursorCheckDriver>();
@@ -113,6 +121,95 @@ public static class GameplayPixelCursorChecks
     {
         if (routine != null && EditorApplication.timeSinceStartup - started > 60d)
             Finish(false, "Play check timed out.");
+    }
+
+    private static bool PointerDisplayOwned => cursor.IsShowing && Cursor.visible == cursor.IsUsingNativeCursor;
+
+    private static IEnumerator CheckFastMotion()
+    {
+        cursor = Object.FindAnyObjectByType<GameplayPixelCursor>();
+        var player = Object.FindAnyObjectByType<Player>();
+        while (!player.InputEnabled) yield return null;
+        cursor.enabled = false;
+        Vector2 point = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        Set("useNativeCursor", false);
+        Call("ShowCursor", point);
+        Require(!cursor.IsUsingNativeCursor && !Cursor.visible && Get<UnityEngine.UI.Image>("arrowSprite").enabled,
+            "A/B baseline is the previous frame-bound UI cursor");
+        Set("useNativeCursor", true);
+        var show = (Action<Vector2>)Delegate.CreateDelegate(typeof(Action<Vector2>), cursor,
+            typeof(GameplayPixelCursor).GetMethod("ShowCursor", Private));
+        int samples = 0;
+        double rasterMilliseconds = 0;
+        var timer = new System.Diagnostics.Stopwatch();
+        foreach (float scale in new[] { 1f, 1.5f, 2f, 3f })
+        {
+            Set("cursorScale", scale);
+            show(point);
+            Require(cursor.IsUsingNativeCursor && PointerDisplayOwned, "Native cursor is accepted at scale " + scale);
+            VerifyNativeArrowPixels(scale);
+            for (int i = 0; i < 24; i++)
+            {
+                // Rapid sweeps, reversals and stops; the head remains exact and all
+                // parts share one native image instead of detaching across frames.
+                point = new Vector2(Screen.width * (i % 2 == 0 ? 0.08f : 0.92f), Screen.height * (0.2f + i % 4 * 0.18f));
+                timer.Restart(); show(point); timer.Stop();
+                rasterMilliseconds += timer.Elapsed.TotalMilliseconds; samples++;
+                Require(cursor.IsUsingNativeCursor && !Get<UnityEngine.UI.Image>("arrowSprite").enabled
+                    && !Get<UnityEngine.UI.Image[]>("chainLinks")[0].enabled, "No frame-bound duplicate head/chain");
+                Require(Vector2.Distance((Vector2)Get<RectTransform>("cursorRoot").position, point) < 0.01f,
+                    "Logical click point never smoothed or predicted");
+                yield return null;
+            }
+        }
+        File.WriteAllBytes(Path.Combine(Output, "native-chain-cursor.png"), cursor.NativeCursorTexture.EncodeToPNG());
+        Require(rasterMilliseconds / samples < 8d, "Cursor composition must stay lightweight");
+        Report.AppendLine("PASS native RGBA cursor at 1/1.5/2/3x, supplied arrow pixels, exact hotspot, attached chain/shadows, rapid sweeps/reversals; mean composition ms=" + (rasterMilliseconds / samples).ToString("F3"));
+
+        // A stationary pose should not upload again just because the mouse moves.
+        Set("cursorScale", 3f);
+        Set("usingGamepad", true);
+        for (float end = Time.unscaledTime + 0.4f; Time.unscaledTime < end;)
+        { show(point); yield return null; }
+        show(point);
+        object raster = Get<object>("nativeRaster");
+        var uploads = raster.GetType().GetProperty("UploadCount");
+        int before = (int)uploads.GetValue(raster);
+        for (int i = 0; i < 30; i++) show(point + Vector2.right * i * 20f);
+        Require((int)uploads.GetValue(raster) == before, "Pointer translation needs no texture uploads");
+        File.WriteAllBytes(Path.Combine(Output, "native-menu-cursor.png"), cursor.NativeCursorTexture.EncodeToPNG());
+        Set("usingGamepad", false);
+        Report.AppendLine("PASS native translation is independent of UI redraws; unchanged poses reuse the cursor texture");
+        var escape = CheckEscape();
+        while (escape.MoveNext()) yield return escape.Current;
+    }
+
+    private static void VerifyNativeArrowPixels(float scale)
+    {
+        var source = Get<UnityEngine.UI.Image>("arrowSprite").sprite.texture;
+        var original = source.GetPixels32();
+        var texture = cursor.NativeCursorTexture;
+        var rendered = texture.GetPixels32();
+        Vector2 target = cursor.NativeCursorHotspot;
+        Vector2 sourceTip = Get<Vector2>("hotspot");
+        int compared = 0, shadows = 0;
+        for (int y = 0; y < source.height; y++)
+            for (int x = 0; x < source.width; x++)
+            {
+                Color32 expected = original[y * source.width + x];
+                if (expected.a != 255) continue;
+                int px = Mathf.FloorToInt(target.x + (x - sourceTip.x + 0.5f) * scale);
+                int py = Mathf.FloorToInt(texture.height - target.y + (y - source.height + sourceTip.y + 0.5f) * scale);
+                Require(px >= 0 && py >= 0 && px < texture.width && py < texture.height, "All opaque arrow pixels fit");
+                Color32 actual = rendered[py * texture.width + px];
+                Require(Mathf.Abs(actual.r - expected.r) <= 1 && Mathf.Abs(actual.g - expected.g) <= 1
+                    && Mathf.Abs(actual.b - expected.b) <= 1 && actual.a == 255, "Native pointer preserves source pixels and tip mapping");
+                compared++;
+            }
+        foreach (var pixel in rendered)
+            if (pixel.r == 0 && pixel.g == 0 && pixel.b == 0 && pixel.a > 80 && pixel.a < 240) shadows++;
+        Require(compared > 20 && shadows > 0, "Arrow source and permanent shadow are present");
+        Require(target.x >= 0 && target.y >= 0 && target.x < texture.width && target.y < texture.height, "Native hotspot is valid");
     }
 
     private static IEnumerator CheckHitStop(bool baseline)
@@ -213,7 +310,7 @@ public static class GameplayPixelCursorChecks
             for (float end = Time.unscaledTime + 0.3f; Time.unscaledTime < end;)
             {
                 Call("ShowCursor", point);
-                Require(cursor.IsShowing && !Cursor.visible, "ESC pause keeps canvas visible and requests OS cursor hidden without clicking");
+                Require(PointerDisplayOwned, "ESC pause retains the custom cursor without clicking");
                 Require(Cursor.lockState == CursorLockMode.None, "No cursor locking introduced");
                 yield return null;
             }
@@ -226,7 +323,7 @@ public static class GameplayPixelCursorChecks
             for (float end = Time.unscaledTime + 0.5f; Time.unscaledTime < end;)
             { Call("ShowCursor", point); yield return null; }
             Call("ShowCursor", point);
-            Require(!pause.IsPaused && cursor.IsChainStyle && !Cursor.visible, "ESC resumes with custom cursor without clicking");
+            Require(!pause.IsPaused && cursor.IsChainStyle && PointerDisplayOwned, "ESC resumes with custom cursor without clicking");
         }
         Call("OnApplicationFocus", false);
         Require(!cursor.IsShowing && Cursor.visible, "Focus loss still restores OS cursor");
@@ -235,8 +332,8 @@ public static class GameplayPixelCursorChecks
         Call("OnApplicationQuit");
         Require(Cursor.visible && !cursor.IsShowing, "Quit still restores OS cursor");
         Require(errors == 0, "Runtime Errors/Exceptions=" + errors);
-        Report.AppendLine("PASS three ESC pause/resume cycles through GameView events and Input System; no mouse clicks; canvas visible and OS-hide requested; both designs; no cursor lock; focus/quit restore; Errors/Exceptions=0");
-        Report.AppendLine("Native Editor cursor rendering after a physical ESC still requires visual confirmation; Cursor.visible reports the game request, not the Editor hide permission.");
+        Report.AppendLine("PASS three ESC pause/resume cycles through GameView events and Input System; no clicks; native/UI ownership retained; both designs; no cursor lock; focus/quit restore; Errors/Exceptions=0");
+        Report.AppendLine("Final physical-pointer smoothness and native rendering outside the Game View require user visual confirmation.");
     }
 
     private static IEnumerator Check()
@@ -282,7 +379,7 @@ public static class GameplayPixelCursorChecks
         }
         Set("cursorScale", 3f);
         Call("ShowCursor", point);
-        Require(cursor.IsShowing && !Cursor.visible, "OS hidden only while owned");
+        Require(PointerDisplayOwned, "Only the custom pointer is displayed while owned");
         yield return null;
         CaptureGameView();
         Call("OnApplicationFocus", false);
@@ -339,7 +436,7 @@ public static class GameplayPixelCursorChecks
             yield return null;
         }
         Call("ShowCursor", point);
-        Require(sawNoise && !cursor.IsChangingDesign && cursor.IsShowing && !Cursor.visible,
+        Require(sawNoise && !cursor.IsChangingDesign && PointerDisplayOwned,
             $"Paused noise: saw={sawNoise}, changing={cursor.IsChangingDesign}, showing={cursor.IsShowing}, OS={Cursor.visible}");
         Require(!cursor.IsChainStyle && !chain.gameObject.activeSelf
             && AssetDatabase.GetAssetPath(arrow.sprite) == GameplayPixelCursorSetup.MenuPath, "Pause uses supplied menu design");
@@ -374,7 +471,7 @@ public static class GameplayPixelCursorChecks
         for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
         { Call("ShowCursor", point); yield return null; }
         Call("ShowCursor", point);
-        Require(!cursor.IsChainStyle && cursor.IsShowing && !Cursor.visible, "Gamepad fallback uses new custom pointer");
+        Require(!cursor.IsChainStyle && PointerDisplayOwned, "Gamepad fallback uses new custom pointer");
         padState = new GamepadState();
         mouseState.position += Vector2.right * 10f;
         yield return null; yield return null;
@@ -512,7 +609,8 @@ public static class GameplayPixelCursorChecks
         EditorApplication.update -= Watchdog;
         Application.logMessageReceived -= OnLog;
         string result = (pass ? "PASS\n" : "FAIL\n") + Report + detail;
-        string filename = SessionState.GetBool(Key + ".HitStopOnly", false)
+        string filename = SessionState.GetBool(Key + ".FastMotionOnly", false) ? "fast-motion.txt"
+            : SessionState.GetBool(Key + ".HitStopOnly", false)
             ? SessionState.GetBool(Key + ".HitStopBaseline", false) ? "hitstop-baseline.txt" : "hitstop.txt"
             : "result.txt";
         File.WriteAllText(Path.Combine(Output, filename), result);

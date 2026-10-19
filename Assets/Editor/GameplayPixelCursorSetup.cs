@@ -14,6 +14,28 @@ public static class GameplayPixelCursorSetup
     public const string MenuPath = "Assets/image_/UI/Cursor/PixelMenuArrow.png";
     public const string PrefabPath = "Assets/Prefabs/UI/GameplayPixelCursor.prefab";
 
+    public static string EnableNativeRendering()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+            throw new InvalidOperationException("Exit Play Mode before updating cursor assets.");
+        foreach (string path in new[] { ArrowPath, MenuPath, ChainPath })
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) throw new InvalidOperationException("Missing cursor texture: " + path);
+            if (!importer.isReadable) { importer.isReadable = true; importer.SaveAndReimport(); }
+        }
+        var contents = PrefabUtility.LoadPrefabContents(PrefabPath);
+        try
+        {
+            var data = new SerializedObject(contents.GetComponent<GameplayPixelCursor>());
+            data.FindProperty("useNativeCursor").boolValue = true;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(contents, PrefabPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(contents); }
+        return "Saved native custom cursor and readable source textures; appearance/physics tuning preserved.";
+    }
+
     public static string Install()
     {
         var scene = EditorSceneManager.GetActiveScene();
@@ -123,6 +145,7 @@ public static class GameplayPixelCursorSetup
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
         var importer = (TextureImporter)AssetImporter.GetAtPath(path);
         importer.textureType = TextureImporterType.Sprite;
+        importer.isReadable = true;
         importer.spriteImportMode = mode;
         importer.spritePixelsPerUnit = 100f;
         importer.filterMode = FilterMode.Point;
