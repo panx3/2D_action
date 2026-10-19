@@ -34,6 +34,11 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
     [SerializeField] private ParticleSystem playerHealingEffect;
     [SerializeField] private AudioClip pickupClip;
     [SerializeField, Range(0f, 1f)] private float soundVolume = 0.5f;
+    [SerializeField, Min(0f), Tooltip("0なら取得音の長さだけ飲んでから回復。秒を指定して調整も可能。")]
+    private float drinkingDuration;
+    [SerializeField] private AudioClip recoveryClip;
+    [SerializeField, Range(0f, 1f)] private float recoverySoundVolume = 0.65f;
+    [SerializeField, Range(0.5f, 2f)] private float recoveryEffectDuration = 1.1f;
     [SerializeField, Tooltip("未設定時は既存WorldImpactSfxへルーティングします。")]
     private AudioSource soundSource;
 
@@ -46,13 +51,26 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
     private bool collected;
     private ParticleSystem[] idleEmitters;
     private Vector3 shadowBaseScale;
+    private PlayerHealth receiverHealth;
+    private Collider2D receiverCollider;
+    private int receiverVersion;
+    private float recoveryStartsAt;
+    private bool recoveryStarted;
+    private ParticleSystem recoveryEffect;
     private static float nextSoundTime;
+    private static float nextRecoverySoundTime;
 
     public bool IsCollected => collected;
     public int HealAmount => healAmount;
+    public bool HasRecovered => recoveryStarted;
+    public float DrinkingDuration => drinkingDuration > 0f ? drinkingDuration
+        : pickupClip != null ? pickupClip.length : 0.94f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSoundCooldown() => nextSoundTime = 0f;
+    private static void ResetSoundCooldown()
+    {
+        nextSoundTime = nextRecoverySoundTime = 0f;
+    }
 
     private void Awake()
     {
@@ -72,6 +90,7 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
         healAmount = Mathf.Max(1, healAmount);
         floatPeriod = Mathf.Max(0.1f, floatPeriod);
         floatAmplitude = Mathf.Max(0f, floatAmplitude);
+        drinkingDuration = Mathf.Max(0f, drinkingDuration);
         if (Application.isPlaying) ApplyParticleRate();
     }
 
@@ -99,14 +118,16 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
         if (other.attachedRigidbody == null
             || other.attachedRigidbody != health.GetComponent<Rigidbody2D>()) return;
 
-        // Healイベントから再入しても二重取得しないよう、回復前に確定する。
+        // 1段階目: 取得確定・小さな反応・飲む音。HPはまだ回復させない。
         collected = true;
         pickupTrigger.enabled = false;
-        Transform receiver = health.transform;
+        receiverHealth = health;
+        receiverCollider = other;
+        receiverVersion = health.RecoveryVersion;
+        recoveryStartsAt = Mathf.Max(pickupDuration, DrinkingDuration);
         pickupStart = visualRoot.position;
         // 接触した方向へ短く寄せる。高速移動するPlayerを追い続けて軌道を曲げない。
         pickupEnd = pickupStart + Vector3.ClampMagnitude(other.bounds.center - pickupStart, 0.35f);
-        health.Heal(healAmount);
 
         if (idleParticles != null)
             idleParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -114,17 +135,6 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
         {
             pickupBurst.transform.position = pickupStart;
             pickupBurst.Play(true);
-        }
-        if (playerHealingEffect != null)
-        {
-            // 吸収中も飲み物の輪郭に回復粒子を重ねない。
-            var effectRenderer = playerHealingEffect.GetComponent<ParticleSystemRenderer>();
-            if (drinkRenderer != null && effectRenderer != null
-                && drinkRenderer.sortingLayerID == effectRenderer.sortingLayerID)
-                drinkRenderer.sortingOrder = Mathf.Max(drinkRenderer.sortingOrder, effectRenderer.sortingOrder + 1);
-            ParticleSystem effect = Instantiate(playerHealingEffect, other.bounds.center,
-                Quaternion.identity, receiver);
-            effect.Play(true);
         }
         if (Time.unscaledTime >= nextSoundTime && soundVolume > 0f && pickupClip != null)
         {
@@ -134,10 +144,47 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
         }
     }
 
+    private bool ReceiverIsValid => receiverHealth != null && receiverHealth.isActiveAndEnabled
+        && !receiverHealth.IsDead && receiverHealth.RecoveryVersion == receiverVersion;
+
+    private void BeginRecovery()
+    {
+        // 2段階目: 同じフレームで回復音・HP・キャラクター・UIを同期する。
+        recoveryStarted = true;
+        receiverHealth.Heal(healAmount);
+        if (!ReceiverIsValid) return;
+        Vector3 center = receiverCollider != null ? receiverCollider.bounds.center : receiverHealth.transform.position;
+        if (playerHealingEffect != null)
+        {
+            recoveryEffect = Instantiate(playerHealingEffect, center, Quaternion.identity, receiverHealth.transform);
+            recoveryEffect.Play(true);
+        }
+        foreach (var bar in FindObjectsByType<SegmentHpBarUI>(FindObjectsSortMode.None))
+            bar.PlayItemRecovery(receiverHealth, recoveryEffectDuration);
+        if (Time.unscaledTime >= nextRecoverySoundTime && recoveryClip != null && recoverySoundVolume > 0f)
+        {
+            if (OneShotAudioUtility.Play2D(soundSource, recoveryClip, recoverySoundVolume, center))
+                nextRecoverySoundTime = Time.unscaledTime + 0.12f;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (!collected) return;
+        if (recoveryEffect != null) Destroy(recoveryEffect.gameObject);
+        // 取得後の無効化・再有効化で遅延回復を再開しない。
+        Destroy(gameObject);
+    }
+
     private void Update()
     {
         if (collected)
         {
+            if (!ReceiverIsValid)
+            {
+                Destroy(gameObject);
+                return;
+            }
             pickupTime += Time.deltaTime;
             float t = Mathf.Clamp01(pickupTime / pickupDuration);
             // 冒頭は形を見せ、拡縮せず短い引き寄せとフェードで消す。
@@ -149,8 +196,11 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
             if (drinkRenderer != null)
                 drinkRenderer.color = new Color(1f, 1f, 1f, opacity);
             if (t >= 1f && drinkRenderer != null) drinkRenderer.enabled = false;
-            // 小粒子が消えるまでrootを残す。音は共有Source上で最後まで鳴る。
-            if (pickupTime >= Mathf.Max(pickupDuration, 1.1f)) Destroy(gameObject);
+            if (!recoveryStarted && pickupTime >= recoveryStartsAt) BeginRecovery();
+            // 飲み終わるまで、見えないrootが遅延回復を所有する。
+            float cleanupAt = recoveryStartsAt + Mathf.Max(recoveryEffectDuration,
+                recoveryClip != null ? recoveryClip.length : 0f) + 0.25f;
+            if (recoveryStarted && pickupTime >= cleanupAt) Destroy(gameObject);
             return;
         }
 

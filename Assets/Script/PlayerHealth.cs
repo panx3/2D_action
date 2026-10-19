@@ -42,6 +42,8 @@ public class PlayerHealth : MonoBehaviour
     public bool IsInvincible { get; private set; }
     public bool IsRespawning { get; private set; }
     public int DamageSoundPlayCount { get; private set; }
+    /// <summary>遅延回復を死亡・復帰・無効化の前後で持ち越さないための世代番号。</summary>
+    public int RecoveryVersion { get; private set; }
 
     public event Action OnDamaged;
     public event Action OnDead;
@@ -85,6 +87,8 @@ public class PlayerHealth : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.H)) TakeDamage(1);
         if (Input.GetKeyDown(KeyCode.R)) ResetToFullHp();
     }
+
+    private void OnDisable() => RecoveryVersion++;
 
     /// <summary>
     /// ダメージを受ける。無敵中・死亡中は無視。ノックバックは knockbackImpulse で指定。
@@ -139,6 +143,7 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void ResetToFullHp()
     {
+        RecoveryVersion++;
         int before = CurrentHp;
         CurrentHp = _maxHp;
         IsDead = false;
@@ -157,6 +162,7 @@ public class PlayerHealth : MonoBehaviour
         if (CurrentHp <= 0)
             return;
 
+        RecoveryVersion++;
         IsDead = false;
         StopInvincible();
         if (_spriteRenderer != null) _spriteRenderer.enabled = true;
@@ -188,6 +194,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
+        RecoveryVersion++;
         IsDead = true;
         StopInvincible();
         OnDead?.Invoke();

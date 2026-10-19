@@ -12,6 +12,8 @@ public static class TapiocaHealingItemSetup
     public const string SoundPath = "Assets/Audio/SFX/Items/TapiocaHeal.wav";
     public const string PrefabPath = "Assets/Prefabs/Items/TapiocaMilkTea.prefab";
     public const string EffectPath = "Assets/Prefabs/Items/TapiocaPlayerHeal.prefab";
+    public const string DrinkingSoundPath = "Assets/Audio/SFX/Items/eat_07.mp3";
+    public const string RecoverySoundPath = "Assets/Audio/SFX/Items/Inspiration03-1_High.wav";
     private const string GeneratedFolder = "Assets/Generated/Tapioca";
 
     public static void CreateAssets()
@@ -30,7 +32,145 @@ public static class TapiocaHealingItemSetup
         if (effect == null) effect = CreatePlayerEffect(dots, soft);
         if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
             CreatePickup(glow, dots, effect.GetComponent<ParticleSystem>());
+        if (File.Exists(DrinkingSoundPath) && File.Exists(RecoverySoundPath)) ConfigureTwoStageRecovery();
         AssetDatabase.SaveAssets();
+    }
+
+    public static void ConfigureTwoStageRecovery()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play Mode first.");
+        AudioClip drinking = ImportPickupAudio(DrinkingSoundPath);
+        AudioClip recovery = ImportPickupAudio(RecoverySoundPath);
+        Material ringMaterial = GetMaterial(GeneratedFolder + "/RecoveryRing.mat", CreateRecoverySprite(false).texture);
+        Material sparkleMaterial = GetMaterial(GeneratedFolder + "/RecoverySparkle.mat", CreateRecoverySprite(true).texture);
+        GameObject effect = PrefabUtility.LoadPrefabContents(EffectPath);
+        try
+        {
+            ParticleSystem particles = effect.GetComponent<ParticleSystem>();
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = particles.main;
+            main.duration = 0.35f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.65f, 0.9f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.8f, 1.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.07f, 0.13f);
+            main.maxParticles = 48;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            var emission = particles.emission;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 12),
+                new ParticleSystem.Burst(0.14f, 8), new ParticleSystem.Burst(0.28f, 6) });
+            var shape = particles.shape;
+            shape.scale = new Vector3(1.35f, 2.3f, 0f);
+            particles.GetComponent<ParticleSystemRenderer>().sharedMaterial = sparkleMaterial;
+
+            var aura = effect.transform.Find("SoftCharge").GetComponent<ParticleSystem>();
+            aura.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var auraMain = aura.main;
+            auraMain.startLifetime = 0.8f;
+            auraMain.startSize = 3.3f;
+            auraMain.startColor = new Color(0.5f, 1f, 0.88f, 0.36f);
+            aura.GetComponent<ParticleSystemRenderer>().sortingOrder = 1;
+
+            ParticleSystem ring = RecoveryChild(effect.transform, "RecoveryPixelRing", ringMaterial);
+            var ringMain = ring.main;
+            ringMain.startLifetime = 0.65f;
+            ringMain.startSize = 3.3f;
+            ringMain.startSpeed = 0f;
+            ringMain.startColor = new Color(0.45f, 1f, 0.92f, 0.75f);
+            var ringShape = ring.shape;
+            ringShape.enabled = false;
+            var ringEmission = ring.emission;
+            ringEmission.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
+            var ringSize = ring.sizeOverLifetime;
+            ringSize.enabled = true;
+            ringSize.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.4f, 1f, 1.15f));
+            ring.GetComponent<ParticleSystemRenderer>().sortingOrder = 1;
+
+            ParticleSystem streaks = RecoveryChild(effect.transform, "RecoveryLightStreaks",
+                AssetDatabase.LoadAssetAtPath<Material>(GeneratedFolder + "/TapiocaDots.mat"));
+            var streakMain = streaks.main;
+            streakMain.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.7f);
+            streakMain.startSpeed = 0f;
+            streakMain.startSize3D = true;
+            streakMain.startSizeX = 0.045f;
+            streakMain.startSizeY = 0.32f;
+            streakMain.startSizeZ = 1f;
+            streakMain.startColor = new Color(0.7f, 1f, 0.98f, 0.9f);
+            var streakShape = streaks.shape;
+            streakShape.shapeType = ParticleSystemShapeType.Box;
+            streakShape.scale = new Vector3(1.6f, 1.2f, 0f);
+            streakShape.rotation = Vector3.zero;
+            var velocity = streaks.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.x = 0f; velocity.y = 1.6f; velocity.z = 0f;
+            var streakEmission = streaks.emission;
+            streakEmission.SetBursts(new[] { new ParticleSystem.Burst(0.02f, 8), new ParticleSystem.Burst(0.18f, 4) });
+            PrefabUtility.SaveAsPrefabAsset(effect, EffectPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(effect); }
+
+        GameObject pickup = PrefabUtility.LoadPrefabContents(PrefabPath);
+        try
+        {
+            var settings = new SerializedObject(pickup.GetComponent<TapiocaHealingPickup>());
+            settings.FindProperty("pickupClip").objectReferenceValue = drinking;
+            settings.FindProperty("drinkingDuration").floatValue = 0f;
+            settings.FindProperty("recoveryClip").objectReferenceValue = recovery;
+            settings.FindProperty("playerHealingEffect").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<GameObject>(EffectPath).GetComponent<ParticleSystem>();
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(pickup, PrefabPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(pickup); }
+    }
+
+    private static AudioClip ImportPickupAudio(string path)
+    {
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        var importer = AssetImporter.GetAtPath(path) as AudioImporter;
+        if (importer == null) throw new FileNotFoundException("Missing pickup sound", path);
+        var settings = importer.defaultSampleSettings;
+        settings.loadType = AudioClipLoadType.DecompressOnLoad;
+        settings.compressionFormat = AudioCompressionFormat.PCM;
+        importer.defaultSampleSettings = settings;
+        importer.forceToMono = true;
+        importer.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+    }
+
+    private static ParticleSystem RecoveryChild(Transform parent, string name, Material material)
+    {
+        Transform existing = parent.Find(name);
+        if (existing != null) return existing.GetComponent<ParticleSystem>();
+        ParticleSystem particles = CreateDots(name, parent, material, false);
+        var main = particles.main;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;
+        return particles;
+    }
+
+    private static Sprite CreateRecoverySprite(bool sparkle)
+    {
+        string path = GeneratedFolder + (sparkle ? "/RecoverySparkle.png" : "/RecoveryRing.png");
+        if (!File.Exists(path))
+        {
+            int size = sparkle ? 9 : 24;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = Mathf.Abs(x - (size - 1) * 0.5f);
+                    float dy = Mathf.Abs(y - (size - 1) * 0.5f);
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    bool visible = sparkle ? (dx < 0.6f || dy < 0.6f || dx + dy < 2.5f)
+                        : r >= 9.6f && r <= 10.8f;
+                    texture.SetPixel(x, y, visible ? Color.white : Color.clear);
+                }
+            texture.Apply();
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(texture);
+        }
+        ConfigureSprite(path, 24f, FilterMode.Point);
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     public static string Place(float x)

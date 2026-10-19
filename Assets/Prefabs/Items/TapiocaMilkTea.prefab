@@ -110,8 +110,12 @@ MonoBehaviour:
   pickupDuration: 0.28
   pickupBurst: {fileID: 5558070824339686039}
   playerHealingEffect: {fileID: 6938090450931482460, guid: 3a859b09d3824a34598a1a2df479d976, type: 3}
-  pickupClip: {fileID: 8300000, guid: a9861820942241349bde2fd24ca11c41, type: 3}
+  pickupClip: {fileID: 8300000, guid: d88388293c2cc6443bbabe2f954924f4, type: 3}
   soundVolume: 0.5
+  drinkingDuration: 0
+  recoveryClip: {fileID: 8300000, guid: ebd53c6f1c1a39c4ba5eca7836ad6afe, type: 3}
+  recoverySoundVolume: 0.65
+  recoveryEffectDuration: 1.1
   soundSource: {fileID: 0}
 --- !u!1 &2026852988743005296
 GameObject:
