@@ -45,6 +45,16 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField, Range(0f, 0.2f)] private float startPulseScale = 0.035f;
     [SerializeField, Min(0f)] private float backgroundDrift = 8f;
 
+    [Header("Logo Shine")]
+    [SerializeField] private Shader logoShineShader;
+    [SerializeField, Min(0.2f), Tooltip("ロゴの反射光が流れる周期（秒）")]
+    private float logoShinePeriod = 6f;
+    [SerializeField, Min(0.1f), Tooltip("反射光が左から右へ通過する時間（秒）")]
+    private float logoShineDuration = 1.35f;
+    [SerializeField, Range(0f, 1f)] private float logoShineStrength = 0.5f;
+    [SerializeField, Min(0f), Tooltip("タイトル登場後、最初の反射光までの待ち時間（秒）")]
+    private float logoShineDelay = 1.4f;
+
     [Header("Stage Loading Transition")]
     [SerializeField] private Sprite loadingBallSprite;
     [SerializeField] private TMP_FontAsset loadingFont;
@@ -72,6 +82,12 @@ public sealed class TitleScreenController : MonoBehaviour
     private float _lastNavigationSound;
     private TitleMenuItem[] _menuItems;
     private Vector3 _backgroundScale;
+    private UnityEngine.UI.Image _logoImage;
+    private Material _logoOriginalMaterial;
+    private Material _logoShineMaterial;
+    private double _logoShineElapsed;
+    private static readonly int LogoShinePositionId = Shader.PropertyToID("_ShinePosition");
+    private static readonly int LogoShineStrengthId = Shader.PropertyToID("_ShineStrength");
 
     public bool InputReady => _inputReady;
     public bool IsStarting => _isStarting;
@@ -101,6 +117,7 @@ public sealed class TitleScreenController : MonoBehaviour
         _startScaleOrigin = startPanel != null ? startPanel.localScale : Vector3.one;
         _startGlowScaleOrigin = startGlow != null ? startGlow.localScale : Vector3.one;
         CacheAmbientState();
+        InitializeLogoShine();
         SetCanvasAlpha(backgroundGroup, 0f);
         SetCanvasAlpha(logoGroup, 0f);
         SetCanvasAlpha(characterGroup, 0f);
@@ -133,6 +150,7 @@ public sealed class TitleScreenController : MonoBehaviour
 
     private void Update()
     {
+        UpdateLogoShine();
         if (!_isStarting)
             UpdateIdlePresentation();
         if (_inputReady && !_isStarting && (controlsPanel == null || !controlsPanel.IsVisible)
@@ -236,6 +254,12 @@ public sealed class TitleScreenController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_logoShineMaterial != null)
+        {
+            if (_logoImage != null && _logoImage.material == _logoShineMaterial)
+                _logoImage.material = _logoOriginalMaterial;
+            Destroy(_logoShineMaterial);
+        }
         if (startButton != null)
             startButton.onClick.RemoveListener(OnStartPressed);
         if (controlsButton != null)
@@ -389,6 +413,54 @@ public sealed class TitleScreenController : MonoBehaviour
                 layer.anchoredPosition = _backgroundOrigins[i] + new Vector2(x, y);
             }
         }
+    }
+
+    private void InitializeLogoShine()
+    {
+        if (logoGroup == null || logoShineShader == null || !logoShineShader.isSupported)
+            return;
+
+        _logoImage = logoGroup.GetComponent<UnityEngine.UI.Image>();
+        if (_logoImage == null || _logoImage.sprite == null)
+            return;
+
+        _logoOriginalMaterial = _logoImage.material;
+        _logoShineMaterial = new Material(logoShineShader) { name = "Title Logo Shine (Runtime)" };
+        Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(_logoImage.sprite);
+        _logoShineMaterial.SetVector("_LogoUVRect", new Vector4(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y));
+        _logoShineMaterial.SetFloat(LogoShineStrengthId, 0f);
+        _logoImage.material = _logoShineMaterial;
+        _logoShineElapsed = -logoShineDelay;
+    }
+
+    private void UpdateLogoShine()
+    {
+        if (_logoShineMaterial == null)
+            return;
+
+        if (!_inputReady || _isStarting || (controlsPanel != null && controlsPanel.IsVisible))
+        {
+            ResetLogoShine();
+            return;
+        }
+
+        _logoShineElapsed += Time.unscaledDeltaTime;
+        float duration = Mathf.Max(0.1f, logoShineDuration);
+        double period = Mathf.Max(logoShinePeriod, duration + 0.2f);
+        float phase = (float)(_logoShineElapsed % period);
+        bool shining = _logoShineElapsed >= 0d && phase < duration;
+        // UV margins keep the entire band outside the sprite between passes.
+        _logoShineMaterial.SetFloat(LogoShinePositionId, Mathf.Lerp(-0.4f, 1.4f, phase / duration));
+        _logoShineMaterial.SetFloat(LogoShineStrengthId, shining ? logoShineStrength : 0f);
+    }
+
+    private void OnDisable() => ResetLogoShine();
+
+    private void ResetLogoShine()
+    {
+        _logoShineElapsed = -logoShineDelay;
+        if (_logoShineMaterial != null)
+            _logoShineMaterial.SetFloat(LogoShineStrengthId, 0f);
     }
 
     private void StartSequence()

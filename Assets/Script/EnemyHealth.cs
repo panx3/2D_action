@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -54,6 +55,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     public bool IsHitStunned => _hitStunTimer > 0f;
     public bool IsDeathHandled => _deathHandled;
     public int HitSoundPlayCount { get; private set; }
+    // 確定した被弾だけをAI/表示へ通知する。HP・ノックバックの所有者はこのComponent。
+    public event Action<MorningStarHitContext, bool> HitConfirmed;
 
     private void Awake()
     {
@@ -104,6 +107,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         else if (context.KnockbackImpulse.sqrMagnitude > 0.0001f)
             _lastImpactDirection = context.KnockbackImpulse.normalized;
 
+        // 移動AIが自分の駆動速度を解除してから、既存の被弾Impulseを適用する。
+        HitConfirmed?.Invoke(context, _currentHp <= 0);
         if (_rigidbody2D != null)
         {
             if (freezeRotationOnHit)

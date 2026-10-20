@@ -39,6 +39,7 @@ public sealed class PlayerStartIntro : MonoBehaviour
 
     public bool IsPlaying { get; private set; }
     public IntroPhase Phase { get; private set; } = IntroPhase.WaitingForStage;
+    public float CameraProgress { get; private set; }
     /// <summary>停止・通常操作への復帰が完了した後に一度だけ通知する。</summary>
     public event System.Action Completed;
 
@@ -51,6 +52,7 @@ public sealed class PlayerStartIntro : MonoBehaviour
     private bool _physicsCaptured;
     private bool _bodyWasSimulated;
     private bool _cameraWasEnabled;
+    private bool _cameraControlled;
     private Vector2 _finalPosition;
 
     private void Reset()
@@ -94,7 +96,10 @@ public sealed class PlayerStartIntro : MonoBehaviour
         _player.ClearAimFacing();
         _player.SetLaunchFacing(1f);
         if (cameraFollow != null)
-            cameraFollow.enabled = false;
+        {
+            _cameraControlled = cameraFollow.BeginStartIntro(this, start, landing, _finalPosition, jumpArcHeight);
+            if (!_cameraControlled) cameraFollow.enabled = false;
+        }
         if (_launcher != null)
             _launcher.BeginStartIntro();
         MoveTo(start);
@@ -106,11 +111,14 @@ public sealed class PlayerStartIntro : MonoBehaviour
 
         Phase = IntroPhase.Jump;
         float duration = Mathf.Max(0.05f, introJumpDuration);
+        float walkDuration = Vector2.Distance(landing, _finalPosition) / Mathf.Max(0.05f, walkSpeed);
+        float cameraDuration = duration + walkDuration;
         float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed = Mathf.Min(duration, elapsed + Time.deltaTime);
             float t = elapsed / duration;
+            CameraProgress = elapsed / cameraDuration;
             Vector2 position = Vector2.Lerp(start, landing, t)
                 + Vector2.up * (4f * Mathf.Max(0f, jumpArcHeight) * t * (1f - t));
             Vector2 velocity = (landing - start) / duration
@@ -132,11 +140,13 @@ public sealed class PlayerStartIntro : MonoBehaviour
         while (walked < distance)
         {
             walked = Mathf.Min(distance, walked + Mathf.Max(0.05f, walkSpeed) * Time.deltaTime);
+            CameraProgress = (duration + walked / Mathf.Max(0.05f, walkSpeed)) / cameraDuration;
             MoveTo(Vector2.Lerp(landing, _finalPosition, distance > 0f ? walked / distance : 1f));
             _player.SetStartIntroMotion(true, direction * Mathf.Max(0.05f, walkSpeed));
             yield return null;
         }
         MoveTo(_finalPosition);
+        CameraProgress = 1f;
         _player.SetStartIntroMotion(true, Vector2.zero);
         yield return null;
         Finish(true);
@@ -184,9 +194,15 @@ public sealed class PlayerStartIntro : MonoBehaviour
             _player.SetStartIntroControl(false);
             if (cameraFollow != null)
             {
-                cameraFollow.ResetLookAhead();
-                cameraFollow.enabled = _cameraWasEnabled;
+                if (_cameraControlled)
+                    cameraFollow.EndStartIntro(this);
+                else
+                {
+                    cameraFollow.ResetLookAhead();
+                    cameraFollow.enabled = _cameraWasEnabled;
+                }
             }
+            _cameraControlled = false;
             _physicsCaptured = false;
         }
         if (_inputCaptured)

@@ -8,6 +8,8 @@ public sealed class GroundProjectedShadow : MonoBehaviour
     [SerializeField] private Collider2D body;
     [SerializeField] private SpriteRenderer groundShadow;
     [SerializeField, Min(0.1f)] private float width = 1.5f;
+    [SerializeField, Tooltip("配置した敵のRootスケールに合わせて影の幅を拡縮する。既存の固定幅の影はOFF。")]
+    private bool scaleWithOwner;
     [SerializeField, Range(0f, 1f)] private float opacity = 0.52f;
     [SerializeField, Min(0.1f)] private float probeDistance = 8f;
     [SerializeField] private LayerMask groundLayers = (1 << 0) | (1 << 6) | (1 << 10);
@@ -59,7 +61,8 @@ public sealed class GroundProjectedShadow : MonoBehaviour
         // 回転する鉄球の子でも影は床に固定。拡縮は親のスケールから独立させる。
         shadow.localScale = Vector3.one;
         Vector3 inherited = shadow.lossyScale;
-        float scale = width * Mathf.Lerp(1f, 0.65f, distance01) / groundShadow.sprite.bounds.size.x;
+        float worldWidth = width * (scaleWithOwner ? Mathf.Abs(transform.lossyScale.x) : 1f);
+        float scale = worldWidth * Mathf.Lerp(1f, 0.65f, distance01) / groundShadow.sprite.bounds.size.x;
         shadow.localScale = new Vector3(scale / Mathf.Max(0.0001f, Mathf.Abs(inherited.x)),
             scale * 0.72f / Mathf.Max(0.0001f, Mathf.Abs(inherited.y)), 1f);
         Renderer floorRenderer = floor.collider.GetComponent<Renderer>();
