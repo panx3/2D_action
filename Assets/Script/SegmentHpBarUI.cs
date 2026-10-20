@@ -44,6 +44,11 @@ public class SegmentHpBarUI : MonoBehaviour
     [SerializeField, Tooltip("被弾時の最大揺れ幅（UI Pixel）")]
     private Vector2 _damageShakeAmount = new Vector2(4f, 1.5f);
 
+    [Header("Healing Feedback")]
+    [SerializeField, Min(0f)] private float _healHighlightDuration = 0.45f;
+    [SerializeField] private Color _healHighlightColor = new Color(1f, 0.78f, 0.92f, 0.65f);
+    [SerializeField, Range(0f, 1f)] private float _itemRecoveryStrength = 0.8f;
+
     private Vector2 _hpMaskFullSize;
     private Vector2 _damageMaskFullSize;
     private float _targetHpNormalized = 1f;
@@ -58,6 +63,17 @@ public class SegmentHpBarUI : MonoBehaviour
     private float _shakeElapsed;
     private bool _isShaking;
     private bool _shakeBaseCached;
+    private UnityEngine.UI.Image _healHighlight;
+    private float _healStartNormalized;
+    private float _healElapsed;
+    private bool _isHealing;
+    private UnityEngine.UI.Image _recoveryFrame;
+    private UnityEngine.UI.Image _recoverySweep;
+    private UnityEngine.UI.Image[] _recoveryPixels;
+    private RectTransform _recoveryRoot;
+    private float _recoveryElapsed;
+    private float _recoveryDuration;
+    private int _recoveryVersion;
 
     public float TargetHpNormalized => _targetHpNormalized;
     public float DisplayHpNormalized => _displayHpNormalized;
@@ -73,6 +89,8 @@ public class SegmentHpBarUI : MonoBehaviour
     public float HpMaskWidth => _hpMask != null ? _hpMask.sizeDelta.x : 0f;
     public float DamageMaskWidth => _damageMask != null ? _damageMask.sizeDelta.x : 0f;
     public float FullMaskWidth => _hpMaskFullSize.x;
+    public bool IsHealing => _isHealing;
+    public bool IsItemRecoveryPlaying => _recoveryDuration > 0f;
 
     private void Awake()
     {
@@ -101,6 +119,8 @@ public class SegmentHpBarUI : MonoBehaviour
     {
         UnbindHealthEvents();
         FinishDamageShake();
+        FinishHealingHighlight();
+        FinishItemRecovery();
     }
 
     private void OnValidate()
@@ -109,6 +129,7 @@ public class SegmentHpBarUI : MonoBehaviour
         _damageDelay = Mathf.Max(0f, _damageDelay);
         _damageSmoothDuration = Mathf.Max(0f, _damageSmoothDuration);
         _damageShakeDuration = Mathf.Max(0f, _damageShakeDuration);
+        _healHighlightDuration = Mathf.Max(0f, _healHighlightDuration);
         _damageShakeAmount.x = Mathf.Max(0f, _damageShakeAmount.x);
         _damageShakeAmount.y = Mathf.Max(0f, _damageShakeAmount.y);
     }
@@ -119,6 +140,8 @@ public class SegmentHpBarUI : MonoBehaviour
         UpdateDisplayedHp(dt);
         UpdateDamageFill(dt);
         UpdateDamageShake(dt);
+        UpdateHealingHighlight(dt);
+        UpdateItemRecovery(dt);
     }
 
     private void ResolvePlayerHealth()
@@ -290,6 +313,7 @@ public class SegmentHpBarUI : MonoBehaviour
 
     private void HandleDamaged()
     {
+        FinishItemRecovery();
         // PlayerHealth.OnDamagedは無敵判定を通過し、実際にHPが減った時だけ発火する。
         _damageEventPending = true;
         StartDamageShake();
@@ -326,6 +350,10 @@ public class SegmentHpBarUI : MonoBehaviour
         }
 
         bool lostHp = normalized < _targetHpNormalized - 0.0001f;
+        bool gainedHp = normalized > _targetHpNormalized + 0.0001f;
+        if (lostHp) FinishHealingHighlight();
+        else if (gainedHp && Application.isPlaying && isActiveAndEnabled)
+            StartHealingHighlight(_targetHpNormalized);
         _targetHpNormalized = normalized;
 
         float hpDistance = Mathf.Abs(_displayHpNormalized - _targetHpNormalized);
@@ -426,6 +454,147 @@ public class SegmentHpBarUI : MonoBehaviour
 
         _initialAnchoredPosition = _hpBarRoot.anchoredPosition;
         _shakeBaseCached = true;
+    }
+
+    private void StartHealingHighlight(float previousHp)
+    {
+        if (_hpMask == null || _healHighlightDuration <= 0f) return;
+        if (_healHighlight == null)
+        {
+            // 既存のマスク内に追加する。元画像・Frame・レイアウトには触れない。
+            var go = new GameObject("HealingHighlight", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            go.transform.SetParent(_hpMask, false);
+            _healHighlight = go.GetComponent<UnityEngine.UI.Image>();
+            _healHighlight.raycastTarget = false;
+            RectTransform rect = _healHighlight.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 0.5f);
+            rect.pivot = new Vector2(0f, 0.5f);
+        }
+        _healStartNormalized = _isHealing ? Mathf.Min(_healStartNormalized, previousHp) : previousHp;
+        _healElapsed = 0f;
+        _isHealing = true;
+        _healHighlight.enabled = true;
+        _healHighlight.color = Color.clear;
+    }
+
+    private void UpdateHealingHighlight(float dt)
+    {
+        if (!_isHealing || _healHighlight == null) return;
+        _healElapsed += dt;
+        float t = Mathf.Clamp01(_healElapsed / _healHighlightDuration);
+        if (t >= 1f)
+        {
+            FinishHealingHighlight();
+            return;
+        }
+        float width = Mathf.Max(0f, _displayHpNormalized - _healStartNormalized) * _hpMaskFullSize.x;
+        RectTransform rect = _healHighlight.rectTransform;
+        rect.anchoredPosition = new Vector2(_healStartNormalized * _hpMaskFullSize.x, 0f);
+        rect.sizeDelta = new Vector2(width, _hpMaskFullSize.y);
+        Color color = _healHighlightColor;
+        color.a *= Mathf.Sin(t * Mathf.PI);
+        _healHighlight.color = color;
+    }
+
+    private void FinishHealingHighlight()
+    {
+        _isHealing = false;
+        if (_healHighlight != null) _healHighlight.enabled = false;
+    }
+
+    /// <summary>タピオカの飲み終わりに呼ぶ。満タンでも取得の反応を見せる。</summary>
+    public void PlayItemRecovery(PlayerHealth health, float duration)
+    {
+        if (!isActiveAndEnabled || health == null || health != _playerHealth
+            || _hpMask == null || _frame == null || _itemRecoveryStrength <= 0f) return;
+        EnsureItemRecoveryVisuals();
+        _recoveryElapsed = 0f;
+        _recoveryDuration = Mathf.Max(0.1f, duration);
+        _recoveryVersion = health.RecoveryVersion;
+        _recoveryRoot.gameObject.SetActive(true);
+        _recoveryFrame.enabled = true;
+        UpdateItemRecovery(0f);
+    }
+
+    private static UnityEngine.UI.Image RecoveryImage(string name, Transform parent)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+        go.transform.SetParent(parent, false);
+        var image = go.GetComponent<UnityEngine.UI.Image>();
+        image.raycastTarget = false;
+        image.color = Color.clear;
+        return image;
+    }
+
+    private void EnsureItemRecoveryVisuals()
+    {
+        if (_recoveryRoot != null) return;
+        // Frameを重ねて発光させ、既存RectTransformや被弾Shakeは書き換えない。
+        _recoveryFrame = RecoveryImage("RecoveryFrameFlash", _frame.transform);
+        _recoveryFrame.sprite = _frame.sprite;
+        _recoveryFrame.type = _frame.type;
+        var rect = _recoveryFrame.rectTransform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+        _recoveryRoot = new GameObject("ItemRecoveryPixels", typeof(RectTransform)).GetComponent<RectTransform>();
+        _recoveryRoot.SetParent(_hpMask.parent, false);
+        _recoveryRoot.anchorMin = _hpMask.anchorMin;
+        _recoveryRoot.anchorMax = _hpMask.anchorMin;
+        _recoveryRoot.pivot = _hpMask.pivot;
+        _recoveryRoot.anchoredPosition = _hpMask.anchoredPosition;
+        _recoveryRoot.sizeDelta = _hpMaskFullSize;
+        _recoveryPixels = new UnityEngine.UI.Image[12];
+        for (int i = 0; i < _recoveryPixels.Length; i++)
+        {
+            var pixel = RecoveryImage("ChargePixel" + i, _recoveryRoot);
+            pixel.rectTransform.anchorMin = pixel.rectTransform.anchorMax = new Vector2(0f, 1f);
+            pixel.rectTransform.sizeDelta = Vector2.one * (i % 3 == 0 ? 6f : 4f);
+            _recoveryPixels[i] = pixel;
+        }
+        _recoverySweep = RecoveryImage("RecoverySweep", _hpMask);
+        _recoverySweep.rectTransform.anchorMin = _recoverySweep.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+        _recoverySweep.rectTransform.sizeDelta = new Vector2(12f, _hpMaskFullSize.y);
+    }
+
+    private void UpdateItemRecovery(float dt)
+    {
+        if (_recoveryDuration <= 0f) return;
+        if (_playerHealth == null || !_playerHealth.isActiveAndEnabled || _playerHealth.IsDead
+            || _playerHealth.RecoveryVersion != _recoveryVersion)
+        {
+            FinishItemRecovery();
+            return;
+        }
+        _recoveryElapsed += dt;
+        float t = Mathf.Clamp01(_recoveryElapsed / _recoveryDuration);
+        if (t >= 1f) { FinishItemRecovery(); return; }
+        float envelope = Mathf.Sin(Mathf.Min(1f, t * 5f) * Mathf.PI * 0.5f) * (1f - t);
+        float pulse = 0.72f + 0.28f * Mathf.Cos(t * Mathf.PI * 6f);
+        _recoveryFrame.color = new Color(0.65f, 1f, 0.94f, envelope * pulse * _itemRecoveryStrength * 0.65f);
+        _recoverySweep.color = new Color(0.85f, 1f, 1f, envelope * _itemRecoveryStrength * 0.9f);
+        _recoverySweep.rectTransform.anchoredPosition = new Vector2(
+            Mathf.Lerp(0f, _hpMaskFullSize.x * _displayHpNormalized, Mathf.SmoothStep(0f, 1f, t)), 0f);
+        for (int i = 0; i < _recoveryPixels.Length; i++)
+        {
+            float travel = Mathf.Clamp01((t - (i % 4) * 0.055f) / 0.65f);
+            Color color = i % 3 == 0 ? new Color(1f, 0.7f, 0.9f) : new Color(0.55f, 1f, 0.95f);
+            color.a = Mathf.Sin(travel * Mathf.PI) * _itemRecoveryStrength;
+            _recoveryPixels[i].color = color;
+            _recoveryPixels[i].rectTransform.anchoredPosition = new Vector2(
+                Mathf.Round((i + 0.5f) / _recoveryPixels.Length * _hpMaskFullSize.x / 2f) * 2f,
+                Mathf.Round((8f + travel * (16f + (i % 3) * 7f)) / 2f) * 2f);
+        }
+    }
+
+    private void FinishItemRecovery()
+    {
+        _recoveryDuration = 0f;
+        if (_recoveryFrame != null) _recoveryFrame.enabled = false;
+        if (_recoveryRoot != null) _recoveryRoot.gameObject.SetActive(false);
+        if (_recoverySweep != null) _recoverySweep.color = Color.clear;
     }
 
     private void StartDamageShake()

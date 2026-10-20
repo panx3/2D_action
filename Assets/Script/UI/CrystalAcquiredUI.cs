@@ -21,13 +21,21 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     [SerializeField] private RectTransform[] sparkleVisuals;
     [SerializeField] private PauseMenuController pauseMenu;
 
+    [Header("Crystal Reward Accents")]
+    [SerializeField] private GoalCelebrationBurstGraphic burstGraphic;
+    [SerializeField] private AudioSource rewardAudioSource;
+    [SerializeField] private AudioClip acquireClip;
+    [SerializeField, Range(0f, 1f)] private float acquireVolume = 0.28f;
+
     [Header("Logo (Unscaled Time)")]
-    [SerializeField, Min(0f)] private float logoStartDelay = 0.08f;
-    [SerializeField, Min(0f)] private float popDuration = 0.34f;
-    [SerializeField, Min(0f)] private float logoDisplayDuration = 1.25f;
-    [SerializeField, Min(0f)] private float fadeOutDuration = 0.24f;
-    [SerializeField, Min(0f)] private float clearScreenDelay = 1.1f;
-    [SerializeField, Min(0f)] private float logoFinalScale = 1.12f;
+    [SerializeField, Min(0f), Tooltip("Logo appears after this delay and the gameplay stop, whichever is later.")]
+    private float logoStartDelay = 0.24f;
+    [SerializeField, Min(0f)] private float popDuration = 0.26f;
+    [SerializeField, Min(0f)] private float logoDisplayDuration = 1.15f;
+    [SerializeField, Min(0f)] private float fadeOutDuration = 0.16f;
+    [SerializeField, Min(0f), Tooltip("Additional logo hold before fading; never an empty wait before the result.")]
+    private float clearScreenDelay = 0.08f;
+    [SerializeField, Min(0f)] private float logoFinalScale = 1.6f;
     [SerializeField, Min(0f)] private float logoStartScale = 0.6f;
     [SerializeField, Min(0f)] private float overshootScale = 1.12f;
     [SerializeField, Min(0f)] private float undershootScale = 0.985f;
@@ -70,9 +78,14 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     private bool _ownsGameplayInput;
     private bool _ownsPauseBlock;
     private bool _hasPlayed;
+    private CameraShake2D _goalCameraShake;
+    private bool _goalShakeStopped;
+    private bool _rewardPlayed;
+    private float LogoRevealDelay => Mathf.Max(logoStartDelay, goalStopDuration);
 
     public bool IsPlaying => _playRoutine != null;
     public bool HasPlayed => _hasPlayed;
+    public int RewardSoundPlayCount { get; private set; }
 
     private void Awake()
     {
@@ -82,16 +95,22 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
     }
 
     /// <summary>一度だけ演出を再生し、終了時に既存Goal処理へ制御を戻す。</summary>
-    public bool Play(Action onComplete)
+    public bool Play(Action onComplete) => Play(onComplete, null);
+
+    public bool Play(Action onComplete, Vector3? impactPosition)
     {
         if (_hasPlayed || _playRoutine != null)
             return false;
 
         _hasPlayed = true;
+        _goalCameraShake = Camera.main != null ? Camera.main.GetComponent<CameraShake2D>() : null;
+        _goalShakeStopped = false;
+        _rewardPlayed = false;
         _onComplete = onComplete;
         BlockPauseMenu();
         BlockGameplayInput();
         PreparePresentation();
+        PrepareBurst(impactPosition);
         BeginGoalStop();
         _playRoutine = StartCoroutine(PlayRoutine());
         return true;
@@ -99,34 +118,29 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private IEnumerator PlayRoutine()
     {
-        float fadeStart = logoStartDelay + popDuration + logoDisplayDuration;
+        float fadeStart = LogoRevealDelay + popDuration + logoDisplayDuration + clearScreenDelay;
         float sequenceEnd = fadeStart + fadeOutDuration;
         float elapsed = 0f;
 
         while (elapsed < sequenceEnd)
         {
             elapsed += Time.unscaledDeltaTime;
+            float fade = fadeOutDuration > 0f
+                ? Mathf.Clamp01((elapsed - fadeStart) / fadeOutDuration)
+                : elapsed >= fadeStart ? 1f : 0f;
+            float visibility = 1f - Smooth01(fade);
             UpdateGoalStop(elapsed);
+            PlayRewardSound(elapsed);
             AnimateFlash(elapsed);
             AnimateDarkOverlay(elapsed);
-            AnimateLogo(elapsed);
-            AnimateSparkles(elapsed);
-
-            if (canvasGroup != null)
-            {
-                float fade = fadeOutDuration > 0f
-                    ? Mathf.Clamp01((elapsed - fadeStart) / fadeOutDuration)
-                    : elapsed >= fadeStart ? 1f : 0f;
-                canvasGroup.alpha = 1f - Smooth01(fade);
-            }
+            AnimateLogo(elapsed, visibility);
+            AnimateSparkles(elapsed, visibility);
+            if (burstGraphic != null) burstGraphic.Advance(elapsed, visibility);
 
             yield return null;
         }
 
         HideImmediate(false);
-
-        if (clearScreenDelay > 0f)
-            yield return new WaitForSecondsRealtime(clearScreenDelay);
 
         _playRoutine = null;
         Action callback = _onComplete;
@@ -145,6 +159,39 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
             ReleaseGameplayInput();
         }
         ReleasePauseBlockUnlessGoalMenuOwnsIt();
+    }
+
+    private void PrepareBurst(Vector3? worldImpact)
+    {
+        if (burstGraphic == null) return;
+        Vector2 reward = celebrationLogo != null
+            ? (Vector2)burstGraphic.rectTransform.InverseTransformPoint(celebrationLogo.parent.TransformPoint(_logoFinalPosition))
+            : Vector2.zero;
+        Vector2 impact = reward;
+        Camera camera = Camera.main;
+        if (worldImpact.HasValue && camera != null)
+        {
+            Vector3 screen = camera.WorldToScreenPoint(worldImpact.Value);
+            // A remote/behind-camera crystal should not send decorative geometry offscreen.
+            if (screen.z > 0f && screen.x >= 0f && screen.y >= 0f && screen.x <= Screen.width && screen.y <= Screen.height)
+            {
+                Canvas canvas = burstGraphic.canvas;
+                Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(burstGraphic.rectTransform, screen, uiCamera, out impact);
+            }
+        }
+        burstGraphic.Begin(impact, reward + Vector2.up * 40f, LogoRevealDelay);
+    }
+
+    private void PlayRewardSound(float elapsed)
+    {
+        if (_rewardPlayed || elapsed < LogoRevealDelay) return;
+        _rewardPlayed = true;
+        if (rewardAudioSource != null && acquireClip != null && acquireVolume > 0f)
+        {
+            rewardAudioSource.PlayOneShot(acquireClip, acquireVolume);
+            RewardSoundPlayCount++;
+        }
     }
 
     private void PreparePresentation()
@@ -197,16 +244,16 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         SetImageAlpha(darkOverlay, darkenAlpha * Smooth01(t));
     }
 
-    private void AnimateLogo(float elapsed)
+    private void AnimateLogo(float elapsed, float visibility)
     {
         if (celebrationLogo == null)
             return;
 
-        float localTime = elapsed - logoStartDelay;
+        float localTime = elapsed - LogoRevealDelay;
         if (localTime < 0f)
             return;
 
-        SetImageAlpha(logoImage, Smooth01(Mathf.Clamp01(localTime / 0.045f)));
+        SetImageAlpha(logoImage, Smooth01(Mathf.Clamp01(localTime / 0.045f)) * visibility);
         float t = popDuration > 0f ? Mathf.Clamp01(localTime / popDuration) : 1f;
         float scale;
         float y;
@@ -240,12 +287,12 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
         celebrationLogo.localRotation = _logoFinalRotation * Quaternion.Euler(0f, 0f, angle);
     }
 
-    private void AnimateSparkles(float elapsed)
+    private void AnimateSparkles(float elapsed, float visibility)
     {
         if (sparkleVisuals == null)
             return;
 
-        float localTime = elapsed - logoStartDelay - popDuration * 0.38f;
+        float localTime = elapsed - LogoRevealDelay - popDuration * 0.38f;
         bool visible = particlesEnabled && localTime >= 0f;
         float burst = sparkleBurstDuration > 0f
             ? Mathf.Clamp01(localTime / sparkleBurstDuration)
@@ -281,7 +328,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
             {
                 float twinkle = Mathf.Lerp(0.55f, 1f, (Mathf.Sin(phase * Mathf.PI * 2f) + 1f) * 0.5f);
                 float afterglow = 1f - 0.6f * Smooth01((localTime - sparkleBurstDuration) / Mathf.Max(0.2f, logoDisplayDuration));
-                group.alpha = Smooth01(stagger) * twinkle * afterglow;
+                group.alpha = Smooth01(stagger) * twinkle * afterglow * visibility;
             }
         }
     }
@@ -314,6 +361,13 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private void UpdateGoalStop(float elapsed)
     {
+        if (!_goalShakeStopped && elapsed >= goalStopDuration)
+        {
+            // End the impact on the same frame as the stop/logo reveal. A scaled
+            // shake timer otherwise retains duration throughout the stopped result.
+            if (_goalCameraShake != null) _goalCameraShake.ResetShake();
+            _goalShakeStopped = true;
+        }
         if (!_ownsTimeScale)
             return;
         if (!Mathf.Approximately(Time.timeScale, _ownedGoalTimeScale))
@@ -511,6 +565,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private void HideImmediate(bool restoreTime = true)
     {
+        if (burstGraphic != null) burstGraphic.Stop();
         if (restoreTime)
             RestoreTimeScaleIfOwned();
         if (canvasGroup != null)
@@ -547,6 +602,7 @@ public sealed class CrystalAcquiredUI : MonoBehaviour
 
     private void OnDisable()
     {
+        if (rewardAudioSource != null) rewardAudioSource.Stop();
         if (_playRoutine != null)
             StopCoroutine(_playRoutine);
         _playRoutine = null;

@@ -29,9 +29,9 @@ public static class CompletSceneBackgroundInstaller
             UnityEngine.Object.DestroyImmediate(existing);
 
         GameObject root = new GameObject("BackgroundRoot");
-        CreateLayer(root.transform, "BG_Far", "SkySea", FarPath, mainCamera, 0f, Vector2.zero, 1.03f, -1000, 1f, 8f);
-        CreateLayer(root.transform, "BG_Mid", "FloatingIslands", MidPath, mainCamera, 0.14f, new Vector2(0f, 0.45f), 1.16f, -900, 0.72f, 6f);
-        CreateLayer(root.transform, "BG_Front", "ForeRuins", FrontPath, mainCamera, 0.24f, new Vector2(0f, -0.55f), 1.22f, -800, 0.82f, 4f);
+        CreateLayer(root.transform, "BG_Far", "SkySea", FarPath, mainCamera, 0f, Vector2.zero, 1.03f, -1000, 0, 8f);
+        CreateLayer(root.transform, "BG_Mid", "FloatingIslands", MidPath, mainCamera, 0.14f, new Vector2(0f, 0.45f), 1.16f, -900, 1, 6f);
+        CreateLayer(root.transform, "BG_Front", "ForeRuins", FrontPath, mainCamera, 0.24f, new Vector2(0f, -0.55f), 1.22f, -800, 2, 4f);
 
         EditorSceneManager.MarkSceneDirty(scene);
         if (!EditorSceneManager.SaveScene(scene, ScenePath))
@@ -73,7 +73,7 @@ public static class CompletSceneBackgroundInstaller
         Vector2 offset,
         float padding,
         int sortingOrder,
-        float alpha,
+        int atmosphereDepth,
         float z)
     {
         GameObject group = new GameObject(groupName);
@@ -88,7 +88,8 @@ public static class CompletSceneBackgroundInstaller
         if (renderer.sprite == null)
             throw new InvalidOperationException(spritePath + " のSpriteを読み込めませんでした。");
         renderer.sortingOrder = sortingOrder;
-        renderer.color = new Color(1f, 1f, 1f, alpha);
+        renderer.color = Color.white;
+        AtmosphereEffectsSetup.ConfigureBackground(renderer, atmosphereDepth);
 
         ParallaxBackgroundLayer layer = image.AddComponent<ParallaxBackgroundLayer>();
         SerializedObject serialized = new SerializedObject(layer);
@@ -96,6 +97,7 @@ public static class CompletSceneBackgroundInstaller
         serialized.FindProperty("parallaxFactor").floatValue = parallax;
         serialized.FindProperty("screenOffset").vector2Value = offset;
         serialized.FindProperty("coverPadding").floatValue = padding;
+        serialized.FindProperty("loopHorizontally").boolValue = atmosphereDepth == 2;
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 

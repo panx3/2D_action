@@ -100,7 +100,7 @@ public sealed class PlayerStartIntro : MonoBehaviour
         MoveTo(start);
         _player.SetStartIntroMotion(false, Vector2.up);
 
-        // TitleStageTransitionは黒フェード中Time.timeScaleを0にする。画面が見えてから登場。
+        // Keep the existing entrance entirely visible: wait for the last wipe dot to disappear.
         while (TitleStageTransition.IsTransitioning)
             yield return null;
 

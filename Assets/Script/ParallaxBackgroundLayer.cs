@@ -13,14 +13,20 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
     [SerializeField, Range(0f, 0.5f)] private float parallaxFactor;
     [SerializeField] private Vector2 screenOffset;
     [SerializeField, Min(1f)] private float coverPadding = 1.05f;
+    [SerializeField, Tooltip("左右反転した画像を隣接表示し、横方向の視差移動を止めずに続けます。")]
+    private bool loopHorizontally;
 
     private SpriteRenderer spriteRenderer;
     private Vector3 cameraOrigin;
     private float depth;
+    private bool originalFlipX;
+    private SpriteRenderer leftCopy;
+    private SpriteRenderer rightCopy;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        originalFlipX = spriteRenderer.flipX;
         if (targetCamera == null)
             targetCamera = Camera.main;
 
@@ -66,12 +72,86 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
         float viewWidth = viewHeight * targetCamera.aspect;
         float maxX = Mathf.Max(0f, (scaledSize.x - viewWidth) * 0.5f);
         float maxY = Mathf.Max(0f, (scaledSize.y - viewHeight) * 0.5f);
-        relativeOffset.x = Mathf.Clamp(relativeOffset.x, -maxX, maxX);
+        int centerTile = 0;
+        if (loopHorizontally && scaledSize.x > 0.001f)
+        {
+            // カメラに最も近いタイルを中心にする。折り返し時には左右のコピーと
+            // 同じ絵柄・位置に入れ替わるため、移動の停止や画面内のポップを起こさない。
+            int wrappedTiles = Mathf.FloorToInt((relativeOffset.x + scaledSize.x * 0.5f) / scaledSize.x);
+            relativeOffset.x -= wrappedTiles * scaledSize.x;
+            centerTile = -wrappedTiles;
+        }
+        else
+            relativeOffset.x = Mathf.Clamp(relativeOffset.x, -maxX, maxX);
         relativeOffset.y = Mathf.Clamp(relativeOffset.y, -maxY, maxY);
 
         transform.position = new Vector3(
             cameraPosition.x + relativeOffset.x,
             cameraPosition.y + relativeOffset.y,
             depth);
+        UpdateLoopCopies(centerTile);
+    }
+
+    private void UpdateLoopCopies(int centerTile)
+    {
+        bool show = loopHorizontally && spriteRenderer.enabled;
+        if (loopHorizontally)
+        {
+            if (leftCopy == null) leftCopy = CreateLoopCopy("Background Loop Left");
+            if (rightCopy == null) rightCopy = CreateLoopCopy("Background Loop Right");
+            spriteRenderer.flipX = originalFlipX ^ ((centerTile & 1) != 0);
+            ConfigureCopy(leftCopy, -1, centerTile - 1, show);
+            ConfigureCopy(rightCopy, 1, centerTile + 1, show);
+        }
+        else
+        {
+            spriteRenderer.flipX = originalFlipX;
+            if (leftCopy != null) leftCopy.enabled = false;
+            if (rightCopy != null) rightCopy.enabled = false;
+        }
+    }
+
+    private SpriteRenderer CreateLoopCopy(string objectName)
+    {
+        // 描画専用のコピー2枚だけを使い回す。Scene/Prefabには保存しない。
+        var copy = new GameObject(objectName) { hideFlags = HideFlags.DontSave };
+        copy.transform.SetParent(transform, false);
+        return copy.AddComponent<SpriteRenderer>();
+    }
+
+    private void ConfigureCopy(SpriteRenderer copy, int side, int tileIndex, bool show)
+    {
+        copy.transform.localPosition = new Vector3(side * spriteRenderer.sprite.bounds.size.x, 0f, 0f);
+        copy.sprite = spriteRenderer.sprite;
+        copy.gameObject.layer = gameObject.layer;
+        copy.sharedMaterial = spriteRenderer.sharedMaterial;
+        copy.color = spriteRenderer.color;
+        copy.sortingLayerID = spriteRenderer.sortingLayerID;
+        copy.sortingOrder = spriteRenderer.sortingOrder;
+        copy.maskInteraction = spriteRenderer.maskInteraction;
+        copy.spriteSortPoint = spriteRenderer.spriteSortPoint;
+        copy.flipX = originalFlipX ^ ((tileIndex & 1) != 0);
+        copy.flipY = spriteRenderer.flipY;
+        copy.enabled = show;
+    }
+
+    private void OnDisable()
+    {
+        if (leftCopy != null) leftCopy.enabled = false;
+        if (rightCopy != null) rightCopy.enabled = false;
+        if (spriteRenderer != null) spriteRenderer.flipX = originalFlipX;
+    }
+
+    private void OnDestroy()
+    {
+        DestroyCopy(leftCopy);
+        DestroyCopy(rightCopy);
+    }
+
+    private static void DestroyCopy(SpriteRenderer copy)
+    {
+        if (copy == null) return;
+        if (Application.isPlaying) Destroy(copy.gameObject);
+        else DestroyImmediate(copy.gameObject);
     }
 }

@@ -169,7 +169,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         if (cameraShake != null)
             cameraShake.Shake(breakShakeDuration, breakShakeStrength);
 
-        BeginGoalSequence();
+        BeginGoalSequence(context.ImpactPoint);
     }
 
     private void OnDisable()
@@ -256,7 +256,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             && morningStarBody.GetComponent<MorningStarCollisionReporter>() != null;
     }
 
-    private void BeginGoalSequence()
+    private void BeginGoalSequence(Vector3 impactPosition)
     {
         if (_goalSequenceStarted)
             return;
@@ -264,7 +264,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         _goalSequenceStarted = true;
         // 最終破壊が成立し、獲得演出へ進むことが確定した時点で一度だけ切り替える。
         GameBgmController.Instance?.PlayGoal();
-        if (crystalAcquiredUI != null && crystalAcquiredUI.Play(ReachGoal))
+        if (crystalAcquiredUI != null && crystalAcquiredUI.Play(ReachGoal, impactPosition))
             return;
 
         StartCoroutine(CompleteGoalRoutine());

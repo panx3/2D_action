@@ -2,9 +2,8 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// Playerが場外や危険領域に入ったとき、現在HPを維持したまま
-/// GimmickRespawnControllerの復帰地点へ戻すトリガー。
-/// HP0死亡時の全回復処理は行わない。
+/// Playerが場外や危険領域に入ったとき、落下専用演出を経て復帰する。
+/// HPは既存のGimmickRespawnControllerと同じく全回復する。
 /// </summary>
 public class RespawnZone : MonoBehaviour
 {

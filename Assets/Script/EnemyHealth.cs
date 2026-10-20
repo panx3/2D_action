@@ -90,6 +90,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
         _lastDamageTime = Time.time;
         _currentHp = Mathf.Max(0, _currentHp - context.Damage);
+        // 無敵・撃破済みの接触では止めず、実際にダメージを受けた時だけ通知する。
+        if (context.Source != null)
+            context.Source.PlayEnemyHitStop(context.HitStopSeconds, _currentHp <= 0);
         if (OneShotAudioUtility.Play2D(hitAudioSource, morningStarHitClip, morningStarHitVolume, transform.position))
             HitSoundPlayCount++;
 

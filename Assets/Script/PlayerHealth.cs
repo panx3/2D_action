@@ -40,7 +40,10 @@ public class PlayerHealth : MonoBehaviour
     public int MaxHp => _maxHp;
     public bool IsDead { get; private set; }
     public bool IsInvincible { get; private set; }
+    public bool IsRespawning { get; private set; }
     public int DamageSoundPlayCount { get; private set; }
+    /// <summary>遅延回復を死亡・復帰・無効化の前後で持ち越さないための世代番号。</summary>
+    public int RecoveryVersion { get; private set; }
 
     public event Action OnDamaged;
     public event Action OnDead;
@@ -85,12 +88,14 @@ public class PlayerHealth : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R)) ResetToFullHp();
     }
 
+    private void OnDisable() => RecoveryVersion++;
+
     /// <summary>
     /// ダメージを受ける。無敵中・死亡中は無視。ノックバックは knockbackImpulse で指定。
     /// </summary>
     public void TakeDamage(int amount, Vector2 knockbackImpulse = default)
     {
-        if (IsDead || IsInvincible) return;
+        if (IsDead || IsInvincible || IsRespawning) return;
         if (amount <= 0) return;
 
         CurrentHp = Mathf.Max(0, CurrentHp - amount);
@@ -125,7 +130,7 @@ public class PlayerHealth : MonoBehaviour
     // Reserved for future heal items. Do not call this from enemy death rewards.
     public void Heal(int amount)
     {
-        if (IsDead || amount <= 0) return;
+        if (IsDead || IsRespawning || amount <= 0) return;
         int before = CurrentHp;
         CurrentHp = Mathf.Min(_maxHp, CurrentHp + amount);
         if (_debugLogHeal && CurrentHp != before)
@@ -138,6 +143,7 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void ResetToFullHp()
     {
+        RecoveryVersion++;
         int before = CurrentHp;
         CurrentHp = _maxHp;
         IsDead = false;
@@ -156,6 +162,7 @@ public class PlayerHealth : MonoBehaviour
         if (CurrentHp <= 0)
             return;
 
+        RecoveryVersion++;
         IsDead = false;
         StopInvincible();
         if (_spriteRenderer != null) _spriteRenderer.enabled = true;
@@ -187,6 +194,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
+        RecoveryVersion++;
         IsDead = true;
         StopInvincible();
         OnDead?.Invoke();
@@ -197,6 +205,18 @@ public class PlayerHealth : MonoBehaviour
         if (_invincibleDuration <= 0f) return;
         if (_invincibleRoutine != null) StopCoroutine(_invincibleRoutine);
         _invincibleRoutine = StartCoroutine(InvincibleRoutine());
+    }
+
+    public void BeginRespawnProtection()
+    {
+        IsRespawning = true;
+        StopInvincible();
+    }
+
+    public void EndRespawnProtection()
+    {
+        IsRespawning = false;
+        if (isActiveAndEnabled) StartInvincible();
     }
 
     private void StopInvincible()
