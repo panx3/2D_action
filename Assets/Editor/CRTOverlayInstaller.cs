@@ -192,6 +192,8 @@ public static class CRTOverlayInstaller
                 var canvas = root.GetComponent<Canvas>();
                 canvas.sortingOrder = 720;
             }
+            // Keep scene editing clear; ReceiveBackdrop enables the presentation at runtime.
+            presentation.gameObject.SetActive(false);
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
         finally { PrefabUtility.UnloadPrefabContents(root); }
