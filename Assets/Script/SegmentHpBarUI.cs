@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// Fill画像自体は伸縮せず、RectMask2Dの幅を右側から狭めて表示する。
 /// </summary>
 [DisallowMultipleComponent]
-public class SegmentHpBarUI : MonoBehaviour
+public partial class SegmentHpBarUI : MonoBehaviour
 {
     // 260x35 の元Sprite上で、中央ゲージが占めるPixel領域（x=62..205 / y=13..19）。
     // Frameを基準に正規化して使うため、FrameのRectTransformは一切変更しない。
@@ -63,6 +63,7 @@ public class SegmentHpBarUI : MonoBehaviour
     private float _shakeElapsed;
     private bool _isShaking;
     private bool _shakeBaseCached;
+    private Vector2 _damageShakeOffset;
     private UnityEngine.UI.Image _healHighlight;
     private float _healStartNormalized;
     private float _healElapsed;
@@ -99,6 +100,7 @@ public class SegmentHpBarUI : MonoBehaviour
         AlignVisualsToFrame();
         CacheMaskSizes();
         CacheShakeRoot();
+        InitializeMotionFeedback();
     }
 
     private void Start()
@@ -121,6 +123,7 @@ public class SegmentHpBarUI : MonoBehaviour
         FinishDamageShake();
         FinishHealingHighlight();
         FinishItemRecovery();
+        ResetMotionFeedback();
     }
 
     private void OnValidate()
@@ -604,7 +607,7 @@ public class SegmentHpBarUI : MonoBehaviour
         if (!_shakeBaseCached)
             CacheShakeRoot();
 
-        _hpBarRoot.anchoredPosition = _initialAnchoredPosition;
+        _damageShakeOffset = Vector2.zero;
         _shakeElapsed = 0f;
         MaxShakeOffsetObserved = 0f;
         _isShaking = _damageShakeDuration > 0f
@@ -636,13 +639,14 @@ public class SegmentHpBarUI : MonoBehaviour
             Mathf.Sin(progress * Mathf.PI * 8f) * _damageShakeAmount.x,
             Mathf.Sin(progress * Mathf.PI * 11f + 0.7f) * _damageShakeAmount.y) * envelope;
         MaxShakeOffsetObserved = Mathf.Max(MaxShakeOffsetObserved, offset.magnitude);
-        _hpBarRoot.anchoredPosition = _initialAnchoredPosition + offset;
+        _damageShakeOffset = offset;
+        ApplyRootPose();
     }
 
     private void FinishDamageShake()
     {
-        if (_hpBarRoot != null && _shakeBaseCached)
-            _hpBarRoot.anchoredPosition = _initialAnchoredPosition;
+        _damageShakeOffset = Vector2.zero;
+        ApplyRootPose();
         _shakeElapsed = 0f;
         _isShaking = false;
     }
