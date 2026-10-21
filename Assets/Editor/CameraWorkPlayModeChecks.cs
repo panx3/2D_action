@@ -86,16 +86,35 @@ public static class CameraWorkPlayModeChecks
         var shake = camera.GetComponent<CameraShake2D>();
         var pixel = camera.GetComponent<PixelPerfectCamera>();
         var intro = player.GetComponent<PlayerStartIntro>();
+        Require(camera.transform.Find("GimmickGuide") == null, "Removed gimmick markers must not return");
         Vector3 introCamera = camera.transform.position;
+        float introSize = camera.orthographicSize;
+        bool capturedIntro = false;
         while (!intro.IsPlaying) yield return null;
         while (intro.IsPlaying)
         {
-            Require(!follow.enabled && camera.transform.position == introCamera, "Intro camera ownership");
+            Require(follow.enabled && follow.IsEventControlled, "Intro camera ownership");
+            Vector3 viewport = camera.WorldToViewportPoint(player.transform.position);
+            Require(viewport.x > 0.04f && viewport.x < 0.96f && viewport.y > 0.05f && viewport.y < 0.92f,
+                "Entrance Player visibility: " + viewport);
+            Require(Vector3.Distance(camera.transform.position, introCamera) < Mathf.Max(0.3f, Time.deltaTime * 13f),
+                "Intro camera continuity");
+            Require(Mathf.Abs(camera.orthographicSize - introSize) < 0.001f && follow.CurrentMagnetFramingOffset == Vector2.zero,
+                "Intro fixed lens / no magnet framing interference");
+            introCamera = camera.transform.position;
+            if (!capturedIntro && intro.CameraProgress > 0.25f)
+            {
+                ScreenCapture.CaptureScreenshot(Path.Combine(Path.GetTempPath(), "TekkyuIntroCamera.png"));
+                capturedIntro = true;
+            }
             yield return null;
         }
+        Require(Vector3.Distance(camera.transform.position, introCamera) < 0.08f, "Intro-to-follow position continuity");
         yield return null;
-        Require(follow.enabled && player.InputEnabled, "Intro handoff");
-        Report.AppendLine("PASS intro jump/walk, camera hold and normal-follow handoff");
+        Require(follow.enabled && !follow.IsEventControlled && player.InputEnabled, "Intro handoff");
+        Require(Mathf.Abs(camera.WorldToViewportPoint(player.transform.position).x - 0.4f) < 0.02f,
+            "Intro must finish at the normal 40% framing");
+        Report.AppendLine("PASS entrance stays visible, smooth intro pan, fixed lens and continuous 40% normal-follow handoff");
         float normalSize = follow.BaseOrthographicSize;
         bool wideView = follow.NormalViewExpansion > 0f;
         Require(normalSize > 0f && pixel.upscaleRT != wideView, "Effective normal-view baseline");
@@ -212,6 +231,59 @@ public static class CameraWorkPlayModeChecks
         Report.AppendLine($"PASS high-speed swing viewport X={swingViewportX:F3}, fixed camera rotation/depth, fast-fall viewport Y={fallingViewportY:F3}");
 
         drive = Vector2.zero;
+        var magnet = Object.FindAnyObjectByType<MagnetPoint>();
+        Require(magnet != null, "Production magnet missing");
+        SpriteRenderer magnetVisual = null;
+        foreach (var renderer in magnet.GetComponentsInChildren<SpriteRenderer>())
+            if (renderer.enabled && renderer.sprite != null) magnetVisual = renderer;
+        Require(magnetVisual != null, "Magnet visual missing");
+        Vector2 previousBodyPosition = body.position;
+        float previousReferenceSize = (float)typeof(CameraFollow).GetField("_referenceOrthographicSize", Private).GetValue(follow);
+        // Exercise the production 640x360 framing even when the Editor Game View is tall.
+        camera.aspect = 16f / 9f;
+        typeof(CameraFollow).GetField("_referenceOrthographicSize", Private).SetValue(follow, 5.625f);
+        typeof(CameraFollow).GetField("_referenceProjectionCaptured", Private).SetValue(follow, true);
+        typeof(CameraFollow).GetField("_zoomInitialized", Private).SetValue(follow, false);
+        body.position = (Vector2)magnetVisual.bounds.center + new Vector2(-6.5f, -8.5f);
+        body.transform.position = body.position; Physics2D.SyncTransforms(); follow.SnapToTarget();
+        end = Time.time + 2f; while (Time.time < end) yield return null;
+        float magnetSize = camera.orthographicSize;
+        Require(follow.CurrentMagnetFramingOffset.y > 0.5f && follow.CurrentMagnetFramingOffset.y <= 2.81f,
+            "Near magnet must gently lift the camera");
+        Vector3 magnetTop = camera.WorldToViewportPoint(magnetVisual.bounds.max);
+        Vector3 playerViewport = camera.WorldToViewportPoint(player.transform.position);
+        Require(magnetTop.y <= 1f && magnetTop.x < 1f && playerViewport.y >= 0.2f,
+            "Magnet must enter the view while preserving Player / floor visibility: magnet=" + magnetTop + " player=" + playerViewport);
+        float settledY = camera.transform.position.y;
+        end = Time.time + 0.4f; while (Time.time < end) yield return null;
+        Require(Mathf.Abs(camera.transform.position.y - settledY) < 0.03f
+            && Mathf.Abs(camera.orthographicSize - magnetSize) < 0.001f, "Magnet framing must settle without swaying or zooming");
+        Require(follow.BeginEventControl(player), "Magnet framing event suppression claim");
+        yield return null;
+        Require(follow.CurrentMagnetFramingOffset == Vector2.zero, "Event presentation takes priority over magnet framing");
+        follow.EndEventControl(player);
+        body.position = (Vector2)magnetVisual.bounds.center + Vector2.left * 2f;
+        body.transform.position = body.position; Physics2D.SyncTransforms(); follow.SnapToTarget();
+        end = Time.time + 0.4f; while (Time.time < end) yield return null;
+        Require(follow.CurrentMagnetFramingOffset.sqrMagnitude < 0.001f, "Already-visible magnet must not move the camera");
+        body.position = (Vector2)magnetVisual.bounds.center + new Vector2(6.5f, -8.5f);
+        body.transform.position = body.position; Physics2D.SyncTransforms(); follow.SnapToTarget();
+        end = Time.time + 0.4f; while (Time.time < end) yield return null;
+        Require(follow.CurrentMagnetFramingOffset.sqrMagnitude < 0.001f, "Passed magnet must not pull the view back");
+        body.position = (Vector2)magnetVisual.bounds.center + new Vector2(-6.5f, -12f);
+        body.transform.position = body.position; Physics2D.SyncTransforms(); follow.SnapToTarget();
+        end = Time.time + 0.4f; while (Time.time < end) yield return null;
+        Require(follow.CurrentMagnetFramingOffset.sqrMagnitude < 0.001f,
+            "Unreachable upper magnet must not take floor visibility from a lower platform");
+        camera.ResetAspect();
+        typeof(CameraFollow).GetField("_referenceOrthographicSize", Private).SetValue(follow, previousReferenceSize);
+        typeof(CameraFollow).GetField("_zoomInitialized", Private).SetValue(follow, false);
+        body.position = previousBodyPosition; body.transform.position = body.position;
+        Physics2D.SyncTransforms(); follow.SnapToTarget();
+        yield return null; yield return null;
+        Require(Mathf.Abs(camera.orthographicSize - normalSize) < 0.001f, "Restore original Game View lens after magnet fixture");
+        Report.AppendLine("PASS proximity magnet framing, actual target visibility, player safety, fixed lens, stable settling and event priority; no markers");
+
         Require(follow.BeginEventControl(player), "Event ownership claim");
         stablePosition = camera.transform.position;
         camera.orthographicSize = normalSize * 1.08f;

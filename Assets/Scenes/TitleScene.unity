@@ -1042,6 +1042,11 @@ MonoBehaviour:
   startPulsePeriod: 2
   startPulseScale: 0
   backgroundDrift: 0
+  logoShineShader: {fileID: 4800000, guid: b6da1f4f6d13dce41aa07fcd2690e12d, type: 3}
+  logoShinePeriod: 6
+  logoShineDuration: 1.35
+  logoShineStrength: 0.5
+  logoShineDelay: 1.4
   loadingBallSprite: {fileID: 21300000, guid: b3f2eac8fbf4af843bbed02d1ccc3b6b, type: 3}
   loadingFont: {fileID: 11400000, guid: b6f4e555add47694c8b3599c7dd71bdf, type: 2}
   transitionShader: {fileID: 4800000, guid: 7cd7adf5707fe2b4ca3d39969e3928e2, type: 3}

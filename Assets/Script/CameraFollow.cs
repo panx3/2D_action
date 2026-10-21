@@ -22,6 +22,12 @@ public class CameraFollow : MonoBehaviour
     [SerializeField, Range(0f, 0.2f), Tooltip("通常視野の固定拡張率。0.1で10%広げ、下端を保つよう中心を上へ補正する。移動速度では変化しない。")]
     private float _normalViewExpansion;
 
+    [Header("Start Intro Framing")]
+    [SerializeField, Range(0.05f, 0.25f), Tooltip("登場開始時の左右端からPlayerまでの画面内余白。演出中だけ使用。")]
+    private float _introEntryViewportX = 0.12f;
+    [SerializeField, Min(0f), Tooltip("登場ジャンプの頂点より上に確保する余白（units）。")]
+    private float _introHeadroom = 1.5f;
+
     [Header("滑らかさ（秒・小さいほど素早く追う）")]
     [FormerlySerializedAs("_smoothTime")]
     [SerializeField, Tooltip("横方向の SmoothDamp 到達時間。目安 0.16〜0.24")]
@@ -51,6 +57,17 @@ public class CameraFollow : MonoBehaviour
     private float _lookAheadVelocityThreshold = 0.75f;
     [SerializeField, Min(0f), Tooltip("反対方向への移動がこの秒数続いてから構図を切り替える。衝突直後の短い逆流を無視。")]
     private float _directionChangeDelay = 0.12f;
+
+    [Header("Nearby Magnet Framing")]
+    [SerializeField, Min(1f), Tooltip("Magnetへこの横距離まで近づくと、見切れている場合だけ構図を補助する。")]
+    private float _magnetActivationDistance = 12f;
+    [SerializeField, Min(0f)] private float _magnetFullFramingDistance = 7f;
+    [SerializeField, Tooltip("Magnet用の最大移動量。Xは左右、Yは上方向。倍率は変えない。")]
+    private Vector2 _magnetMaximumShift = new Vector2(1.5f, 2.8f);
+    [SerializeField, Min(0.1f)] private float _magnetFramingSmoothTime = 0.65f;
+    [SerializeField, Range(0f, 0.15f)] private float _magnetViewportMargin = 0.04f;
+    [SerializeField, Range(0.18f, 0.35f), Tooltip("Magnetを映す場合もPlayerを画面下へ寄せすぎない。高速落下中は着地点の視界を優先する。")]
+    private float _magnetMinimumPlayerViewportY = 0.22f;
 
     [Header("Jump / Fall Look Ahead")]
     [SerializeField, Min(0f)] private float _jumpLookAhead = 0f;
@@ -130,10 +147,21 @@ public class CameraFollow : MonoBehaviour
     private float _zoomDemand;
     private float _zoomHoldRemaining;
     private bool _zoomInitialized;
+    private bool _referenceProjectionCaptured;
     private bool _restoreUpscaleRT;
     private int _screenWidth, _screenHeight;
     private Object _eventOwner;
     private bool _eventControlled;
+    private PlayerStartIntro _introOwner;
+    private Vector2 _introStart, _introFinal;
+    private Vector3 _introFrom, _introTo;
+    private float _introPeakY, _introDirection;
+    private bool _introPrepared;
+    private MagnetPoint[] _magnets;
+    private SpriteRenderer[] _magnetVisuals;
+    private Vector3[] _magnetHalfSizes;
+    private int _activeMagnet = -1;
+    private Vector2 _magnetFramingOffset, _magnetFramingVelocity;
 
     // Keep the existing read-only API used by older Editor checks.
     public float HorizontalLookAhead => GetFramingDistance();
@@ -148,6 +176,7 @@ public class CameraFollow : MonoBehaviour
     public float UpperViewOffset => _upperViewOffset;
     public float NormalViewExpansion => _normalViewExpansion;
     public bool IsEventControlled => _eventControlled;
+    public Vector2 CurrentMagnetFramingOffset => _magnetFramingOffset;
 
     private void Awake()
     {
@@ -157,6 +186,7 @@ public class CameraFollow : MonoBehaviour
         _baseOrthographicSize = _camera != null ? _camera.orthographicSize : 5f;
         _referenceOrthographicSize = _baseOrthographicSize;
         ResolveTargetMotionSources();
+        CacheMagnets();
         _followCenter = transform.position;
     }
 
@@ -178,6 +208,11 @@ public class CameraFollow : MonoBehaviour
         _lookAheadSmoothTime = Mathf.Max(0.01f, _lookAheadSmoothTime);
         _lookAheadVelocityThreshold = Mathf.Max(0f, _lookAheadVelocityThreshold);
         _directionChangeDelay = Mathf.Max(0f, _directionChangeDelay);
+        _magnetActivationDistance = Mathf.Max(1f, _magnetActivationDistance);
+        _magnetFullFramingDistance = Mathf.Clamp(_magnetFullFramingDistance, 0f, _magnetActivationDistance - 0.1f);
+        _magnetMaximumShift.x = Mathf.Max(0f, _magnetMaximumShift.x);
+        _magnetMaximumShift.y = Mathf.Max(0f, _magnetMaximumShift.y);
+        _magnetFramingSmoothTime = Mathf.Max(0.1f, _magnetFramingSmoothTime);
         _upwardFollowDeadZone = Mathf.Max(0f, _upwardFollowDeadZone);
         _jumpLookAhead = Mathf.Max(0f, _jumpLookAhead);
         _fallLookAhead = Mathf.Max(0f, _fallLookAhead);
@@ -199,6 +234,12 @@ public class CameraFollow : MonoBehaviour
         // Pause / hit stop / result: neither follow nor lens damping may drift.
         if (Time.deltaTime <= 0f)
             return;
+
+        if (_introOwner != null)
+        {
+            UpdateStartIntro();
+            return;
+        }
 
         if (_respawnHeld)
         {
@@ -223,7 +264,7 @@ public class CameraFollow : MonoBehaviour
 
         if (_eventControlled && _eventOwner == null)
             ReleaseEventControl();
-        // The existing intro disables this component. Goal presentation blocks Player input.
+        // Other event owners and the existing goal presentation take priority over tracking.
         if (_eventControlled || (_targetPlayer != null && _targetPlayer.IsGoalInputBlocked))
         {
             AdoptCurrentFraming();
@@ -300,6 +341,9 @@ public class CameraFollow : MonoBehaviour
         _followCenter.y = Mathf.SmoothDamp(_followCenter.y, desiredY, ref _velocityY, smoothY);
         float nextX = _followCenter.x + _lookAheadOffset;
         float nextY = _followCenter.y + _verticalLookAheadOffset + _upperViewOffset;
+        UpdateMagnetFraming(new Vector2(nextX, nextY), motion, longFall);
+        nextX += _magnetFramingOffset.x;
+        nextY += _magnetFramingOffset.y;
 
         nextX = ClampFollowDelta(current.x, nextX, motion.x);
         nextY = ClampFollowDelta(current.y, nextY, motion.y);
@@ -312,8 +356,99 @@ public class CameraFollow : MonoBehaviour
 
         transform.position = new Vector3(nextX, nextY, FixedZ);
         // Discard blocked movement so bounds / speed limiting cannot accumulate a hidden offset.
-        _followCenter = new Vector2(nextX - _lookAheadOffset,
-            nextY - _verticalLookAheadOffset - _upperViewOffset);
+        _followCenter = new Vector2(nextX - _lookAheadOffset - _magnetFramingOffset.x,
+            nextY - _verticalLookAheadOffset - _upperViewOffset - _magnetFramingOffset.y);
+    }
+
+    private void CacheMagnets()
+    {
+        // Scene lookup and renderer arrays are allocated only once, never during follow.
+        _magnets = FindObjectsByType<MagnetPoint>();
+        _magnetVisuals = new SpriteRenderer[_magnets.Length];
+        _magnetHalfSizes = new Vector3[_magnets.Length];
+        for (int i = 0; i < _magnets.Length; i++)
+        {
+            if (_magnets[i].gameObject.scene != gameObject.scene) continue;
+            float largest = 0f;
+            foreach (var renderer in _magnets[i].GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (!renderer.enabled || renderer.sprite == null) continue;
+                float area = renderer.bounds.size.x * renderer.bounds.size.y;
+                if (_magnetVisuals[i] == null || area > largest)
+                {
+                    _magnetVisuals[i] = renderer;
+                    // Reserve the existing 4% pulse without following its size every frame.
+                    _magnetHalfSizes[i] = renderer.bounds.extents * 1.05f;
+                    largest = area;
+                }
+            }
+        }
+    }
+
+    private bool MagnetAvailable(int index, float distance)
+    {
+        return _magnets != null && index >= 0 && index < _magnets.Length
+            && _magnets[index] != null && _magnets[index].isActiveAndEnabled
+            && _magnetVisuals[index] != null && _magnetVisuals[index].enabled
+            && _magnetVisuals[index].gameObject.activeInHierarchy
+            && Mathf.Abs(_magnets[index].transform.position.x - _target.position.x) <= distance
+            && Mathf.Abs(_magnets[index].transform.position.y - _target.position.y) < _camera.orthographicSize * 2f;
+    }
+
+    private void UpdateMagnetFraming(Vector2 nominalCenter, Vector2 motion, bool longFall)
+    {
+        if (_camera == null || !_camera.orthographic) return;
+        if (!MagnetAvailable(_activeMagnet, _magnetActivationDistance + 2f))
+        {
+            _activeMagnet = -1;
+            float nearest = float.PositiveInfinity;
+            for (int i = 0; _magnets != null && i < _magnets.Length; i++)
+            {
+                if (!MagnetAvailable(i, _magnetActivationDistance)) continue;
+                float distance = Mathf.Abs(_magnets[i].transform.position.x - _target.position.x);
+                if (distance < nearest) { nearest = distance; _activeMagnet = i; }
+            }
+        }
+
+        float halfHeight = _camera.orthographicSize;
+        float halfWidth = halfHeight * _camera.aspect;
+        float maxUp = Mathf.Max(0f, _target.position.y
+            + (0.5f - _magnetMinimumPlayerViewportY) * 2f * halfHeight - nominalCenter.y);
+        maxUp = Mathf.Min(_magnetMaximumShift.y, maxUp);
+        Vector2 desired = Vector2.zero;
+        if (_activeMagnet >= 0)
+        {
+            Bounds bounds = _magnetVisuals[_activeMagnet].bounds;
+            bounds.extents = _magnetHalfSizes[_activeMagnet];
+            float usableX = halfWidth * (1f - 2f * _magnetViewportMargin);
+            float usableY = halfHeight * (1f - 2f * _magnetViewportMargin);
+            float desiredX = bounds.extents.x < usableX
+                ? Mathf.Clamp(nominalCenter.x, bounds.max.x - usableX, bounds.min.x + usableX)
+                : bounds.center.x;
+            desired.x = Mathf.Clamp(desiredX - nominalCenter.x, -_magnetMaximumShift.x, _magnetMaximumShift.x);
+            desired.y = Mathf.Clamp(bounds.max.y - usableY - nominalCenter.y, 0f, _magnetMaximumShift.y);
+            // Do not steal floor visibility from a lower platform when the magnet
+            // cannot fit even at the allowed shift. Wait until Player is closer in height.
+            if (bounds.max.y > nominalCenter.y + maxUp + halfHeight)
+                desired = Vector2.zero;
+            float distance = Mathf.Abs(_magnets[_activeMagnet].transform.position.x - _target.position.x);
+            float weight = Mathf.InverseLerp(_magnetActivationDistance, _magnetFullFramingDistance, distance);
+            weight = weight * weight * (3f - 2f * weight);
+            float forwardDistance = (_magnets[_activeMagnet].transform.position.x - _target.position.x) * _framingDirection;
+            weight *= Mathf.InverseLerp(-5f, -1f, forwardDistance);
+            if (longFall) weight *= 1f - Mathf.InverseLerp(_verticalVelocityThreshold, 12f, -motion.y);
+            desired *= weight;
+        }
+        desired.y = Mathf.Min(desired.y, maxUp);
+        // Keep the body anchor separate from this offset: otherwise repeatedly using
+        // the assisted camera center feeds back into tracking and produces swaying.
+        _magnetFramingOffset = Vector2.SmoothDamp(_magnetFramingOffset, desired,
+            ref _magnetFramingVelocity, _magnetFramingSmoothTime);
+        if (_magnetFramingOffset.y > maxUp)
+        {
+            _magnetFramingOffset.y = maxUp;
+            _magnetFramingVelocity.y = Mathf.Min(0f, _magnetFramingVelocity.y);
+        }
     }
 
     private float GetFramingDistance()
@@ -367,17 +502,20 @@ public class CameraFollow : MonoBehaviour
         {
             RestorePixelPerfectUpscaling();
             _zoomInitialized = false;
+            _referenceProjectionCaptured = false;
             return; // PixelPerfectCamera recalculates its reference projection next frame.
         }
         if (!_zoomInitialized)
         {
             _baseOrthographicSize = _referenceOrthographicSize;
-            if (_pixelPerfect != null && _pixelPerfect.isActiveAndEnabled)
+            if (!_referenceProjectionCaptured && _pixelPerfect != null && _pixelPerfect.isActiveAndEnabled)
             {
                 _baseOrthographicSize = _pixelPerfect.CorrectCinemachineOrthoSize(
                     _pixelPerfect.upscaleRT ? float.MaxValue : _baseOrthographicSize);
             }
             _baseOrthographicSize = Mathf.Max(0.01f, _baseOrthographicSize);
+            _referenceOrthographicSize = _baseOrthographicSize;
+            _referenceProjectionCaptured = true;
             // Expanding both half-height and center by the same amount keeps the
             // previous lower edge. Keep this correction outside the follow dead zone.
             float previousUpperOffset = _upperViewOffset;
@@ -446,6 +584,8 @@ public class CameraFollow : MonoBehaviour
 
     private void AdoptCurrentFraming()
     {
+        _activeMagnet = -1;
+        _magnetFramingOffset = _magnetFramingVelocity = Vector2.zero;
         ResetLookAhead();
         _velocityX = _velocityY = 0f;
         _followCenter = transform.position;
@@ -474,9 +614,61 @@ public class CameraFollow : MonoBehaviour
 
     private void ReleaseEventControl()
     {
+        _introOwner = null;
         _eventControlled = false;
         _eventOwner = null;
         AdoptCurrentFraming();
+    }
+
+    /// <summary>登場経路を一度だけ構図へ変換し、位置・レンズの所有権をCameraFollowに保つ。</summary>
+    public bool BeginStartIntro(PlayerStartIntro owner, Vector2 start, Vector2 landing, Vector2 final, float arcHeight)
+    {
+        if (!isActiveAndEnabled || !BeginEventControl(owner)) return false;
+        _introOwner = owner;
+        _introStart = start;
+        _introFinal = final;
+        _introDirection = final.x >= start.x ? 1f : -1f;
+        float arc = Mathf.Max(0f, arcHeight);
+        float peakT = arc > 0f ? Mathf.Clamp01((landing.y - start.y + 4f * arc) / (8f * arc)) : 0f;
+        _introPeakY = Mathf.Max(start.y, landing.y,
+            Mathf.Lerp(start.y, landing.y, peakT) + 4f * arc * peakT * (1f - peakT));
+        _introPrepared = false;
+        return true;
+    }
+
+    private void UpdateStartIntro()
+    {
+        // Establish the final fixed lens while the entrance/wipe begins, rather than
+        // popping the normal-view expansion on as Player control returns.
+        UpdateZoom(0f);
+        if (!_introPrepared)
+        {
+            float halfHeight = _camera != null ? _camera.orthographicSize : _baseOrthographicSize;
+            float halfWidth = halfHeight * (_camera != null ? _camera.aspect : 16f / 9f);
+            _introTo = new Vector3(_introFinal.x + _offset.x + GetFramingDistance() * _introDirection,
+                _introFinal.y + _offset.y + _upperViewOffset, FixedZ);
+            float entryX = _introStart.x + 2f * halfWidth * (0.5f - _introEntryViewportX) * _introDirection;
+            _introFrom = new Vector3(_introDirection > 0f ? Mathf.Min(entryX, _introTo.x) : Mathf.Max(entryX, _introTo.x),
+                Mathf.Max(_introTo.y, _introPeakY + _introHeadroom - halfHeight), FixedZ);
+            _introFrom = ClampToBounds(_introFrom);
+            _introTo = ClampToBounds(_introTo);
+            _introPrepared = true;
+        }
+        float t = Mathf.Clamp01(_introOwner.CameraProgress);
+        float eased = t * t * t * (t * (t * 6f - 15f) + 10f);
+        transform.position = Vector3.LerpUnclamped(_introFrom, _introTo, eased);
+    }
+
+    public void EndStartIntro(PlayerStartIntro owner)
+    {
+        if (_introOwner != owner) return;
+        // The last presentation frame already has the normal directional framing.
+        // Preserve that lead instead of resetting it and sliding across the screen again.
+        float direction = _introDirection;
+        EndEventControl(owner);
+        _framingDirection = direction;
+        _lookAheadOffset = GetFramingDistance() * direction;
+        _followCenter = (Vector2)transform.position - new Vector2(_lookAheadOffset, _upperViewOffset);
     }
 
     /// <summary>

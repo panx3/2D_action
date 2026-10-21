@@ -33,6 +33,7 @@ public sealed class PauseMenuController : MonoBehaviour
     public bool IsPaused { get; private set; }
     public bool IsShowingControls => controlsPanel != null && controlsPanel.IsVisible;
     public bool IsExternallyBlocked => externallyBlocked;
+    public event System.Action<bool> PauseStateChanged;
 
     private void Awake()
     {
@@ -87,6 +88,7 @@ public sealed class PauseMenuController : MonoBehaviour
         if (hitStopOwner != null) hitStopOwner.CancelHitStop();
         previousTimeScale = Time.timeScale;
         IsPaused = true;
+        PauseStateChanged?.Invoke(true);
         Time.timeScale = 0f;
         pausedBgm = GameBgmController.Instance;
         if (pausedBgm != null) pausedBgm.SetPauseMuffled(true);
@@ -108,6 +110,7 @@ public sealed class PauseMenuController : MonoBehaviour
     {
         controlsPanel.Hide();
         IsPaused = false;
+        PauseStateChanged?.Invoke(false);
         Time.timeScale = previousTimeScale;
         if (pausedBgm != null) pausedBgm.SetPauseMuffled(false);
         pausedBgm = null;
