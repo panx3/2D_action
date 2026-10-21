@@ -106,3 +106,15 @@ Scene内の作業開始前の未保存編集は一時フォルダへ退避して
 追加/変更: `Assets/Script/AmbientPetalField.cs`, `ScreenVisualController.cs`, `ScreenVisualProfile.cs`, `Assets/ScreenVisualPetals.shader`, `Assets/Editor/AmbientPetalSetup.cs`, `ScreenVisualChecks.cs`, `Assets/Art/ScreenVisuals/{PinkPetalsAtlas.png,PinkPetals.mat,SkyRuins.asset}`と新規アセットの`.meta`。CompletSceneには既存管理ComponentへのMaterial参照1個だけを追加。Prefab、タイトルScene、Packages、ProjectSettings、入力/物理/カメラ追従の本番処理は変更しない。
 
 花びら追加後の統合確認は61項目PASS、Runtime Error/Exception=0、C#/花びらShaderコンパイルエラーなし。操作なしでの継続的な変形、通常起動での可視数、個別/マスターOFF、ポーズ中の停止、シーン遷移後の破棄を確認した。実際のゲーム画面もキャプチャして目視確認済み。長時間の実機放置、ゲームパッド通しプレイ、最終的な華やかさの評価は未実施。Editorは保存済みCompletScene/Edit Modeに戻している。
+
+### 背景と前景の2層
+
+ユーザー調整により、SkyRuinsの背景側は基準サイズ18→38px、不透明度0.85→0.95に変更した。28枚・風速・揺れは保持。Inspector上の表示名は`Background Petals`、既存の保存フィールド名`petals`は保持。
+
+`Foreground Petals`を独立して追加し、4枚、基準46px、不透明度0.35、風速1.3、落下0.42、揺れ0.65で有効化した。画像・Materialは背景側と共有。配置の種とカメラ移動への反応を変え、別々の花びらが手前を横切る。前景はDefault:40、背景はDefault:-650。キャラクターの描画順2〜6より前、HP/UIの100以上より後ろ。各層のON/OFF・数・サイズ・透明度・速度は個別に調整できる。マスターOFFとComponent無効化時は両方消える。
+
+開始演出でカメラが広角へ変わっても、花びらの画面内の分布を保つよう補正した。従来は開始時の小さい画角に座標が残り、演出後の広い画角で下半分へ偏って見えることがあった。
+
+変更は`AmbientPetalField.cs`, `ScreenVisualController.cs`, `ScreenVisualProfile.cs`, `SkyRuins.asset`と本書。画像、Shader、Scene、Prefabは今回変更/保存していない。Play Modeで2層の可視性、実際の描画順、前景の透明度上限、個別/マスターON/OFF、Component無効化/再有効化を確認。未変更システムの統合テスト再実行、実機の長時間表示、最終的な演出量の評価は省略。
+
+最終確認は背景15枚・前景3枚が画面内に表示され、背景側の描画面は約25〜46px。開始演出後にも上下へ分散し、画面上部の花びらが見えることを実画面で確認した。コンパイル正常、新規Console Error=0。保存済みCompletScene/Edit Modeへ戻し、作業開始前のScene差分は保持した。

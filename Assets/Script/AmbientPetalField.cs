@@ -17,20 +17,23 @@ internal sealed class AmbientPetalField : System.IDisposable
     private readonly GameObject root;
     private readonly Mesh mesh;
     private readonly MeshRenderer renderer;
+    private readonly bool foreground;
     private Camera previousCamera;
     private Vector2 previousCameraPosition;
+    private Vector2 previousViewSize;
     private bool initialized;
     private double clock;
 
     internal int VisibleCount { get; private set; }
 
-    internal AmbientPetalField(Transform parent, Material material)
+    internal AmbientPetalField(Transform parent, Material material, bool foreground = false)
     {
-        root = new GameObject("Screen Visual Pink Petals", typeof(MeshFilter), typeof(MeshRenderer)) { hideFlags = HideFlags.DontSave };
+        this.foreground = foreground;
+        root = new GameObject(foreground ? "Screen Visual Foreground Petals" : "Screen Visual Pink Petals", typeof(MeshFilter), typeof(MeshRenderer)) { hideFlags = HideFlags.DontSave };
         root.transform.SetParent(parent, false);
         renderer = root.GetComponent<MeshRenderer>();
         renderer.sharedMaterial = material;
-        renderer.sortingOrder = -650; // In front of backgrounds/dust, behind terrain, characters and HUD.
+        renderer.sortingOrder = foreground ? 40 : -650; // Foreground stays below HP/UI (100+) and above character sprites.
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = false;
         renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
@@ -62,22 +65,32 @@ internal sealed class AmbientPetalField : System.IDisposable
         Vector2 cameraPosition = camera.transform.position;
         Vector2 travel = initialized ? cameraPosition - previousCameraPosition : Vector2.zero;
         bool reset = !initialized || camera != previousCamera || travel.sqrMagnitude > height * height * 4;
+        if (!reset && previousViewSize.x > 0 && previousViewSize.y > 0)
+        {
+            // The intro changes the camera projection. Preserve the distribution
+            // across the view instead of leaving all petals in the old small frame.
+            Vector2 scale = new Vector2(width / previousViewSize.x, height / previousViewSize.y);
+            if (!Mathf.Approximately(scale.x, 1) || !Mathf.Approximately(scale.y, 1))
+                for (int i = 0; i < Capacity; i++) petals[i].position = Vector2.Scale(petals[i].position, scale);
+        }
         if (reset)
         {
             for (int i = 0; i < Capacity; i++)
             {
-                float seed = Mathf.Repeat(i * 0.618034f + 0.29f, 1);
+                float layerSeed = foreground ? 0.37f : 0;
+                float seed = Mathf.Repeat(i * 0.618034f + 0.29f + layerSeed, 1);
                 petals[i] = new Petal
                 {
-                    seed = seed, depth = Mathf.Repeat(i * 0.381966f + 0.13f, 1), age = 3,
-                    position = new Vector2((Mathf.Repeat(i * 0.754877f + 0.17f, 1) - 0.5f) * width * 1.12f,
-                        (Mathf.Repeat(i * 0.569841f + 0.31f, 1) - 0.5f) * height * 1.12f)
+                    seed = seed, depth = Mathf.Repeat(i * 0.381966f + 0.13f + layerSeed, 1), age = 3,
+                    position = new Vector2((Mathf.Repeat(i * 0.754877f + 0.17f + layerSeed, 1) - 0.5f) * width * 1.12f,
+                        (Mathf.Repeat(i * 0.569841f + 0.31f + layerSeed, 1) - 0.5f) * height * 1.12f)
                 };
             }
             travel = Vector2.zero;
             initialized = true;
         }
         previousCamera = camera; previousCameraPosition = cameraPosition;
+        previousViewSize = new Vector2(width, height);
         float dt = Mathf.Clamp(deltaTime, 0, 0.1f);
         clock += dt;
         // Camera-normalized sizes retain the generated pixel silhouettes at any view width.
@@ -99,7 +112,7 @@ internal sealed class AmbientPetalField : System.IDisposable
             float speed = Mathf.Lerp(0.6f, 1.25f, p.depth);
             float frequency = Mathf.Lerp(1.1f, 1.85f, p.seed);
             float phase = p.seed * 31;
-            p.position -= travel * Mathf.Lerp(0.24f, 0.62f, p.depth);
+            p.position -= travel * (foreground ? Mathf.Lerp(0.9f, 1.15f, p.depth) : Mathf.Lerp(0.24f, 0.62f, p.depth));
             p.position += new Vector2(settings.windSpeed * speed * gust,
                 -settings.fallSpeed * speed + Wave(frequency * 0.73f, phase * 0.73f) * settings.flutter * 0.28f) * dt;
             bool wrapped = false;
@@ -127,7 +140,7 @@ internal sealed class AmbientPetalField : System.IDisposable
             petals[i] = p;
         }
         VisibleCount = visible;
-        root.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, 1);
+        root.transform.position = new Vector3(cameraPosition.x, cameraPosition.y, foreground ? -1 : 1);
         root.transform.rotation = Quaternion.identity;
         // The scene owner normally has unit scale, but do not let its scale deform the field.
         Vector3 parentScale = root.transform.parent.lossyScale;

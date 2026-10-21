@@ -9,7 +9,11 @@ public sealed class ScreenVisualProfile : ScriptableObject
     public VignetteSettings vignette = new VignetteSettings();
     public BlurSettings blur = new BlurSettings();
     public AtmosphereSettings atmosphere = new AtmosphereSettings();
-    public PetalSettings petals = new PetalSettings();
+    [InspectorName("Background Petals")] public PetalSettings petals = new PetalSettings();
+    public PetalSettings foregroundPetals = new PetalSettings
+    {
+        count = 4, sizePixels = 46, opacity = 0.35f, windSpeed = 1.3f, fallSpeed = 0.42f
+    };
     public LightingSettings lighting = new LightingSettings();
     public bool parallaxEnabled = true;
     public LayerSettings[] layers = new LayerSettings[0];
@@ -60,8 +64,8 @@ public sealed class ScreenVisualProfile : ScriptableObject
     {
         public bool enabled;
         [Range(0, 48)] public int count = 28;
-        [Range(6, 32)] public float sizePixels = 18;
-        [Range(0, 1)] public float opacity = 0.85f;
+        [Range(6, 80)] public float sizePixels = 38;
+        [Range(0, 1)] public float opacity = 0.95f;
         [Range(-3, 3)] public float windSpeed = 1.15f;
         [Range(0, 2)] public float fallSpeed = 0.35f;
         [Range(0, 2)] public float flutter = 0.65f;
