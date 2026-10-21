@@ -92,3 +92,17 @@ Scene内の作業開始前の未保存編集は一時フォルダへ退避して
 最初の実装では粒子の生成アトラスの透明余白が大きく、通常画面の可視部分が約1〜2ピクセル・不透明度24%になっていた。また開始地点の街灯へ光を接続しておらず、通常の開始画面では局所光0灯だった。アトラスのアルファ境界を測定して各セルの内容をUV範囲(106/256,82/256)-(162/256,152/256)から描画するよう修正し、SkyRuinsの元の不透明度既定値だけを48%へ更新。粒子数と速度は保持した。既存の街灯へ局所光と数学的な光彩を接続し、起動直後の自然発生・光彩表示も確認対象に追加した。
 
 修正後は53項目PASS、Runtime Error/Exception=0、C#/Shaderコンパイルエラーなし。手動Emit/Simulate前の通常起動画面も保存して確認した。光彩だけをOFF/ONした比較画像でも街灯周囲の暖色の差を確認。今回の縦長Game Viewでの測定はOFF 238.3fps / 中央値4.12ms / DrawCall平均19、ON（粒子49個）218.7fps / 中央値4.36ms / DrawCall平均22。測定条件が前回と異なるため前回値との直接比較はしない。実機とゲームパッド通しプレイ、最終的な見た目の評価は未実施。
+
+## 操作しなくても舞い続けるピンクの花びら
+
+新たに画像生成した`PinkPetalsAtlas.png`の4種類を`PinkPetals.mat`へ接続。既存のタイトル用花びらと遺跡背景を画風の参照にし、切れ込み・斜め・横向き・丸い花びらの異なるシルエットを作成した。元のタイトル用素材は変更していない。ゲーム用インポートは128×128、Point、Mipなし、非圧縮、透明背景。
+
+`ScreenVisuals > Stage settings > Petals`でON/OFF・数・大きさ・不透明度・風速・落下速度・揺れ・色を設定する。SkyRuinsの初期値はON、28枚、基準18画面ピクセル、不透明度0.85、風速1.15、落下0.35、揺れ0.65。ほかのプリセットは明示的に有効化するまでOFF。既存の霧・ホコリ・ライト設定は保持。
+
+`AmbientPetalField`は既存ScreenVisualControllerに所有される描画補助で、別の管理オブジェクトやカメラを作らない。48枚分の固定配列・1つの動的Meshを初期生成し、毎フレームのオブジェクト/Texture生成なしで動かす。初期状態から画面内へ分散配置し、大小による速度差、ゆっくり変化する風、上下の揺れ、幅の変化による表裏の返り、画面外でのループを組み合わせる。長時間待機しても風の時計を一斉リセットしない。
+
+画角に合わせた画面上の大きさを保ち、通常のカメラ移動には奥行き別の視差を付ける。カメラの大きな瞬間移動/再生成ではフィールドを再配置する。描画順はDefault:-650で、背景/ホコリより手前、地形/主人公/敵/UIより奥。UIや主人公を覆わない。High28枚、Medium20枚、Low11枚。Time.timeScale=0のポーズ中は動きを止める。
+
+追加/変更: `Assets/Script/AmbientPetalField.cs`, `ScreenVisualController.cs`, `ScreenVisualProfile.cs`, `Assets/ScreenVisualPetals.shader`, `Assets/Editor/AmbientPetalSetup.cs`, `ScreenVisualChecks.cs`, `Assets/Art/ScreenVisuals/{PinkPetalsAtlas.png,PinkPetals.mat,SkyRuins.asset}`と新規アセットの`.meta`。CompletSceneには既存管理ComponentへのMaterial参照1個だけを追加。Prefab、タイトルScene、Packages、ProjectSettings、入力/物理/カメラ追従の本番処理は変更しない。
+
+花びら追加後の統合確認は61項目PASS、Runtime Error/Exception=0、C#/花びらShaderコンパイルエラーなし。操作なしでの継続的な変形、通常起動での可視数、個別/マスターOFF、ポーズ中の停止、シーン遷移後の破棄を確認した。実際のゲーム画面もキャプチャして目視確認済み。長時間の実機放置、ゲームパッド通しプレイ、最終的な華やかさの評価は未実施。Editorは保存済みCompletScene/Edit Modeに戻している。

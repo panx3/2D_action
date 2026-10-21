@@ -4960,6 +4960,7 @@ MonoBehaviour:
   vignetteShader: {fileID: 4800000, guid: 73deedf8f3719f04e9fece821a2b88a4, type: 3}
   particleMaterial: {fileID: 2100000, guid: 8fb78373ad910e044a2d5c3003c8c125, type: 2}
   localGlowShader: {fileID: 4800000, guid: 735b14f9bd06a9545831ed711e361108, type: 3}
+  petalMaterial: {fileID: 2100000, guid: 087e26df407c8a140ac2054ce5d119f9, type: 2}
 --- !u!4 &932229945
 Transform:
   m_ObjectHideFlags: 0

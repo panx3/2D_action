@@ -14,6 +14,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     [SerializeField] private Shader vignetteShader;
     [SerializeField] private Material particleMaterial;
     [SerializeField] private Shader localGlowShader;
+    [SerializeField] private Material petalMaterial;
 
     private sealed class Binding
     {
@@ -44,6 +45,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     private Vector2 lastParticleArea;
     private Material localGlowMaterial;
     private Sprite localGlowSprite;
+    private AmbientPetalField petalField;
 
     public ScreenVisualProfile Settings
     {
@@ -62,6 +64,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     public int ParticleCount => particles != null ? particles.particleCount : 0;
     public int BoundRendererCount => bindings.Count;
     public Camera TargetCamera => targetCamera;
+    public int VisiblePetalCount => petalField != null ? petalField.VisibleCount : 0;
 
     private void OnEnable()
     {
@@ -80,6 +83,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         RefreshBindings();
         CreateVignette();
         CreateParticles();
+        if (petalMaterial != null) petalField = new AmbientPetalField(transform, petalMaterial);
         if (localGlowShader != null && localGlowShader.isSupported)
         {
             localGlowMaterial = new Material(localGlowShader) { hideFlags = HideFlags.HideAndDontSave };
@@ -177,6 +181,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         ApplyLights(p, active);
         ApplyVignette(p, active);
         ApplyParticles(p, active);
+        if (petalField != null) petalField.Tick(targetCamera, p.petals, p.quality, active, Time.deltaTime);
         Shader.SetGlobalFloat("_SV_Time", Time.time);
     }
 
@@ -363,6 +368,7 @@ public sealed class ScreenVisualController : MonoBehaviour
             if (light != null && light.gameObject.scene == gameObject.scene) light.SetGlowVisible(false);
         if (vignetteCanvas != null) vignetteCanvas.enabled = false;
         if (particles != null) particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        if (petalField != null) petalField.Hide();
     }
 
     private void RestoreBindings()
@@ -384,6 +390,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         if (vignetteCanvas != null) DestroyOwned(vignetteCanvas.gameObject);
         if (particles != null) DestroyOwned(particles.gameObject);
         DestroyOwned(fallback);
+        if (petalField != null) petalField.Dispose();
     }
     private static void DestroyOwned(Object value)
     {

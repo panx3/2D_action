@@ -9,6 +9,7 @@ public sealed class ScreenVisualProfile : ScriptableObject
     public VignetteSettings vignette = new VignetteSettings();
     public BlurSettings blur = new BlurSettings();
     public AtmosphereSettings atmosphere = new AtmosphereSettings();
+    public PetalSettings petals = new PetalSettings();
     public LightingSettings lighting = new LightingSettings();
     public bool parallaxEnabled = true;
     public LayerSettings[] layers = new LayerSettings[0];
@@ -54,6 +55,17 @@ public sealed class ScreenVisualProfile : ScriptableObject
         public bool localLightsEnabled = true;
         public Color ambientColor = new Color(0.96f, 0.98f, 1, 1);
         [Range(0.5f, 1.5f)] public float ambientIntensity = 1;
+    }
+    [Serializable] public sealed class PetalSettings
+    {
+        public bool enabled;
+        [Range(0, 48)] public int count = 28;
+        [Range(6, 32)] public float sizePixels = 18;
+        [Range(0, 1)] public float opacity = 0.85f;
+        [Range(-3, 3)] public float windSpeed = 1.15f;
+        [Range(0, 2)] public float fallSpeed = 0.35f;
+        [Range(0, 2)] public float flutter = 0.65f;
+        public Color color = Color.white;
     }
     [Serializable] public sealed class LayerSettings
     {

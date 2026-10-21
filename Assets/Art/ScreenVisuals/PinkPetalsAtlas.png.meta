@@ -1,0 +1,2470 @@
+fileFormatVersion: 2
+guid: 77b6ac4809cff1b4dbbbc67fffb741df
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 675407325757238917
+    second: PinkPetalsAtlas_0
+  - first:
+      213: -4694389703942902122
+    second: PinkPetalsAtlas_1
+  - first:
+      213: -7421049863109769653
+    second: PinkPetalsAtlas_2
+  - first:
+      213: 5036123384381886321
+    second: PinkPetalsAtlas_3
+  - first:
+      213: 1972468472437532283
+    second: PinkPetalsAtlas_4
+  - first:
+      213: 5832259909973249840
+    second: PinkPetalsAtlas_5
+  - first:
+      213: 8280781190811187515
+    second: PinkPetalsAtlas_6
+  - first:
+      213: 8193876354154552148
+    second: PinkPetalsAtlas_7
+  - first:
+      213: -6428603450996772869
+    second: PinkPetalsAtlas_8
+  - first:
+      213: -439824081036691625
+    second: PinkPetalsAtlas_9
+  - first:
+      213: -6533780282783745791
+    second: PinkPetalsAtlas_10
+  - first:
+      213: -6220634773716926120
+    second: PinkPetalsAtlas_11
+  - first:
+      213: 8532572708249436556
+    second: PinkPetalsAtlas_12
+  - first:
+      213: -965634670105704503
+    second: PinkPetalsAtlas_13
+  - first:
+      213: 2877354695154100267
+    second: PinkPetalsAtlas_14
+  - first:
+      213: 332906786069093973
+    second: PinkPetalsAtlas_15
+  - first:
+      213: 925873594461254611
+    second: PinkPetalsAtlas_16
+  - first:
+      213: -420568222662742242
+    second: PinkPetalsAtlas_17
+  - first:
+      213: -6639441963003656458
+    second: PinkPetalsAtlas_18
+  - first:
+      213: 6920849768473769186
+    second: PinkPetalsAtlas_19
+  - first:
+      213: 3441941212698125982
+    second: PinkPetalsAtlas_20
+  - first:
+      213: 6135606778861461499
+    second: PinkPetalsAtlas_21
+  - first:
+      213: -2831578291526512335
+    second: PinkPetalsAtlas_22
+  - first:
+      213: -1076245353322773401
+    second: PinkPetalsAtlas_23
+  - first:
+      213: -1997442910120184082
+    second: PinkPetalsAtlas_24
+  - first:
+      213: 529426811389080461
+    second: PinkPetalsAtlas_25
+  - first:
+      213: -3555419345027275707
+    second: PinkPetalsAtlas_26
+  - first:
+      213: -6162317388830399808
+    second: PinkPetalsAtlas_27
+  - first:
+      213: 8267651910393783530
+    second: PinkPetalsAtlas_28
+  - first:
+      213: -3392595664278947090
+    second: PinkPetalsAtlas_29
+  - first:
+      213: 8492090055383438931
+    second: PinkPetalsAtlas_30
+  - first:
+      213: 4010578827778215405
+    second: PinkPetalsAtlas_31
+  - first:
+      213: 2284615076425804755
+    second: PinkPetalsAtlas_32
+  - first:
+      213: 657795130305056945
+    second: PinkPetalsAtlas_33
+  - first:
+      213: -3187524735635136667
+    second: PinkPetalsAtlas_34
+  - first:
+      213: 2454025057026816680
+    second: PinkPetalsAtlas_35
+  - first:
+      213: 2473256289108552650
+    second: PinkPetalsAtlas_36
+  - first:
+      213: -2991046477405074275
+    second: PinkPetalsAtlas_37
+  - first:
+      213: -7449409568870919536
+    second: PinkPetalsAtlas_38
+  - first:
+      213: -1955285739637799097
+    second: PinkPetalsAtlas_39
+  - first:
+      213: 1263277178950554134
+    second: PinkPetalsAtlas_40
+  - first:
+      213: -8128038972055570119
+    second: PinkPetalsAtlas_41
+  - first:
+      213: 7116202314288318294
+    second: PinkPetalsAtlas_42
+  - first:
+      213: -2884963428136964609
+    second: PinkPetalsAtlas_43
+  - first:
+      213: -4657861221024080036
+    second: PinkPetalsAtlas_44
+  - first:
+      213: -1865091800431643840
+    second: PinkPetalsAtlas_45
+  - first:
+      213: -4551003899091872666
+    second: PinkPetalsAtlas_46
+  - first:
+      213: 379585031802981393
+    second: PinkPetalsAtlas_47
+  - first:
+      213: 3075746536292294128
+    second: PinkPetalsAtlas_48
+  - first:
+      213: -459414976072883028
+    second: PinkPetalsAtlas_49
+  - first:
+      213: 2317192672558895404
+    second: PinkPetalsAtlas_50
+  - first:
+      213: -4177308926914193001
+    second: PinkPetalsAtlas_51
+  - first:
+      213: 8933299700227080853
+    second: PinkPetalsAtlas_52
+  - first:
+      213: -4527900074071010244
+    second: PinkPetalsAtlas_53
+  - first:
+      213: 6373774401917086528
+    second: PinkPetalsAtlas_54
+  - first:
+      213: -7097792572032187300
+    second: PinkPetalsAtlas_55
+  - first:
+      213: 1119686123772488836
+    second: PinkPetalsAtlas_56
+  - first:
+      213: -8035837679316572960
+    second: PinkPetalsAtlas_57
+  - first:
+      213: -6435580518740492125
+    second: PinkPetalsAtlas_58
+  - first:
+      213: 2778665534868948067
+    second: PinkPetalsAtlas_59
+  - first:
+      213: 8463686459651955937
+    second: PinkPetalsAtlas_60
+  - first:
+      213: -4709474703873974406
+    second: PinkPetalsAtlas_61
+  - first:
+      213: 4951499940277206019
+    second: PinkPetalsAtlas_62
+  - first:
+      213: 3844043758292344580
+    second: PinkPetalsAtlas_63
+  - first:
+      213: -7438890243611910491
+    second: PinkPetalsAtlas_64
+  - first:
+      213: -304436827432793161
+    second: PinkPetalsAtlas_65
+  - first:
+      213: 7328443378475794446
+    second: PinkPetalsAtlas_66
+  - first:
+      213: -6338050723375796635
+    second: PinkPetalsAtlas_67
+  - first:
+      213: -8626581545290551055
+    second: PinkPetalsAtlas_68
+  - first:
+      213: 3241003636790658004
+    second: PinkPetalsAtlas_69
+  - first:
+      213: 8025690587515241686
+    second: PinkPetalsAtlas_70
+  - first:
+      213: -122206241899497700
+    second: PinkPetalsAtlas_71
+  - first:
+      213: -5535503197846070826
+    second: PinkPetalsAtlas_72
+  - first:
+      213: -5644440385777118922
+    second: PinkPetalsAtlas_73
+  - first:
+      213: -4830748541309238745
+    second: PinkPetalsAtlas_74
+  - first:
+      213: 3393393917988337863
+    second: PinkPetalsAtlas_75
+  - first:
+      213: 1655090103081641726
+    second: PinkPetalsAtlas_76
+  - first:
+      213: 8461786979914344356
+    second: PinkPetalsAtlas_77
+  - first:
+      213: -7569738669859798930
+    second: PinkPetalsAtlas_78
+  - first:
+      213: -1275689218599324247
+    second: PinkPetalsAtlas_79
+  - first:
+      213: 2255203290202630252
+    second: PinkPetalsAtlas_80
+  - first:
+      213: 2614830125828676292
+    second: PinkPetalsAtlas_81
+  - first:
+      213: -1325504576223727569
+    second: PinkPetalsAtlas_82
+  - first:
+      213: 9214989088819751284
+    second: PinkPetalsAtlas_83
+  - first:
+      213: 190167014316737953
+    second: PinkPetalsAtlas_84
+  - first:
+      213: 7495667507755745657
+    second: PinkPetalsAtlas_85
+  - first:
+      213: -8704014170459924
+    second: PinkPetalsAtlas_86
+  - first:
+      213: -1701702879287633055
+    second: PinkPetalsAtlas_87
+  - first:
+      213: 8237413963623690055
+    second: PinkPetalsAtlas_88
+  - first:
+      213: -3457482651789516122
+    second: PinkPetalsAtlas_89
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 128
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 956
+        width: 130
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58ee47262678f5900800000000000000
+      internalID: 675407325757238917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_1
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 568
+        width: 496
+        height: 534
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69e6b3baf6d2adeb0800000000000000
+      internalID: -4694389703942902122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_2
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 1118
+        width: 67
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4681e8c772230990800000000000000
+      internalID: -7421049863109769653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_3
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 1094
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17fce1b1987e3e540800000000000000
+      internalID: 5036123384381886321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_4
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 1131
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b76eb4600ad9f5b10800000000000000
+      internalID: 1972468472437532283
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_5
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 1130
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03f05bbcc7950f050800000000000000
+      internalID: 5832259909973249840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_6
+      rect:
+        serializedVersion: 2
+        x: 464
+        y: 1116
+        width: 19
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b39790d9e9e3be270800000000000000
+      internalID: 8280781190811187515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_7
+      rect:
+        serializedVersion: 2
+        x: 466
+        y: 1138
+        width: 40
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45bdade812f76b170800000000000000
+      internalID: 8193876354154552148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_8
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 1107
+        width: 23
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bffac75b83309c6a0800000000000000
+      internalID: -6428603450996772869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_9
+      rect:
+        serializedVersion: 2
+        x: 502
+        y: 1097
+        width: 56
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 757352e145e65e9f0800000000000000
+      internalID: -439824081036691625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_10
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 1133
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 109393443795355a0800000000000000
+      internalID: -6533780282783745791
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_11
+      rect:
+        serializedVersion: 2
+        x: 653
+        y: 562
+        width: 570
+        height: 614
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8510923b1addba9a0800000000000000
+      internalID: -6220634773716926120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_12
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 1125
+        width: 81
+        height: 107
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c81866faba9c96670800000000000000
+      internalID: 8532572708249436556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_13
+      rect:
+        serializedVersion: 2
+        x: 986
+        y: 1110
+        width: 30
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c74c8932606992f0800000000000000
+      internalID: -965634670105704503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_14
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 1110
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b286671b9da6ee720800000000000000
+      internalID: 2877354695154100267
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_15
+      rect:
+        serializedVersion: 2
+        x: 1174
+        y: 1093
+        width: 49
+        height: 85
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55e17f645f8be9400800000000000000
+      internalID: 332906786069093973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_16
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 1043
+        width: 55
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d3f6c0f02d59dc00800000000000000
+      internalID: 925873594461254611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_17
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 937
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1fae540e67d92af0800000000000000
+      internalID: -420568222662742242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_18
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 937
+        width: 13
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f6485046b6fbd3a0800000000000000
+      internalID: -6639441963003656458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_19
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 916
+        width: 9
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e439b9323ccb0060800000000000000
+      internalID: 6920849768473769186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_20
+      rect:
+        serializedVersion: 2
+        x: 1170
+        y: 942
+        width: 35
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9626a8fb4b34cf20800000000000000
+      internalID: 3441941212698125982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_21
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 867
+        width: 7
+        height: 72
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bff14878bdd062550800000000000000
+      internalID: 6135606778861461499
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_22
+      rect:
+        serializedVersion: 2
+        x: 705
+        y: 899
+        width: 18
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 131dad3db8634b8d0800000000000000
+      internalID: -2831578291526512335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_23
+      rect:
+        serializedVersion: 2
+        x: 713
+        y: 921
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7640808ad886011f0800000000000000
+      internalID: -1076245353322773401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_24
+      rect:
+        serializedVersion: 2
+        x: 1165
+        y: 921
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee6f9239148a744e0800000000000000
+      internalID: -1997442910120184082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_25
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 919
+        width: 11
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d83f96341e6e85700800000000000000
+      internalID: 529426811389080461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_26
+      rect:
+        serializedVersion: 2
+        x: 1180
+        y: 907
+        width: 9
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 544e81071fc98aec0800000000000000
+      internalID: -3555419345027275707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_27
+      rect:
+        serializedVersion: 2
+        x: 1184
+        y: 921
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c22d85fbfc0b7aa0800000000000000
+      internalID: -6162317388830399808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_28
+      rect:
+        serializedVersion: 2
+        x: 659
+        y: 836
+        width: 56
+        height: 62
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae4e99dcb999cb270800000000000000
+      internalID: 8267651910393783530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_29
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 889
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eea7f14d7341be0d0800000000000000
+      internalID: -3392595664278947090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_30
+      rect:
+        serializedVersion: 2
+        x: 713
+        y: 877
+        width: 29
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 356d1cf89e6f9d570800000000000000
+      internalID: 8492090055383438931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_31
+      rect:
+        serializedVersion: 2
+        x: 1125
+        y: 866
+        width: 64
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ded4c65e13078a730800000000000000
+      internalID: 4010578827778215405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_32
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 757
+        width: 52
+        height: 89
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3dbacdebe4594bf10800000000000000
+      internalID: 2284615076425804755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_33
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 769
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b090d49f25f02900800000000000000
+      internalID: 657795130305056945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_34
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 781
+        width: 18
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56f52b32423a3c3d0800000000000000
+      internalID: -3187524735635136667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_35
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 753
+        width: 23
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8aabdf199c27e0220800000000000000
+      internalID: 2454025057026816680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_36
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 770
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: acbe0d6bd75c25220800000000000000
+      internalID: 2473256289108552650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_37
+      rect:
+        serializedVersion: 2
+        x: 643
+        y: 730
+        width: 25
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9c4697731bad76d0800000000000000
+      internalID: -2991046477405074275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_38
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 726
+        width: 22
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0929d0d37716e9890800000000000000
+      internalID: -7449409568870919536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_39
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 729
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7478086bafd6dd4e0800000000000000
+      internalID: -1955285739637799097
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_40
+      rect:
+        serializedVersion: 2
+        x: 380
+        y: 644
+        width: 21
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6129430b6ef088110800000000000000
+      internalID: 1263277178950554134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_41
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 665
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 939b81e7e97633f80800000000000000
+      internalID: -8128038972055570119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_42
+      rect:
+        serializedVersion: 2
+        x: 406
+        y: 670
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 657c7f43d44d1c260800000000000000
+      internalID: 7116202314288318294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_43
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 584
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffd27eb1c0d86f7d0800000000000000
+      internalID: -2884963428136964609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_44
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 580
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5fdacbd5e3fb5fb0800000000000000
+      internalID: -4657861221024080036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_45
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 560
+        width: 18
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04337c1a3ecdd16e0800000000000000
+      internalID: -1865091800431643840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_46
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 542
+        width: 12
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6641637e01697d0c0800000000000000
+      internalID: -4551003899091872666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_47
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 23
+        width: 468
+        height: 539
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11c0ca6439e844500800000000000000
+      internalID: 379585031802981393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_48
+      rect:
+        serializedVersion: 2
+        x: 303
+        y: 557
+        width: 24
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fd17d2cd2f3faa20800000000000000
+      internalID: 3075746536292294128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_49
+      rect:
+        serializedVersion: 2
+        x: 327
+        y: 526
+        width: 44
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca46eaa6384df99f0800000000000000
+      internalID: -459414976072883028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_50
+      rect:
+        serializedVersion: 2
+        x: 814
+        y: 505
+        width: 67
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c21d20c6572582020800000000000000
+      internalID: 2317192672558895404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_51
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 520
+        width: 75
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 799163ec9a73706c0800000000000000
+      internalID: -4177308926914193001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_52
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 553
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59283282fb479fb70800000000000000
+      internalID: 8933299700227080853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_53
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 516
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c34588a5fdaa921c0800000000000000
+      internalID: -4527900074071010244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_54
+      rect:
+        serializedVersion: 2
+        x: 969
+        y: 535
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04beeb08c02347850800000000000000
+      internalID: 6373774401917086528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_55
+      rect:
+        serializedVersion: 2
+        x: 1051
+        y: 527
+        width: 43
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c548d9ee2439f7d90800000000000000
+      internalID: -7097792572032187300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_56
+      rect:
+        serializedVersion: 2
+        x: 717
+        y: 484
+        width: 22
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48ca463e89ce98f00800000000000000
+      internalID: 1119686123772488836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_57
+      rect:
+        serializedVersion: 2
+        x: 735
+        y: 477
+        width: 66
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e4e2a3d438fa7090800000000000000
+      internalID: -8035837679316572960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_58
+      rect:
+        serializedVersion: 2
+        x: 1029
+        y: 503
+        width: 41
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a08c098d9930b6a0800000000000000
+      internalID: -6435580518740492125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_59
+      rect:
+        serializedVersion: 2
+        x: 1075
+        y: 499
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3640c7bf49dcf8620800000000000000
+      internalID: 2778665534868948067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_60
+      rect:
+        serializedVersion: 2
+        x: 1091
+        y: 511
+        width: 13
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ec96d51efd057570800000000000000
+      internalID: 8463686459651955937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_61
+      rect:
+        serializedVersion: 2
+        x: 1093
+        y: 506
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7f57ec65b594aeb0800000000000000
+      internalID: -4709474703873974406
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_62
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 500
+        width: 36
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30c379526f247b440800000000000000
+      internalID: 4951499940277206019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_63
+      rect:
+        serializedVersion: 2
+        x: 700
+        y: 23
+        width: 512
+        height: 477
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40f921a7e69c85530800000000000000
+      internalID: 3844043758292344580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_64
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 491
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ae94628cb0c3c890800000000000000
+      internalID: -7438890243611910491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_65
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 438
+        width: 28
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7bb4254815c66cbf0800000000000000
+      internalID: -304436827432793161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_66
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 449
+        width: 36
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e000d9acc6cd3b560800000000000000
+      internalID: 7328443378475794446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_67
+      rect:
+        serializedVersion: 2
+        x: 1165
+        y: 454
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56e27c09278ba08a0800000000000000
+      internalID: -6338050723375796635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_68
+      rect:
+        serializedVersion: 2
+        x: 1174
+        y: 433
+        width: 45
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f034074ac9384880800000000000000
+      internalID: -8626581545290551055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_69
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 440
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d308a6d2ab5afc20800000000000000
+      internalID: 3241003636790658004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_70
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 337
+        width: 84
+        height: 105
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d4ca02411bf06f60800000000000000
+      internalID: 8025690587515241686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_71
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 310
+        width: 99
+        height: 134
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c17be3a0216dd4ef0800000000000000
+      internalID: -122206241899497700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_72
+      rect:
+        serializedVersion: 2
+        x: 657
+        y: 438
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d9985f7b21fd23b0800000000000000
+      internalID: -5535503197846070826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_73
+      rect:
+        serializedVersion: 2
+        x: 1196
+        y: 401
+        width: 21
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 631d2e9ef5beaa1b0800000000000000
+      internalID: -5644440385777118922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_74
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 296
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 722c60ccbcbb5fcb0800000000000000
+      internalID: -4830748541309238745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_75
+      rect:
+        serializedVersion: 2
+        x: 1160
+        y: 226
+        width: 33
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c87aa81ac1c71f20800000000000000
+      internalID: 3393393917988337863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_76
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 170
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef622710eaf08f610800000000000000
+      internalID: 1655090103081641726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_77
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 107
+        width: 31
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a7e1defc6e4e6570800000000000000
+      internalID: 8461786979914344356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_78
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 128
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e60087439c2e2f690800000000000000
+      internalID: -7569738669859798930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_79
+      rect:
+        serializedVersion: 2
+        x: 1037
+        y: 106
+        width: 25
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a577912a67db4ee0800000000000000
+      internalID: -1275689218599324247
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_80
+      rect:
+        serializedVersion: 2
+        x: 1072
+        y: 114
+        width: 12
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c68e1d0a1771c4f10800000000000000
+      internalID: 2255203290202630252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_81
+      rect:
+        serializedVersion: 2
+        x: 1107
+        y: 109
+        width: 36
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ca120e352eb94420800000000000000
+      internalID: 2614830125828676292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_82
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 101
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f20b70a5c9cda9de0800000000000000
+      internalID: -1325504576223727569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_83
+      rect:
+        serializedVersion: 2
+        x: 1139
+        y: 118
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 479a330d0c732ef70800000000000000
+      internalID: 9214989088819751284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_84
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 95
+        width: 56
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a5885854eb93a200800000000000000
+      internalID: 190167014316737953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_85
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 86
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 971083272e5f50860800000000000000
+      internalID: 7495667507755745657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_86
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 87
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce0ff37ceb311eff0800000000000000
+      internalID: -8704014170459924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_87
+      rect:
+        serializedVersion: 2
+        x: 555
+        y: 95
+        width: 15
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16b1dce4f365268e0800000000000000
+      internalID: -1701702879287633055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_88
+      rect:
+        serializedVersion: 2
+        x: 504
+        y: 63
+        width: 18
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74fe1a13b5c215270800000000000000
+      internalID: 8237413963623690055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PinkPetalsAtlas_89
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 85
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a2a203c8dd8400d0800000000000000
+      internalID: -3457482651789516122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      PinkPetalsAtlas_0: 675407325757238917
+      PinkPetalsAtlas_1: -4694389703942902122
+      PinkPetalsAtlas_10: -6533780282783745791
+      PinkPetalsAtlas_11: -6220634773716926120
+      PinkPetalsAtlas_12: 8532572708249436556
+      PinkPetalsAtlas_13: -965634670105704503
+      PinkPetalsAtlas_14: 2877354695154100267
+      PinkPetalsAtlas_15: 332906786069093973
+      PinkPetalsAtlas_16: 925873594461254611
+      PinkPetalsAtlas_17: -420568222662742242
+      PinkPetalsAtlas_18: -6639441963003656458
+      PinkPetalsAtlas_19: 6920849768473769186
+      PinkPetalsAtlas_2: -7421049863109769653
+      PinkPetalsAtlas_20: 3441941212698125982
+      PinkPetalsAtlas_21: 6135606778861461499
+      PinkPetalsAtlas_22: -2831578291526512335
+      PinkPetalsAtlas_23: -1076245353322773401
+      PinkPetalsAtlas_24: -1997442910120184082
+      PinkPetalsAtlas_25: 529426811389080461
+      PinkPetalsAtlas_26: -3555419345027275707
+      PinkPetalsAtlas_27: -6162317388830399808
+      PinkPetalsAtlas_28: 8267651910393783530
+      PinkPetalsAtlas_29: -3392595664278947090
+      PinkPetalsAtlas_3: 5036123384381886321
+      PinkPetalsAtlas_30: 8492090055383438931
+      PinkPetalsAtlas_31: 4010578827778215405
+      PinkPetalsAtlas_32: 2284615076425804755
+      PinkPetalsAtlas_33: 657795130305056945
+      PinkPetalsAtlas_34: -3187524735635136667
+      PinkPetalsAtlas_35: 2454025057026816680
+      PinkPetalsAtlas_36: 2473256289108552650
+      PinkPetalsAtlas_37: -2991046477405074275
+      PinkPetalsAtlas_38: -7449409568870919536
+      PinkPetalsAtlas_39: -1955285739637799097
+      PinkPetalsAtlas_4: 1972468472437532283
+      PinkPetalsAtlas_40: 1263277178950554134
+      PinkPetalsAtlas_41: -8128038972055570119
+      PinkPetalsAtlas_42: 7116202314288318294
+      PinkPetalsAtlas_43: -2884963428136964609
+      PinkPetalsAtlas_44: -4657861221024080036
+      PinkPetalsAtlas_45: -1865091800431643840
+      PinkPetalsAtlas_46: -4551003899091872666
+      PinkPetalsAtlas_47: 379585031802981393
+      PinkPetalsAtlas_48: 3075746536292294128
+      PinkPetalsAtlas_49: -459414976072883028
+      PinkPetalsAtlas_5: 5832259909973249840
+      PinkPetalsAtlas_50: 2317192672558895404
+      PinkPetalsAtlas_51: -4177308926914193001
+      PinkPetalsAtlas_52: 8933299700227080853
+      PinkPetalsAtlas_53: -4527900074071010244
+      PinkPetalsAtlas_54: 6373774401917086528
+      PinkPetalsAtlas_55: -7097792572032187300
+      PinkPetalsAtlas_56: 1119686123772488836
+      PinkPetalsAtlas_57: -8035837679316572960
+      PinkPetalsAtlas_58: -6435580518740492125
+      PinkPetalsAtlas_59: 2778665534868948067
+      PinkPetalsAtlas_6: 8280781190811187515
+      PinkPetalsAtlas_60: 8463686459651955937
+      PinkPetalsAtlas_61: -4709474703873974406
+      PinkPetalsAtlas_62: 4951499940277206019
+      PinkPetalsAtlas_63: 3844043758292344580
+      PinkPetalsAtlas_64: -7438890243611910491
+      PinkPetalsAtlas_65: -304436827432793161
+      PinkPetalsAtlas_66: 7328443378475794446
+      PinkPetalsAtlas_67: -6338050723375796635
+      PinkPetalsAtlas_68: -8626581545290551055
+      PinkPetalsAtlas_69: 3241003636790658004
+      PinkPetalsAtlas_7: 8193876354154552148
+      PinkPetalsAtlas_70: 8025690587515241686
+      PinkPetalsAtlas_71: -122206241899497700
+      PinkPetalsAtlas_72: -5535503197846070826
+      PinkPetalsAtlas_73: -5644440385777118922
+      PinkPetalsAtlas_74: -4830748541309238745
+      PinkPetalsAtlas_75: 3393393917988337863
+      PinkPetalsAtlas_76: 1655090103081641726
+      PinkPetalsAtlas_77: 8461786979914344356
+      PinkPetalsAtlas_78: -7569738669859798930
+      PinkPetalsAtlas_79: -1275689218599324247
+      PinkPetalsAtlas_8: -6428603450996772869
+      PinkPetalsAtlas_80: 2255203290202630252
+      PinkPetalsAtlas_81: 2614830125828676292
+      PinkPetalsAtlas_82: -1325504576223727569
+      PinkPetalsAtlas_83: 9214989088819751284
+      PinkPetalsAtlas_84: 190167014316737953
+      PinkPetalsAtlas_85: 7495667507755745657
+      PinkPetalsAtlas_86: -8704014170459924
+      PinkPetalsAtlas_87: -1701702879287633055
+      PinkPetalsAtlas_88: 8237413963623690055
+      PinkPetalsAtlas_89: -3457482651789516122
+      PinkPetalsAtlas_9: -439824081036691625
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

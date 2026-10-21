@@ -105,6 +105,21 @@ public static class ScreenVisualChecks
         var intro = Object.FindAnyObjectByType<PlayerStartIntro>();
         double wait = Time.realtimeSinceStartupAsDouble + 8;
         while (intro != null && intro.IsPlaying && Time.realtimeSinceStartupAsDouble < wait) yield return null;
+        Transform petalRoot = c.transform.Find("Screen Visual Pink Petals");
+        if (p.petals != null && p.petals.enabled)
+        {
+            Require(petalRoot != null && c.VisiblePetalCount >= 8, "Pink petals visible after normal idle startup");
+            Mesh petalMesh = petalRoot.GetComponent<MeshFilter>().sharedMesh;
+            var idleVertices = petalMesh.vertices;
+            double idleUntil = Time.realtimeSinceStartupAsDouble + 1.2;
+            while (Time.realtimeSinceStartupAsDouble < idleUntil) yield return null;
+            Require(!idleVertices.SequenceEqual(petalMesh.vertices), "Petals keep fluttering without player input");
+            Require(petalMesh.vertexCount == 48 * 4 && petalRoot.GetComponent<Renderer>().sortingOrder < 0, "Petal mesh stays bounded and behind gameplay");
+            Require(petalRoot.GetComponent<Renderer>().sharedMaterial.mainTexture.filterMode == FilterMode.Point, "Generated petal atlas retains Point filter");
+            p.petals.enabled = false; c.ApplyNow();
+            Require(c.VisiblePetalCount == 0 && !petalRoot.GetComponent<Renderer>().enabled, "Petal toggle hides its mesh");
+            p.petals.enabled = true; c.ApplyNow();
+        }
         Time.timeScale = 0;
         if (follow != null) follow.enabled = false;
         foreach (var canv in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -136,9 +151,18 @@ public static class ScreenVisualChecks
         var originals = renderers.Select(x => x.sharedMaterial).ToArray();
         ScreenCapture.CaptureScreenshot(Path.Combine(Output, "off.png"));
         for (int i = 0; i < 3; i++) yield return null;
+        if (petalRoot != null)
+            Require(!petalRoot.GetComponent<Renderer>().enabled, "Master OFF hides petals");
         c.visualsEnabled = true; c.ApplyNow();
         Require(renderers.All(r => r.sharedMaterial.GetFloat("_SV_Active") == 1), "All five visual groups enabled");
         yield return null; yield return null;
+        if (petalRoot != null && p.petals.enabled)
+        {
+            Mesh petalMesh = petalRoot.GetComponent<MeshFilter>().sharedMesh;
+            var pausedVertices = petalMesh.vertices;
+            yield return null; yield return null;
+            Require(pausedVertices.SequenceEqual(petalMesh.vertices), "Petals respect paused game time");
+        }
         var dust = c.GetComponentInChildren<ParticleSystem>();
         Require(dust != null, "Generated dust atlas wired");
         dust.Simulate(5, true, false);
@@ -255,6 +279,7 @@ public static class ScreenVisualChecks
         Require(Object.FindObjectsByType<ScreenVisualController>(FindObjectsSortMode.None).Length == 0, "Gameplay controller removed on Title transition");
         Require(Shader.GetGlobalFloat("_SV_LightingEnabled") == 0, "Lighting globals reset after scene unload");
         Require(Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None).All(x => x.name != "Screen Visual Ambient Dust"), "Ambient particles removed on scene unload");
+        Require(Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None).All(x => x.name != "Screen Visual Pink Petals"), "Petal field removed on scene unload");
         yield return SceneManager.LoadSceneAsync("CompletScene");
         yield return null; yield return null;
         var fresh = Object.FindObjectsByType<ScreenVisualController>(FindObjectsSortMode.None);

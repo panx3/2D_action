@@ -41,6 +41,15 @@ MonoBehaviour:
     particleOpacity: 0.48
     particleSize: 0.09
     particleColor: {r: 1, g: 1, b: 1, a: 1}
+  petals:
+    enabled: 1
+    count: 28
+    sizePixels: 18
+    opacity: 0.85
+    windSpeed: 1.15
+    fallSpeed: 0.35
+    flutter: 0.65
+    color: {r: 1, g: 1, b: 1, a: 1}
   lighting:
     enabled: 1
     localLightsEnabled: 1
