@@ -29,6 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats: []
-    m_Colors: []
+    m_Colors:
+    - _AtlasCrop: {r: 0.4140625, g: 0.3203125, b: 0.6328125, a: 0.59375}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

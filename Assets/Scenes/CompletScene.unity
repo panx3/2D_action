@@ -624,6 +624,66 @@ MonoBehaviour:
   _healHighlightDuration: 0.45
   _healHighlightColor: {r: 1, g: 0.78, b: 0.92, a: 0.65}
   _itemRecoveryStrength: 0.8
+--- !u!1 &193677132
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 193677133}
+  - component: {fileID: 193677134}
+  m_Layer: 0
+  m_Name: StreetlampLight_-5_0_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &193677133
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 193677132}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.62, y: 2.1399999, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &193677134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 193677132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1 &234535921
 GameObject:
   m_ObjectHideFlags: 0
@@ -2174,6 +2234,66 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c852d0f22fdd95543bfa02b3de368d67, type: 3}
+--- !u!1 &573813413
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 573813414}
+  - component: {fileID: 573813415}
+  m_Layer: 0
+  m_Name: StreetlampLight_55_1_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &573813414
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 573813413}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 112.38, y: 4.14, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &573813415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 573813413}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1 &580274680
 GameObject:
   m_ObjectHideFlags: 0
@@ -4092,6 +4212,66 @@ Transform:
   - {fileID: 454613678}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &766424275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 766424276}
+  - component: {fileID: 766424277}
+  m_Layer: 0
+  m_Name: StreetlampLight_62_3_0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &766424276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766424275}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 123.74, y: 8.14, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &766424277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766424275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!114 &802044258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4518,6 +4698,66 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3022797861727431700, guid: d75bd920d2d05284fb0da16c8189cc34, type: 3}
   m_PrefabInstance: {fileID: 931621607}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &882011617
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 882011618}
+  - component: {fileID: 882011619}
+  m_Layer: 0
+  m_Name: StreetlampLight_18_0_0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &882011618
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882011617}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 35.74, y: 2.1399999, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &882011619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882011617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1001 &883105232
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4719,6 +4959,7 @@ MonoBehaviour:
   spriteLightingShader: {fileID: 4800000, guid: 6c61a71760aa56b4488d937c5acc1d62, type: 3}
   vignetteShader: {fileID: 4800000, guid: 73deedf8f3719f04e9fece821a2b88a4, type: 3}
   particleMaterial: {fileID: 2100000, guid: 8fb78373ad910e044a2d5c3003c8c125, type: 2}
+  localGlowShader: {fileID: 4800000, guid: 735b14f9bd06a9545831ed711e361108, type: 3}
 --- !u!4 &932229945
 Transform:
   m_ObjectHideFlags: 0
@@ -12797,6 +13038,66 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6465581950011872840, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
   m_PrefabInstance: {fileID: 1251400730}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1270689774
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1270689775}
+  - component: {fileID: 1270689776}
+  m_Layer: 0
+  m_Name: StreetlampLight_62_3_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1270689775
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270689774}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 126.38, y: 8.14, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1270689776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270689774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1001 &1276162535
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12940,6 +13241,66 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3528385307640532958, guid: 383870a3127e92e4093e2b462013d4bc, type: 3}
   m_PrefabInstance: {fileID: 1307838679}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1310900451
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1310900452}
+  - component: {fileID: 1310900453}
+  m_Layer: 0
+  m_Name: StreetlampLight_55_1_0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1310900452
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310900451}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 109.74, y: 4.14, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1310900453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310900451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1 &1356973203
 GameObject:
   m_ObjectHideFlags: 0
@@ -13459,6 +13820,66 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c852d0f22fdd95543bfa02b3de368d67, type: 3}
+--- !u!1 &1400290054
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1400290055}
+  - component: {fileID: 1400290056}
+  m_Layer: 0
+  m_Name: StreetlampLight_-5_0_0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1400290055
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400290054}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.26, y: 2.1399999, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1400290056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1400290054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1 &1420355662
 GameObject:
   m_ObjectHideFlags: 0
@@ -14248,7 +14669,15 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1400290055}
+  - {fileID: 193677133}
+  - {fileID: 882011618}
+  - {fileID: 1816282263}
+  - {fileID: 1310900452}
+  - {fileID: 573813414}
+  - {fileID: 766424276}
+  - {fileID: 1270689775}
   m_Father: {fileID: 1574093063}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &1602198370
@@ -14827,6 +15256,66 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 717557417}
   m_ActionId: c95b2375-e6d9-4b88-9c4c-c5e76515df4b
+--- !u!1 &1816282262
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1816282263}
+  - component: {fileID: 1816282264}
+  m_Layer: 0
+  m_Name: StreetlampLight_18_0_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1816282263
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1816282262}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 38.38, y: 2.1399999, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1602198369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1816282264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1816282262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 1, g: 0.73, b: 0.34, a: 1}
+  intensity: 0.48
+  radius: 3.8
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 1.1
+  flickerAmount: 0.04
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 0}
+  emissionOwner: {fileID: 1602198370}
+  glowEnabled: 1
+  glowIntensity: 0.28
+  glowRadius: 1.5
 --- !u!1 &1868212175
 GameObject:
   m_ObjectHideFlags: 0
@@ -15146,6 +15635,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967263
   emissionSource: {fileID: 2026876642}
+  emissionOwner: {fileID: 0}
+  glowEnabled: 1
+  glowIntensity: 0.22
+  glowRadius: 1.5
 --- !u!1 &2067330765
 GameObject:
   m_ObjectHideFlags: 0

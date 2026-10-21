@@ -18,11 +18,11 @@ CompletSceneに接続済み。`ScreenVisuals`のInspectorでマスターON/OFF�
 |ビネット|uGUI上の数学的グラデーション。色、強度、滑らかさ、丸み、縦横比対応。UIの背面。|
 |背景/周辺ぼかし|背景Shader内の中心＋上下左右5サンプル。背景層ごとの倍率と画面周辺の滑らかな係数を合成。Player/敵/地形/UIはサンプリング対象外。|
 |空気遠近・霧|既存の霞に距離係数による色補正を追加。霧はワールド座標の連続的な波形から計算し、タイル境界で模様を切らない。背景だけに薄く適用。|
-|環境粒子|画像生成した4種の透過ドット素材、ワールド空間シミュレーション、寿命の始終でフェード、低速のランダム速度/ノイズ。最大96個。カメラが大きく移動した場合は古い粒子をクリア。|
-|2Dライティング|Built-in用のSprite/Tilemap表面Shader。環境光と最大8個の局所光を合成。GameObject Layerマスク、半径、減衰、弱い揺らぎを設定可能。影生成や全画面Bloomは追加しない。|
+|環境粒子|画像生成した4種の透過ドット素材、ワールド空間シミュレーション、寿命の始終でフェード、低速のランダム速度/ノイズ。最大96個。画像セルの透明な余白をUVで除き、可視サイズを画角に合わせる。起動時にPrewarmし、カメラが大きく移動した場合は古い粒子をクリア。|
+|2Dライティング|Built-in用のSprite/Tilemap表面Shader。環境光と最大8個の局所光を合成。GameObject Layerマスク、半径、減衰、弱い揺らぎを設定可能。局所光の周囲には専用Shaderの淡い光彩を表示。影生成や全画面Bloomは追加しない。|
 |パララックス|既存のCover/鏡像ループを維持。層ごとのScroll/Depth/Tint/Contrast/Saturation/Blur/Fog/LightingをProfileから設定。スケール再計算結果が変わった場合だけTransformを書き込む。カメラ再生成時も視差の位相を保持。|
 
-局所光は`ScreenLocalLight2D`を任意のオブジェクトへ追加して配置する。既存GoalPointのクリスタルに1灯を接続済み。`Emission Source`のSprite非表示/透明化に合わせて光も消える。磁石には光源を追加していない。互換性を確認した`Sprites/Default`のSprite/Tilemapだけを実行時マテリアルへ差し替え、他の独自Shaderは保持する。背景は既存専用Shaderに拡張している。
+局所光は`ScreenLocalLight2D`を任意のオブジェクトへ追加して配置する。既存GoalPointのクリスタルに1灯、既存の街灯4本の電球位置に各2灯を接続済み。街灯は既存TilemapのSprite・セル位置・変換行列から位置を求めている。`Emission Source`のSprite非表示/透明化、`Emission Owner`のTilemap描画停止に合わせて光も消える。`Glow Enabled / Intensity / Radius`で光彩を制御する。磁石には光源を追加していない。互換性を確認した`Sprites/Default`のSprite/Tilemapだけを実行時マテリアルへ差し替え、他の独自Shaderは保持する。背景は既存専用Shaderに拡張している。
 
 ## 操作と初期値
 
@@ -36,9 +36,10 @@ CompletSceneに接続済み。`ScreenVisuals`のInspectorでマスターON/OFF�
 |周辺ぼかし|強度0.12、開始範囲0.6|
 |距離色補正|0.12、青白色(0.70, 0.83, 0.96)|
 |霧|不透明度0.045、速度(0.025, 0.006)、変化0.55|
-|粒子|毎秒5、速度0.12、不透明度0.24、可視サイズ目安0.09|
+|粒子|毎秒5、速度0.12、不透明度0.48、希望ワールドサイズ0.09。余白除去後の描画面を6〜10画面ピクセルに補正し、中心の絵柄を約3〜6ピクセルに保つ。さらに個体差を付ける。|
 |環境光|色(0.96, 0.98, 1.0)、強さ1.0|
 |クリスタル局所光|強度0.25、半径4.5、減衰1.7、揺らぎ0.035|
+|街灯の各電球|暖色(1, 0.73, 0.34)、強度0.48、半径3.8、光彩強度0.28、光彩半径1.5|
 |背景Scroll|元のFar=0、Mid=0.14、Front=0.24を保持。OverrideをONにした層だけ変更。|
 |背景Depth|Far=1、Mid=0.65、Front=0.25|
 |背景Blur倍率|Far=1、Mid=0.45、Front=0.12|
@@ -67,6 +68,7 @@ Profile未指定でも安全な既定値で動作する。未登録の背景層�
 - 修正: `Assets/BackgroundAerialPerspective.shader`, `Assets/Script/ParallaxBackgroundLayer.cs`, `Assets/Scenes/CompletScene.unity`（ScreenVisualsとGoalPointへの光源追加のみをコミット対象にする）。
 - 新規Runtime: `Assets/Script/ScreenVisualController.cs`, `ScreenVisualProfile.cs`, `ScreenLocalLight2D.cs`。
 - 新規Shader: `Assets/ScreenVisualSprite.shader`, `ScreenVisualVignette.shader`, `ScreenVisualParticles.shader`, `ScreenVisualLighting.cginc`。
+- 視認性修正で追加: `Assets/ScreenVisualGlow.shader`と対応`.meta`。
 - 新規Editor: `Assets/Editor/ScreenVisualSetup.cs`, `ScreenVisualChecks.cs`。
 - 新規設定/素材: `Assets/Art/ScreenVisuals/{SkyRuins,MoonlitRuins,WarmRuins}.asset`, `RuinsDust.mat`, `RuinsDustAtlas.png`。
 - 上記新規Unityアセットとフォルダに対応する`.meta`。既存GUIDを保持。Prefab/Packages/ProjectSettingsの変更なし。
@@ -84,3 +86,9 @@ FPSは同一の停止画面でOFF/ONを各120フレーム測定する。Editor�
 独立したSprite描画の画素値でも光を確認した。輝度は基準0.251、局所光ON 0.310、対象Layer除外0.251、環境光75%で0.216。背景/キャラクター/UIのON/OFF比較画像を確認した。配置の隙間についてはタイルBoundsの一致を自動検証しており、移動中の見え方の最終評価は未実施。
 
 Scene内の作業開始前の未保存編集は一時フォルダへ退避して保存内容に維持した。その差分は今回のコミットへ含めない。
+
+## 粒子と光の視認性修正
+
+最初の実装では粒子の生成アトラスの透明余白が大きく、通常画面の可視部分が約1〜2ピクセル・不透明度24%になっていた。また開始地点の街灯へ光を接続しておらず、通常の開始画面では局所光0灯だった。アトラスのアルファ境界を測定して各セルの内容をUV範囲(106/256,82/256)-(162/256,152/256)から描画するよう修正し、SkyRuinsの元の不透明度既定値だけを48%へ更新。粒子数と速度は保持した。既存の街灯へ局所光と数学的な光彩を接続し、起動直後の自然発生・光彩表示も確認対象に追加した。
+
+修正後は53項目PASS、Runtime Error/Exception=0、C#/Shaderコンパイルエラーなし。手動Emit/Simulate前の通常起動画面も保存して確認した。光彩だけをOFF/ONした比較画像でも街灯周囲の暖色の差を確認。今回の縦長Game Viewでの測定はOFF 238.3fps / 中央値4.12ms / DrawCall平均19、ON（粒子49個）218.7fps / 中央値4.36ms / DrawCall平均22。測定条件が前回と異なるため前回値との直接比較はしない。実機とゲームパッド通しプレイ、最終的な見た目の評価は未実施。

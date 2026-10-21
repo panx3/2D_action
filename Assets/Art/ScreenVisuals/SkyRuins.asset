@@ -38,9 +38,9 @@ MonoBehaviour:
     particleEnabled: 1
     particleDensity: 5
     particleSpeed: 0.12
-    particleOpacity: 0.24
+    particleOpacity: 0.48
     particleSize: 0.09
-    particleColor: {r: 0.82, g: 0.9, b: 1, a: 1}
+    particleColor: {r: 1, g: 1, b: 1, a: 1}
   lighting:
     enabled: 1
     localLightsEnabled: 1

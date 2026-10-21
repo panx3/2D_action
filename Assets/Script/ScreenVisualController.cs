@@ -13,6 +13,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     [SerializeField] private Shader spriteLightingShader;
     [SerializeField] private Shader vignetteShader;
     [SerializeField] private Material particleMaterial;
+    [SerializeField] private Shader localGlowShader;
 
     private sealed class Binding
     {
@@ -41,6 +42,8 @@ public sealed class ScreenVisualController : MonoBehaviour
     private float lastParticleOpacity = -1;
     private Color lastParticleColor;
     private Vector2 lastParticleArea;
+    private Material localGlowMaterial;
+    private Sprite localGlowSprite;
 
     public ScreenVisualProfile Settings
     {
@@ -69,6 +72,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         ownsScene = true;
         if (spriteLightingShader == null) spriteLightingShader = Shader.Find("IronBallGirl/Screen Visual Sprite");
         if (vignetteShader == null) vignetteShader = Shader.Find("IronBallGirl/Screen Visual Vignette");
+        if (localGlowShader == null) localGlowShader = Shader.Find("IronBallGirl/Screen Visual Glow");
     }
 
     private void Start()
@@ -76,6 +80,12 @@ public sealed class ScreenVisualController : MonoBehaviour
         RefreshBindings();
         CreateVignette();
         CreateParticles();
+        if (localGlowShader != null && localGlowShader.isSupported)
+        {
+            localGlowMaterial = new Material(localGlowShader) { hideFlags = HideFlags.HideAndDontSave };
+            localGlowSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, Texture2D.whiteTexture.width, Texture2D.whiteTexture.height), Vector2.one * 0.5f, Texture2D.whiteTexture.width, 0, SpriteMeshType.FullRect);
+            localGlowSprite.hideFlags = HideFlags.HideAndDontSave;
+        }
         ApplyNow();
     }
 
@@ -230,8 +240,16 @@ public sealed class ScreenVisualController : MonoBehaviour
             lightColors[i] = new Vector4(c.r, c.g, c.b, 1);
             uint mask = unchecked((uint)light.targetLayers.value);
             lightMasks[i] = new Vector4(mask & 65535, mask >> 16, 0, 0);
+            light.UpdateGlow(localGlowMaterial, localGlowSprite);
         }
         ActiveLightCount = count;
+        foreach (ScreenLocalLight2D light in ScreenLocalLight2D.Active)
+        {
+            if (light == null || light.gameObject.scene != gameObject.scene) continue;
+            bool selected = false;
+            for (int i = 0; i < count; i++) if (selectedLights[i] == light) { selected = true; break; }
+            if (!selected) light.SetGlowVisible(false);
+        }
         Shader.SetGlobalInt("_SV_LightCount", count);
         Shader.SetGlobalVectorArray("_SV_LightPositions", lightPositions);
         Shader.SetGlobalVectorArray("_SV_LightColors", lightColors);
@@ -277,6 +295,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var main = particles.main;
         main.playOnAwake = false; main.loop = true; main.maxParticles = 96;
+        main.duration = 10; main.prewarm = true;
         main.startLifetime = new ParticleSystem.MinMaxCurve(7, 13);
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;
@@ -306,7 +325,13 @@ public sealed class ScreenVisualController : MonoBehaviour
         if ((particles.transform.position - center).sqrMagnitude > 1600) particles.Clear();
         particles.transform.position = center;
         var main = particles.main;
-        main.startSize = new ParticleSystem.MinMaxCurve(a.particleSize * 3, a.particleSize * 6);
+        // Atlas UVs now crop the transparent padding. Keep the visible fleck readable
+        // at wide/portrait views without turning it into a large foreground sprite.
+        float worldPerPixel = targetCamera.orthographicSize * 2 / Mathf.Max(1, targetCamera.pixelHeight);
+        // The cropped cell still includes satellites and irregular edges: a 6-10px
+        // quad gives the actual main fleck about 3-6px, rather than another 1px speck.
+        float visibleSize = Mathf.Clamp(a.particleSize, worldPerPixel * 6, worldPerPixel * 10);
+        main.startSize = new ParticleSystem.MinMaxCurve(visibleSize * 0.75f, visibleSize * 1.25f);
         var emission = particles.emission;
         float q = p.quality == ScreenVisualProfile.Quality.Low ? 0.2f : p.quality == ScreenVisualProfile.Quality.Medium ? 0.5f : 1;
         emission.rateOverTime = a.particleDensity * q;
@@ -334,6 +359,8 @@ public sealed class ScreenVisualController : MonoBehaviour
         RestoreBindings();
         Shader.SetGlobalFloat("_SV_LightingEnabled", 0);
         Shader.SetGlobalInt("_SV_LightCount", 0);
+        foreach (ScreenLocalLight2D light in ScreenLocalLight2D.Active)
+            if (light != null && light.gameObject.scene == gameObject.scene) light.SetGlowVisible(false);
         if (vignetteCanvas != null) vignetteCanvas.enabled = false;
         if (particles != null) particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
@@ -352,6 +379,8 @@ public sealed class ScreenVisualController : MonoBehaviour
         foreach (Binding b in bindings) if (b.background) DestroyOwned(b.visual);
         foreach (Material m in litMaterials.Values) DestroyOwned(m);
         DestroyOwned(vignetteMaterial);
+        DestroyOwned(localGlowMaterial);
+        DestroyOwned(localGlowSprite);
         if (vignetteCanvas != null) DestroyOwned(vignetteCanvas.gameObject);
         if (particles != null) DestroyOwned(particles.gameObject);
         DestroyOwned(fallback);

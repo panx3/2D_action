@@ -112,6 +112,25 @@ public static class ScreenVisualChecks
         var backgrounds = Object.FindObjectsByType<ParallaxBackgroundLayer>(FindObjectsSortMode.None);
         var savedCamera = camera.transform.position;
         var renderers = backgrounds.Select(x => x.GetComponent<SpriteRenderer>()).ToArray();
+        var naturalDust = c.GetComponentInChildren<ParticleSystem>();
+        Require(naturalDust != null && naturalDust.main.prewarm && naturalDust.particleCount > 0, "Ambient dust is present without manual emission after normal startup");
+        Vector4 crop = naturalDust.GetComponent<Renderer>().sharedMaterial.GetVector("_AtlasCrop");
+        Require(crop.z - crop.x < 0.3f && crop.w - crop.y < 0.3f, "Particle UVs exclude the measured transparent atlas padding");
+        ScreenCapture.CaptureScreenshot(Path.Combine(Output, "natural.png"));
+        yield return null; yield return null;
+        Require(Object.FindObjectsByType<ScreenLocalLight2D>(FindObjectsSortMode.None)
+            .SelectMany(light => light.GetComponentsInChildren<SpriteRenderer>(true))
+            .Any(r => r.name == "Local Light Glow" && r.enabled), "Existing streetlamp glow is visible near the stage entrance");
+        var sourceLights = Object.FindObjectsByType<ScreenLocalLight2D>(FindObjectsSortMode.None);
+        var sourceGlowStates = sourceLights.Select(light => light.glowEnabled).ToArray();
+        foreach (var sourceLight in sourceLights) sourceLight.glowEnabled = false;
+        c.ApplyNow(); yield return null; yield return null;
+        ScreenCapture.CaptureScreenshot(Path.Combine(Output, "glow-off.png"));
+        yield return null; yield return null;
+        for (int i = 0; i < sourceLights.Length; i++) sourceLights[i].glowEnabled = sourceGlowStates[i];
+        c.ApplyNow(); yield return null; yield return null;
+        ScreenCapture.CaptureScreenshot(Path.Combine(Output, "glow-on.png"));
+        yield return null; yield return null;
         c.visualsEnabled = false; c.ApplyNow();
         yield return null; yield return null;
         var originals = renderers.Select(x => x.sharedMaterial).ToArray();

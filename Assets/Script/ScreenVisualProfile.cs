@@ -43,9 +43,10 @@ public sealed class ScreenVisualProfile : ScriptableObject
         public bool particleEnabled = true;
         [Range(0, 40)] public float particleDensity = 5;
         [Range(0, 1)] public float particleSpeed = 0.12f;
-        [Range(0, 1)] public float particleOpacity = 0.24f;
-        [Range(0.01f, 0.3f)] public float particleSize = 0.09f;
-        public Color particleColor = new Color(0.82f, 0.9f, 1, 1);
+        [Range(0, 1)] public float particleOpacity = 0.48f;
+        [Range(0.01f, 0.3f), Tooltip("希望ワールドサイズ。余白除去後の描画面を6〜10画面ピクセルに補正し、中心の絵柄を約3〜6ピクセルに保ちます。")]
+        public float particleSize = 0.09f;
+        public Color particleColor = Color.white;
     }
     [Serializable] public sealed class LightingSettings
     {
