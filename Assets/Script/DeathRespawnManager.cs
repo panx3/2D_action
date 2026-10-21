@@ -1,150 +1,174 @@
 using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// HP0による死亡リスポーンを管理する。
-/// 最後に通過したCheckpoint位置へPlayerを戻し、死亡時のみHPを全回復する。
-/// RespawnZoneなどのギミック即時復帰は GimmickRespawnController が担当する。
-/// </summary>
+/// <summary>HP死亡・落下の演出進行を一本化。位置と装備の復元は既存Controllerへ委譲する。</summary>
 [DisallowMultipleComponent]
+[RequireComponent(typeof(DeathRespawnFeedback))]
 public class DeathRespawnManager : MonoBehaviour
 {
     [Header("スポーン地点")]
-    [SerializeField, Tooltip("ゲーム開始時のスポーン位置。未通過のチェックポイントが無い場合はここに戻る。")]
-    private Transform _defaultSpawnPoint;
+    [SerializeField] private Transform _defaultSpawnPoint;
 
     [Header("参照")]
-    [SerializeField, Tooltip("リスポーン対象の Player。")]
-    private Player _player;
-    [SerializeField, Tooltip("リスポーン対象の PlayerHealth。OnDead を購読する。")]
-    private PlayerHealth _playerHealth;
-    [SerializeField, Tooltip("落下復帰と共通のPlayer／MorningStar／Chain初期化を行うController。")]
-    private GimmickRespawnController _gimmickRespawnController;
-    [SerializeField, Tooltip("GimmickRespawnControllerが無い場合のCamera即時復帰先。")]
-    private CameraFollow _cameraFollow;
+    [SerializeField] private Player _player;
+    [SerializeField] private PlayerHealth _playerHealth;
+    [SerializeField] private GimmickRespawnController _gimmickRespawnController;
+    [SerializeField] private CameraFollow _cameraFollow;
+    [SerializeField] private DeathRespawnFeedback _feedback;
 
-    [Header("リスポーン設定")]
-    [SerializeField, Tooltip("死亡から復活までの待機時間（秒）。")]
-    private float _delaySeconds = 1.5f;
+    [Header("電子リスポーン")]
+    [SerializeField, Range(0.15f, 0.3f), Tooltip("電子分解からカメラスライドまでの秒数。旧死亡待機とは独立")]
+    private float _dissolveDuration = 0.24f;
+    [SerializeField, Range(0.15f, 0.3f)] private float _rebuildDuration = 0.22f;
+    [SerializeField, Range(0.4f, 0.8f), Tooltip("カメラ移動のこの進行度から再構築を重ねる")]
+    private float _rebuildStartProgress = 0.58f;
 
     private Vector2 _lastCheckpoint;
     private bool _hasCheckpoint;
     private Coroutine _respawnRoutine;
+    private MorningStarLauncher _launcher;
+    private Rigidbody2D _body;
+    private bool _inputWasEnabled;
+    private bool _bodyWasSimulated;
+    private Vector3 _respawnPosition;
+
+    public bool IsRespawning { get; private set; }
 
     private void Awake()
     {
-        ResolvePlayerReferences();
-
-        if (_gimmickRespawnController == null)
-            _gimmickRespawnController = FindAnyObjectByType<GimmickRespawnController>(FindObjectsInactive.Exclude);
-
-        if (_cameraFollow == null)
-            _cameraFollow = FindAnyObjectByType<CameraFollow>(FindObjectsInactive.Exclude);
-
-        if (_defaultSpawnPoint != null)
+        if (_player == null) _player = FindAnyObjectByType<Player>();
+        if (_playerHealth == null && _player != null) _playerHealth = _player.GetComponent<PlayerHealth>();
+        if (_gimmickRespawnController == null) _gimmickRespawnController = FindAnyObjectByType<GimmickRespawnController>();
+        if (_cameraFollow == null) _cameraFollow = FindAnyObjectByType<CameraFollow>();
+        if (_feedback == null) _feedback = GetComponent<DeathRespawnFeedback>();
+        if (_player != null)
         {
-            _lastCheckpoint = _defaultSpawnPoint.position;
-            _hasCheckpoint = true;
+            _body = _player.GetComponent<Rigidbody2D>();
+            _launcher = _player.GetComponent<MorningStarLauncher>();
         }
-    }
-
-    private void ResolvePlayerReferences()
-    {
-        if (_player == null)
-        {
-            _player = FindAnyObjectByType<Player>(FindObjectsInactive.Exclude);
-            if (_player != null)
-                Debug.LogWarning("[DeathRespawnManager] Player was auto-found. Assign it in Inspector to avoid wrong references.", this);
-            else
-                Debug.LogWarning("[DeathRespawnManager] Player is not assigned and could not be found.", this);
-        }
-
-        if (_playerHealth == null)
-        {
-            _playerHealth = FindAnyObjectByType<PlayerHealth>(FindObjectsInactive.Exclude);
-            if (_playerHealth != null)
-                Debug.LogWarning("[DeathRespawnManager] PlayerHealth was auto-found. Assign it in Inspector to avoid wrong references.", this);
-            else
-                Debug.LogWarning("[DeathRespawnManager] PlayerHealth is not assigned and could not be found.", this);
-        }
+        if (_defaultSpawnPoint != null) RegisterCheckpoint(_defaultSpawnPoint.position);
     }
 
     private void OnEnable()
     {
-        if (_playerHealth != null)
-            _playerHealth.OnDead += HandlePlayerDead;
+        if (_playerHealth != null) _playerHealth.OnDead += HandlePlayerDead;
     }
 
     private void OnDisable()
     {
-        if (_playerHealth != null)
-            _playerHealth.OnDead -= HandlePlayerDead;
+        if (_playerHealth != null) _playerHealth.OnDead -= HandlePlayerDead;
+        if (_respawnRoutine != null) StopCoroutine(_respawnRoutine);
+        _respawnRoutine = null;
+        // 無効化・シーン終了時にも借りた入力／描画／物理を返す。
+        if (IsRespawning)
+        {
+            RestoreAtDestination();
+            FinishRespawn();
+            if (_feedback != null) _feedback.Clear();
+        }
     }
 
-    /// <summary>
-    /// チェックポイント通過時に呼ぶ。以降の死亡で同位置から復活する。
-    /// </summary>
     public void RegisterCheckpoint(Vector2 position)
     {
         _lastCheckpoint = position;
         _hasCheckpoint = true;
     }
 
-    /// <summary>
-    /// リスポーン処理を手動でトリガー（OnDead を介さず呼ぶ場合）。
-    /// </summary>
     public void Respawn()
     {
-        if (_respawnRoutine != null) return;
-        _respawnRoutine = StartCoroutine(RespawnRoutine());
+        Vector3 target = _hasCheckpoint ? (Vector3)_lastCheckpoint
+            : _gimmickRespawnController != null ? _gimmickRespawnController.CurrentRespawnPosition
+            : _defaultSpawnPoint != null ? _defaultSpawnPoint.position : transform.position;
+        BeginRespawn(target, false);
     }
 
-    private void HandlePlayerDead()
+    public void RespawnFromFall(Vector3 position) => BeginRespawn(position, true);
+
+    private void HandlePlayerDead() => Respawn();
+
+    private void BeginRespawn(Vector3 position, bool falling)
     {
-        Respawn();
+        if (IsRespawning || !isActiveAndEnabled || _player == null) return;
+        var intro = _player.GetComponent<PlayerStartIntro>();
+        if (intro != null && intro.IsPlaying) intro.enabled = false;
+        IsRespawning = true;
+        _respawnPosition = position;
+        _inputWasEnabled = _player.InputEnabled;
+        _bodyWasSimulated = _body != null && _body.simulated;
+        _player.SetInputEnabled(false);
+        _player.SetStartIntroControl(true);
+        _player.SetStartIntroMotion(true, Vector2.zero);
+        if (_playerHealth != null) _playerHealth.BeginRespawnProtection();
+        if (_cameraFollow != null) _cameraFollow.HoldForRespawn();
+        if (_feedback != null) _feedback.PlayDeath(_player, _launcher, falling, _dissolveDuration);
+        if (_launcher != null) _launcher.BeginRespawnPresentation();
+        if (_body != null)
+        {
+            _body.linearVelocity = Vector2.zero;
+            _body.angularVelocity = 0f;
+            _body.simulated = false;
+        }
+        _respawnRoutine = StartCoroutine(RespawnRoutine());
     }
 
     private IEnumerator RespawnRoutine()
     {
-        if (_delaySeconds > 0f)
-            yield return new WaitForSeconds(_delaySeconds);
-
-        Vector2 target = _hasCheckpoint
-            ? _lastCheckpoint
-            : (_defaultSpawnPoint != null ? (Vector2)_defaultSpawnPoint.position : (Vector2)transform.position);
-
-        if (_gimmickRespawnController != null)
+        float elapsed = 0f;
+        while (elapsed < _dissolveDuration)
         {
-            _gimmickRespawnController.RespawnAt(target, true);
+            yield return null;
+            elapsed += Time.deltaTime;
         }
-        else if (_player != null)
+        // カメラは死亡位置に保持し、不可視のPlayerと装備だけ先に復元する。
+        RestoreAtDestination();
+        if (_cameraFollow != null) _cameraFollow.BeginRespawnTravel(_respawnPosition);
+        while (_cameraFollow != null && _cameraFollow.IsRespawnTravelling
+            && _cameraFollow.RespawnTravelProgress < _rebuildStartProgress)
+            yield return null;
+        if (_feedback != null) _feedback.PlayRebuild(_rebuildDuration);
+        elapsed = 0f;
+        while (elapsed < _rebuildDuration || (_cameraFollow != null && _cameraFollow.IsRespawnTravelling))
         {
-            Rigidbody2D rb = _player.Rigidbody2D;
-            if (rb != null)
-            {
-                rb.position = target;
-                rb.linearVelocity = Vector2.zero;
-                rb.angularVelocity = 0f;
-            }
-            else
-            {
-                _player.transform.position = target;
-            }
+            yield return null;
+            elapsed += Time.deltaTime;
         }
-
-        if (_gimmickRespawnController == null && _playerHealth != null)
-        {
-            // HP0 で死亡したリスポーン＝リトライ（満タン復帰）。HP が残っている場合のみ HP 維持。
-            if (_playerHealth.CurrentHp <= 0)
-                _playerHealth.ResetToFullHp();
-            else
-                _playerHealth.ReviveKeepCurrentHp();
-        }
-
-        // 通常経路ではGimmickRespawnController側がReset完了後にSnapする。
-        if (_gimmickRespawnController == null && _cameraFollow != null)
-            _cameraFollow.SnapToTarget();
-
+        FinishRespawn();
         _respawnRoutine = null;
+    }
+
+    private void RestoreAtDestination()
+    {
+        if (_player == null) return;
+        if (_gimmickRespawnController != null)
+            _gimmickRespawnController.RespawnAt(_respawnPosition, true, false);
+        else
+        {
+            _player.transform.position = _respawnPosition;
+            if (_body != null) _body.position = _respawnPosition;
+            if (_playerHealth != null) _playerHealth.ResetToFullHp();
+            if (_launcher != null) _launcher.ResetForRespawn();
+        }
+        Physics2D.SyncTransforms();
+    }
+
+    private void FinishRespawn()
+    {
+        if (_feedback != null) _feedback.EndPresentation();
+        if (_launcher != null) _launcher.EndRespawnPresentation();
+        if (_body != null)
+        {
+            _body.linearVelocity = Vector2.zero;
+            _body.angularVelocity = 0f;
+            _body.simulated = _bodyWasSimulated;
+        }
+        Physics2D.SyncTransforms();
+        if (_playerHealth != null) _playerHealth.EndRespawnProtection();
+        if (_player != null)
+        {
+            _player.SetStartIntroControl(false);
+            _player.SetInputEnabled(_inputWasEnabled);
+        }
+        if (_cameraFollow != null) _cameraFollow.EndRespawnTravel();
+        IsRespawning = false;
     }
 }

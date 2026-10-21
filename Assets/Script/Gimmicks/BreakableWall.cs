@@ -50,7 +50,7 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
             ? context.ImpactDirection
             : Vector2.right;
 
-        ApplyDamage(context.Damage, hitDirection);
+        ApplyDamage(context.Damage, hitDirection, context.Source, context.HitStopSeconds);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -68,7 +68,9 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
             return;
 
         Vector2 hitDirection = GetCollisionDirection(collision, morningStarBody);
-        ApplyDamage(1, hitDirection);
+        // Layerや攻撃Stateに依存しない既存の物理破壊でも、同じLauncherへ演出を依頼する。
+        var reporter = morningStarBody.GetComponent<MorningStarCollisionReporter>();
+        ApplyDamage(1, hitDirection, reporter.Launcher);
     }
 
     private static bool TryGetMorningStarBody(Collider2D other, out Rigidbody2D morningStarBody)
@@ -98,7 +100,7 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
         return Vector2.right;
     }
 
-    private void ApplyDamage(int damage, Vector2 hitDirection)
+    private void ApplyDamage(int damage, Vector2 hitDirection, MorningStarLauncher source, float hitStopSeconds = 0f)
     {
         hitPoint -= damage;
 
@@ -106,12 +108,15 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
             Debug.Log($"BreakableWall Damage: {damage}, HP: {hitPoint}");
 
         if (hitPoint <= 0)
-            Break(hitDirection);
+            Break(hitDirection, source, hitStopSeconds);
     }
 
-    private void Break(Vector2 hitDirection)
+    private void Break(Vector2 hitDirection, MorningStarLauncher source, float hitStopSeconds)
     {
         isBroken = true;
+
+        if (source != null)
+            source.PlayBlockBreakHitStop(hitStopSeconds);
 
         if (OneShotAudioUtility.Play2D(breakAudioSource, breakImpactClip, breakImpactVolume, transform.position))
             BreakSoundPlayCount++;

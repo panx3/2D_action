@@ -33,6 +33,9 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Button controlsButton;
     [SerializeField] private ControlsPanelController controlsPanel;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private TitleAtmosphere atmosphere;
+    [SerializeField] private CanvasGroup titleCompositionGroup;
     [SerializeField] private TitleChainDisplay chainDisplay;
     [SerializeField] private RectTransform[] backgroundLayers;
     [SerializeField] private Graphic[] ambientGlowGraphics;
@@ -42,14 +45,22 @@ public sealed class TitleScreenController : MonoBehaviour
     [SerializeField, Range(0f, 0.2f)] private float startPulseScale = 0.035f;
     [SerializeField, Min(0f)] private float backgroundDrift = 8f;
 
+    [Header("Logo Shine")]
+    [SerializeField] private Shader logoShineShader;
+    [SerializeField, Min(0.2f), Tooltip("ロゴの反射光が流れる周期（秒）")]
+    private float logoShinePeriod = 6f;
+    [SerializeField, Min(0.1f), Tooltip("反射光が左から右へ通過する時間（秒）")]
+    private float logoShineDuration = 1.35f;
+    [SerializeField, Range(0f, 1f)] private float logoShineStrength = 0.5f;
+    [SerializeField, Min(0f), Tooltip("タイトル登場後、最初の反射光までの待ち時間（秒）")]
+    private float logoShineDelay = 1.4f;
+
     [Header("Stage Loading Transition")]
     [SerializeField] private Sprite loadingBallSprite;
     [SerializeField] private TMP_FontAsset loadingFont;
-    [SerializeField, Min(0f)] private float fadeOutDuration = 0.25f;
-    [SerializeField, Min(0f)] private float minimumLoadingDuration = 0.6f;
-    [SerializeField, Min(0f)] private float loadingFadeOutDuration = 0.18f;
-    [SerializeField, Min(0f)] private float stageFadeInDuration = 0.3f;
-    [SerializeField, Min(0f)] private float loadingRotationSpeed = 220f;
+    [SerializeField] private Shader transitionShader;
+    [SerializeField] private Texture2D loadingBackdrop;
+    [SerializeField] private TitleStageTransition.Settings transitionSettings = new TitleStageTransition.Settings();
 
     [Header("Audio")]
     [SerializeField] private AudioSource bgmSource;
@@ -67,11 +78,21 @@ public sealed class TitleScreenController : MonoBehaviour
     private Color[] _ambientBaseColors;
     private bool _inputReady;
     private bool _isStarting;
+    private AudioClip _navigationClip;
+    private float _lastNavigationSound;
+    private TitleMenuItem[] _menuItems;
+    private Vector3 _backgroundScale;
+    private UnityEngine.UI.Image _logoImage;
+    private Material _logoOriginalMaterial;
+    private Material _logoShineMaterial;
+    private double _logoShineElapsed;
+    private static readonly int LogoShinePositionId = Shader.PropertyToID("_ShinePosition");
+    private static readonly int LogoShineStrengthId = Shader.PropertyToID("_ShineStrength");
 
     public bool InputReady => _inputReady;
     public bool IsStarting => _isStarting;
     public string StageSceneName => stageSceneName;
-    public float MinimumLoadingDuration => minimumLoadingDuration;
+    public float MinimumLoadingDuration => transitionSettings.minimumLoadingDuration;
 
     private void Awake()
     {
@@ -79,6 +100,15 @@ public sealed class TitleScreenController : MonoBehaviour
         ValidateReferences();
         RegisterButtonListeners();
         ConfigureButtonNavigation();
+        CreateNavigationSound();
+        _menuItems = startPanel != null ? startPanel.GetComponentsInChildren<TitleMenuItem>(true) : new TitleMenuItem[0];
+        _backgroundScale = backgroundGroup != null ? backgroundGroup.transform.localScale : Vector3.one;
+        if (titleCompositionGroup == null && logoGroup != null && logoGroup.transform.parent != null)
+        {
+            titleCompositionGroup = logoGroup.transform.parent.GetComponent<CanvasGroup>();
+            if (titleCompositionGroup == null)
+                titleCompositionGroup = logoGroup.transform.parent.gameObject.AddComponent<CanvasGroup>();
+        }
 
         _sceneOrigin = sceneRoot != null ? sceneRoot.anchoredPosition : Vector2.zero;
         _heroOrigin = heroMotionRoot != null ? heroMotionRoot.anchoredPosition : Vector2.zero;
@@ -87,6 +117,7 @@ public sealed class TitleScreenController : MonoBehaviour
         _startScaleOrigin = startPanel != null ? startPanel.localScale : Vector3.one;
         _startGlowScaleOrigin = startGlow != null ? startGlow.localScale : Vector3.one;
         CacheAmbientState();
+        InitializeLogoShine();
         SetCanvasAlpha(backgroundGroup, 0f);
         SetCanvasAlpha(logoGroup, 0f);
         SetCanvasAlpha(characterGroup, 0f);
@@ -97,6 +128,8 @@ public sealed class TitleScreenController : MonoBehaviour
             startButton.interactable = false;
         if (controlsButton != null)
             controlsButton.interactable = false;
+        if (exitButton != null)
+            exitButton.interactable = false;
         if (controlsPanel != null)
         {
             controlsPanel.BackRequested += HandleControlsBack;
@@ -117,8 +150,12 @@ public sealed class TitleScreenController : MonoBehaviour
 
     private void Update()
     {
+        UpdateLogoShine();
         if (!_isStarting)
             UpdateIdlePresentation();
+        if (_inputReady && !_isStarting && (controlsPanel == null || !controlsPanel.IsVisible)
+            && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+            startButton.Select();
     }
 
     public void OnStartPressed()
@@ -130,9 +167,9 @@ public sealed class TitleScreenController : MonoBehaviour
         _inputReady = false;
         if (startButton != null)
             startButton.interactable = false;
-        if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(null);
-
+        if (startGroup != null) startGroup.interactable = false;
+        startButton.GetComponent<TitleMenuItem>()?.Confirm();
+        atmosphere?.Confirm();
         StartSequence();
     }
 
@@ -150,14 +187,87 @@ public sealed class TitleScreenController : MonoBehaviour
         controlsPanel.Show();
     }
 
+    public void OnExitPressed()
+    {
+        if (!_inputReady || _isStarting || (controlsPanel != null && controlsPanel.IsVisible)) return;
+#if UNITY_EDITOR
+        // Never close the editor from a runtime menu.
+        Debug.Log("[TitleScreen] EXIT: standalone builds quit here.");
+#else
+        Application.Quit();
+#endif
+    }
+
+    internal void PlayTransitionConfirm(AudioSource destination)
+    {
+        if (sfxSource != null) destination.outputAudioMixerGroup = sfxSource.outputAudioMixerGroup;
+        if (startConfirmClip != null) destination.PlayOneShot(startConfirmClip, startConfirmVolume);
+    }
+
+    internal void PresentStartTransition(float elapsed)
+    {
+        float zoom = SmoothRange(elapsed, transitionSettings.confirmDuration, transitionSettings.DepartureDuration);
+        if (backgroundGroup != null)
+            backgroundGroup.transform.localScale = _backgroundScale * Mathf.Lerp(1, transitionSettings.backgroundZoom, zoom);
+        if (logoGroup != null) logoGroup.alpha = 1 - SmoothRange(elapsed, 0, .30f);
+        if (titleCompositionGroup != null) titleCompositionGroup.alpha = 1 - SmoothRange(elapsed, .18f, transitionSettings.DepartureDuration);
+        foreach (var item in _menuItems)
+            item.SetTransitionAlpha(1 - SmoothRange(elapsed, item.gameObject == startButton.gameObject ? .18f : 0, .34f));
+        // The backdrop is drawn by the background shader, outside the menu CanvasGroup.
+        atmosphere?.SetMenuVisibility(1 - SmoothRange(elapsed, .18f, .34f));
+        atmosphere?.SetDeparting(true);
+    }
+
+    internal void RestoreAfterTransitionFailure()
+    {
+        _isStarting = false;
+        if (backgroundGroup != null) backgroundGroup.transform.localScale = _backgroundScale;
+        SetCanvasAlpha(logoGroup, 1); SetCanvasAlpha(titleCompositionGroup, 1);
+        foreach (var item in _menuItems) item.SetTransitionAlpha(1);
+        atmosphere?.SetMenuVisibility(1);
+        atmosphere?.SetDeparting(false);
+        RestoreStartInput();
+        GameBgmController.Instance?.PlayTitle();
+    }
+
+    public void PlayNavigationSound()
+    {
+        if (sfxSource == null || _navigationClip == null || Time.unscaledTime - _lastNavigationSound < 0.09f) return;
+        _lastNavigationSound = Time.unscaledTime;
+        sfxSource.PlayOneShot(_navigationClip, 0.1f);
+    }
+
+    private void CreateNavigationSound()
+    {
+        // Original, short bell-like tick; no external recording or asset dependency.
+        const int rate = 22050;
+        float[] samples = new float[2205];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float t = i / (float)rate;
+            float envelope = Mathf.Exp(-t * 55f) * Mathf.Min(1f, t * 800f) * (1f - i / (float)samples.Length);
+            samples[i] = (Mathf.Sin(t * 880f * Mathf.PI * 2f) + 0.2f * Mathf.Sin(t * 2376f * Mathf.PI * 2f)) * envelope * 0.3f;
+        }
+        _navigationClip = AudioClip.Create("Title navigation tick", samples.Length, 1, rate, false);
+        _navigationClip.SetData(samples, 0);
+    }
+
     private void OnDestroy()
     {
+        if (_logoShineMaterial != null)
+        {
+            if (_logoImage != null && _logoImage.material == _logoShineMaterial)
+                _logoImage.material = _logoOriginalMaterial;
+            Destroy(_logoShineMaterial);
+        }
         if (startButton != null)
             startButton.onClick.RemoveListener(OnStartPressed);
         if (controlsButton != null)
             controlsButton.onClick.RemoveListener(OnControlsPressed);
         if (controlsPanel != null)
             controlsPanel.BackRequested -= HandleControlsBack;
+        if (exitButton != null) exitButton.onClick.RemoveListener(OnExitPressed);
+        if (_navigationClip != null) Destroy(_navigationClip);
     }
 
     private void RegisterButtonListeners()
@@ -173,6 +283,11 @@ public sealed class TitleScreenController : MonoBehaviour
             controlsButton.onClick.RemoveListener(OnControlsPressed);
             controlsButton.onClick.AddListener(OnControlsPressed);
         }
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveListener(OnExitPressed);
+            exitButton.onClick.AddListener(OnExitPressed);
+        }
     }
 
     private void ConfigureButtonNavigation()
@@ -180,21 +295,7 @@ public sealed class TitleScreenController : MonoBehaviour
         if (startButton == null || controlsButton == null)
             return;
 
-        Navigation startNavigation = new Navigation
-        {
-            mode = Navigation.Mode.Explicit,
-            selectOnUp = controlsButton,
-            selectOnDown = controlsButton
-        };
-        startButton.navigation = startNavigation;
-
-        Navigation controlsNavigation = new Navigation
-        {
-            mode = Navigation.Mode.Explicit,
-            selectOnUp = startButton,
-            selectOnDown = startButton
-        };
-        controlsButton.navigation = controlsNavigation;
+        CRTMenuNavigation.Configure(startButton, controlsButton, exitButton);
     }
 
     private void ValidateReferences()
@@ -234,8 +335,8 @@ public sealed class TitleScreenController : MonoBehaviour
             startGroup.blocksRaycasts = true;
         }
 
-        if (startButton != null && EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(startButton.gameObject);
+        if (controlsButton != null && EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(controlsButton.gameObject);
     }
 
     private IEnumerator IntroRoutine()
@@ -272,6 +373,8 @@ public sealed class TitleScreenController : MonoBehaviour
         }
         if (controlsButton != null)
             controlsButton.interactable = true;
+        if (exitButton != null)
+            exitButton.interactable = true;
     }
 
     private void UpdateIdlePresentation()
@@ -312,11 +415,56 @@ public sealed class TitleScreenController : MonoBehaviour
         }
     }
 
+    private void InitializeLogoShine()
+    {
+        if (logoGroup == null || logoShineShader == null || !logoShineShader.isSupported)
+            return;
+
+        _logoImage = logoGroup.GetComponent<UnityEngine.UI.Image>();
+        if (_logoImage == null || _logoImage.sprite == null)
+            return;
+
+        _logoOriginalMaterial = _logoImage.material;
+        _logoShineMaterial = new Material(logoShineShader) { name = "Title Logo Shine (Runtime)" };
+        Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(_logoImage.sprite);
+        _logoShineMaterial.SetVector("_LogoUVRect", new Vector4(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y));
+        _logoShineMaterial.SetFloat(LogoShineStrengthId, 0f);
+        _logoImage.material = _logoShineMaterial;
+        _logoShineElapsed = -logoShineDelay;
+    }
+
+    private void UpdateLogoShine()
+    {
+        if (_logoShineMaterial == null)
+            return;
+
+        if (!_inputReady || _isStarting || (controlsPanel != null && controlsPanel.IsVisible))
+        {
+            ResetLogoShine();
+            return;
+        }
+
+        _logoShineElapsed += Time.unscaledDeltaTime;
+        float duration = Mathf.Max(0.1f, logoShineDuration);
+        double period = Mathf.Max(logoShinePeriod, duration + 0.2f);
+        float phase = (float)(_logoShineElapsed % period);
+        bool shining = _logoShineElapsed >= 0d && phase < duration;
+        // UV margins keep the entire band outside the sprite between passes.
+        _logoShineMaterial.SetFloat(LogoShinePositionId, Mathf.Lerp(-0.4f, 1.4f, phase / duration));
+        _logoShineMaterial.SetFloat(LogoShineStrengthId, shining ? logoShineStrength : 0f);
+    }
+
+    private void OnDisable() => ResetLogoShine();
+
+    private void ResetLogoShine()
+    {
+        _logoShineElapsed = -logoShineDelay;
+        if (_logoShineMaterial != null)
+            _logoShineMaterial.SetFloat(LogoShineStrengthId, 0f);
+    }
+
     private void StartSequence()
     {
-        if (sfxSource != null && startConfirmClip != null)
-            sfxSource.PlayOneShot(startConfirmClip, startConfirmVolume);
-
         if (string.IsNullOrWhiteSpace(stageSceneName))
         {
             Debug.LogError("[TitleScreen] Stage Sceneが設定されていません。", this);
@@ -329,11 +477,10 @@ public sealed class TitleScreenController : MonoBehaviour
                 stageSceneName,
                 loadingBallSprite,
                 loadingFont,
-                fadeOutDuration,
-                minimumLoadingDuration,
-                loadingFadeOutDuration,
-                stageFadeInDuration,
-                loadingRotationSpeed))
+                transitionShader,
+                loadingBackdrop,
+                transitionSettings,
+                this))
         {
             Debug.LogError("[TitleScreen] Stage Loading Transitionを開始できませんでした。", this);
             _isStarting = false;
@@ -341,15 +488,18 @@ public sealed class TitleScreenController : MonoBehaviour
             return;
         }
 
-        // Loading表示中にタイトル曲だけを短くフェードアウトする。
-        GameBgmController.Instance?.FadeOut(fadeOutDuration);
+        GameBgmController.Instance?.FadeOut(transitionSettings.DepartureDuration + transitionSettings.coverDuration);
     }
 
     private void RestoreStartInput()
     {
         _inputReady = true;
         if (startButton != null)
+        {
             startButton.interactable = true;
+            startButton.Select();
+        }
+        if (startGroup != null) startGroup.interactable = true;
     }
 
     private void CacheAmbientState()

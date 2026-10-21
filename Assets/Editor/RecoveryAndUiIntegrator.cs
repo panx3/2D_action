@@ -423,60 +423,7 @@ public static class RecoveryAndUiIntegrator
 
     private static void CreatePauseMenuPrefab()
     {
-        GameObject controlsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ControlsPrefabPath);
-        if (controlsPrefab == null)
-            throw new FileNotFoundException("ControlsPanel Prefabが見つかりません。", ControlsPrefabPath);
-
-        TMP_FontAsset bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldFontPath);
-        Sprite chain = LoadLargestSprite(ChainSpritePath);
-        Sprite stoneSprite = LoadLargestSprite(StoneTexturePath);
-
-        GameObject root = new GameObject("PauseMenu", typeof(RectTransform), typeof(PauseMenuController));
-        RectTransform rootRect = root.GetComponent<RectTransform>();
-        Stretch(rootRect);
-        SetLayerRecursively(root, 5);
-
-        RectTransform presentation = CreateRect("PausePresentation", rootRect, Vector2.zero, Vector2.zero);
-        Stretch(presentation);
-        Image overlay = CreateImage("DarkOverlay", presentation, new Color32(5, 8, 14, 190));
-        Stretch(overlay.rectTransform);
-        overlay.raycastTarget = true;
-
-        RectTransform panel = CreateRect("PauseStonePanel", presentation, Vector2.zero, new Vector2(720f, 740f));
-        CreateFramedPanel(panel, stoneSprite);
-        TextMeshProUGUI title = CreateText("PauseTitle", panel, "PAUSE", bold, 70f, Ivory, TextAlignmentOptions.Center);
-        SetRect(title.rectTransform, new Vector2(0f, 260f), new Vector2(560f, 100f));
-        title.characterSpacing = 7f;
-        title.outlineColor = IronBlack;
-        title.outlineWidth = 0.16f;
-        AddChainDecoration(panel, chain, new Vector2(0f, 198f), 510f, 0f);
-
-        Button resume = CreateMenuButton(panel, "ResumeButton", "つづける", bold, new Vector2(0f, 90f), new Vector2(430f, 86f));
-        Button controls = CreateMenuButton(panel, "ControlsButton", "操作方法", bold, new Vector2(0f, -30f), new Vector2(430f, 86f));
-        Button titleButton = CreateMenuButton(panel, "TitleButton", "タイトルへ戻る", bold, new Vector2(0f, -150f), new Vector2(430f, 86f));
-
-        GameObject controlsObject = PrefabUtility.InstantiatePrefab(controlsPrefab) as GameObject;
-        controlsObject.name = "ControlsPanel";
-        RectTransform controlsRect = controlsObject.GetComponent<RectTransform>();
-        controlsRect.SetParent(presentation, false);
-        Stretch(controlsRect);
-        controlsObject.SetActive(false);
-
-        PauseMenuController controller = root.GetComponent<PauseMenuController>();
-        SerializedObject serialized = new SerializedObject(controller);
-        serialized.FindProperty("inputActions").objectReferenceValue = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
-        serialized.FindProperty("pauseActionName").stringValue = "Player/Pause";
-        serialized.FindProperty("presentationRoot").objectReferenceValue = presentation.gameObject;
-        serialized.FindProperty("menuPanel").objectReferenceValue = panel.gameObject;
-        serialized.FindProperty("controlsPanel").objectReferenceValue = controlsObject.GetComponent<ControlsPanelController>();
-        serialized.FindProperty("resumeButton").objectReferenceValue = resume;
-        serialized.FindProperty("controlsButton").objectReferenceValue = controls;
-        serialized.FindProperty("titleButton").objectReferenceValue = titleButton;
-        serialized.FindProperty("titleSceneName").stringValue = "TitleScene";
-        serialized.ApplyModifiedPropertiesWithoutUndo();
-
-        PrefabUtility.SaveAsPrefabAsset(root, PausePrefabPath);
-        UnityEngine.Object.DestroyImmediate(root);
+        CRTOverlayInstaller.RebuildPausePrefab();
     }
 
     private static void ConfigureCompletScene()

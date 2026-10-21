@@ -16,21 +16,82 @@ public class JumpPad : MonoBehaviour
     [SerializeField] private Color activeColor = Color.white;
     [SerializeField] private float flashDuration = 0.08f;
 
+    [Header("Spring Animation")]
+    [SerializeField] private SpriteRenderer visualRenderer;
+    [SerializeField] private Vector2 compressedScale = new Vector2(1.08f, 0.58f);
+    [SerializeField] private Vector2 stretchedScale = new Vector2(0.94f, 1.24f);
+    [SerializeField, Min(0.01f)] private float compressionDuration = 0.04f;
+    [SerializeField, Min(0.01f)] private float extensionDuration = 0.08f;
+    [SerializeField, Min(0.01f)] private float settleDuration = 0.22f;
+
+    [Header("Bounce Audio")]
+    [SerializeField] private AudioClip bounceClip;
+    [SerializeField, Range(0f, 1f)] private float bounceVolume = 0.8f;
+
     [Header("Debug")]
     [SerializeField] private bool showDebugLog = true;
 
     private SpriteRenderer spriteRenderer;
     private float nextBounceTime;
-    private Coroutine flashCoroutine;
+    private AudioSource audioSource;
+    private Coroutine feedbackCoroutine;
+    private Vector3 visualRestPosition;
+    private Vector3 visualRestScale;
+    private float visualBottom;
+    private float feedbackStartTime;
+    private Vector2 currentVisualScale = Vector2.one;
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer = visualRenderer;
+
+        // Keep the existing root SpriteRenderer (and scene sprite overrides) as the source.
+        // Only its visual copy moves; the Rigidbody2D and Collider2D stay unchanged.
+        if (spriteRenderer == null || spriteRenderer.transform == transform)
+        {
+            SpriteRenderer source = spriteRenderer != null ? spriteRenderer : GetComponent<SpriteRenderer>();
+            if (source != null)
+            {
+                GameObject visual = new GameObject("SpringVisual");
+                visual.layer = gameObject.layer;
+                visual.transform.SetParent(transform, false);
+                spriteRenderer = visual.AddComponent<SpriteRenderer>();
+                spriteRenderer.sprite = source.sprite;
+                spriteRenderer.sharedMaterials = source.sharedMaterials;
+                spriteRenderer.sortingLayerID = source.sortingLayerID;
+                spriteRenderer.sortingOrder = source.sortingOrder;
+                spriteRenderer.flipX = source.flipX;
+                spriteRenderer.flipY = source.flipY;
+                spriteRenderer.drawMode = source.drawMode;
+                spriteRenderer.size = source.size;
+                spriteRenderer.tileMode = source.tileMode;
+                spriteRenderer.maskInteraction = source.maskInteraction;
+                spriteRenderer.spriteSortPoint = source.spriteSortPoint;
+                source.enabled = false;
+            }
+        }
+
+        audioSource = OneShotAudioUtility.FindWorldImpactSource();
 
         if (spriteRenderer != null)
         {
             spriteRenderer.color = idleColor;
+            visualRestPosition = spriteRenderer.transform.localPosition;
+            visualRestScale = spriteRenderer.transform.localScale;
+            visualBottom = spriteRenderer.localBounds.min.y;
         }
+    }
+
+    private void OnDisable()
+    {
+        if (feedbackCoroutine != null)
+        {
+            StopCoroutine(feedbackCoroutine);
+            feedbackCoroutine = null;
+        }
+
+        ResetVisual();
+        nextBounceTime = 0f;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -76,12 +137,17 @@ public class JumpPad : MonoBehaviour
             Debug.Log("JumpPad: Player bounced.");
         }
 
-        if (flashCoroutine != null)
+        OneShotAudioUtility.Play2D(audioSource, bounceClip, bounceVolume, transform.position);
+
+        if (feedbackCoroutine != null)
         {
-            StopCoroutine(flashCoroutine);
+            StopCoroutine(feedbackCoroutine);
         }
 
-        flashCoroutine = StartCoroutine(FlashRoutine());
+        if (spriteRenderer != null)
+        {
+            feedbackCoroutine = StartCoroutine(BounceFeedbackRoutine());
+        }
     }
 
     private bool IsLandingFromAbove(Collision2D collision, Rigidbody2D playerRb)
@@ -105,18 +171,52 @@ public class JumpPad : MonoBehaviour
         return false;
     }
 
-    private IEnumerator FlashRoutine()
+    private IEnumerator BounceFeedbackRoutine()
     {
-        if (spriteRenderer == null)
+        feedbackStartTime = Time.time;
+        spriteRenderer.color = activeColor;
+        yield return AnimateVisual(currentVisualScale, compressedScale, compressionDuration);
+        yield return AnimateVisual(compressedScale, stretchedScale, extensionDuration);
+        Vector2 settleScale = new Vector2(1.025f, 0.94f);
+        yield return AnimateVisual(stretchedScale, settleScale, settleDuration * 0.65f);
+        yield return AnimateVisual(settleScale, Vector2.one, settleDuration * 0.35f);
+        ResetVisual();
+        feedbackCoroutine = null;
+    }
+
+    private IEnumerator AnimateVisual(Vector2 from, Vector2 to, float duration)
+    {
+        float elapsed = 0f;
+        duration = Mathf.Max(0.01f, duration);
+        while (elapsed < duration)
         {
-            yield break;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+            ApplyVisualScale(Vector2.LerpUnclamped(from, to, t));
+            spriteRenderer.color = Time.time - feedbackStartTime < flashDuration ? activeColor : idleColor;
+            yield return null;
+            elapsed += Time.deltaTime;
         }
 
-        spriteRenderer.color = activeColor;
+        ApplyVisualScale(to);
+    }
 
-        yield return new WaitForSeconds(flashDuration);
+    private void ApplyVisualScale(Vector2 scale)
+    {
+        currentVisualScale = scale;
+        spriteRenderer.transform.localScale = Vector3.Scale(visualRestScale, new Vector3(scale.x, scale.y, 1f));
+        // Anchor the bottom so compression looks planted instead of floating.
+        spriteRenderer.transform.localPosition = visualRestPosition +
+            spriteRenderer.transform.localRotation * Vector3.up * (visualBottom * visualRestScale.y * (1f - scale.y));
+    }
 
-        spriteRenderer.color = idleColor;
-        flashCoroutine = null;
+    private void ResetVisual()
+    {
+        currentVisualScale = Vector2.one;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.transform.localPosition = visualRestPosition;
+            spriteRenderer.transform.localScale = visualRestScale;
+            spriteRenderer.color = idleColor;
+        }
     }
 }

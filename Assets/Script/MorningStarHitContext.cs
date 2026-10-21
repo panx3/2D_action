@@ -12,6 +12,7 @@ public readonly struct MorningStarHitContext
     public Vector2 ImpactDirection { get; }
     public float ImpactSpeed { get; }
     public float ChargeMultiplier { get; }
+    public MorningStarLauncher Source { get; }
 
     public MorningStarHitContext(
         int damage,
@@ -20,7 +21,8 @@ public readonly struct MorningStarHitContext
         Vector2 impactPoint,
         Vector2 impactDirection,
         float impactSpeed,
-        float chargeMultiplier)
+        float chargeMultiplier,
+        MorningStarLauncher source = null)
     {
         Damage = damage;
         KnockbackImpulse = knockbackImpulse;
@@ -29,6 +31,7 @@ public readonly struct MorningStarHitContext
         ImpactDirection = impactDirection;
         ImpactSpeed = impactSpeed;
         ChargeMultiplier = chargeMultiplier;
+        Source = source;
     }
 }
 

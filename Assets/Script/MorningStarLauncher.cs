@@ -23,7 +23,8 @@ public class MorningStarLauncher : MonoBehaviour
         Returning,
         Hooked,
         Swinging,
-        StartIntro
+        StartIntro,
+        Respawning
     }
 
     [Header("参照")]
@@ -62,6 +63,12 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private float hitStopPerDamage = 0.006f;
     [SerializeField] private float minCombatHitStop = 0.02f;
     [SerializeField] private float maxCombatHitStop = 0.1f;
+    [SerializeField, Min(0f), Tooltip("ブロック破壊時の最低停止秒数。通常の地形接触では停止しません")]
+    private float blockBreakHitStop = 0.065f;
+    [SerializeField, Min(0f), Tooltip("敵撃破時の最低停止秒数。溜め命中の停止が長ければそちらを優先")]
+    private float enemyDefeatHitStop = 0.085f;
+    [SerializeField, Range(0.01f, 0.2f), Tooltip("同時・連続命中をまとめた1回の停止時間の上限。停止秒数を加算しません")]
+    private float maxContinuousHitStop = 0.12f;
     [SerializeField] private float hitCooldownPerTarget = 0.2f;
     [SerializeField, Range(0f, 1f)] private float postHitSpeedRetention = 0.7f;
 
@@ -326,6 +333,22 @@ public class MorningStarLauncher : MonoBehaviour
     private float _nextGroundImpactShakeTime;
     private Coroutine _hitStopRoutine;
     private float _savedTimeScale = 1f;
+    private double _hitStopStartedAt;
+    private double _hitStopEndsAt;
+    private bool _goalInputBlocked;
+
+    public bool IsHitStopping => _hitStopRoutine != null;
+
+    public void SetGoalInputBlocked(bool blocked)
+    {
+        _goalInputBlocked = blocked;
+        if (!blocked)
+            return;
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        // Let the goal presentation acquire time after any earlier combat hit stop.
+        CancelHitStop();
+    }
     private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
     private readonly List<(Collider2D Ball, Collider2D Goal)> _recallGoalCollisionPairs =
         new List<(Collider2D Ball, Collider2D Goal)>();
@@ -383,6 +406,33 @@ public class MorningStarLauncher : MonoBehaviour
     public MorningStarState State => _state;
     public MorningStarState CurrentState => _state;
     private bool _simulatedBeforeStartIntro;
+    private bool _respawnPresentation;
+    private bool _simulatedBeforeRespawn;
+    public Rigidbody2D BallBody => morningStarRb;
+    public Transform ChainVisualRoot => chainLineController != null ? chainLineController.transform : null;
+
+    /// <summary>位置を変えず中央State経由で停止。見た目はFeedback側で分解する。</summary>
+    public void BeginRespawnPresentation()
+    {
+        if (_respawnPresentation) return;
+        CancelHitStop();
+        _respawnPresentation = true;
+        _simulatedBeforeRespawn = morningStarRb != null && morningStarRb.simulated;
+        EndLaunchPose();
+        ResetChainClimbState(false);
+        SetSpinGuardActive(false);
+        TransitionToState(MorningStarState.Respawning);
+        if (aimGuideLineRenderer != null) aimGuideLineRenderer.enabled = false;
+        if (aimMark != null) aimMark.gameObject.SetActive(false);
+    }
+
+    public void EndRespawnPresentation()
+    {
+        if (!_respawnPresentation) return;
+        _respawnPresentation = false;
+        if (morningStarRb != null) morningStarRb.simulated = _simulatedBeforeRespawn;
+        ResetForRespawn();
+    }
 
     /// <summary>開始演出も中央の状態遷移を通し、鎖と鉄球の物理を一時停止する。</summary>
     public void BeginStartIntro()
@@ -478,6 +528,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
         if (_chargeFeedback != null)
             _chargeFeedback.ResetFeedback();
@@ -506,6 +557,10 @@ public class MorningStarLauncher : MonoBehaviour
 
         EnterDraggingState(true);
 
+        // 共通Restで位置・ラッチを復元した後も、再構築が済むまで物理を開始しない。
+        if (_respawnPresentation)
+            TransitionToState(MorningStarState.Respawning);
+
         if (animator != null)
         {
             if (HasAnimatorParam(_hashLaunchFire, AnimatorControllerParameterType.Trigger))
@@ -524,7 +579,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public bool TryAttachToMagnet(MagnetPoint magnet, Rigidbody2D targetBody, Vector2 anchorPosition)
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return false;
         if (magnet == null || targetBody == null || targetBody != morningStarRb)
             return false;
@@ -712,6 +767,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
         _activeThrowCharge01 = 0f;
         if (_chargeFeedback != null)
@@ -728,13 +784,19 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void Update()
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (morningStarRb == null)
             return;
 
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
+
+        if (_goalInputBlocked)
+        {
+            UpdateFallbackLineRenderer();
+            return;
+        }
 
         UpdateGamepadInputState();
         ProcessRecoilTrigger();
@@ -798,7 +860,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (_playerRb == null || morningStarRb == null)
             return;
@@ -851,7 +913,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_state == MorningStarState.StartIntro)
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (UpdateChainClimbVisual())
             return;
@@ -936,6 +998,7 @@ public class MorningStarLauncher : MonoBehaviour
         switch (state)
         {
             case MorningStarState.StartIntro:
+            case MorningStarState.Respawning:
                 morningStarRb.simulated = false;
                 morningStarRb.linearVelocity = Vector2.zero;
                 morningStarRb.angularVelocity = 0f;
@@ -1730,6 +1793,8 @@ public class MorningStarLauncher : MonoBehaviour
         if (morningStarRb == null || collision.collider == null)
             return;
 
+        GoalPoint goal = collision.collider.GetComponentInParent<GoalPoint>();
+        int groundShakeCountBeforeImpact = GroundImpactShakeCount;
         TryPlayGroundImpactCameraShake(collision);
         if (IsPowerThrow && !_powerImpactPlayed
             && Mathf.Max(collision.relativeVelocity.magnitude, morningStarRb.linearVelocity.magnitude) >= minCombatHitSpeed)
@@ -1739,7 +1804,8 @@ public class MorningStarLauncher : MonoBehaviour
             Vector2 direction = collision.contactCount > 0 ? -collision.GetContact(0).normal : _pendingLaunchDir;
             if (_chargeFeedback != null)
                 _chargeFeedback.PlayImpact(point, direction);
-            if (cameraShake != null)
+            // Floor and Goal already own their collision shake; a charged hit must not request it twice.
+            if (cameraShake != null && goal == null && GroundImpactShakeCount == groundShakeCountBeforeImpact)
                 cameraShake.Shake(0.12f, maximumShakeStrength);
         }
 
@@ -1750,7 +1816,6 @@ public class MorningStarLauncher : MonoBehaviour
             LogDebug("MorningStar Heavy Land");
         }
 
-        GoalPoint goal = collision.collider.GetComponentInParent<GoalPoint>();
         if (goal != null)
         {
             // Goal自身が命中回数を数える。combat Layer設定による二重処理を避ける。
@@ -1862,7 +1927,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         _lastCombatHitTimeByColliderId[colliderId] = Time.time;
         ApplyPostHitBallResponse(context);
-        PlayCombatHitStop(context.HitStopSeconds);
+        // 各Receiverが実際の被弾・破壊を確定した時だけヒットストップを依頼する。
 
         return true;
     }
@@ -1917,7 +1982,8 @@ public class MorningStarLauncher : MonoBehaviour
             impactPoint,
             impactDir,
             impactSpeed,
-            chargeMult);
+            chargeMult,
+            this);
     }
 
     private void ApplyPostHitBallResponse(MorningStarHitContext context)
@@ -1928,15 +1994,52 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.linearVelocity *= postHitSpeedRetention;
     }
 
+    public void PlayEnemyHitStop(float duration, bool defeated)
+    {
+        PlayCombatHitStop(defeated ? Mathf.Max(duration, enemyDefeatHitStop) : duration);
+    }
+
+    public void PlayBlockBreakHitStop(float impactHitStop = 0f)
+    {
+        float duration = Mathf.Max(blockBreakHitStop, impactHitStop);
+        if (IsPowerThrow)
+            duration = Mathf.Max(duration, maxCombatHitStop);
+        PlayCombatHitStop(duration);
+    }
+
+    public void CancelHitStop()
+    {
+        if (_hitStopRoutine == null)
+            return;
+        StopCoroutine(_hitStopRoutine);
+        _hitStopRoutine = null;
+        // 別の演出が既に変更した時間倍率は上書きしない。
+        if (Mathf.Approximately(Time.timeScale, 0f))
+            Time.timeScale = _savedTimeScale;
+    }
+
     private void PlayCombatHitStop(float duration)
     {
-        if (duration <= 0f)
+        if (!isActiveAndEnabled || _goalInputBlocked || _respawnPresentation || duration <= 0f
+            || (_playerHealth != null && _playerHealth.IsDead))
             return;
 
         if (_hitStopRoutine != null)
-            StopCoroutine(_hitStopRoutine);
+        {
+            // 元の倍率を0で保存し直さず、最長の要求までだけ延長する。
+            _hitStopEndsAt = System.Math.Min(_hitStopStartedAt + maxContinuousHitStop,
+                System.Math.Max(_hitStopEndsAt, Time.realtimeSinceStartupAsDouble + duration));
+            return;
+        }
 
-        _hitStopRoutine = StartCoroutine(HitStopRoutine(duration));
+        // ポーズ・結果表示等による停止中には、新しく時間を取得しない。
+        if (Time.timeScale <= 0f)
+            return;
+
+        _savedTimeScale = Time.timeScale;
+        _hitStopStartedAt = Time.realtimeSinceStartupAsDouble;
+        _hitStopEndsAt = _hitStopStartedAt + Mathf.Min(duration, maxContinuousHitStop);
+        _hitStopRoutine = StartCoroutine(HitStopRoutine());
     }
 
     private void TryPlayGroundImpactCameraShake(Collision2D collision)
@@ -2062,12 +2165,13 @@ public class MorningStarLauncher : MonoBehaviour
             Instantiate(hookSparkPrefab, _hookPoint, Quaternion.identity);
     }
 
-    private IEnumerator HitStopRoutine(float duration)
+    private IEnumerator HitStopRoutine()
     {
-        _savedTimeScale = Time.timeScale;
         Time.timeScale = 0f;
-        yield return new WaitForSecondsRealtime(duration);
-        Time.timeScale = _savedTimeScale;
+        while (Time.realtimeSinceStartupAsDouble < _hitStopEndsAt && Mathf.Approximately(Time.timeScale, 0f))
+            yield return null;
+        if (Mathf.Approximately(Time.timeScale, 0f))
+            Time.timeScale = _savedTimeScale;
         _hitStopRoutine = null;
     }
 
@@ -2306,6 +2410,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerDead()
     {
+        CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
         _activeThrowCharge01 = 0f;
         if (_chargeFeedback != null)
@@ -2971,7 +3076,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -2983,6 +3088,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
+        if (_goalInputBlocked || _respawnPresentation)
+            return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
             || (_state == MorningStarState.Dragging && !IsBallAtReturnSocket()))
