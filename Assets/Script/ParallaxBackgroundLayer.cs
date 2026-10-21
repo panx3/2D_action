@@ -24,17 +24,23 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
     private bool originalFlipX;
     private SpriteRenderer leftCopy;
     private SpriteRenderer rightCopy;
+    private float? visualScrollFactor;
+    private float lastCoverScale = -1f;
+    private Vector2 lastCameraTravel;
+
+    public float ScrollFactor => parallaxFactor;
+    public bool LoopsHorizontally => loopHorizontally;
+    public void SetVisualScrollFactor(float? factor) => visualScrollFactor = factor;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         originalFlipX = spriteRenderer.flipX;
-        if (targetCamera == null)
+        if (targetCamera == null || !targetCamera.isActiveAndEnabled)
             targetCamera = Camera.main;
 
         if (targetCamera == null || spriteRenderer.sprite == null)
         {
-            enabled = false;
             return;
         }
 
@@ -46,8 +52,16 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (targetCamera == null || spriteRenderer == null || spriteRenderer.sprite == null)
+        if (spriteRenderer == null || spriteRenderer.sprite == null)
             return;
+        if (targetCamera == null || !targetCamera.isActiveAndEnabled)
+        {
+            targetCamera = Camera.main;
+            if (targetCamera == null) return;
+            cameraOrigin = targetCamera.transform.position - (Vector3)lastCameraTravel;
+            depth = transform.position.z;
+            lastCoverScale = -1f;
+        }
 
         UpdateCoverScale();
         UpdatePosition();
@@ -60,16 +74,21 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
         float viewWidth = viewHeight * targetCamera.aspect;
         float coverScale = Mathf.Max(viewWidth / spriteSize.x, viewHeight / spriteSize.y);
         float scale = coverScale * coverPadding;
-        transform.localScale = new Vector3(scale, scale, 1f);
+        if (!Mathf.Approximately(scale, lastCoverScale))
+        {
+            transform.localScale = new Vector3(scale, scale, 1f);
+            lastCoverScale = scale;
+        }
     }
 
     private void UpdatePosition()
     {
         Vector3 cameraPosition = targetCamera.transform.position;
         Vector2 cameraTravel = (Vector2)(cameraPosition - cameraOrigin);
+        lastCameraTravel = cameraTravel;
         Vector2 relativeOffset = screenOffset - new Vector2(
-            cameraTravel.x * parallaxFactor,
-            cameraTravel.y * parallaxFactor * verticalParallaxMultiplier);
+            cameraTravel.x * (visualScrollFactor ?? parallaxFactor),
+            cameraTravel.y * (visualScrollFactor ?? parallaxFactor) * verticalParallaxMultiplier);
 
         Vector2 scaledSize = Vector2.Scale(spriteRenderer.sprite.bounds.size, transform.lossyScale);
         float viewHeight = targetCamera.orthographicSize * 2f;

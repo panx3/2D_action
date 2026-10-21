@@ -1,0 +1,598 @@
+fileFormatVersion: 2
+guid: bacf92f10dbffae4e84c76cbf9b2494b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3285003738403444983
+    second: RuinsDustAtlas_0
+  - first:
+      213: 4898552339597071246
+    second: RuinsDustAtlas_1
+  - first:
+      213: 7461511250677674254
+    second: RuinsDustAtlas_2
+  - first:
+      213: -5250062034219980622
+    second: RuinsDustAtlas_3
+  - first:
+      213: 9028732480259632070
+    second: RuinsDustAtlas_4
+  - first:
+      213: -2985083417370658520
+    second: RuinsDustAtlas_5
+  - first:
+      213: -5164421780237753745
+    second: RuinsDustAtlas_6
+  - first:
+      213: 836572823789492229
+    second: RuinsDustAtlas_7
+  - first:
+      213: 2511566055206018356
+    second: RuinsDustAtlas_8
+  - first:
+      213: 5899981617950227654
+    second: RuinsDustAtlas_9
+  - first:
+      213: -7621256997406387820
+    second: RuinsDustAtlas_10
+  - first:
+      213: 982415776584507484
+    second: RuinsDustAtlas_11
+  - first:
+      213: -8624449573693645485
+    second: RuinsDustAtlas_12
+  - first:
+      213: -267064041722768651
+    second: RuinsDustAtlas_13
+  - first:
+      213: 1075180134437811350
+    second: RuinsDustAtlas_14
+  - first:
+      213: -8319050023351790372
+    second: RuinsDustAtlas_15
+  - first:
+      213: -8677034846713121305
+    second: RuinsDustAtlas_16
+  - first:
+      213: -339671997382634326
+    second: RuinsDustAtlas_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: RuinsDustAtlas_0
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 666
+        width: 552
+        height: 510
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f81e51de7da69d20800000000000000
+      internalID: 3285003738403444983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_1
+      rect:
+        serializedVersion: 2
+        x: 653
+        y: 998
+        width: 212
+        height: 187
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e83975336672bf340800000000000000
+      internalID: 4898552339597071246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_2
+      rect:
+        serializedVersion: 2
+        x: 932
+        y: 970
+        width: 156
+        height: 200
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e01393023fc9c8760800000000000000
+      internalID: 7461511250677674254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_3
+      rect:
+        serializedVersion: 2
+        x: 1035
+        y: 996
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b8ad8955680427b0800000000000000
+      internalID: -5250062034219980622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_4
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 119
+        width: 630
+        height: 827
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6cb28e1ca508c4d70800000000000000
+      internalID: 9028732480259632070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_5
+      rect:
+        serializedVersion: 2
+        x: 962
+        y: 924
+        width: 35
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82976b2927ad296d0800000000000000
+      internalID: -2985083417370658520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_6
+      rect:
+        serializedVersion: 2
+        x: 782
+        y: 815
+        width: 133
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6263aec0c94458b0800000000000000
+      internalID: -5164421780237753745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_7
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 144
+        width: 343
+        height: 278
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 508d7b60d8a1c9b00800000000000000
+      internalID: 836572823789492229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_8
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 408
+        width: 9
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43ddb763500ead220800000000000000
+      internalID: 2511566055206018356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_9
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 417
+        width: 7
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ccf147a502f0e150800000000000000
+      internalID: 5899981617950227654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_10
+      rect:
+        serializedVersion: 2
+        x: 452
+        y: 393
+        width: 58
+        height: 53
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 491d1a7d32bdb3690800000000000000
+      internalID: -7621256997406387820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_11
+      rect:
+        serializedVersion: 2
+        x: 366
+        y: 336
+        width: 33
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c502f0991fd32ad00800000000000000
+      internalID: 982415776584507484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_12
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 256
+        width: 112
+        height: 104
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35d98b89ecccf4880800000000000000
+      internalID: -8624449573693645485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_13
+      rect:
+        serializedVersion: 2
+        x: 269
+        y: 248
+        width: 36
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f295d44ba23b4cf0800000000000000
+      internalID: -267064041722768651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_14
+      rect:
+        serializedVersion: 2
+        x: 402
+        y: 122
+        width: 51
+        height: 188
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 694f8beb2aecbee00800000000000000
+      internalID: 1075180134437811350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_15
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 262
+        width: 19
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd45969741ccc8c80800000000000000
+      internalID: -8319050023351790372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_16
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 232
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e57af1a7caf49780800000000000000
+      internalID: -8677034846713121305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RuinsDustAtlas_17
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 128
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa45cd73e1e394bf0800000000000000
+      internalID: -339671997382634326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      RuinsDustAtlas_0: 3285003738403444983
+      RuinsDustAtlas_1: 4898552339597071246
+      RuinsDustAtlas_10: -7621256997406387820
+      RuinsDustAtlas_11: 982415776584507484
+      RuinsDustAtlas_12: -8624449573693645485
+      RuinsDustAtlas_13: -267064041722768651
+      RuinsDustAtlas_14: 1075180134437811350
+      RuinsDustAtlas_15: -8319050023351790372
+      RuinsDustAtlas_16: -8677034846713121305
+      RuinsDustAtlas_17: -339671997382634326
+      RuinsDustAtlas_2: 7461511250677674254
+      RuinsDustAtlas_3: -5250062034219980622
+      RuinsDustAtlas_4: 9028732480259632070
+      RuinsDustAtlas_5: -2985083417370658520
+      RuinsDustAtlas_6: -5164421780237753745
+      RuinsDustAtlas_7: 836572823789492229
+      RuinsDustAtlas_8: 2511566055206018356
+      RuinsDustAtlas_9: 5899981617950227654
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

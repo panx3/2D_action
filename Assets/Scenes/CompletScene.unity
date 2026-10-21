@@ -4684,6 +4684,56 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d75bd920d2d05284fb0da16c8189cc34, type: 3}
+--- !u!1 &932229943
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 932229945}
+  - component: {fileID: 932229944}
+  m_Layer: 0
+  m_Name: ScreenVisuals
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &932229944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932229943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3111aab7299784459c566d7c1ff6354, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenVisualController
+  visualsEnabled: 1
+  profile: {fileID: 11400000, guid: ebac6aa0cdc52ab4ab60334284d3c58f, type: 2}
+  targetCamera: {fileID: 1360393371}
+  spriteLightingShader: {fileID: 4800000, guid: 6c61a71760aa56b4488d937c5acc1d62, type: 3}
+  vignetteShader: {fileID: 4800000, guid: 73deedf8f3719f04e9fece821a2b88a4, type: 3}
+  particleMaterial: {fileID: 2100000, guid: 8fb78373ad910e044a2d5c3003c8c125, type: 2}
+--- !u!4 &932229945
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932229943}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &937333722
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12472,7 +12522,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3514624810534279794, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2062114580}
   m_SourcePrefab: {fileID: 100100000, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
 --- !u!4 &1105497800 stripped
 Transform:
@@ -15012,6 +15065,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 717557417}
   m_ActionId: 3c7022bf-7922-4f7c-a998-c437916075ad
+--- !u!212 &2026876642 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1968701295838604062, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+  m_PrefabInstance: {fileID: 1105497799}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &2040911753
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15059,6 +15117,35 @@ Transform:
   - {fileID: 1307838680}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2062114576 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3514624810534279794, guid: c3f0d0360b49fd643b9c33fa9f0f151d, type: 3}
+  m_PrefabInstance: {fileID: 1105497799}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2062114580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062114576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
+  lightEnabled: 1
+  color: {r: 0.73, g: 0.66, b: 1, a: 1}
+  intensity: 0.25
+  radius: 4.5
+  falloff: 1.7
+  flickerEnabled: 1
+  flickerSpeed: 0.8
+  flickerAmount: 0.035
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967263
+  emissionSource: {fileID: 2026876642}
 --- !u!1 &2067330765
 GameObject:
   m_ObjectHideFlags: 0
@@ -15834,3 +15921,4 @@ SceneRoots:
   - {fileID: 632934718}
   - {fileID: 1276162535}
   - {fileID: 1422026727}
+  - {fileID: 932229945}
