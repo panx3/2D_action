@@ -257,6 +257,8 @@ public class Player : MonoBehaviour
 
     public event System.Action Landed;
 
+    public event System.Action Jumped;
+
     public bool IsBackwardAim => _backwardAim;
 
     public Transform WeaponHandAnchor => _weaponHandAnchor;
@@ -1036,6 +1038,7 @@ public class Player : MonoBehaviour
         _rigid.AddForce(Vector2.up * _jumpSpeed, ForceMode2D.Impulse);
         StopFootstepAudio();
         PlayJumpSound();
+        Jumped?.Invoke();
         _bjump = true;
         ClearGroundedStateForJump();
         _jumpBufferTimer = 0f;

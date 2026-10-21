@@ -11,6 +11,8 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
 {
     [SerializeField] private Camera targetCamera;
     [SerializeField, Range(0f, 0.5f)] private float parallaxFactor;
+    [SerializeField, Range(0f, 1f), Tooltip("縦方向の視差の倍率。小さくすると、上昇・下降時の画面内での背景移動を穏やかにします。")]
+    private float verticalParallaxMultiplier = 0.25f;
     [SerializeField] private Vector2 screenOffset;
     [SerializeField, Min(1f)] private float coverPadding = 1.05f;
     [SerializeField, Tooltip("左右反転した画像を隣接表示し、横方向の視差移動を止めずに続けます。")]
@@ -65,7 +67,9 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
     {
         Vector3 cameraPosition = targetCamera.transform.position;
         Vector2 cameraTravel = (Vector2)(cameraPosition - cameraOrigin);
-        Vector2 relativeOffset = screenOffset - cameraTravel * parallaxFactor;
+        Vector2 relativeOffset = screenOffset - new Vector2(
+            cameraTravel.x * parallaxFactor,
+            cameraTravel.y * parallaxFactor * verticalParallaxMultiplier);
 
         Vector2 scaledSize = Vector2.Scale(spriteRenderer.sprite.bounds.size, transform.lossyScale);
         float viewHeight = targetCamera.orthographicSize * 2f;

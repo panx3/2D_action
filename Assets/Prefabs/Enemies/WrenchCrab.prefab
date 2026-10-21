@@ -128,6 +128,7 @@ GameObject:
   - component: {fileID: 6116554413951923266}
   - component: {fileID: 9137877073970868574}
   - component: {fileID: 5648010355067718809}
+  - component: {fileID: 6432201702282037167}
   m_Layer: 9
   m_Name: WrenchCrab
   m_TagString: Untagged
@@ -213,7 +214,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.02}
+  m_Offset: {x: 0, y: -0.76}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -247,6 +248,12 @@ MonoBehaviour:
     m_Bits: 65
   _visualRenderer: {fileID: 6003042680990097627}
   _visualAnimator: {fileID: 4802616627951098230}
+  _detectionRange: 5.5
+  _attackReach: 1.35
+  _attackHeight: 0.75
+  _windupDuration: 0.65
+  _slamDuration: 0.18
+  _recoveryDuration: 1.15
   _contactDamage: 1
   _contactKnockback: 5
   _contactCooldown: 0.7
@@ -276,6 +283,7 @@ MonoBehaviour:
   hitFlashRenderer: {fileID: 6003042680990097627}
   disableOnDeath:
   - {fileID: 6116554413951923266}
+  - {fileID: 6432201702282037167}
   hitAudioSource: {fileID: 0}
   morningStarHitClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
   morningStarHitVolume: 0.9
@@ -299,13 +307,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GroundProjectedShadow
   body: {fileID: 6894150940415235163}
   groundShadow: {fileID: 6096710511026154149}
-  width: 0.931
+  width: 2
   scaleWithOwner: 1
   opacity: 0.52
   probeDistance: 8
   groundLayers:
     serializedVersion: 2
     m_Bits: 1089
+--- !u!114 &6432201702282037167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4760093864722752103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0ba4581dfeadad4eaab59949ad85544, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WrenchCrabFeedback
+  _renderer: {fileID: 6003042680990097627}
+  _animationStrength: 0.065
+  _enableEffects: 1
+  _warningTexture: {fileID: 2800000, guid: 5d0d5ff31efdb6e4f88fb7c509476273, type: 3}
+  _sparkMaterial: {fileID: 2100000, guid: 814e9571e8c626246b56b88f92dc8cd1, type: 2}
+  _dustMaterial: {fileID: 2100000, guid: 97d624887f6633049a88a0e3cb90e6ae, type: 2}
+  _slamClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
+  _slamVolume: 0.4
 --- !u!1 &7174097783455341714
 GameObject:
   m_ObjectHideFlags: 0
