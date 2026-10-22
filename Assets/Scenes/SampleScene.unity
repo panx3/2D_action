@@ -498,6 +498,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 73206308}
   m_CullTransparentMesh: 1
+--- !u!1001 &80833982
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 679838680356825907, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_Name
+      value: SpringFrog
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 13.93788
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.9432988
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1240373647650210422, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1119bcf1f8939df4192c56c93e4d8286, type: 3}
 --- !u!1001 &82090317
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2312,20 +2369,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   _target: {fileID: 5482672115534824993}
   _offset: {x: 0, y: 1.5}
+  _normalViewExpansion: 0
+  _introEntryViewportX: 0.12
+  _introHeadroom: 1.5
   _smoothTimeX: 0.24
   _smoothTimeY: 0.176
   _followDeadZoneX: 2.5
   _followDeadZoneY: 1.5
+  _upwardFollowDeadZone: 4
   _maxFollowSpeed: 12.5
-  _horizontalLookAhead: 2.2
+  _forwardViewportX: 0.4
   _lookAheadSmoothTime: 0.15
   _lookAheadVelocityThreshold: 0.1
-  _swingLookAheadMultiplier: 0.35
+  _directionChangeDelay: 0.12
+  _magnetActivationDistance: 12
+  _magnetFullFramingDistance: 7
+  _magnetMaximumShift: {x: 1.5, y: 2.8}
+  _magnetFramingSmoothTime: 0.65
+  _magnetViewportMargin: 0.04
+  _magnetMinimumPlayerViewportY: 0.22
+  _jumpLookAhead: 0
+  _fallLookAhead: 1
+  _jumpLookAheadFullSpeed: 8
+  _fallLookAheadFullSpeed: 22
+  _verticalVelocityThreshold: 4
+  _verticalLookAheadSmoothTime: 0.35
+  _airborneLookAheadDelay: 0.08
+  _highSpeedThreshold: 14
+  _fullZoomSpeed: 28
+  _maxZoomOut: 0
+  _zoomSmoothTime: 0.5
+  _zoomHoldTime: 0.18
+  _zoomSpeedHysteresis: 2
   _useBounds: 1
   _minX: 5.5
   _maxX: 93
   _minY: 3.4
   _maxY: 6.6
+  _respawnMinDuration: 0.42
+  _respawnMaxDuration: 0.68
+  _respawnMaxDurationDistance: 45
 --- !u!114 &519420035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2338,6 +2421,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 784fe751290e0264e9389a8a415ffa29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShake2D
+  _intensity: 1
+  _maximumStrength: 0.18
+  _maximumDuration: 0.18
+  _decayPower: 2
+  _mergeInterval: 0.05
 --- !u!1 &534833884
 GameObject:
   m_ObjectHideFlags: 0
@@ -40478,6 +40566,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1202108359}
   - component: {fileID: 1202108358}
+  - component: {fileID: 1202108360}
   m_Layer: 0
   m_Name: SpawnPoint
   m_TagString: Untagged
@@ -40502,7 +40591,10 @@ MonoBehaviour:
   _playerHealth: {fileID: 5482672115534824995}
   _gimmickRespawnController: {fileID: 0}
   _cameraFollow: {fileID: 0}
-  _delaySeconds: 1.5
+  _feedback: {fileID: 0}
+  _dissolveDuration: 0.24
+  _rebuildDuration: 0.22
+  _rebuildStartProgress: 0.58
 --- !u!4 &1202108359
 Transform:
   m_ObjectHideFlags: 0
@@ -40518,6 +40610,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1202108360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202108357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17ef5b3a5b1c82c4e82f0b1309b5a4f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeathRespawnFeedback
+  _pink: {r: 1, g: 0.18, b: 0.58, a: 1}
+  _cyan: {r: 0.2, g: 0.94, b: 1, a: 1}
+  _pixelsPerHeight: 40
+  _bodyPixelCount: 44
+  _dissolveSound: {fileID: 0}
+  _rebuildSound: {fileID: 0}
+  _volume: 0.5
 --- !u!1001 &1203853984
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -46711,6 +46822,17 @@ MonoBehaviour:
     m_Bits: 73
   _eyePoint: {fileID: 0}
   _eyeOffset: {x: 0, y: 0.15}
+  _windupDuration: 0.4
+  _dashSpeed: 11
+  _dashDistance: 3
+  _brakeDuration: 0.12
+  _retreatSpeed: 3.5
+  _retreatDistance: 1.1
+  _recoveryDuration: {x: 0.95, y: 1.3}
+  _terrainLayers:
+    serializedVersion: 2
+    m_Bits: 65
+  _groundDetectionDepth: 0.18
   _visualAnimator: {fileID: 0}
   _visualRenderer: {fileID: 0}
   _isMovingParameter: IsMoving
@@ -50931,6 +51053,9 @@ MonoBehaviour:
   _damageSmoothDuration: 0.25
   _damageShakeDuration: 0.14
   _damageShakeAmount: {x: 4, y: 1.5}
+  _healHighlightDuration: 0.45
+  _healHighlightColor: {r: 1, g: 0.78, b: 0.92, a: 0.65}
+  _itemRecoveryStrength: 0.8
 --- !u!1 &3000000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -51414,3 +51539,4 @@ SceneRoots:
   - {fileID: 4100000021}
   - {fileID: 351792659}
   - {fileID: 393866867}
+  - {fileID: 80833982}
