@@ -14,13 +14,21 @@ public partial class SegmentHpBarUI
     [Header("Hanging Chain")]
     [SerializeField] private bool _showHangingChain = true;
     [SerializeField, Range(8f, 24f), Tooltip("最も長い鎖の高さ（元HPバー画像のPixel換算）。3本の比率は生成画像を維持")]
-    private float _hangingChainHeight = 15f;
+    private float _hangingChainHeight = 20.5f;
+    [SerializeField, Range(0f, 8f), Tooltip("HPバーの絵に重ねる高さ（元画像のPixel換算）")]
+    private float _chainAttachmentLift = 4f;
     [SerializeField, Range(0f, 15f)] private float _chainSwayAngle = 12f;
+
+    [Header("Draped Chain")]
+    [SerializeField] private bool _showDrapedChain = true;
+    [SerializeField, Range(4f, 24f), Tooltip("両端を固定した鎖のたわみ（元画像のPixel換算）")]
+    private float _drapedChainSag = 12f;
 
     private Player _motionPlayer;
     private Rigidbody2D _motionBody;
     private readonly HpBarChainGraphic[] _hangingChains = new HpBarChainGraphic[3];
     private readonly Sprite[] _hangingChainSprites = new Sprite[3];
+    private HpBarChainGraphic _drapedChain;
     private static readonly string[] ChainSpriteNames = { "HpChain_Short", "HpChain_Long", "HpChain_Medium" };
     private readonly float[] _chainAngles = new float[3];
     private readonly float[] _chainAngularVelocities = new float[3];
@@ -30,6 +38,8 @@ public partial class SegmentHpBarUI
         new Vector2(0.755f, 0.18f)  // Right metal loop.
     };
     private static readonly float[] ChainLengthRatios = { 0.6f, 1f, 0.8f };
+    private static readonly Vector2 DrapedStartAnchor = new Vector2(0.515f, 0.17f);
+    private static readonly Vector2 DrapedEndAnchor = new Vector2(0.72f, 0.18f);
     private Vector2 _movementOffset;
     private Vector2 _movementDamping;
     private Vector2 _previousMotionVelocity;
@@ -75,6 +85,20 @@ public partial class SegmentHpBarUI
             rect.anchorMin = rect.anchorMax = ChainAttachments[i];
             rect.pivot = new Vector2(0.5f, 1f);
             rect.anchoredPosition = Vector2.zero;
+        }
+        if (_drapedChain == null && _hangingChainSprites[0] != null)
+        {
+            var chain = new GameObject("Draped HP Chain", typeof(RectTransform),
+                typeof(CanvasRenderer), typeof(HpBarChainGraphic));
+            chain.layer = _hpBarRoot.gameObject.layer;
+            chain.transform.SetParent(_frame.transform, false);
+            chain.transform.SetAsFirstSibling();
+            _drapedChain = chain.GetComponent<HpBarChainGraphic>();
+            _drapedChain.SetArtwork(_hangingChainSprites[0]);
+            _drapedChain.raycastTarget = false;
+            RectTransform rect = _drapedChain.rectTransform;
+            rect.anchorMin = rect.anchorMax = DrapedStartAnchor;
+            rect.pivot = new Vector2(0f, 1f);
         }
         UpdateHangingChain();
     }
@@ -168,15 +192,28 @@ public partial class SegmentHpBarUI
     private void UpdateHangingChain()
     {
         if (_frame == null || _hangingChainSprites[1] == null) return;
-        // All three use the same artwork scale, preserving their metal thickness and
-        // different lengths. The longest is only 15 source-frame pixels tall by default.
-        float scale = _frame.rectTransform.rect.width / 260f
-            * Mathf.Clamp(_hangingChainHeight, 8f, 24f) / _hangingChainSprites[1].rect.height;
+        float framePixel = _frame.rectTransform.rect.width / 260f;
+        float scale = framePixel * Mathf.Clamp(_hangingChainHeight, 8f, 24f)
+            / _hangingChainSprites[1].rect.height;
+        Vector2 attachmentOffset = Vector2.up * (Mathf.Clamp(_chainAttachmentLift, 0f, 8f) * framePixel);
         for (int i = 0; i < _hangingChains.Length; i++)
         {
             if (_hangingChains[i] == null) continue;
             _hangingChains[i].gameObject.SetActive(_showHangingChain);
-            _hangingChains[i].SetPose(_hangingChainSprites[i].rect.size * scale, _chainAngles[i]);
+            _hangingChains[i].rectTransform.anchoredPosition = attachmentOffset;
+            // The corrected right strand has three full-size links. A small overall
+            // scale difference keeps the three silhouettes at distinct lengths.
+            float strandScale = scale * (i == 2 ? 0.9f : 1f);
+            _hangingChains[i].SetPose(_hangingChainSprites[i].rect.size * strandScale, _chainAngles[i]);
+        }
+        if (_drapedChain != null)
+        {
+            _drapedChain.gameObject.SetActive(_showHangingChain && _showDrapedChain);
+            _drapedChain.rectTransform.anchoredPosition = attachmentOffset;
+            Vector2 end = Vector2.Scale(DrapedEndAnchor - DrapedStartAnchor, _frame.rectTransform.rect.size);
+            float sag = framePixel * Mathf.Clamp(_drapedChainSag, 4f, 24f);
+            float width = _hangingChainSprites[0].rect.width * scale;
+            _drapedChain.SetDrapedPose(end, sag, width, _chainAngles[1]);
         }
     }
 

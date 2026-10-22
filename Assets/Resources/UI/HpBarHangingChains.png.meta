@@ -129,8 +129,8 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 236
-        y: 446
-        width: 200
+        y: 447
+        width: 199
         height: 414
       alignment: 2
       pivot: {x: 0.5, y: 1}
@@ -150,9 +150,9 @@ TextureImporter:
       name: HpChain_Long
       rect:
         serializedVersion: 2
-        x: 667
+        x: 668
         y: 220
-        width: 201
+        width: 199
         height: 641
       alignment: 2
       pivot: {x: 0.5, y: 1}
@@ -172,10 +172,10 @@ TextureImporter:
       name: HpChain_Medium
       rect:
         serializedVersion: 2
-        x: 1104
-        y: 278
-        width: 203
-        height: 582
+        x: 1102
+        y: 220
+        width: 201
+        height: 641
       alignment: 2
       pivot: {x: 0.5, y: 1}
       border: {x: 0, y: 0, z: 0, w: 0}
