@@ -218,7 +218,7 @@ public sealed class SpringFrog : MonoBehaviour
     {
         if (_visualRenderer == null)
             return;
-        _visualRenderer.flipX = _direction < 0;
+        _visualRenderer.flipX = _direction > 0;
         int frame;
         if (_grounded || !_jumping)
             frame = Time.time - _landTime < 1f / _animationSpeed ? 5 : 0;
