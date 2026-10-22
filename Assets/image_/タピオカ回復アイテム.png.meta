@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b5b51d90fc62c7a4ea581535ef4194fc
+guid: d85008a55c9c0f44baad2a626affefeb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9059142940461938515
-    second: PAN-KUN_0
+      213: 3351319812458472443
+    second: "\u30BF\u30D4\u30AA\u30AB\u56DE\u5FA9\u30A2\u30A4\u30C6\u30E0_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: PAN-KUN_0
+      name: "\u30BF\u30D4\u30AA\u30AB\u56DE\u5FA9\u30A2\u30A4\u30C6\u30E0_0"
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 32
-        height: 32
+        x: 12
+        y: 1
+        width: 34
+        height: 58
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 357b8b7c18a88bd70800000000000000
-      internalID: 9059142940461938515
+      spriteID: bf3e0560d97428e20800000000000000
+      internalID: 3351319812458472443
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5cd8cdcaa15654149b6e20356ac604e5
+    spriteID: 27ae8d1a345265a4496c4f1e7ee790dd
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      PAN-KUN_0: 9059142940461938515
+      "\u30BF\u30D4\u30AA\u30AB\u56DE\u5FA9\u30A2\u30A4\u30C6\u30E0_0": 3351319812458472443
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
