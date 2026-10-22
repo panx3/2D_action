@@ -118,3 +118,11 @@ Scene内の作業開始前の未保存編集は一時フォルダへ退避して
 変更は`AmbientPetalField.cs`, `ScreenVisualController.cs`, `ScreenVisualProfile.cs`, `SkyRuins.asset`と本書。画像、Shader、Scene、Prefabは今回変更/保存していない。Play Modeで2層の可視性、実際の描画順、前景の透明度上限、個別/マスターON/OFF、Component無効化/再有効化を確認。未変更システムの統合テスト再実行、実機の長時間表示、最終的な演出量の評価は省略。
 
 最終確認は背景15枚・前景3枚が画面内に表示され、背景側の描画面は約25〜46px。開始演出後にも上下へ分散し、画面上部の花びらが見えることを実画面で確認した。コンパイル正常、新規Console Error=0。保存済みCompletScene/Edit Modeへ戻し、作業開始前のScene差分は保持した。
+
+### 花びらのドットを粗くする
+
+`PinkPetals.mat > Pixels Per Petal (Lower = Coarser)`を16に設定。従来の1セル64×64の情報を、Shaderで1枚16×16の格子へまとめてPointサンプリングする。値は8〜32で、小さいほど粗い。元画像とGUIDは保持し、背景・前景の両層へ同じ設定を適用する。
+
+画像の輪郭アルファだけを0.5で二値化し、細い半透明の縁を取り除く。各層の不透明度・画面端のフェードはその後に適用するため、前景の控えめな透明感は保持する。枚数、表示サイズ、色、風、回転、揺れは変更しない。追加のTexture/描画パスは不要。
+
+変更は`Assets/ScreenVisualPetals.shader`, `Assets/Art/ScreenVisuals/PinkPetals.mat`と本書。独立したEditor描画で4種類を38px・前景相当46px/不透明度0.35・拡大128pxで比較し、輪郭の段差と回転時の表示を確認した。Shaderコンパイルメッセージ0、C#コンパイル失敗なし。Scene/Prefabは変更・保存せず、既存の未保存Scene編集を維持。Play Modeの全体表示と最終的な見た目の評価はユーザー確認とする。
