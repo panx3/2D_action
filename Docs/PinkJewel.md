@@ -1,0 +1,73 @@
+# ピンクジュエル収集
+
+CompletSceneの任意収集アイテム。取得順にかかわらず、配置番号1〜3がHUDとリザルトの同じ枠に対応する。数字・取得通知・操作停止・カメラ移動は追加していない。
+
+## 素材
+
+- 本体: `Assets/Art/PinkJewel/PinkJewel.png`。ユーザー提供PNGをバイト単位でそのままコピー。SHA256: `89DCD41479D243D429FA34C0E4F2D91AEC3EA3DCC3BD6C9C2102F4F54EE7A91B`。
+- 生成原本: `Assets/Art/PinkJewel/Source/`。HUD取得済み／未取得、リザルト取得済み／未取得、VFXアトラスの5画像。組み込みimage_genを使用。プロンプトは [PinkJewelImagePrompts.md](PinkJewelImagePrompts.md)。
+- 実使用UI: `HudCollected.png` / `HudEmpty.png` は24×32px、`ResultCollected.png` / `ResultEmpty.png` は32×40px。生成画像を最近傍で専用サイズへ取り込み、取得済みは最大16色、未取得は7色へ整理。
+- 実使用VFX: `Star.png`, `Diamond.png`, `Ring.png`, `Halo.png`, `Flash.png`, `Glint.png`。生成アトラスをUnity側で分割・縮小。すべて別レイヤーで、本体画像への焼き込みはない。
+- SpriteはPoint／非圧縮／Mip Mapなし／Clamp。地面の影だけは既存回復アイテムの `Assets/Generated/Tapioca/GroundShadow.png` を共用する。
+
+## PrefabとScene配置
+
+- `Assets/Prefabs/Items/PinkJewel.prefab`: 複製し、PinkJewelPickupのSlotを1〜3に設定する。番号は重複させない。
+- `Assets/Prefabs/Items/PinkJewelPickupVfx.prefab`: 取得本体から独立して再生・消滅するVFX。
+- `Assets/Prefabs/UI/PinkJewelHUD.prefab`: 既存HPバーのFrame配下。下端中央アンカー、上端中央Pivot、位置(0,-16)。既存HPバーの移動とCanvasScalerを継承する。
+- `Assets/Prefabs/UI/PinkJewelResult.prefab`: GoalMenuの `CRTPresentation/PhosphorUI/SafeArea` 配下。中央アンカー、位置(0,38)。既存のCRT表示と非スケール時間を利用する。
+- Sceneの `PinkJewels` が収集状態を所有する。子の3つは同一Prefabのインスタンス。
+
+| 配置番号 | 初期World位置 | 意図 |
+|---|---|---|
+| 1 | (18, 1.7, 0) | 序盤の跳躍で狙う |
+| 2 | (68, 3.2, 0) | MagnetPoint付近の空中ルート |
+| 3 | (168, 13.1, 0) | JumpPad後の上昇区間 |
+
+配置は初期案。実際の遊びやすさ・探索性はユーザーがPlay Modeで調整する。
+
+## Inspector初期値
+
+| 対象 | パラメータ | 初期値 |
+|---|---|---|
+| PinkJewelPickup | Slot | Prefab=1、Scene=1/2/3 |
+| 同上 | Float Amplitude / Period | 0.125 world units（32PPUで4px）/ 1.8秒 |
+| 同上 | Glow Intensity / Particle Rate | 0.32 / 合計5個毎秒 |
+| 同上 | Reflection Period | 2.6秒を基準にランダム化 |
+| 同上 | Shadow Opacity / Probe Distance | 0.52 / 8 units |
+| 同上 | Pickup Duration / Burst Count | 1.0秒 / 28個 |
+| 同上 | Burst Speed / Flash Intensity | 2.5 / 0.85 |
+| 同上 | BoxCollider2D（Trigger） | 幅1.55、高さ2.25 |
+| PinkJewelIconRow | Highlight Duration / Scale | 0.36秒 / 1.12倍 |
+
+粒子の色・大きさ・寿命・放出形状、光のSpriteや色は各PrefabのParticleSystem／SpriteRendererでも変更できる。既存のHP・回復・入力・鉄球物理・クリア画面の設定値は変更していない。
+
+## 取得状態と進行の連携
+
+`PinkJewelCollection` が3ビットの挑戦内状態を保持する。PlayerPrefsや永続保存は使用しない。Player本体の既存Collider、PlayerHealth、生存状態、復帰中ではないことを確認する。Player配下の装備Colliderも取得対象から除外する。
+
+- チェックポイントと通常の奈落復帰: 同じScene内でプレイヤーを復元する既存構造なので、収集状態には触れず保持。
+- GameOver／クリア／Pauseからのリトライ: 新しいSceneインスタンスのAwakeで全リセット。各進行コントローラーの変更は不要。
+- タイトルから新規開始／次ステージ: 同様に全リセット。
+- クリア: 既存GoalMenuControllerのクリア時刻確定を参照してスナップショット化。それ以後は取得を拒否し、結果確認中は保持。
+- 将来通常復帰をScene再読込へ変更する場合: 再読込の直前に `PinkJewelCollection.PrepareForRespawnReload()` を呼ぶ。その1回の同一ステージ再読込だけ取得状態を引き継ぐ。Retry／Title／Nextからは呼ばない。
+
+## ファイルと確認方法
+
+新規Runtimeは `Assets/Script/Items/PinkJewelCollection.cs`, `PinkJewelPickup.cs`, `PinkJewelPickupVfx.cs` と `Assets/Script/UI/PinkJewelIconRow.cs`。既存Runtimeは変更していない。
+
+セットアップは `Assets/Editor/PinkJewelSetup.cs`。既存の配置や設定を上書きせず、未作成のアセットだけ作成する。明示的なUI再生成は Tools > Tekkyu > Pink Jewels > Rebuild Generated UI Icons。
+
+統合チェックは `Assets/Editor/PinkJewelPlayModeChecks.cs`。Tools > Tekkyu > Pink Jewels > Verify Play Modeで明示実行する。現在のCompletSceneと既存GameOverフローを対象に、接触対象、取得順、重複、VFX独立性、HUD、チェックポイント、通常復帰、結果固定、実際のクリアRetry、通常復帰用Scene再読込、HP0後のRetry、タイトル経由新規開始を確認する。結果とキャプチャはOS一時フォルダーの `TekkyuPinkJewelChecks/`。
+
+最終的な配置の到達性、ゲームパッド実操作での取りやすさ、演出の明るさ・豪華さ、アスペクト比変更時の見た目はユーザー確認項目。
+
+## 今回の検証結果
+
+2026-10-22: コンパイル成功。上記のPlay Mode統合チェックは全項目PASS、実行中のError／Exceptionは0。4つのPrefab、取得用参照、SpriteのPoint／非圧縮／Mip Mapなし、粒子の速度カーブ形式も確認済み。HPバー下のUIは実画面で確認した。
+
+結果表示も既存CRT画面上で確認済み。[2枠取得状態の表示用プレビュー](PinkJewelResultPreview.png)。統合チェックの結果は [PinkJewelValidation.txt](PinkJewelValidation.txt)。
+
+既存Runtime・回復Prefab・HPバー設定は変更していない。新規Prefabは保存済み。CompletSceneはUnity MCPで作成した今回の追加差分だけをディスクへ反映し、編集前からあった未保存Scene差分と未コミット作業は保持する。操作感・配置の最終判断はユーザーによるPlay Mode確認を残す。
+
+検証後の画像保存時にCドライブの空き容量不足が発生したため、最終プレビューはDドライブの本リポジトリへ保存した。空き容量不足は開発環境側の残確認事項。
