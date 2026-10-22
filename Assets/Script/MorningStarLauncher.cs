@@ -239,6 +239,11 @@ public class MorningStarLauncher : MonoBehaviour
     [SerializeField] private AudioClip morningStarLaunchClip;
     [SerializeField, Range(0f, 1f)] private float morningStarLaunchVolume = 0.55f;
 
+    [Header("Chain Full Stretch SFX")]
+    [SerializeField, Tooltip("投げた後に鎖が最大長へ達すると1回再生。未指定なら同梱の既定音を使用します")]
+    private AudioClip chainFullStretchClip;
+    [SerializeField, Range(0f, 1f)] private float chainFullStretchVolume = 0.7f;
+
     [Header("照準ガイド")]
     [SerializeField] private bool showAimGuide = true;
     [SerializeField] private float aimGuideMaxLength = 8f;
@@ -304,6 +309,7 @@ public class MorningStarLauncher : MonoBehaviour
     private float _activeRecallDuration;
     private float _pendingThrowSpeedMultiplier = 1f;
     private float _thrownElapsed;
+    private bool _chainFullStretchSoundPending;
     private Vector2 _hookPoint;
     private bool _isHooked;
     private MagnetPoint _attachedMagnet;
@@ -639,6 +645,8 @@ public class MorningStarLauncher : MonoBehaviour
             if (sfxTransform != null)
                 sfxAudioSource = sfxTransform.GetComponent<AudioSource>();
         }
+        if (chainFullStretchClip == null)
+            chainFullStretchClip = Resources.Load<AudioClip>("ChainFullStretch");
         if (cameraShake == null && Camera.main != null)
             cameraShake = Camera.main.GetComponent<CameraShake2D>();
         if (animator == null)
@@ -869,6 +877,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         float dt = Time.fixedDeltaTime;
         Vector2 hand = GetHandWorld();
+        TryPlayChainFullStretchSound();
         UpdateAirLaunchAssist(dt);
         UpdatePhysicalUpperHangDetection(dt);
         switch (_state)
@@ -948,6 +957,8 @@ public class MorningStarLauncher : MonoBehaviour
         bool useLaunchLength = nextState == MorningStarState.Thrown
             || ShouldKeepLaunchRopeLengthAfterFlight(nextState);
         SetLaunchRopeLengthActive(useLaunchLength);
+        if (nextState == MorningStarState.Thrown)
+            _chainFullStretchSoundPending = true;
 
         bool useFreeRope = nextState == MorningStarState.Dragging
             || nextState == MorningStarState.Thrown
@@ -2603,6 +2614,20 @@ public class MorningStarLauncher : MonoBehaviour
             sfxAudioSource.PlayOneShot(morningStarLaunchClip, morningStarLaunchVolume);
     }
 
+    private void TryPlayChainFullStretchSound()
+    {
+        if (!_chainFullStretchSoundPending)
+            return;
+
+        // 飛翔終了後も射出時の鎖長が残る間は待ち、地形を回り込んだ経路も含める。
+        if (GetCurrentRopeSpan() < GetEffectiveRopeLength() - 0.001f)
+            return;
+
+        _chainFullStretchSoundPending = false;
+        OneShotAudioUtility.Play2D(sfxAudioSource, chainFullStretchClip,
+            chainFullStretchVolume, GetHandWorld());
+    }
+
     private void UpdateThrown(float dt, Vector2 hand)
     {
         if (_state != MorningStarState.Thrown)
@@ -2858,6 +2883,8 @@ public class MorningStarLauncher : MonoBehaviour
     private void SetLaunchRopeLengthActive(bool active)
     {
         _launchRopeLengthActive = active;
+        if (!active)
+            _chainFullStretchSoundPending = false;
         SyncRopeLengthToConstraint();
 
         // Hook/Magnet用Jointは通常長でのみ使用するが、状態変更と同フレームでも整合させる。

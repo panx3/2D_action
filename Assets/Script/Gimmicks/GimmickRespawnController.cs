@@ -2,8 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// ギミック復帰地点とPlayer／鉄球の共通復元処理を管理する。
-/// 復帰時はHPを全回復する。
-/// HP0死亡時のリスポーンは DeathRespawnManager が担当する。
+/// 奈落復帰ではHPペナルティを適用する。
+/// HP0死亡時の演出は DeathRespawnManager、リトライ選択はGameOverMenuControllerが担当する。
 /// </summary>
 public class GimmickRespawnController : MonoBehaviour
 {
@@ -71,7 +71,13 @@ public class GimmickRespawnController : MonoBehaviour
             deathRespawnManager.RespawnFromFall(currentRespawnPosition);
             return;
         }
-        RespawnAt(currentRespawnPosition, true);
+        if (playerHealth != null) playerHealth.ApplyFallRespawnPenalty();
+        if (playerHealth != null && playerHealth.IsDead)
+        {
+            GameOverMenuController.ShowForDeath();
+            return;
+        }
+        RespawnAt(currentRespawnPosition, false);
     }
 
     /// <summary>
@@ -94,7 +100,7 @@ public class GimmickRespawnController : MonoBehaviour
             playerRigidbody.angularVelocity = 0f;
         }
 
-        // 既存の落下復帰・死亡復帰は満タン、明示的なHP維持復帰にも対応する。
+        // 奈落復帰は減少後のHPを維持する。全回復は明示的な呼び出しに限る。
         if (playerHealth != null)
         {
             if (restoreFullHealth || playerHealth.CurrentHp <= 0)

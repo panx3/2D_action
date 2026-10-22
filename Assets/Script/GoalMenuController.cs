@@ -72,6 +72,8 @@ public sealed class GoalMenuController : MonoBehaviour
         resumedAt = Time.unscaledTimeAsDouble;
         timerPaused = paused;
     }
+    /// <summary>リトライを選ぶまで死亡後の待機時間をプレイ時間へ加算しない。</summary>
+    public void StopTimerForGameOver() => SetTimerPaused(true);
     /// <summary>最終結晶破壊時に一度だけ確定し、獲得演出の時間は加算しない。</summary>
     public void CaptureClearTime()
     {

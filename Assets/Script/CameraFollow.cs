@@ -69,6 +69,15 @@ public class CameraFollow : MonoBehaviour
     [SerializeField, Range(0.18f, 0.35f), Tooltip("Magnetを映す場合もPlayerを画面下へ寄せすぎない。高速落下中は着地点の視界を優先する。")]
     private float _magnetMinimumPlayerViewportY = 0.22f;
 
+    [Header("Nearby Goal Framing")]
+    [SerializeField, Range(0f, 1f), Tooltip("通常画角にゴールが入ったとき、ゴール中心へ寄せる割合。")]
+    private float _goalFramingStrength = 0.9f;
+    [SerializeField, Min(0.1f)] private float _goalFramingSmoothTime = 0.8f;
+    [SerializeField, Min(0f), Tooltip("画面端付近で演出が出入りしないよう、解除時だけ広げる範囲（units）。")]
+    private float _goalExitPadding = 2f;
+    [SerializeField, Tooltip("ゴールへ寄る間もPlayerに残す画面端からの余白（画面比率）。")]
+    private Vector2 _goalPlayerViewportMargin = new Vector2(0.16f, 0.22f);
+
     [Header("Jump / Fall Look Ahead")]
     [SerializeField, Min(0f)] private float _jumpLookAhead = 0f;
     [SerializeField, Min(0f)] private float _fallLookAhead = 1f;
@@ -162,6 +171,10 @@ public class CameraFollow : MonoBehaviour
     private Vector3[] _magnetHalfSizes;
     private int _activeMagnet = -1;
     private Vector2 _magnetFramingOffset, _magnetFramingVelocity;
+    private GoalPoint[] _goals;
+    private SpriteRenderer[] _goalVisuals;
+    private int _activeGoal = -1;
+    private Vector2 _goalFramingOffset, _goalFramingVelocity;
 
     // Keep the existing read-only API used by older Editor checks.
     public float HorizontalLookAhead => GetFramingDistance();
@@ -177,6 +190,8 @@ public class CameraFollow : MonoBehaviour
     public float NormalViewExpansion => _normalViewExpansion;
     public bool IsEventControlled => _eventControlled;
     public Vector2 CurrentMagnetFramingOffset => _magnetFramingOffset;
+    public Vector2 CurrentGoalFramingOffset => _goalFramingOffset;
+    public bool IsGoalFramingActive => _activeGoal >= 0;
 
     private void Awake()
     {
@@ -187,6 +202,7 @@ public class CameraFollow : MonoBehaviour
         _referenceOrthographicSize = _baseOrthographicSize;
         ResolveTargetMotionSources();
         CacheMagnets();
+        CacheGoals();
         _followCenter = transform.position;
     }
 
@@ -197,6 +213,7 @@ public class CameraFollow : MonoBehaviour
 
     private void OnDisable()
     {
+        ResetGoalFraming();
         RestorePixelPerfectUpscaling();
         ResetLookAhead();
     }
@@ -213,6 +230,11 @@ public class CameraFollow : MonoBehaviour
         _magnetMaximumShift.x = Mathf.Max(0f, _magnetMaximumShift.x);
         _magnetMaximumShift.y = Mathf.Max(0f, _magnetMaximumShift.y);
         _magnetFramingSmoothTime = Mathf.Max(0.1f, _magnetFramingSmoothTime);
+        _goalFramingStrength = Mathf.Clamp01(_goalFramingStrength);
+        _goalFramingSmoothTime = Mathf.Max(0.1f, _goalFramingSmoothTime);
+        _goalExitPadding = Mathf.Max(0f, _goalExitPadding);
+        _goalPlayerViewportMargin.x = Mathf.Clamp(_goalPlayerViewportMargin.x, 0.05f, 0.35f);
+        _goalPlayerViewportMargin.y = Mathf.Clamp(_goalPlayerViewportMargin.y, 0.05f, 0.35f);
         _upwardFollowDeadZone = Mathf.Max(0f, _upwardFollowDeadZone);
         _jumpLookAhead = Mathf.Max(0f, _jumpLookAhead);
         _fallLookAhead = Mathf.Max(0f, _fallLookAhead);
@@ -257,7 +279,10 @@ public class CameraFollow : MonoBehaviour
         }
 
         if (_target == null)
+        {
+            ResetGoalFraming();
             return;
+        }
 
         if (_targetRigidbody == null)
             ResolveTargetMotionSources();
@@ -344,6 +369,9 @@ public class CameraFollow : MonoBehaviour
         UpdateMagnetFraming(new Vector2(nextX, nextY), motion, longFall);
         nextX += _magnetFramingOffset.x;
         nextY += _magnetFramingOffset.y;
+        UpdateGoalFraming(new Vector2(nextX, nextY), motion, longFall);
+        nextX += _goalFramingOffset.x;
+        nextY += _goalFramingOffset.y;
 
         nextX = ClampFollowDelta(current.x, nextX, motion.x);
         nextY = ClampFollowDelta(current.y, nextY, motion.y);
@@ -356,8 +384,96 @@ public class CameraFollow : MonoBehaviour
 
         transform.position = new Vector3(nextX, nextY, FixedZ);
         // Discard blocked movement so bounds / speed limiting cannot accumulate a hidden offset.
-        _followCenter = new Vector2(nextX - _lookAheadOffset - _magnetFramingOffset.x,
-            nextY - _verticalLookAheadOffset - _upperViewOffset - _magnetFramingOffset.y);
+        _followCenter = new Vector2(nextX - _lookAheadOffset - _magnetFramingOffset.x - _goalFramingOffset.x,
+            nextY - _verticalLookAheadOffset - _upperViewOffset - _magnetFramingOffset.y - _goalFramingOffset.y);
+    }
+
+    private void CacheGoals()
+    {
+        _goals = FindObjectsByType<GoalPoint>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        _goalVisuals = new SpriteRenderer[_goals.Length];
+        for (int i = 0; i < _goals.Length; i++)
+        {
+            if (_goals[i].gameObject.scene != gameObject.scene) continue;
+            float largest = 0f;
+            foreach (var renderer in _goals[i].GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer.sprite == null) continue;
+                float area = renderer.bounds.size.x * renderer.bounds.size.y;
+                if (area <= largest) continue;
+                largest = area;
+                _goalVisuals[i] = renderer;
+            }
+        }
+    }
+
+    private bool GoalVisible(int index, Vector2 nominalCenter, float padding)
+    {
+        if (_goals == null || index < 0 || index >= _goals.Length
+            || _goals[index] == null || !_goals[index].isActiveAndEnabled || _goals[index].IsBroken
+            || _goalVisuals[index] == null || !_goalVisuals[index].enabled
+            || !_goalVisuals[index].gameObject.activeInHierarchy) return false;
+        Bounds bounds = _goalVisuals[index].bounds;
+        float halfHeight = _camera.orthographicSize + padding;
+        float halfWidth = _camera.orthographicSize * _camera.aspect + padding;
+        return bounds.min.x <= nominalCenter.x + halfWidth && bounds.max.x >= nominalCenter.x - halfWidth
+            && bounds.min.y <= nominalCenter.y + halfHeight && bounds.max.y >= nominalCenter.y - halfHeight;
+    }
+
+    private void UpdateGoalFraming(Vector2 nominalCenter, Vector2 motion, bool longFall)
+    {
+        if (_camera == null || !_camera.orthographic) return;
+        // Test the unassisted view, so moving toward the Goal cannot keep its own trigger alive.
+        if (!GoalVisible(_activeGoal, nominalCenter, _goalExitPadding))
+        {
+            _activeGoal = -1;
+            float nearest = float.PositiveInfinity;
+            for (int i = 0; _goals != null && i < _goals.Length; i++)
+            {
+                if (!GoalVisible(i, nominalCenter, 0f)) continue;
+                float distance = ((Vector2)_goals[i].transform.position - (Vector2)_target.position).sqrMagnitude;
+                if (distance < nearest) { nearest = distance; _activeGoal = i; }
+            }
+        }
+
+        Vector2 desired = Vector2.zero;
+        Vector2 playerRoom = new Vector2(_camera.orthographicSize * _camera.aspect
+            * (1f - 2f * _goalPlayerViewportMargin.x),
+            _camera.orthographicSize * (1f - 2f * _goalPlayerViewportMargin.y));
+        Vector2 safeMin = (Vector2)_target.position - playerRoom;
+        Vector2 safeMax = (Vector2)_target.position + playerRoom;
+        if (_activeGoal >= 0)
+        {
+            Vector2 center = Vector2.Lerp(nominalCenter, _goalVisuals[_activeGoal].bounds.center, _goalFramingStrength);
+            center.x = Mathf.Clamp(center.x, safeMin.x, safeMax.x);
+            center.y = Mathf.Clamp(center.y, safeMin.y, safeMax.y);
+            desired = center - nominalCenter;
+            if (longFall && motion.y < -_verticalVelocityThreshold) desired.y = Mathf.Min(0f, desired.y);
+        }
+        _goalFramingOffset = Vector2.SmoothDamp(_goalFramingOffset, desired,
+            ref _goalFramingVelocity, _goalFramingSmoothTime);
+        if (_activeGoal >= 0)
+        {
+            Vector2 center = nominalCenter + _goalFramingOffset;
+            center.x = Mathf.Clamp(center.x, safeMin.x, safeMax.x);
+            center.y = Mathf.Clamp(center.y, safeMin.y, safeMax.y);
+            _goalFramingOffset = center - nominalCenter;
+        }
+        SetGoalApproachAudio(_activeGoal >= 0 ? 1f : 0f);
+    }
+
+    private void SetGoalApproachAudio(float amount)
+    {
+        var bgm = GameBgmController.Instance;
+        if (bgm != null && bgm.gameObject.scene == gameObject.scene)
+            bgm.SetGoalApproach(amount);
+    }
+
+    private void ResetGoalFraming()
+    {
+        _activeGoal = -1;
+        _goalFramingOffset = _goalFramingVelocity = Vector2.zero;
+        SetGoalApproachAudio(0f);
     }
 
     private void CacheMagnets()
@@ -584,6 +700,7 @@ public class CameraFollow : MonoBehaviour
 
     private void AdoptCurrentFraming()
     {
+        ResetGoalFraming();
         _activeMagnet = -1;
         _magnetFramingOffset = _magnetFramingVelocity = Vector2.zero;
         ResetLookAhead();
@@ -601,6 +718,7 @@ public class CameraFollow : MonoBehaviour
         if (owner == null || _respawnHeld || (_eventControlled && _eventOwner != owner))
             return false;
         if (_shake != null) _shake.ResetShake();
+        ResetGoalFraming();
         _eventOwner = owner;
         _eventControlled = true;
         return true;

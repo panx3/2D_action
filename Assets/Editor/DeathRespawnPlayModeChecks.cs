@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-/// <summary>CompletScene上で演出ライフサイクルを確認する手動実行の回帰チェック。</summary>
+/// <summary>CompletScene上でHP0以外の復帰演出ライフサイクルを確認する手動実行の回帰チェック。</summary>
 [InitializeOnLoad]
 public static class DeathRespawnPlayModeChecks
 {
@@ -30,6 +30,7 @@ public static class DeathRespawnPlayModeChecks
     private static double rebuildSeenAt;
     private static float lastSampleTime;
     private static float ballMass, ballGravity, ballDamping;
+    private static int expectedHp;
 
     static DeathRespawnPlayModeChecks()
     {
@@ -98,6 +99,8 @@ public static class DeathRespawnPlayModeChecks
     private static void BeginCycle(bool fall)
     {
         health.ResetToFullHp();
+        int fallDamage = new SerializedObject(health).FindProperty("_fallRespawnDamage").intValue;
+        expectedHp = fall ? Mathf.Max(0, health.MaxHp - Mathf.Max(0, fallDamage)) : health.MaxHp;
         cameraStart = follow.transform.position;
         expected = respawn.CurrentRespawnPosition + (Vector3)follow.FollowOffset;
         expected.z = -10f;
@@ -110,7 +113,8 @@ public static class DeathRespawnPlayModeChecks
         if (fall)
             zone.SendMessage("OnTriggerEnter2D", player.GetComponent<Collider2D>(), SendMessageOptions.RequireReceiver);
         else
-            health.TakeDamage(health.MaxHp);
+            // HP0死亡はシーンを再読込するため、ここではHPを変えない明示復帰を使う。
+            manager.Respawn();
         Require(manager.IsRespawning && health.IsRespawning, "Death/fall did not enter the shared sequence");
         Require(!player.InputEnabled && !player.Rigidbody2D.simulated && !launcher.BallBody.simulated, "Gameplay was not suspended");
         Require(launcher.State == MorningStarLauncher.MorningStarState.Respawning, "Launcher did not suspend through its state authority");
@@ -163,7 +167,7 @@ public static class DeathRespawnPlayModeChecks
     {
         Require(!manager.IsRespawning && !follow.IsRespawnTravelling && !feedback.IsPresenting, "Sequence did not finish");
         Require(player.InputEnabled && player.Rigidbody2D.simulated && launcher.BallBody.simulated, "Input/physics were not restored");
-        Require(!health.IsDead && health.CurrentHp == health.MaxHp && health.IsInvincible, "HP or respawn invincibility was not restored");
+        Require(!health.IsDead && health.CurrentHp == expectedHp && health.IsInvincible, "Wrong respawn HP or missing invincibility");
         Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "Launcher did not return to common Rest");
         Require(Mathf.Approximately(launcher.BallBody.mass, ballMass)
             && Mathf.Approximately(launcher.BallBody.gravityScale, ballGravity)

@@ -20,6 +20,48 @@ public static class CRTOverlayInstaller
     public static void RebuildResultPrefab() => RebuildPrefab("Assets/Prefabs/UI/GoalMenu.prefab", 1);
     public static void RebuildAcquiredPrefab() => GoalCelebrationLogoSetup.Apply();
 
+    [MenuItem("Tools/鉄球少女/UI/Rebuild Game Over CRT Prefab")]
+    public static void RebuildGameOverPrefab()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
+        const string path = "Assets/Resources/UI/GameOverMenu.prefab";
+        GameObject root = PrefabUtility.LoadPrefabContents("Assets/Prefabs/UI/GoalMenu.prefab");
+        try
+        {
+            root.name = "GameOverMenu";
+            UnityEngine.Object.DestroyImmediate(root.GetComponent<GoalMenuController>());
+            var overlay = root.GetComponent<CRTOverlayController>();
+            var controller = root.AddComponent<GameOverMenuController>();
+            var canvas = root.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 710;
+            var scaler = root.AddComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
+            root.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+            Transform safe = root.transform.Find("CRTPresentation/PhosphorUI/SafeArea");
+            Transform menu = safe.Find("Menu");
+            UnityEngine.Object.DestroyImmediate(menu.Find("NextButton").gameObject);
+            UnityEngine.Object.DestroyImmediate(safe.Find("ClearTime").gameObject);
+            var retry = menu.Find("RetryButton").GetComponent<UnityEngine.UI.Button>();
+            var title = menu.Find("TitleButton").GetComponent<UnityEngine.UI.Button>();
+            retry.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -24);
+            title.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -98);
+            CRTMenuNavigation.Configure(retry, title);
+            overlay.SetMessage("GAME OVER", "TRY AGAIN");
+            safe.Find("Signal").GetComponent<TMP_Text>().text = "SIGNAL LOST";
+            SetArray(overlay, "menuItems", new UnityEngine.Object[] { retry.GetComponent<CRTMenuItem>(), title.GetComponent<CRTMenuItem>() });
+            Set(controller, "overlay", overlay);
+            Set(controller, "retryButton", retry);
+            Set(controller, "titleButton", title);
+            root.transform.Find("CRTPresentation").gameObject.SetActive(false);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
+    }
+
     private static void RebuildPrefab(string path, int kind)
     {
         font = CreateFont();

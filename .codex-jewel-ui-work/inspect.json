@@ -1,0 +1,5 @@
+{
+  "className": "JewelUiInspect",
+  "methodName": "Run",
+  "csharpCode": "using System;\nusing System.Linq;\nusing UnityEngine;\nusing UnityEditor;\nusing UnityEditor.SceneManagement;\npublic static class JewelUiInspect {\n public static string Run() {\n var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();\n EditorSceneManager.SaveScene(scene,System.IO.Path.GetFullPath(\".codex-jewel-ui-work/scene-before.unity\"),true);\n var rows=UnityEngine.Object.FindObjectsByType<PinkJewelIconRow>(FindObjectsInactive.Include);\n return \"dirty=\"+scene.isDirty+\"\\n\"+string.Join(\"\\n\",rows.Select(r=>r.name+\" parent=\"+r.transform.parent.name+\" rect=\"+((RectTransform)r.transform).rect+\" anchor=\"+((RectTransform)r.transform).anchorMin+\" position=\"+((RectTransform)r.transform).anchoredPosition+\" data=\"+EditorJsonUtility.ToJson(r)));\n }\n}"
+}

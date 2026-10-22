@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-/// <summary>HP死亡・落下の演出進行を一本化。位置と装備の復元は既存Controllerへ委譲する。</summary>
+/// <summary>落下はHPを減らして復帰し、HP0死亡は演出後にゲームオーバー画面へ進む。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(DeathRespawnFeedback))]
 public class DeathRespawnManager : MonoBehaviour
@@ -62,7 +62,7 @@ public class DeathRespawnManager : MonoBehaviour
         // 無効化・シーン終了時にも借りた入力／描画／物理を返す。
         if (IsRespawning)
         {
-            RestoreAtDestination();
+            if (_playerHealth == null || !_playerHealth.IsDead) RestoreAtDestination();
             FinishRespawn();
             if (_feedback != null) _feedback.Clear();
         }
@@ -99,6 +99,7 @@ public class DeathRespawnManager : MonoBehaviour
         _player.SetStartIntroControl(true);
         _player.SetStartIntroMotion(true, Vector2.zero);
         if (_playerHealth != null) _playerHealth.BeginRespawnProtection();
+        if (falling && _playerHealth != null) _playerHealth.ApplyFallRespawnPenalty();
         if (_cameraFollow != null) _cameraFollow.HoldForRespawn();
         if (_feedback != null) _feedback.PlayDeath(_player, _launcher, falling, _dissolveDuration);
         if (_launcher != null) _launcher.BeginRespawnPresentation();
@@ -118,6 +119,13 @@ public class DeathRespawnManager : MonoBehaviour
         {
             yield return null;
             elapsed += Time.deltaTime;
+        }
+        if (_playerHealth != null && _playerHealth.IsDead)
+        {
+            // 選択画面でも入力・物理を止めたままにし、旧チェックポイントへは復元しない。
+            _respawnRoutine = null;
+            GameOverMenuController.ShowForDeath();
+            yield break;
         }
         // カメラは死亡位置に保持し、不可視のPlayerと装備だけ先に復元する。
         RestoreAtDestination();
@@ -140,12 +148,12 @@ public class DeathRespawnManager : MonoBehaviour
     {
         if (_player == null) return;
         if (_gimmickRespawnController != null)
-            _gimmickRespawnController.RespawnAt(_respawnPosition, true, false);
+            _gimmickRespawnController.RespawnAt(_respawnPosition, false, false);
         else
         {
             _player.transform.position = _respawnPosition;
             if (_body != null) _body.position = _respawnPosition;
-            if (_playerHealth != null) _playerHealth.ResetToFullHp();
+            if (_playerHealth != null) _playerHealth.ReviveKeepCurrentHp();
             if (_launcher != null) _launcher.ResetForRespawn();
         }
         Physics2D.SyncTransforms();

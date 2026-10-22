@@ -12,6 +12,8 @@ public class PlayerHealth : MonoBehaviour
     [Header("HP 設定")]
     [SerializeField, Tooltip("プレイヤーの最大 HP。")]
     private int _maxHp = 14;
+    [SerializeField, Min(0), Tooltip("奈落からの復帰時に失うHP。標準の敵の攻撃と同じ1ダメージ。無敵中も適用し、HP0でゲームオーバーになる。")]
+    private int _fallRespawnDamage = 1;
     [SerializeField, Tooltip("被弾後の無敵時間（秒）。")]
     private float _invincibleDuration = 1.2f;
 
@@ -167,6 +169,16 @@ public class PlayerHealth : MonoBehaviour
         StopInvincible();
         if (_spriteRenderer != null) _spriteRenderer.enabled = true;
         NotifyHealthChanged();
+    }
+
+    /// <summary>奈落のHPペナルティ。被弾無敵・復帰保護とは独立し、HP0なら通常と同じ死亡を通知する。</summary>
+    public void ApplyFallRespawnPenalty()
+    {
+        if (IsDead || CurrentHp <= 0) return;
+        int before = CurrentHp;
+        CurrentHp = Mathf.Max(0, CurrentHp - Mathf.Max(0, _fallRespawnDamage));
+        if (CurrentHp != before) NotifyHealthChanged();
+        if (CurrentHp <= 0) Die();
     }
 
     /// <summary>互換用。新規コードは ResetToFullHp を使う。</summary>

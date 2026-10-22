@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 /// <summary>
 /// Playerが場外や危険領域に入ったとき、落下専用演出を経て復帰する。
-/// HPは既存のGimmickRespawnControllerと同じく全回復する。
+/// HPペナルティは既存の復帰処理へ委譲する。
 /// </summary>
 public class RespawnZone : MonoBehaviour
 {
