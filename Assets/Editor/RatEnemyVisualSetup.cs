@@ -165,6 +165,7 @@ public static class RatEnemyVisualSetup
             collider.size = colliderSize;
             collider.offset = colliderOffset;
             collider.isTrigger = false;
+            EnemyPlacementTools.FitCollider(root, false);
 
             Enemy enemy = Require<Enemy>(root);
             SerializedObject enemySerialized = new SerializedObject(enemy);
@@ -221,8 +222,9 @@ public static class RatEnemyVisualSetup
             $"Visual scale is unexpected: {path}");
 
         BoxCollider2D collider = root.GetComponent<BoxCollider2D>();
-        Check(collider != null && Vector2.Distance(collider.size, colliderSize) < 0.001f
-              && Vector2.Distance(collider.offset, colliderOffset) < 0.001f,
+        EnemyPlacementTools.CalculateCollider(root, out Vector2 fittedSize, out Vector2 fittedOffset);
+        Check(collider != null && Vector2.Distance(collider.size, fittedSize) < 0.001f
+              && Vector2.Distance(collider.offset, fittedOffset) < 0.001f,
             $"Root collider is not fixed to the rat body/feet: {path}");
     }
 

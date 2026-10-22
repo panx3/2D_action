@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05bd95ceec2508a47b77cb097ab3699d, type: 3}
+  m_Name: MoonlitRuins
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenVisualProfile
+  quality: 2
+  vignette:
+    enabled: 1
+    intensity: 0.15
+    smoothness: 0.65
+    roundness: 0.65
+    color: {r: 0.055, g: 0.07, b: 0.14, a: 1}
+  blur:
+    backgroundBlurEnabled: 1
+    blurStrength: 0.18
+    blurRadius: 1
+    peripheralBlurEnabled: 1
+    peripheralBlurStrength: 0.12
+    peripheralBlurRange: 0.6
+  atmosphere:
+    atmosphereEnabled: 1
+    atmosphereColor: {r: 0.65, g: 0.74, b: 0.94, a: 1}
+    distanceFade: 0.12
+    fogEnabled: 1
+    fogColor: {r: 0.65, g: 0.74, b: 0.94, a: 1}
+    fogOpacity: 0.045
+    fogScrollSpeed: {x: 0.025, y: 0.006}
+    fogVariation: 0.55
+    particleEnabled: 1
+    particleDensity: 5
+    particleSpeed: 0.12
+    particleOpacity: 0.24
+    particleSize: 0.09
+    particleColor: {r: 0.82, g: 0.9, b: 1, a: 1}
+  lighting:
+    enabled: 1
+    localLightsEnabled: 1
+    ambientColor: {r: 0.88, g: 0.92, b: 1, a: 1}
+    ambientIntensity: 0.97
+  parallaxEnabled: 1
+  layers:
+  - layerName: SkySea
+    depthFactor: 1
+    overrideScrollFactor: 0
+    scrollFactor: 0.14
+    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    contrast: 1
+    saturation: 1
+    blurStrength: 1
+    fogInfluence: 0.65
+    lightingInfluence: 0
+  - layerName: FloatingIslands
+    depthFactor: 0.65
+    overrideScrollFactor: 0
+    scrollFactor: 0.14
+    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    contrast: 1
+    saturation: 1
+    blurStrength: 0.45
+    fogInfluence: 1
+    lightingInfluence: 0.06
+  - layerName: ForeRuins
+    depthFactor: 0.25
+    overrideScrollFactor: 0
+    scrollFactor: 0.14
+    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    contrast: 1
+    saturation: 1
+    blurStrength: 0.12
+    fogInfluence: 0.4
+    lightingInfluence: 0.12
