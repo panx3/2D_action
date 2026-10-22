@@ -1001,7 +1001,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CRYSTAL ACQUIRED
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ae93df63644a6a64b9f60c2ea1a56d18, type: 2}
   m_sharedMaterial: {fileID: -8273534452428503118, guid: ae93df63644a6a64b9f60c2ea1a56d18, type: 2}

@@ -91,7 +91,7 @@ public sealed class GoalMenuController : MonoBehaviour
         if (pauseMenu != null) pauseMenu.SetExternalPauseBlocked(true);
         // Capture the centered camera even when entered without the celebration.
         Camera.main?.GetComponent<CameraShake2D>()?.ResetShake();
-        overlay.SetMessage("STAGE CLEAR", "CRYSTAL ACQUIRED");
+        overlay.SetMessage("STAGE CLEAR", string.Empty);
         if (!overlay.Show())
         {
             if (pauseMenu != null) pauseMenu.SetExternalPauseBlocked(false);

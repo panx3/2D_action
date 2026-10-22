@@ -14,6 +14,7 @@ public static class PinkJewelSetup
     public const string EffectPath = "Assets/Prefabs/Items/PinkJewelPickupVfx.prefab";
     public const string HudPath = "Assets/Prefabs/UI/PinkJewelHUD.prefab";
     public const string ResultPath = "Assets/Prefabs/UI/PinkJewelResult.prefab";
+    public const string UiSpritePath = Art + "/JewelUI.png";
     private const string Materials = "Assets/Generated/PinkJewel";
     private static readonly Color Pink = new Color(1f, 0.4f, 0.72f, 1f);
 
@@ -284,19 +285,27 @@ public static class PinkJewelSetup
         try
         {
             root.layer = LayerMask.NameToLayer("UI");
-            var rect = root.GetComponent<RectTransform>(); rect.sizeDelta = new Vector2(result ? 180f : 168f, result ? 48f : 64f);
+            var rect = root.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(174f, 87f);
+            rect.anchorMin = rect.anchorMax = result ? new Vector2(0.5f, 0.5f) : Vector2.zero;
+            rect.pivot = result ? new Vector2(0.5f, 0.5f) : new Vector2(0f, 1f);
+            rect.anchoredPosition = result ? new Vector2(0f, 62f) : new Vector2(24f, -50f);
+            Sprite[] uiSprites = AssetDatabase.LoadAllAssetsAtPath(UiSpritePath).OfType<Sprite>().ToArray();
+            Sprite collected = uiSprites.Single(s => s.name == "JewelCollected");
+            Sprite empty = uiSprites.Single(s => s.name == "JewelEmpty");
             var row = root.AddComponent<PinkJewelIconRow>();
             Set(row, "showFinalResult", result);
-            Set(row, "collectedIcon", Sprite(result ? "ResultCollected" : "HudCollected"));
-            Set(row, "emptyIcon", Sprite(result ? "ResultEmpty" : "HudEmpty"));
+            Set(row, "collectedIcon", collected);
+            Set(row, "emptyIcon", empty);
             var icons = new Object[3]; var glints = new Object[3];
             for (int i = 0; i < 3; i++)
             {
                 var image = Image("Jewel" + (i + 1), root.transform,
-                    Sprite(result ? "ResultEmpty" : "HudEmpty"), new Vector2(result ? 36f : 36f, result ? 45f : 48f));
-                image.rectTransform.anchoredPosition = new Vector2((i - 1) * 54f, 0f);
+                    empty, new Vector2(54f, 87f));
+                image.rectTransform.anchorMin = image.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+                image.rectTransform.anchoredPosition = new Vector2(27f + i * 60f, 0f);
                 icons[i] = image;
-                var glint = Image("PickupGlint", image.transform, Sprite("Flash"), new Vector2(60f, 60f));
+                var glint = Image("PickupGlint", image.transform, Sprite("Flash"), new Vector2(96f, 96f));
                 glint.color = Color.clear; glints[i] = glint;
             }
             SetArray(row, "icons", icons); SetArray(row, "glints", glints);
@@ -344,14 +353,14 @@ public static class PinkJewelSetup
         var hud = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(HudPath), frame);
         Undo.RegisterCreatedObjectUndo(hud, "Add jewel HUD");
         var hudRect = hud.GetComponent<RectTransform>();
-        hudRect.anchorMin = hudRect.anchorMax = new Vector2(0.5f, 0f);
-        hudRect.pivot = new Vector2(0.5f, 1f); hudRect.anchoredPosition = new Vector2(0f, -16f);
+        hudRect.anchorMin = hudRect.anchorMax = Vector2.zero;
+        hudRect.pivot = new Vector2(0f, 1f); hudRect.anchoredPosition = new Vector2(24f, -50f);
         PrefabUtility.RecordPrefabInstancePropertyModifications(hudRect);
         var result = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ResultPath), safe);
         Undo.RegisterCreatedObjectUndo(result, "Add jewel result row");
         var resultRect = result.GetComponent<RectTransform>();
         resultRect.anchorMin = resultRect.anchorMax = new Vector2(0.5f, 0.5f);
-        resultRect.anchoredPosition = new Vector2(0f, 38f);
+        resultRect.anchoredPosition = new Vector2(0f, 62f);
         PrefabUtility.RecordPrefabInstancePropertyModifications(resultRect);
         EditorSceneManager.MarkSceneDirty(scene);
         return "Placed slots 1/2/3 at (18,1.7), (68,3.2), (168,13.1). HUD under Frame; result under Goal SafeArea. Scene not saved.";

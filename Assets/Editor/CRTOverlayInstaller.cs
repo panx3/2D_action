@@ -107,7 +107,7 @@ public static class CRTOverlayInstaller
             Text(safe, "System", "TEKKYU / CRT-01", new Vector2(390, 340), new Vector2(390, 36), 22, White, TextAlignmentOptions.Right);
             Line(safe, "TopRule", new Vector2(0, 294), new Vector2(1180, 2), new Color(1, 0.32f, 0.63f, 0.35f));
             string title = kind == 0 ? "PAUSE" : kind == 1 ? "STAGE CLEAR" : "CRYSTAL\nACQUIRED";
-            string detail = kind == 0 ? "TAKE A BREATHER" : kind == 1 ? "CRYSTAL ACQUIRED" : "SIGNAL RECOVERED";
+            string detail = kind == 0 ? "TAKE A BREATHER" : kind == 1 ? string.Empty : "SIGNAL RECOVERED";
             var heading = Text(safe, "Heading", title, new Vector2(0, kind == 2 ? 60 : 176),
                 new Vector2(1440, kind == 2 ? 240 : 120), kind == 0 ? 112 : 86, White, TextAlignmentOptions.Center);
             heading.characterSpacing = 5;

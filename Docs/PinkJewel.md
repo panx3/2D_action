@@ -5,8 +5,9 @@ CompletSceneの任意収集アイテム。取得順にかかわらず、配置�
 ## 素材
 
 - 本体: `Assets/Art/PinkJewel/PinkJewel.png`。ユーザー提供PNGをバイト単位でそのままコピー。SHA256: `89DCD41479D243D429FA34C0E4F2D91AEC3EA3DCC3BD6C9C2102F4F54EE7A91B`。
-- 生成原本: `Assets/Art/PinkJewel/Source/`。HUD取得済み／未取得、リザルト取得済み／未取得、VFXアトラスの5画像。組み込みimage_genを使用。プロンプトは [PinkJewelImagePrompts.md](PinkJewelImagePrompts.md)。
-- 実使用UI: `HudCollected.png` / `HudEmpty.png` は24×32px、`ResultCollected.png` / `ResultEmpty.png` は32×40px。生成画像を最近傍で専用サイズへ取り込み、取得済みは最大16色、未取得は7色へ整理。
+- 実使用UI: `Assets/Art/PinkJewel/JewelUI.png`。ユーザー提供の `DeUI用crystal取得HUD素材t.png` を無加工でコピーし、左のピンクを取得済み、右の白を未取得としてSprite Editorで分割。どちらも18×29pxで、HUDとリザルトで同じSpriteを使用する。
+- UI表示サイズは54×87（元画像の3倍）、アイコン間は6 UI px。以前生成したHUD／リザルト画像は参照しない。
+- 生成原本: `Assets/Art/PinkJewel/Source/`。VFXは引き続き使用する。初版で生成したHUD／リザルト原本も保管されている。プロンプトは [PinkJewelImagePrompts.md](PinkJewelImagePrompts.md)。
 - 実使用VFX: `Star.png`, `Diamond.png`, `Ring.png`, `Halo.png`, `Flash.png`, `Glint.png`。生成アトラスをUnity側で分割・縮小。すべて別レイヤーで、本体画像への焼き込みはない。
 - SpriteはPoint／非圧縮／Mip Mapなし／Clamp。地面の影だけは既存回復アイテムの `Assets/Generated/Tapioca/GroundShadow.png` を共用する。
 
@@ -14,8 +15,8 @@ CompletSceneの任意収集アイテム。取得順にかかわらず、配置�
 
 - `Assets/Prefabs/Items/PinkJewel.prefab`: 複製し、PinkJewelPickupのSlotを1〜3に設定する。番号は重複させない。
 - `Assets/Prefabs/Items/PinkJewelPickupVfx.prefab`: 取得本体から独立して再生・消滅するVFX。
-- `Assets/Prefabs/UI/PinkJewelHUD.prefab`: 既存HPバーのFrame配下。下端中央アンカー、上端中央Pivot、位置(0,-16)。既存HPバーの移動とCanvasScalerを継承する。
-- `Assets/Prefabs/UI/PinkJewelResult.prefab`: GoalMenuの `CRTPresentation/PhosphorUI/SafeArea` 配下。中央アンカー、位置(0,38)。既存のCRT表示と非スケール時間を利用する。
+- `Assets/Prefabs/UI/PinkJewelHUD.prefab`: 既存HPバーのFrame配下。左下アンカー、左上Pivot、位置(24,-50)、幅174・高さ87。HPバー下で左揃えにし、既存HPバーの移動とCanvasScalerを継承する。
+- `Assets/Prefabs/UI/PinkJewelResult.prefab`: GoalMenuの `CRTPresentation/PhosphorUI/SafeArea` 配下。中央アンカー、位置(0,62)、幅174・高さ87。既存のCRT表示と非スケール時間を利用する。「CRYSTAL ACQUIRED」の副題を外し、収集結果は3つの記号だけで表示する。
 - Sceneの `PinkJewels` が収集状態を所有する。子の3つは同一Prefabのインスタンス。
 
 | 配置番号 | 初期World位置 | 意図 |
@@ -64,10 +65,10 @@ CompletSceneの任意収集アイテム。取得順にかかわらず、配置�
 
 ## 今回の検証結果
 
-2026-10-22: コンパイル成功。上記のPlay Mode統合チェックは全項目PASS、実行中のError／Exceptionは0。4つのPrefab、取得用参照、SpriteのPoint／非圧縮／Mip Mapなし、粒子の速度カーブ形式も確認済み。HPバー下のUIは実画面で確認した。
+2026-10-22初版: コンパイル成功。上記のPlay Mode統合チェックは全項目PASS、実行中のError／Exceptionは0。4つのPrefab、取得用参照、SpriteのPoint／非圧縮／Mip Mapなし、粒子の速度カーブ形式も確認済み。収集処理の初回検証結果は [PinkJewelValidation.txt](PinkJewelValidation.txt)。
 
-結果表示も既存CRT画面上で確認済み。[2枠取得状態の表示用プレビュー](PinkJewelResultPreview.png)。統合チェックの結果は [PinkJewelValidation.txt](PinkJewelValidation.txt)。
+同日のUI修正: ユーザー提供素材へ差し替え、HUDを拡大・左揃え・狭い間隔に変更し、クリア画面の副題を除去。コンパイル、Sprite参照、RectTransformを確認済み。Consoleの新規エラーはGame View画像取得に失敗した撮影ツール由来のみで、コード由来のError／Exceptionはなし。収集処理のPlay Mode回帰チェックは再実行せず、最終的な見た目はユーザー確認とする。`PinkJewelResultPreview.png` は初版の旧レイアウトを記録した画像。
 
-既存Runtime・回復Prefab・HPバー設定は変更していない。新規Prefabは保存済み。CompletSceneはUnity MCPで作成した今回の追加差分だけをディスクへ反映し、編集前からあった未保存Scene差分と未コミット作業は保持する。操作感・配置の最終判断はユーザーによるPlay Mode確認を残す。
+収集・回復・HPバーの挙動は変更していない。GoalMenuControllerではクリア時の副題だけを空にする。PrefabとCompletSceneは今回のUI差分のみを反映し、既存の未コミット作業を保持する。
 
 検証後の画像保存時にCドライブの空き容量不足が発生したため、最終プレビューはDドライブの本リポジトリへ保存した。空き容量不足は開発環境側の残確認事項。
