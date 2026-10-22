@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b5b51d90fc62c7a4ea581535ef4194fc
+guid: 7e7b1568008fd3c4785ed13eae07f482
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9059142940461938515
-    second: PAN-KUN_0
+      213: 6925983005569182454
+    second: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: PAN-KUN_0
+      name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_0"
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 32
-        height: 32
+        y: 26
+        width: 151
+        height: 128
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 357b8b7c18a88bd70800000000000000
-      internalID: 9059142940461938515
+      spriteID: 6fae75f19d80e1060800000000000000
+      internalID: 6925983005569182454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_1"
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 24
+        width: 136
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8bf3fac75bffde04ca9ae0c1b24829ee
+      internalID: -207356854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_2"
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 29
+        width: 138
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4ed94fa3d1f5f7b47acd98301b493ffa
+      internalID: -1737724389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_3"
+      rect:
+        serializedVersion: 2
+        x: 426
+        y: 25
+        width: 142
+        height: 130
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 46bd4c9d8d485f94ebe5fd5b11646125
+      internalID: 1637985387
       vertices: []
       indices: 
       edges: []
@@ -138,7 +204,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5cd8cdcaa15654149b6e20356ac604e5
+    spriteID: dc5d434f506c094458e0cd98cd434110
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +214,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      PAN-KUN_0: 9059142940461938515
+      "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_0": 6925983005569182454
+      "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_1": -207356854
+      "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_2": -1737724389
+      "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_3": 1637985387
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

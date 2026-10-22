@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5465347736696486146}
@@ -280,9 +280,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d951c7b490723c5418d763fee95f6362, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpringFrog
-  _jumpForce: 3.2
+  _jumpForce: 10
   _moveSpeed: 1.5
-  _jumpInterval: 0.12
+  _jumpInterval: 1
   _initialDirection: 1
   _groundCheck: {fileID: 6706748250308761912}
   _edgeCheck: {fileID: 5198525081315059361}
