@@ -161,19 +161,22 @@ public static class BeamScorpionPlayModeChecks
                     "Entering range starts shooting without waiting for a patrol turn.");
                 var health = attacker.GetComponent<EnemyHealth>();
                 Set(health, "destroyOnDeath", false);
-                health.OnMorningStarHit(new MorningStarHitContext(1, Vector2.zero, 0f, attacker.transform.position, Vector2.right, 1f, 1f));
-                Check(health.CurrentHp == 0 && health.IsDeathHandled && !attacker.BeamActive && !attacker.enabled, "One-hit kill cancels beam/controller.");
+                // HP3の被弾表示は専用チェックで検証。ここは撃破時のビーム停止だけを確認する。
+                Set(health, "maxDamagePerHit", 0);
+                health.OnMorningStarHit(new MorningStarHitContext(health.CurrentHp, Vector2.zero, 0f, attacker.transform.position, Vector2.right, 1f, 1f));
+                Check(health.CurrentHp == 0 && health.IsDeathHandled && !attacker.BeamActive && !attacker.enabled, "Lethal hit cancels beam/controller.");
                 Check(!attacker.GetComponent<Collider2D>().enabled && !attacker.GetComponent<Rigidbody2D>().simulated, "Death disables collider/physics.");
                 hpAtDeath = target.CurrentHp;
                 var contactHealth = contact.GetComponent<EnemyHealth>(); Set(contactHealth, "destroyOnDeath", false);
-                contactHealth.OnMorningStarHit(new MorningStarHitContext(1, Vector2.zero, 0f, contact.transform.position, Vector2.right, 1f, 1f));
+                Set(contactHealth, "maxDamagePerHit", 0);
+                contactHealth.OnMorningStarHit(new MorningStarHitContext(contactHealth.CurrentHp, Vector2.zero, 0f, contact.transform.position, Vector2.right, 1f, 1f));
                 contactTarget.ResetToFullHp(); stage = 2;
             }
             if (stage == 2 && elapsed > 2.5f)
             {
                 Check(target.CurrentHp == hpAtDeath && contactTarget.CurrentHp == contactTarget.MaxHp, "No beam/contact damage after death.");
                 var health = attacker.GetComponent<EnemyHealth>(); health.ResetHealth(); attacker.gameObject.SetActive(true);
-                Check(health.CurrentHp == 1 && attacker.enabled && attacker.State == BeamScorpionController.ActionState.Patrol && !attacker.BeamActive,
+                Check(health.CurrentHp == 3 && attacker.enabled && attacker.State == BeamScorpionController.ActionState.Patrol && !attacker.BeamActive,
                     "ResetHealth restores clean patrol.");
                 wall.SetActive(false);
                 // Inspectorの色・長さ・太さを判定と描画へ反映する。

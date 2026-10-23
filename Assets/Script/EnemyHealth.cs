@@ -8,7 +8,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 {
-    [SerializeField] private int maxHp = 3;
+    [SerializeField, Min(1)] private int maxHp = 3;
+    [SerializeField, Min(0), Tooltip("0は従来どおり。1なら強い鉄球でも確定被弾1回につきHPを1だけ減らす。")]
+    private int maxDamagePerHit;
     [SerializeField, Min(0.01f)] private float knockbackResistance = 1f;
     [SerializeField] private bool destroyOnDeath = true;
     [SerializeField] private float hitStunDuration = 0.18f;
@@ -57,6 +59,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     public int HitSoundPlayCount { get; private set; }
     // 確定した被弾だけをAI/表示へ通知する。HP・ノックバックの所有者はこのComponent。
     public event Action<MorningStarHitContext, bool> HitConfirmed;
+    public event Action HealthReset;
 
     private void Awake()
     {
@@ -92,7 +95,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             return;
 
         _lastDamageTime = Time.time;
-        _currentHp = Mathf.Max(0, _currentHp - context.Damage);
+        int damage = maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
+        _currentHp = Mathf.Max(0, _currentHp - damage);
         // 無敵・撃破済みの接触では止めず、実際にダメージを受けた時だけ通知する。
         if (context.Source != null)
             context.Source.PlayEnemyHitStop(context.HitStopSeconds, _currentHp <= 0);
@@ -269,6 +273,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _rigidbody2D.freezeRotation = true;
             _rigidbody2D.angularVelocity = 0f;
         }
+        HealthReset?.Invoke();
     }
 
     private void SetDeathBehavioursEnabled(bool value)

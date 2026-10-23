@@ -86,7 +86,8 @@ public static class BeamScorpionSetup
             }
             settings.ApplyModifiedPropertiesWithoutUndo();
             var hp = new SerializedObject(health);
-            hp.FindProperty("maxHp").intValue = 1;
+            hp.FindProperty("maxHp").intValue = 3;
+            hp.FindProperty("maxDamagePerHit").intValue = 1;
             hp.FindProperty("destroyOnDeath").boolValue = true;
             Ref(hp, "hitFlashRenderer", renderer); Ref(hp, "hitAudioSource", null);
             var disable = hp.FindProperty("disableOnDeath"); disable.arraySize = 1;
@@ -115,7 +116,7 @@ public static class BeamScorpionSetup
     public static void Validate()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-        if (prefab == null || prefab.GetComponent<EnemyHealth>().MaxHp != 1
+        if (prefab == null || prefab.GetComponent<EnemyHealth>().MaxHp != 3
             || prefab.GetComponent<Enemy>() != null || prefab.GetComponent<WrenchCrab>() != null)
             throw new InvalidOperationException("Invalid BeamScorpion health/controller.");
         var settings = new SerializedObject(prefab.GetComponent<BeamScorpionController>());
@@ -132,7 +133,7 @@ public static class BeamScorpionSetup
         if (health.FindProperty("disableOnDeath").GetArrayElementAtIndex(0).objectReferenceValue != prefab.GetComponent<BeamScorpionController>())
             throw new InvalidOperationException("Death cleanup must disable BeamScorpionController.");
         if (prefab.GetComponentsInChildren<Component>(true).Any(item => item == null)) throw new InvalidOperationException("Missing script.");
-        Debug.Log("[BeamScorpion] Prefab validation PASS: HP1, Animator, death cleanup, audio and six replaceable VFX references.");
+        Debug.Log("[BeamScorpion] Prefab validation PASS: HP3, Animator, death cleanup, audio and six replaceable VFX references.");
     }
 
     private static Sprite[] Frames(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s => s.rect.x).ToArray();

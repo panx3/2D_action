@@ -13,7 +13,9 @@ Prefab内の参照、Layer、AudioSource、Animatorは設定済みです。
 - 初期位置から左右それぞれ2.5の範囲をゆっくり巡回。壁や足場端では範囲に達する前でも反転します。
 - 射程7以内にPlayerが見える場合、左右どちらからでも反応して停止・向き直り・射撃します。追跡移動はせず、予備動作開始後は向きを固定します。
 - 巡回中の待機1.2秒 → 予備動作0.5秒 → ビーム0.55秒 → 硬直0.55秒 → 巡回。射程内に留まる場合の発射周期は約2.8秒です。
-- `EnemyHealth` がHP1、Morning Starの `IMorningStarHitReceiver`、撃破破片、被弾SE、ヒットストップ、復帰を担当します。
+- `EnemyHealth` がHP3、Morning Starの `IMorningStarHitReceiver`、撃破破片、被弾SE、ヒットストップ、復帰を担当します。
+- `EnemyDamageFeedback` により、被弾時だけ1.5秒の3分割ゲージ・0.1秒の白フラッシュ・生成したドット絵の被弾火花を表示します。HP1で間欠的な火花／煙、HP0で破壊アニメを再生します。
+- 1回の確定被弾のダメージを1に制限し、3回で撃破されます。詳細は [EnemyDamageFeedback.md](EnemyDamageFeedback.md) を参照。
 - 本体への接触はダメージを与えません。ビームだけが `PlayerColliderUtility.IsPlayerBody` を通して `PlayerHealth.TakeDamage` を使用し、既存の無敵・死亡・復帰中は追加ダメージを与えません。
 - ビームのダメージ間隔は0.7秒。撃破／無効化時にビーム・チャージ・移動を停止します。
 - `GroundProjectedShadow`、既存の影画像、敵の物理Material、`OneShotAudioUtility` を再利用しています。
@@ -105,7 +107,7 @@ GroundCheck／EdgeCheck／WallCheckはPrefab内の確認用マーカーです。
 - Unity 6000.4.2f1でコンパイル成功。
 - `Tools > Beam Scorpion > Run Play Mode Checks`: **PASS (38), runtimeErrors=0**。
 - 壁／足場端と広い床での巡回範囲反転、歩行コマ、射程外での待機・射程内への反応、左右の向き直り、射撃間隔を検証。
-- PlayerのHP減少と無敵、本体接触でダメージがないこと、壁遮蔽、環境着弾VFX、1回のMorning Star攻撃による撃破、撃破後の停止、ResetHealth復帰を検証。
+- PlayerのHP減少と無敵、本体接触でダメージがないこと、壁遮蔽、環境着弾VFX、撃破後の停止、ResetHealth復帰を検証。3回被弾とダメージ表示は専用チェックで検証。
 - 鉄球で一射全体が消えること、鉄球の物理設定が保持されること、壁の奥の鉄球には反応しないこと、打ち消し後に再射撃できること、専用SEの割り当てとAudioSourceの再生を検証。
 - 長さ・太さ・色の変更反映も確認。
 - 一時Preview Sceneで発射ポーズとビーム表示を確認。本番Sceneの未保存状態は維持。

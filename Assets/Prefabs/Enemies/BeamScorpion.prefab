@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 8456111066456089678}
   - component: {fileID: 3052221884825174349}
   - component: {fileID: 2374081426561630526}
+  - component: {fileID: 5591956467598803012}
   m_Layer: 9
   m_Name: BeamScorpion
   m_TagString: Untagged
@@ -219,7 +220,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7cad5c721a30444a8a8d436ddd30e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 1
+  maxHp: 3
+  maxDamagePerHit: 1
   knockbackResistance: 1
   destroyOnDeath: 1
   hitStunDuration: 0.18
@@ -227,8 +229,8 @@ MonoBehaviour:
   freezeRotationOnHit: 1
   stopAngularVelocityOnHit: 1
   debugLog: 0
-  hitInvincibleDuration: 0.2
-  hitFlashDuration: 0.24
+  hitInvincibleDuration: 0.25
+  hitFlashDuration: 0
   hitFlashInterval: 0.06
   hitFlashRenderer: {fileID: 8377431386023412996}
   disableOnDeath:
@@ -430,6 +432,38 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 1089
+--- !u!114 &5591956467598803012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569964633128659038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2d956e02562b6f498a305c756418632, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDamageFeedback
+  gaugeEnabled: 1
+  gaugePrefab: {fileID: 5561037782073791896, guid: 98c15aef5b6eb0c4b84d11e8c97c42e3, type: 3}
+  gaugeDisplayTime: 1.5
+  gaugeOffset: {x: 0, y: 2.95, z: 0}
+  flashEnabled: 1
+  bodyRenderers:
+  - {fileID: 8377431386023412996}
+  flashMaterial: {fileID: 2100000, guid: ba36c3a2f804d414b9e2e0ccd6cf4560, type: 2}
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashDuration: 0.1
+  hitEffectEnabled: 1
+  hitEffectPrefab: {fileID: 5478602007043324184, guid: e447be345d8bd64499dbf2090dcdfbd4, type: 3}
+  hitOffset: {x: 0, y: 0, z: 0}
+  criticalEffectEnabled: 1
+  criticalHpThreshold: 1
+  criticalEffectPrefab: {fileID: 996187813842394769, guid: dfd9361d304249140a1fd778e0db0008, type: 3}
+  criticalOffset: {x: 0, y: 1.1, z: 0}
+  defeatEffectEnabled: 1
+  defeatEffectPrefab: {fileID: 2905271716130985749, guid: 630bab7348389f4408dd97bf778c2592, type: 3}
+  defeatOffset: {x: 0, y: 1.1, z: 0}
 --- !u!1 &1962063372084365883
 GameObject:
   m_ObjectHideFlags: 0
