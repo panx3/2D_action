@@ -131,10 +131,10 @@ TextureImporter:
       name: "\u3059\u308A\u629C\u3051\u308B\u5E8A_0"
       rect:
         serializedVersion: 2
-        x: 7
-        y: 38
-        width: 218
-        height: 16
+        x: 4
+        y: 18
+        width: 226
+        height: 40
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -145,28 +145,6 @@ TextureImporter:
       bones: []
       spriteID: 7cd1a9da55e678b50800000000000000
       internalID: 6595361493571214791
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: OneWayPlatform_Full
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 234
-        height: 75
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ba4b61d3156a45f4290edffe2b3f155b
-      internalID: 2091481046
       vertices: []
       indices: 
       edges: []

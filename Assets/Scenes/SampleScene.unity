@@ -2388,6 +2388,10 @@ MonoBehaviour:
   _magnetFramingSmoothTime: 0.65
   _magnetViewportMargin: 0.04
   _magnetMinimumPlayerViewportY: 0.22
+  _goalFramingStrength: 0.9
+  _goalFramingSmoothTime: 0.8
+  _goalExitPadding: 2
+  _goalPlayerViewportMargin: {x: 0.16, y: 0.22}
   _jumpLookAhead: 0
   _fallLookAhead: 1
   _jumpLookAheadFullSpeed: 8
@@ -46996,6 +47000,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHp: 3
+  maxDamagePerHit: 0
   knockbackResistance: 1
   destroyOnDeath: 1
   hitStunDuration: 0.18
@@ -47017,6 +47022,8 @@ MonoBehaviour:
   minFragmentForce: 1.5
   maxFragmentForce: 3
   fragmentLifeTime: 2
+  fragmentScatterScale: 1.15
+  fragmentDirectionSpread: 1.1
 --- !u!1 &1411714210
 GameObject:
   m_ObjectHideFlags: 0
@@ -51040,6 +51047,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8c7d6e5f4a39281706f5e4d3c2b1a09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SegmentHpBarUI
+  _movementFeedback: 1
+  _movementAmount: {x: 8, y: 5}
+  _movementSmoothTime: 0.22
+  _runningBob: 1.1
+  _showHangingChain: 1
+  _hangingChainHeight: 20.5
+  _chainAttachmentLift: 4
+  _chainSwayAngle: 12
+  _showDrapedChain: 1
+  _drapedChainSag: 12
   _playerHealth: {fileID: 5482672115534824995}
   _hpBarRoot: {fileID: 0}
   _emptyBar: {fileID: 0}
