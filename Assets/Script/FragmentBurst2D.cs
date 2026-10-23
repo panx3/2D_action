@@ -13,7 +13,8 @@ public static class FragmentBurst2D
         float fragmentSpread,
         float minForce,
         float maxForce,
-        float fragmentLifeTime)
+        float fragmentLifeTime,
+        float directionSpread = 0.8f)
     {
         if (fragmentPrefab == null || fragmentCount <= 0)
             return 0;
@@ -44,7 +45,7 @@ public static class FragmentBurst2D
             {
                 Vector2 randomDirection = (
                     baseDirection
-                    + Random.insideUnitCircle * 0.8f
+                    + Random.insideUnitCircle * Mathf.Max(0f, directionSpread)
                     + Vector2.up * 0.4f
                 ).normalized;
 
