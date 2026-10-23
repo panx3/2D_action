@@ -11,9 +11,15 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private int hitPoint = 1;
     [SerializeField, Min(0f)] private float breakSpeedThreshold = 6f;
 
+    [Header("Falling Physics")]
+    [SerializeField, Min(0f), Tooltip("支えを失ったときの重力倍率。岩同士・地面では自然に転がり、鉄球やキャラクターには押されない。")]
+    private float fallGravityScale = 1f;
+
     [Header("Fragment Settings")]
     [SerializeField] private GameObject fragmentPrefab;
     [SerializeField] private int fragmentCount = 10;
+    [SerializeField, Min(1), Tooltip("配置ごとの Fragment Count を保ったまま、岩の破片の生成数を増やす倍率。")]
+    private int fragmentCountMultiplier = 2;
     [SerializeField] private float fragmentSpread = 0.3f;
     [SerializeField] private float minForce = 1.5f;
     [SerializeField] private float maxForce = 3.5f;
@@ -29,6 +35,7 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
 
     private bool isBroken;
     private Collider2D wallCollider;
+    private Rigidbody2D wallBody;
 
     public bool IsBroken => isBroken;
     public float BreakSpeedThreshold => breakSpeedThreshold;
@@ -36,9 +43,32 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
 
     private void Awake()
     {
-        wallCollider = GetComponent<Collider2D>();
+        ConfigureFallingPhysics();
         if (breakAudioSource == null)
             breakAudioSource = OneShotAudioUtility.FindWorldImpactSource();
+    }
+
+    [ContextMenu("Configure Falling Physics")]
+    public void ConfigureFallingPhysics()
+    {
+        wallCollider = GetComponent<Collider2D>();
+        wallBody = GetComponent<Rigidbody2D>();
+        if (wallBody == null)
+            wallBody = gameObject.AddComponent<Rigidbody2D>();
+
+        wallBody.bodyType = RigidbodyType2D.Dynamic;
+        wallBody.gravityScale = fallGravityScale;
+        wallBody.constraints = RigidbodyConstraints2D.None;
+        wallBody.interpolation = RigidbodyInterpolation2D.Interpolate;
+        wallBody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+        // 接触・破壊通知は残し、キャラクターや鉄球からの衝突力だけ受け取らない。
+        // 地面と他の岩の接触力は有効なので、積み重ねと落下は物理側が解決する。
+        if (wallCollider != null)
+        {
+            int actorLayers = LayerMask.GetMask("player", "Enemy", "morningstar", "chain", "WallFragment");
+            wallCollider.forceReceiveLayers &= ~actorLayers;
+        }
     }
 
     public void OnMorningStarHit(MorningStarHitContext context)
@@ -124,6 +154,13 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
         if (wallCollider != null)
             wallCollider.enabled = false;
 
+        if (wallBody != null)
+        {
+            wallBody.linearVelocity = Vector2.zero;
+            wallBody.angularVelocity = 0f;
+            wallBody.simulated = false;
+        }
+
         HideAllVisuals();
         SpawnFragments(hitDirection);
 
@@ -155,7 +192,7 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
             fragmentPrefab,
             transform.position,
             hitDirection,
-            fragmentCount,
+            fragmentCount * Mathf.Max(1, fragmentCountMultiplier),
             fragmentSpread,
             minForce,
             maxForce,

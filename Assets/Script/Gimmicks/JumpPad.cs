@@ -10,6 +10,8 @@ public class JumpPad : MonoBehaviour
     [SerializeField] private float jumpVelocity = 12f;
     [SerializeField] private bool preserveHorizontalVelocity = true;
     [SerializeField] private float bounceCooldown = 0.15f;
+    [SerializeField, Min(0f), Tooltip("接触前後にジャンプ入力を受け付ける秒数。通常ジャンプの受付時間は変更しません。")]
+    private float highJumpInputWindow = 0.3f;
 
     [Header("Visual Settings")]
     [SerializeField] private Color idleColor = Color.cyan;
@@ -129,6 +131,9 @@ public class JumpPad : MonoBehaviour
 
         // 着地した瞬間だけ、指定した上向き速度に固定する
         playerRb.linearVelocity = new Vector2(horizontalVelocity, jumpVelocity);
+
+        if (playerRb.TryGetComponent<Player>(out var player))
+            player.BeginTrampolineJumpInput(highJumpInputWindow);
 
         // 跳躍中の鉄球・鎖の扱いは物理の所有者へ任せる。
         if (playerRb.TryGetComponent<MorningStarLauncher>(out var launcher))

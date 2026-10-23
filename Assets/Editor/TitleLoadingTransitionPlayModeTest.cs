@@ -133,7 +133,7 @@ public static class TitleLoadingTransitionPlayModeTest
                 }
                 return;
             }
-            if (SceneManager.GetActiveScene().name != "CompletScene" || intro == null) return;
+            if (SceneManager.GetActiveScene().name != Path.GetFileNameWithoutExtension(TitleSceneBuilder.StageScenePath) || intro == null) return;
             if (intro.Phase == PlayerStartIntro.IntroPhase.Jump)
             {
                 sawJump = true;

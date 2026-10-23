@@ -1,0 +1,1 @@
+PASS: raised Player support, ground mask, no Player activation, Morning Star activation and passage

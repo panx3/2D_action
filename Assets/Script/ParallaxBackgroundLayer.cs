@@ -17,6 +17,8 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
     [SerializeField, Min(1f)] private float coverPadding = 1.05f;
     [SerializeField, Tooltip("左右反転した画像を隣接表示し、横方向の視差移動を止めずに続けます。")]
     private bool loopHorizontally;
+    [SerializeField, Min(0f), Tooltip("ループ端の重なり（画像ピクセル）。ぼかし・小数座標で生じる細い隙間を防ぎます。")]
+    private float loopOverlapPixels = 2f;
 
     private SpriteRenderer spriteRenderer;
     private Vector3 cameraOrigin;
@@ -96,12 +98,13 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
         float maxX = Mathf.Max(0f, (scaledSize.x - viewWidth) * 0.5f);
         float maxY = Mathf.Max(0f, (scaledSize.y - viewHeight) * 0.5f);
         int centerTile = 0;
-        if (loopHorizontally && scaledSize.x > 0.001f)
+        float tileStride = LoopStride * Mathf.Abs(transform.lossyScale.x);
+        if (loopHorizontally && tileStride > 0.001f)
         {
             // カメラに最も近いタイルを中心にする。折り返し時には左右のコピーと
             // 同じ絵柄・位置に入れ替わるため、移動の停止や画面内のポップを起こさない。
-            int wrappedTiles = Mathf.FloorToInt((relativeOffset.x + scaledSize.x * 0.5f) / scaledSize.x);
-            relativeOffset.x -= wrappedTiles * scaledSize.x;
+            int wrappedTiles = Mathf.FloorToInt((relativeOffset.x + tileStride * 0.5f) / tileStride);
+            relativeOffset.x -= wrappedTiles * tileStride;
             centerTile = -wrappedTiles;
         }
         else
@@ -144,7 +147,7 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
 
     private void ConfigureCopy(SpriteRenderer copy, int side, int tileIndex, bool show)
     {
-        copy.transform.localPosition = new Vector3(side * spriteRenderer.sprite.bounds.size.x, 0f, 0f);
+        copy.transform.localPosition = new Vector3(side * LoopStride, 0f, 0f);
         copy.sprite = spriteRenderer.sprite;
         copy.gameObject.layer = gameObject.layer;
         copy.sharedMaterial = spriteRenderer.sharedMaterial;
@@ -157,6 +160,9 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
         copy.flipY = spriteRenderer.flipY;
         copy.enabled = show;
     }
+
+    private float LoopStride => Mathf.Max(spriteRenderer.sprite.bounds.size.x * 0.5f,
+        spriteRenderer.sprite.bounds.size.x - loopOverlapPixels / spriteRenderer.sprite.pixelsPerUnit);
 
     private void OnDisable()
     {

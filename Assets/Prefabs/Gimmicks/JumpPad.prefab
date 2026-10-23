@@ -183,6 +183,7 @@ MonoBehaviour:
   jumpVelocity: 12
   preserveHorizontalVelocity: 1
   bounceCooldown: 0.15
+  highJumpInputWindow: 0.3
   idleColor: {r: 0, g: 1, b: 1, a: 1}
   activeColor: {r: 1, g: 1, b: 1, a: 1}
   flashDuration: 0.08

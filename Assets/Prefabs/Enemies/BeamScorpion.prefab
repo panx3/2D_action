@@ -196,7 +196,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.55}
+  m_Offset: {x: 0, y: 0.7}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -206,7 +206,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.2, y: 1.2}
+  m_Size: {x: 2.375, y: 1.5}
   m_EdgeRadius: 0
 --- !u!114 &2016213782038478787
 MonoBehaviour:
@@ -395,12 +395,12 @@ MonoBehaviour:
   - {fileID: 2321668600206345532, guid: 6e321ab8761b92240a9e8a0aaa02bdd3, type: 3}
   - {fileID: 987416404, guid: 6e321ab8761b92240a9e8a0aaa02bdd3, type: 3}
   muzzleOffsets:
-  - {x: -0.34, y: 1.18}
-  - {x: -0.32, y: 1.36}
-  - {x: -0.29, y: 1.18}
-  - {x: -0.26, y: 1.18}
-  - {x: -0.27, y: 1.24}
-  - {x: -0.29, y: 1.18}
+  - {x: -0.2578125, y: 1.15625}
+  - {x: -0.109375, y: 1.5}
+  - {x: -0.3046875, y: 1.234375}
+  - {x: -0.484375, y: 1.15625}
+  - {x: -0.4140625, y: 1.25}
+  - {x: -0.3671875, y: 1.15625}
   beamVfxPrefab: {fileID: 2356320515133414534, guid: d0e35a4b1449b0e449b528115564c8f8, type: 3}
   chargeVfxPrefab: {fileID: 3519538144431614789, guid: 83af126b3329a3d4b869e9043aa53a29, type: 3}
   muzzleVfxPrefab: {fileID: 164426621728010300, guid: 21f0c929752abbd46ace8e9d95e7bcda, type: 3}
@@ -520,7 +520,7 @@ Transform:
   m_GameObject: {fileID: 4594287779526906037}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.22, y: -0.05, z: 0}
+  m_LocalPosition: {x: -1.3075, y: -0.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -551,7 +551,7 @@ Transform:
   m_GameObject: {fileID: 6007396230135936937}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6, y: 2.4, z: 0}
+  m_LocalPosition: {x: -0.8125, y: 2.4375, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -696,7 +696,7 @@ Transform:
   m_GameObject: {fileID: 6180030733444892672}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.1, y: 0.55, z: 0}
+  m_LocalPosition: {x: -1.1875, y: 0.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

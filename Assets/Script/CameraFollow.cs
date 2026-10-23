@@ -189,6 +189,7 @@ public class CameraFollow : MonoBehaviour
     public float UpperViewOffset => _upperViewOffset;
     public float NormalViewExpansion => _normalViewExpansion;
     public bool IsEventControlled => _eventControlled;
+    public Player FollowPlayer => _targetPlayer;
     public Vector2 CurrentMagnetFramingOffset => _magnetFramingOffset;
     public Vector2 CurrentGoalFramingOffset => _goalFramingOffset;
     public bool IsGoalFramingActive => _activeGoal >= 0;
@@ -728,6 +729,17 @@ public class CameraFollow : MonoBehaviour
     {
         if (!_eventControlled || _eventOwner != owner) return;
         ReleaseEventControl();
+    }
+
+    public bool IsEventControlledBy(Object owner) => _eventControlled && _eventOwner == owner;
+
+    /// <summary>演出所有者だけがカメラ位置を更新する。通常の物理時間に依存しない。</summary>
+    public bool SetEventPosition(Object owner, Vector3 position)
+    {
+        if (!isActiveAndEnabled || !IsEventControlledBy(owner)) return false;
+        position.z = FixedZ;
+        transform.position = ClampToBounds(position);
+        return true;
     }
 
     private void ReleaseEventControl()

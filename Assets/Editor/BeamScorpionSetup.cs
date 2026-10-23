@@ -45,8 +45,8 @@ public static class BeamScorpionSetup
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             BoxCollider2D collider = root.AddComponent<BoxCollider2D>();
             collider.sharedMaterial = source.GetComponent<BoxCollider2D>().sharedMaterial;
-            collider.size = new Vector2(2.2f, 1.2f);
-            collider.offset = new Vector2(0f, 0.55f);
+            collider.size = new Vector2(2.375f, 1.5f);
+            collider.offset = new Vector2(0f, 0.7f);
             Transform visual = Child(root.transform, "Visual", Vector2.zero);
             visual.localScale = new Vector3(2f, 2f, 1f);
             SpriteRenderer renderer = visual.gameObject.AddComponent<SpriteRenderer>();
@@ -65,9 +65,9 @@ public static class BeamScorpionSetup
             var settings = new SerializedObject(scorpion);
             Ref(settings, "visualRenderer", renderer); Ref(settings, "visualAnimator", animator);
             Ref(settings, "groundCheck", Child(root.transform, "GroundCheck", new Vector2(0f, -0.05f)));
-            Ref(settings, "edgeCheck", Child(root.transform, "EdgeCheck", new Vector2(-1.22f, -0.05f)));
-            Ref(settings, "wallCheck", Child(root.transform, "WallCheck", new Vector2(-1.1f, 0.55f)));
-            Ref(settings, "beamOrigin", Child(root.transform, "BeamOrigin", new Vector2(-0.6f, 2.4f)));
+            Ref(settings, "edgeCheck", Child(root.transform, "EdgeCheck", new Vector2(-1.3075f, -0.05f)));
+            Ref(settings, "wallCheck", Child(root.transform, "WallCheck", new Vector2(-1.1875f, 0.7f)));
+            Ref(settings, "beamOrigin", Child(root.transform, "BeamOrigin", new Vector2(-0.8125f, 2.4375f)));
             Ref(settings, "audioSource", audio);
             Ref(settings, "beamFireSE", fireSound);
             Ref(settings, "beamHitSE", AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/SFX/Imported/打撃6.mp3"));
@@ -77,8 +77,8 @@ public static class BeamScorpionSetup
             SerializedProperty frames = settings.FindProperty("attackFrames"); frames.arraySize = attack.Length;
             SerializedProperty offsets = settings.FindProperty("muzzleOffsets"); offsets.arraySize = attack.Length;
             // しっぽ先の赤いレンズ中心（各スプライト内ピクセル位置）。
-            Vector2[] lens = { new Vector2(22f, 59f), new Vector2(21f, 68f), new Vector2(21f, 59f),
-                new Vector2(23f, 59f), new Vector2(22f, 62f), new Vector2(20f, 59f) };
+            Vector2[] lens = { new Vector2(31f, 74f), new Vector2(37f, 96f), new Vector2(26.5f, 79f),
+                new Vector2(13f, 74f), new Vector2(19f, 80f), new Vector2(23f, 74f) };
             for (int i = 0; i < attack.Length; i++)
             {
                 frames.GetArrayElementAtIndex(i).objectReferenceValue = attack[i];

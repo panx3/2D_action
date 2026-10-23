@@ -28,6 +28,8 @@ public class PlayerHealth : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
     [SerializeField, Tooltip("点滅の切替間隔（秒）。")]
     private float _blinkInterval = 0.1f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("無敵点滅の薄い側の不透明度。完全には非表示にしません。")]
+    private float _blinkOpacity = 0.4f;
 
     [Header("参照")]
     [SerializeField, Tooltip("ノックバック適用先の Player。未設定なら同 GameObject から自動取得。")]
@@ -61,11 +63,13 @@ public class PlayerHealth : MonoBehaviour
 
     private Coroutine _invincibleRoutine;
     private bool _initialized;
+    private float _baseSpriteAlpha = 1f;
 
     private void Awake()
     {
         if (_player == null) _player = GetComponent<Player>();
         if (_spriteRenderer == null) _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (_spriteRenderer != null) _baseSpriteAlpha = _spriteRenderer.color.a;
         if (_damageAudioSource == null)
         {
             Transform sfxTransform = transform.Find("SfxAudioSource");
@@ -90,7 +94,11 @@ public class PlayerHealth : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R)) ResetToFullHp();
     }
 
-    private void OnDisable() => RecoveryVersion++;
+    private void OnDisable()
+    {
+        RecoveryVersion++;
+        StopInvincible();
+    }
 
     /// <summary>
     /// ダメージを受ける。無敵中・死亡中は無視。ノックバックは knockbackImpulse で指定。
@@ -150,7 +158,6 @@ public class PlayerHealth : MonoBehaviour
         CurrentHp = _maxHp;
         IsDead = false;
         StopInvincible();
-        if (_spriteRenderer != null) _spriteRenderer.enabled = true;
         if (_debugLogHeal && before != CurrentHp)
             Debug.Log($"[PlayerHealth] ResetToFullHp {before} -> {CurrentHp} (caller: {GetHealCallerHint()})", this);
         NotifyHealthChanged();
@@ -167,7 +174,6 @@ public class PlayerHealth : MonoBehaviour
         RecoveryVersion++;
         IsDead = false;
         StopInvincible();
-        if (_spriteRenderer != null) _spriteRenderer.enabled = true;
         NotifyHealthChanged();
     }
 
@@ -239,24 +245,41 @@ public class PlayerHealth : MonoBehaviour
             _invincibleRoutine = null;
         }
         IsInvincible = false;
-        if (_spriteRenderer != null) _spriteRenderer.enabled = true;
+        SetBlinkDimmed(false);
+    }
+
+    private void SetBlinkDimmed(bool dimmed)
+    {
+        float opacity = dimmed ? Mathf.Clamp(_blinkOpacity, 0.1f, 1f) : 1f;
+        if (_player != null)
+        {
+            _player.SetDamageBlinkOpacity(opacity);
+            return;
+        }
+        if (_spriteRenderer == null) return;
+        Color color = _spriteRenderer.color;
+        color.a = _baseSpriteAlpha * opacity;
+        _spriteRenderer.color = color;
+        _spriteRenderer.enabled = true;
     }
 
     private IEnumerator InvincibleRoutine()
     {
         IsInvincible = true;
         float elapsed = 0f;
-        WaitForSeconds wait = new WaitForSeconds(_blinkInterval);
+        float interval = Mathf.Max(0.01f, _blinkInterval);
+        WaitForSeconds wait = new WaitForSeconds(interval);
+        bool dimmed = false;
 
         while (elapsed < _invincibleDuration)
         {
-            if (_spriteRenderer != null)
-                _spriteRenderer.enabled = !_spriteRenderer.enabled;
+            dimmed = !dimmed;
+            SetBlinkDimmed(dimmed);
             yield return wait;
-            elapsed += _blinkInterval;
+            elapsed += interval;
         }
 
-        if (_spriteRenderer != null) _spriteRenderer.enabled = true;
+        SetBlinkDimmed(false);
         IsInvincible = false;
         _invincibleRoutine = null;
     }

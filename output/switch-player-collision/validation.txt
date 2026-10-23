@@ -1,0 +1,1 @@
+PASS: raised support, grounded detection, no Player activation, Morning Star activation and passage, lowered support, one-shot latch; no production input/physics settings changed.

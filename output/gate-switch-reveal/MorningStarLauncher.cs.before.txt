@@ -1,0 +1,3683 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
+
+/// <summary>
+/// モーニングスター：状態管理・発射・回収・磁石固定・スイング・鎖解除。
+/// 通常時は ChainConstraint2D、Hook/Swing中は既存 DistanceJoint2D を
+/// Max Distance Only のロープとして使い、手元と固定支点の最大距離を守る。
+/// </summary>
+public class MorningStarLauncher : MonoBehaviour
+{
+    private const string LauncherPoseLayerName = "Launcher Pose";
+
+    public enum MorningStarState
+    {
+        Dragging,
+        SpinCharging,
+        RecallBeforeThrow,
+        Thrown,
+        Dropping, // 旧テストScene/API互換。物理はDragging(Rest)と同一。
+        Returning,
+        Hooked,
+        Swinging,
+        StartIntro,
+        Respawning
+    }
+
+    [Header("参照")]
+    [SerializeField] private Rigidbody2D morningStarRb;
+    [SerializeField] private LineRenderer lineRenderer;
+    [SerializeField] private ChainLineController chainLineController;
+    [SerializeField] private LineRenderer aimGuideLineRenderer;
+    [SerializeField] private Transform aimMark;
+    [SerializeField] private Transform handAnchor;
+    [SerializeField] private Transform throwSocket;
+    [SerializeField] private Rigidbody2D playerRigidbody2D;
+    [SerializeField] private bool usePlayerOnSameObject = true;
+    [SerializeField] private Player player;
+    [SerializeField] private ChainConstraint2D chainConstraint;
+    [SerializeField, Tooltip("Hook/Swing中の最大距離制約。未設定ならPlayer上の既存DistanceJoint2Dを使用")]
+    private DistanceJoint2D hookRopeJoint;
+    [FormerlySerializedAs("mainCamera")]
+    [SerializeField] private Camera aimCamera;
+    [SerializeField] private bool restrictPointerToGameView = true;
+    [SerializeField] private float screenZ = 10f;
+
+    [Header("レイヤー")]
+    [SerializeField] private LayerMask hookableLayers;
+    [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private LayerMask breakableLayers;
+
+    [Header("Combat（命中ダメージ・ノックバック・ヒットストップ）")]
+    [SerializeField] private float minCombatHitSpeed = 3f;
+    [SerializeField] private int baseDamage = 1;
+    [SerializeField] private float damagePerSpeed = 0.2f;
+    [SerializeField] private int minDamage = 1;
+    [SerializeField] private int maxDamage = 24;
+    [SerializeField] private float baseKnockback = 2f;
+    [SerializeField] private float knockbackPerSpeed = 0.45f;
+    [SerializeField] private float maxKnockback = 14f;
+    [SerializeField] private float hitStopPerDamage = 0.006f;
+    [SerializeField] private float minCombatHitStop = 0.02f;
+    [SerializeField] private float maxCombatHitStop = 0.1f;
+    [SerializeField, Min(0f), Tooltip("ブロック破壊時の最低停止秒数。通常の地形接触では停止しません")]
+    private float blockBreakHitStop = 0.065f;
+    [SerializeField, Min(0f), Tooltip("敵撃破時の最低停止秒数。溜め命中の停止が長ければそちらを優先")]
+    private float enemyDefeatHitStop = 0.085f;
+    [SerializeField, Range(0.01f, 0.2f), Tooltip("同時・連続命中をまとめた1回の停止時間の上限。停止秒数を加算しません")]
+    private float maxContinuousHitStop = 0.12f;
+    [SerializeField] private float hitCooldownPerTarget = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float postHitSpeedRetention = 0.7f;
+
+    [Header("Chain / Tension")]
+    [SerializeField, Min(0.1f), Tooltip("鎖の通常時最大長。値を上げるほどBallが遠くまで遅れて追従します")]
+    private float maxRopeLength = 4.5f;
+    [SerializeField, Range(0.5f, 0.98f), Tooltip("最大鎖長に対して張力が立ち上がり始める割合。上げるほどたるみが長く残ります")]
+    private float tensionStartRatio = 0.84f;
+    [SerializeField, Min(0f), Tooltip("鎖が張った時にPlayerをBall方向へ引く基本力。上げるほど引かれ方が強くなります")]
+    private float tensionStrength = 42f;
+    [SerializeField, Min(0f), Tooltip("BallがPlayerから離れる相対速度に対する張力。上げるほど高速射出時の引きが強くなります")]
+    private float tensionDamping = 5f;
+    [SerializeField, Min(0f), Tooltip("地上でPlayerへ加える張力の上限。空中ではAir Tension Multiplierを掛けた値が上限になります")]
+    private float maxTensionForce = 65f;
+    [SerializeField, Range(1f, 3f), Tooltip("空中時のPlayer張力倍率。上げるほど鎖が張った後のスプリント感が強くなります")]
+    private float airTensionMultiplier = 1.8f;
+    [SerializeField, Min(0.01f), Tooltip("地上でBallを引き続けた時、抵抗が軽くなるまでの時間")]
+    private float groundPullEaseTime = 0.2f;
+    [SerializeField, Range(0.1f, 0.7f), Tooltip("地上でBallが動き出した後の抵抗倍率。小さいほど軽く引きずれます")]
+    private float movingPullResistance = 0.12f;
+    [SerializeField, Min(0f), Tooltip("走りジャンプの水平慣性保護を開始する離地時の最低水平速度")]
+    private float runJumpMomentumThreshold = 4f;
+    [SerializeField, Min(0f), Tooltip("走りジャンプ直後にBall由来の水平抵抗を弱める時間")]
+    private float jumpMomentumGraceTime = 0.3f;
+    [SerializeField, Range(0f, 1f), Tooltip("慣性保護開始時にPlayerの進行・上昇へ逆らう張力倍率。時間経過で通常張力へ戻ります")]
+    private float runJumpTensionMultiplier = 0.25f;
+
+    [Header("Ball Physics")]
+    [SerializeField, Min(0.01f), Tooltip("Ballの質量。衝突と慣性へ影響します。大幅に上げると操作性を損ないます")]
+    private float ballMass = 0.35f;
+    [SerializeField, Tooltip("Rest / Dragging時の重力倍率。上げるほど地面へ押し付けられ重量感が増します")]
+    private float normalBallGravityScale = 2f;
+    [SerializeField, Tooltip("Flying時の重力倍率。上げるほど射出軌道が早く落下します")]
+    private float thrownBallGravityScale = 2f;
+    [SerializeField, Min(0f), Tooltip("地上時の速度減衰。上げるほどBallが早く止まり、下げるほど慣性が残ります")]
+    private float ballGroundLinearDamping = 0.08f;
+    [SerializeField, Min(0f), Tooltip("Flying時の速度減衰。上げるほど飛距離が短くなります")]
+    private float ballFlyingLinearDamping = 0f;
+    [SerializeField, Min(0f), Tooltip("Ballの最大速度。射出と落下の暴走防止用です")]
+    private float maxBallLinearSpeed = 20f;
+    [SerializeField, Min(0f), Tooltip("Ballの最大落下速度。上げるほど速い落下と強い衝突を許可します")]
+    private float maxBallFallSpeed = 22f;
+    [SerializeField] private float spinChargeBallGravityScale = 0f;
+    [SerializeField] private float hookedBallGravityScale = 0f;
+
+    [Header("Launch")]
+    [SerializeField, Min(0f), Tooltip("通常射出速度。上げるほどBallの初速と衝突の勢いが増します")]
+    private float throwSpeed = 18f;
+    [SerializeField, Min(1f), Tooltip("Flying開始時に使用する鎖長倍率。Rest移行時は基準長へ安全に戻れるまで維持します")]
+    private float launchRopeLengthMultiplier = 1.4f;
+    [SerializeField, Tooltip("射出速度へ加える下向き成分。上げるほどBallを狙った地面へ落としやすくなります")]
+    private float postThrowDownwardBias = 0.25f;
+
+    [Header("クリック照準・発射")]
+    [SerializeField] private float minAimDistance = 0.2f;
+    [SerializeField] private float launchStartOffset = 0.25f;
+    [SerializeField] private float aimLaunchCooldown = 0f;
+    [SerializeField] private float fireInputBufferTime = 0.18f;
+    [SerializeField, Range(0f, 1f), Tooltip("この値未満の横成分では現在の向きを維持")]
+    private float horizontalFacingThreshold = 0.1f;
+
+    [Header("空中射出制限")]
+    [SerializeField] private bool limitAirThrows = true;
+    [SerializeField, Min(0)] private int maxAirThrows = 1;
+
+    [Header("Air Launch Assist")]
+    [SerializeField, Tooltip("空中射出直後だけ、Playerの落下を短時間弱めます")]
+    private bool enableAirLaunchAssist = true;
+    [SerializeField, Range(0.05f, 0.3f), Tooltip("ふわっと感が続く時間。上げるほど滞空感が長くなります")]
+    private float airLaunchAssistDuration = 0.16f;
+    [SerializeField, Range(0f, 1f), Tooltip("Assist中に残す通常重力の割合。下げるほどふわっとしますが、0でもPlayerを上向きには飛ばしません")]
+    private float airLaunchGravityMultiplier = 0.4f;
+    [SerializeField, Min(0f), Tooltip("射出瞬間に弱める下向き速度。上げるほど落下中のふわっと感が強くなります")]
+    private float airLaunchFallingVelocityReduction = 1.4f;
+    [SerializeField, Min(0f), Tooltip("降下中の空中射出直後に許可する最大落下速度。0で上限補正なし。軽い降下には影響しません")]
+    private float airLaunchMaxFallSpeedAfterShot = 3f;
+
+    [Header("Gamepad（追加入力）")]
+    [SerializeField] private bool enableGamepadInput = true;
+    [SerializeField, Range(0.05f, 1f)] private float gamepadFireThreshold = 0.70f;
+    [SerializeField, Range(0.05f, 0.7f)] private float gamepadResetThreshold = 0.25f;
+    [SerializeField] private bool useRightStickClickForCharge = true;
+    [SerializeField] private bool useLeftTriggerForSwingHold = true;
+
+    [Header("RecallBeforeThrow（発射前の見える引き寄せ）")]
+    [SerializeField] private bool useVisibleRecallBeforeThrow = true;
+    [SerializeField] private float visibleRecallTime = 0.12f;
+    [SerializeField] private float recallEasePower = 2f;
+    [SerializeField] private float recallHoldTime = 0.04f;
+    [SerializeField] private float recallStartDelay = 0f;
+    [SerializeField] private float chargedRecallTimeMultiplier = 0.6f;
+
+    [Header("Flying 終了条件")]
+    [SerializeField] private float maxThrownTime = 0.45f;
+    [SerializeField] private float maxThrowDistance = 4.8f;
+    [SerializeField] private float dropTransitionSpeed = 2f;
+
+    [Header("Recall")]
+    [SerializeField, Min(0f), Tooltip("明示RecallでBallが手元へ戻る速度。上げるほど回収が速くなります")]
+    private float returnSpeed = 21f;
+    [SerializeField] private float returnFinishDistance = 0.25f;
+
+    [Header("地形接触判定")]
+    [SerializeField, Range(0f, 1f)] private float floorNormalThreshold = 0.5f;
+
+    [Header("Hooked")]
+    [SerializeField] private float releaseBoost = 3f;
+    [FormerlySerializedAs("leftClickReThrowFromHook")]
+    [SerializeField] private bool shortClickRethrowFromHook = true;
+    [SerializeField] private float rehookLockoutTime = 0.15f;
+    [SerializeField] private float hookStickMinTime = 0.1f;
+    [SerializeField] private float holdToSwingTime = 0.5f;
+    [SerializeField] private bool releaseFromSwingToThrow = true;
+
+    [Header("HookSwing")]
+    [SerializeField] private float swingPullForce = 32f;
+    [SerializeField] private float swingInputForce = 12f;
+    [SerializeField] private float swingRadialDamping = 0.9f;
+    [SerializeField, Range(0f, 1f)] private float swingTangentKeepRate = 0.95f;
+    [SerializeField] private float maxSwingSpeed = 16f;
+
+    [Header("Magnet Swing Assist")]
+    [SerializeField, Min(0f)] private float magnetSwingForce = 12f;
+    [SerializeField, Min(0f)] private float magnetMaxSwingSpeed = 16f;
+
+    [Header("Hooked フィードバック")]
+    [SerializeField] private float hookedChainWidthMultiplier = 1.25f;
+    [SerializeField] private Color normalChainColor = Color.white;
+    [SerializeField] private Color hookedChainColor = new Color(1f, 0.9f, 0.5f, 1f);
+    [SerializeField] private float hookHitStopTime = 0.04f;
+    [SerializeField] private GameObject hookSparkPrefab;
+
+    [Header("SpinCharge")]
+    [SerializeField] private bool enableSpinCharge = true;
+    [SerializeField] private float holdThreshold = 0.28f;
+    [SerializeField] private float maxChargeTime = 1.2f;
+    [SerializeField] private float spinRadius = 1f;
+    [SerializeField] private float spinAngularSpeed = 720f;
+    [SerializeField] private float minChargedThrowMultiplier = 1.2f;
+    [SerializeField] private float maxChargedThrowMultiplier = 2.2f;
+    [SerializeField] private Collider2D spinGuardCollider;
+
+    [Header("Charged Attack")]
+    [SerializeField, Min(1f), Tooltip("最大チャージ時の飛翔速度上限倍率。通常時の速度上限は変えません")]
+    private float chargedSpeedLimitMultiplier = 1.8f;
+    [SerializeField, Min(1f), Tooltip("最大チャージ時のダメージ倍率。途中で離すとチャージ量に応じて補間します")]
+    private float fullChargeDamageMultiplier = 2.5f;
+    [SerializeField, Min(1f), Tooltip("最大チャージ時のノックバックとその上限の倍率")]
+    private float fullChargeKnockbackMultiplier = 1.35f;
+    [SerializeField] private bool enableChargeFeedback = true;
+
+    [Header("Ground Impact Camera Shake")]
+    [SerializeField] private CameraShake2D cameraShake;
+    [SerializeField, Min(0f)] private float minimumGroundImpactSpeed = 7f;
+    [SerializeField, Min(0f)] private float shakeDuration = 0.10f;
+    [SerializeField, Min(0f)] private float minimumShakeStrength = 0.06f;
+    [SerializeField, Min(0f)] private float maximumShakeStrength = 0.16f;
+    [SerializeField, Min(0f)] private float maxImpactSpeed = 20f;
+    [SerializeField, Min(0f)] private float shakeCooldown = 0.10f;
+
+    [Header("Ground Impact SFX")]
+    [SerializeField] private AudioSource groundImpactAudioSource;
+    [SerializeField] private AudioClip groundImpactClip;
+    [SerializeField, Range(0f, 1f)] private float groundImpactVolume = 0.56f;
+
+    [Header("Launch SFX")]
+    [SerializeField] private AudioSource sfxAudioSource;
+    [SerializeField] private AudioClip morningStarLaunchClip;
+    [SerializeField, Range(0f, 1f)] private float morningStarLaunchVolume = 0.55f;
+
+    [Header("Chain Full Stretch SFX")]
+    [SerializeField, Tooltip("投げた後に鎖が最大長へ達すると1回再生。未指定なら同梱の既定音を使用します")]
+    private AudioClip chainFullStretchClip;
+    [SerializeField, Range(0f, 1f)] private float chainFullStretchVolume = 0.7f;
+
+    [Header("照準ガイド")]
+    [SerializeField] private bool showAimGuide = true;
+    [SerializeField] private float aimGuideMaxLength = 8f;
+
+    [Header("Animator（任意）")]
+    [SerializeField] private Animator animator;
+    [SerializeField] private string backwardAimParam = "BackwardAim";
+    [SerializeField] private string launchChargeParam = "LaunchCharge";
+    [SerializeField] private string launchFireTrigger = "LaunchFire";
+    [SerializeField] private string launchPoseActiveParam = "LaunchPoseActive";
+    [SerializeField] private string launchRecoilTrigger = "LaunchRecoil";
+    [SerializeField] private float launchRecoilDelay = 0.08f;
+
+    [Header("Launch Pose Anchor")]
+    [SerializeField, Tooltip("右向きの構えフレームで棒先端へ合わせたHandAnchor localPosition")]
+    private Vector2 launchReadyAnchorLocalPosition = new Vector2(-1.68f, -1.15f);
+    [SerializeField, Tooltip("右向きの投げ切りフレームで棒先端へ合わせたHandAnchor localPosition")]
+    private Vector2 launchAnchorLocalPosition = new Vector2(2.28f, -0.05f);
+    [SerializeField, Min(0f), Tooltip("構えから投げ切りAnchorへ切り替える時間。Clipの2枚目と同じ0.06秒")]
+    private float launchPoseForwardFrameTime = 0.06f;
+    [SerializeField, Min(0.01f), InspectorName("Air Launch Pose Hold Duration"), Tooltip("空中射出後に腕を前へ突き出したPoseを維持する時間")]
+    private float launchPoseMaxHoldTime = 0.90f;
+    [SerializeField, Min(0.01f), InspectorName("Ground Launch Pose Hold Duration"), Tooltip("地上射出後に腕を前へ突き出したPoseを維持する時間")]
+    private float groundLaunchPoseHoldDuration = 1.35f;
+    [SerializeField, Range(0.05f, 0.15f), InspectorName("Chain Anchor Follow Time"), Tooltip("Spriteや向きで棒先端が変わった際に、鎖の物理支点と見た目を新しい位置へ追従させる時間")]
+    private float chainAnchorVisualFollowTime = 0.08f;
+
+    [Header("Upward Launch / Hanging Visual")]
+    [SerializeField, Tooltip("斜め45度以上の射出と、上側支点からのぶら下がり中に表示するSprite")]
+    private Sprite upwardPoseSprite;
+    [SerializeField, Tooltip("右向きの上投げSpriteで、棒の先端に合わせた鎖の描画始点")]
+    private Vector2 upwardPoseChainAnchorLocalPosition = new Vector2(-0.53125f, 1.79f);
+
+    [Header("Chain Climb")]
+    [SerializeField, Min(0.1f), Tooltip("↑入力中に鎖に沿って支点へ近づく速度")]
+    private float chainClimbSpeed = 3f;
+    [SerializeField, Min(0.1f), Tooltip("支点に近づき過ぎないための最小距離")]
+    private float chainClimbMinimumDistance = 1.25f;
+    [SerializeField, Range(0.1f, 1f), Tooltip("よじ登りを開始するMove Y入力のしきい値")]
+    private float chainClimbInputThreshold = 0.5f;
+    [SerializeField, Tooltip("よじ登り中の1フレーム目")]
+    private Sprite chainClimbSpriteA;
+    [SerializeField, Tooltip("よじ登り中の2フレーム目")]
+    private Sprite chainClimbSpriteB;
+    [SerializeField, Tooltip("よじ登りSpriteを鎖中心へ合わせる、回転後のローカル座標オフセット")]
+    private Vector2 chainClimbVisualOffset = new Vector2(-0.078125f, 0f);
+    [SerializeField, Min(1f), Tooltip("鎖登り中のアニメーション切り替え回数/秒。小さいほどゆっくり動きます")]
+    private float chainClimbAnimationFps = 5f;
+
+    [Header("Debug")]
+    [SerializeField] private bool debugLog;
+
+    private Rigidbody2D _playerRb;
+    private MorningStarState _state = MorningStarState.Dragging;
+    private float _nextLaunchTime;
+    private int _airThrowsUsed;
+    private Vector2 _pendingLaunchDir;
+    private Vector2 _recallStartPosition;
+    private Vector2 _recallTargetPosition;
+    private float _recallTimer;
+    private float _recallHoldTimer;
+    private float _recallDelayTimer;
+    private float _activeRecallDuration;
+    private float _pendingThrowSpeedMultiplier = 1f;
+    private float _thrownElapsed;
+    private bool _chainFullStretchSoundPending;
+    private Vector2 _hookPoint;
+    private bool _isHooked;
+    private MagnetPoint _attachedMagnet;
+    private float _rehookLockoutTimer;
+    private float _fireBufferTimer;
+    private Vector2 _bufferedAimDirection;
+    private float _recoilTriggerTime = -1f;
+    private float _hookedAtTime = -1f;
+    private float _fireHoldTime;
+    private bool _isFireHolding;
+    private bool _shoulderChargeInput;
+    private float _hookClickHoldTimer;
+    private bool _hookClickHolding;
+    private bool _requireReleaseBeforeHookClick;
+    private float _chargeTime;
+    private float _spinAngle;
+    private Vector2 _pendingAimDirection;
+    private Vector2 _lastValidAimDirection;
+    private bool _rightStickReady = true;
+    private Vector2 _lastGamepadAimDirection = Vector2.right;
+    private bool _gamepadFirePressedThisFrame;
+    private float _lastCharge01;
+    private float _lastSpeedMultiplier = 1f;
+    private float _pendingCharge01;
+    private float _activeThrowCharge01;
+    private bool _powerImpactPlayed;
+    private MorningStarChargeFeedback _chargeFeedback;
+    private float _nextGroundImpactShakeTime;
+    private Coroutine _hitStopRoutine;
+    private float _savedTimeScale = 1f;
+    private double _hitStopStartedAt;
+    private double _hitStopEndsAt;
+    private bool _goalInputBlocked;
+
+    public bool IsHitStopping => _hitStopRoutine != null;
+
+    public void SetGoalInputBlocked(bool blocked)
+    {
+        _goalInputBlocked = blocked;
+        if (!blocked)
+            return;
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        // Let the goal presentation acquire time after any earlier combat hit stop.
+        CancelHitStop();
+    }
+    private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
+    private readonly List<(Collider2D Ball, Collider2D Goal)> _recallGoalCollisionPairs =
+        new List<(Collider2D Ball, Collider2D Goal)>();
+    private Color _defaultLineColor = Color.white;
+    private float _defaultLineWidth;
+    private bool _lineVisualDefaultsCached;
+    private RigidbodyConstraints2D _restBallConstraints;
+    private CollisionDetectionMode2D _restBallCollisionDetectionMode;
+    private RigidbodyInterpolation2D _restBallInterpolation;
+    private bool _launchPoseActive;
+    private bool _launchForwardAnchorApplied;
+    private float _launchPoseElapsed;
+    private float _activeLaunchPoseHoldDuration;
+    private Vector3 _visualRopeAnchorLocal;
+    private Vector3 _visualRopeAnchorLocalVelocity;
+    private bool _visualRopeAnchorInitialized;
+    private int _visualRopeAnchorUpdatedFrame = -1;
+    private bool _playerLandingSubscribed;
+    private PlayerHealth _playerHealth;
+    private bool _playerDeathSubscribed;
+    private bool _launchRopeLengthActive;
+    private float _airLaunchAssistRemaining;
+    private SpriteRenderer _playerBodySprite;
+    private Sprite _animatorDrivenSpriteBeforeUpwardPose;
+    private bool _upwardLaunchPoseSelected;
+    private bool _upwardSpriteOverrideActive;
+    private bool _isChainClimbing;
+    private bool _waitingForUpperHangRetension;
+    private float _chainClimbDistance;
+    private float _previousChainClimbSpan;
+    private bool _chainClimbMovedThisFixedStep;
+    private float _chainClimbAnimationTime;
+    private SpriteRenderer _chainClimbSpriteRenderer;
+    private Sprite _animatorDrivenSpriteBeforeChainClimb;
+    private readonly ContactPoint2D[] _physicalUpperHangContacts = new ContactPoint2D[8];
+    private ContactFilter2D _physicalUpperHangContactFilter;
+    private bool _physicalUpperHangDetected;
+    private float _physicalUpperHangCandidateTime;
+    private float _physicalUpperHangGraceRemaining;
+    private const float PhysicalUpperHangEnterTime = 0.04f;
+    private const float PhysicalUpperHangGraceTime = 0.12f;
+    private const float PhysicalUpperHangMinimumClearance = 0.1f;
+    private const float PhysicalUpperHangRopeTolerance = 0.08f;
+
+    public float LastGroundImpactSpeed { get; private set; }
+    public float LastGroundImpactShakeStrength { get; private set; }
+    public int GroundImpactShakeCount { get; private set; }
+    public int GroundImpactSoundCount { get; private set; }
+    private int _hashBackwardAim;
+    private int _hashLaunchCharge;
+    private int _hashLaunchFire;
+    private int _hashLaunchPoseActive;
+    private int _hashLaunchRecoil;
+
+    public MorningStarState State => _state;
+    public MorningStarState CurrentState => _state;
+    private bool _simulatedBeforeStartIntro;
+    private bool _respawnPresentation;
+    private bool _trampolineJumpActive;
+    private bool _trampolineJumpLeftGround;
+    private bool _simulatedBeforeRespawn;
+    public Rigidbody2D BallBody => morningStarRb;
+    public Transform ChainVisualRoot => chainLineController != null ? chainLineController.transform : null;
+
+    /// <summary>位置を変えず中央State経由で停止。見た目はFeedback側で分解する。</summary>
+    public void BeginRespawnPresentation()
+    {
+        if (_respawnPresentation) return;
+        CancelHitStop();
+        _respawnPresentation = true;
+        _simulatedBeforeRespawn = morningStarRb != null && morningStarRb.simulated;
+        EndLaunchPose();
+        ResetChainClimbState(false);
+        SetSpinGuardActive(false);
+        TransitionToState(MorningStarState.Respawning);
+        if (aimGuideLineRenderer != null) aimGuideLineRenderer.enabled = false;
+        if (aimMark != null) aimMark.gameObject.SetActive(false);
+    }
+
+    public void EndRespawnPresentation()
+    {
+        if (!_respawnPresentation) return;
+        _respawnPresentation = false;
+        if (morningStarRb != null) morningStarRb.simulated = _simulatedBeforeRespawn;
+        ResetForRespawn();
+    }
+
+    /// <summary>開始演出も中央の状態遷移を通し、鎖と鉄球の物理を一時停止する。</summary>
+    public void BeginStartIntro()
+    {
+        if (_state == MorningStarState.StartIntro)
+            return;
+        _simulatedBeforeStartIntro = morningStarRb != null && morningStarRb.simulated;
+        ResetForRespawn();
+        TransitionToState(MorningStarState.StartIntro);
+        if (aimGuideLineRenderer != null)
+            aimGuideLineRenderer.enabled = false;
+        if (aimMark != null)
+            aimMark.gameObject.SetActive(false);
+    }
+
+    public void SetStartIntroBallPosition(Vector2 position)
+    {
+        if (_state != MorningStarState.StartIntro || morningStarRb == null)
+            return;
+        morningStarRb.position = position;
+        morningStarRb.transform.position = new Vector3(position.x, position.y, morningStarRb.transform.position.z);
+    }
+
+    public void EndStartIntro()
+    {
+        if (_state != MorningStarState.StartIntro)
+            return;
+        if (morningStarRb != null)
+            morningStarRb.simulated = _simulatedBeforeStartIntro;
+        // 初回・Recall完了・Respawnと同じRest設定へ戻す。
+        ResetForRespawn();
+    }
+    public float MaxRopeLength => _isChainClimbing
+        ? Mathf.Max(0.1f, _chainClimbDistance)
+        : GetEffectiveRopeLength();
+    public float BaseMaxRopeLength => Mathf.Max(0.1f, maxRopeLength);
+    public float LaunchRopeLengthMultiplier => Mathf.Max(1f, launchRopeLengthMultiplier);
+    public bool IsLaunchRopeLengthActive => _launchRopeLengthActive;
+    public float RestBallMass => Mathf.Max(0.01f, ballMass);
+    public float RestBallGravityScale => normalBallGravityScale;
+    public float RestBallLinearDamping => ballGroundLinearDamping;
+    public bool IsAirLaunchAssistActive => _airLaunchAssistRemaining > 0f;
+    public bool IsTrampolineJumpActive => _trampolineJumpActive;
+    public float AirTensionMultiplier => airTensionMultiplier;
+    public float LastCharge01 => _lastCharge01;
+    public event System.Action<float> LaunchCommitted;
+    public event System.Action EnemyHitConfirmed;
+    public float ChargeProgress => maxChargeTime > 0f ? Mathf.Clamp01(_chargeTime / maxChargeTime) : 1f;
+    public bool IsChargeReady => _state == MorningStarState.SpinCharging && ChargeProgress >= 1f;
+    public bool IsPowerThrow => _state == MorningStarState.Thrown && _activeThrowCharge01 >= 1f;
+    public float EffectiveBallSpeedLimit => maxBallLinearSpeed * Mathf.Lerp(
+        1f, Mathf.Max(1f, chargedSpeedLimitMultiplier), _activeThrowCharge01);
+    public float LastSpeedMultiplier => _lastSpeedMultiplier;
+    public Transform HandAnchor => handAnchor;
+    public Vector2 RopeAnchorWorld => GetPlayerRopeAnchorWorld();
+    public Vector2 VisualRopeAnchorWorld => GetVisualRopeAnchorWorld();
+    public int RopeContactPointCount => chainConstraint != null
+        ? chainConstraint.RopeContactPointCount
+        : 0;
+    public bool IsLaunchPoseActive => _launchPoseActive;
+    public bool IsUpwardPoseVisible => ShouldUseUpwardPose();
+    public Vector2 LaunchReadyAnchorLocalPosition => launchReadyAnchorLocalPosition;
+    public Vector2 LaunchAnchorLocalPosition => launchAnchorLocalPosition;
+    public float LaunchPoseMaxHoldTime => launchPoseMaxHoldTime;
+    public float GroundLaunchPoseHoldDuration => groundLaunchPoseHoldDuration;
+    public bool IsChainClimbing => _isChainClimbing;
+    public bool IsWaitingForUpperHangRetension => _waitingForUpperHangRetension;
+    public float CurrentChainClimbDistance => _chainClimbDistance;
+    public bool IsUpperHanging => IsUpperHangingSupport();
+    public bool IsPhysicalUpperHanging => IsPhysicalUpperHangingSupport();
+
+    public Vector2 GetRopeContactPoint(int index)
+    {
+        return chainConstraint != null
+            ? chainConstraint.GetRopeContactPoint(index)
+            : Vector2.zero;
+    }
+
+    public bool IsRopeLineVisible =>
+        _state == MorningStarState.StartIntro
+        || _state == MorningStarState.Dragging
+        || _state == MorningStarState.SpinCharging
+        || _state == MorningStarState.RecallBeforeThrow
+        || _state == MorningStarState.Thrown
+        || _state == MorningStarState.Dropping
+        || _state == MorningStarState.Returning
+        || _state == MorningStarState.Hooked
+        || _state == MorningStarState.Swinging;
+
+    public bool IsHookedState =>
+        _state == MorningStarState.Hooked || _state == MorningStarState.Swinging;
+
+    /// <summary>
+    /// Playerのリスポーン後に、鉄球・鎖・入力ラッチを共通Restへ戻す。
+    /// ゲーム開始時・Recall完了時と同じDragging初期化経路で物理設定を再構築する。
+    /// </summary>
+    public void ResetForRespawn()
+    {
+        EndTrampolineJump();
+        CancelHitStop();
+        SetGoalCollisionIgnoredForRecall(false);
+        if (_chargeFeedback != null)
+            _chargeFeedback.ResetFeedback();
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
+        _airThrowsUsed = 0;
+        _nextLaunchTime = 0f;
+        _fireBufferTimer = 0f;
+        _bufferedAimDirection = Vector2.zero;
+        _pendingLaunchDir = Vector2.zero;
+        _pendingAimDirection = Vector2.zero;
+        _gamepadFirePressedThisFrame = false;
+        _recoilTriggerTime = -1f;
+
+        Gamepad pad = Gamepad.current;
+        _rightStickReady = pad == null
+            || pad.rightStick.ReadValue().magnitude <= gamepadResetThreshold;
+
+        if (morningStarRb != null)
+        {
+            morningStarRb.linearVelocity = Vector2.zero;
+            morningStarRb.angularVelocity = 0f;
+            morningStarRb.WakeUp();
+        }
+
+        EnterDraggingState(true);
+
+        // 共通Restで位置・ラッチを復元した後も、再構築が済むまで物理を開始しない。
+        if (_respawnPresentation)
+            TransitionToState(MorningStarState.Respawning);
+
+        if (animator != null)
+        {
+            if (HasAnimatorParam(_hashLaunchFire, AnimatorControllerParameterType.Trigger))
+                animator.ResetTrigger(_hashLaunchFire);
+            if (HasAnimatorParam(_hashLaunchRecoil, AnimatorControllerParameterType.Trigger))
+                animator.ResetTrigger(_hashLaunchRecoil);
+        }
+
+        if (player != null)
+            player.ClearAimFacing();
+    }
+
+    /// <summary>
+    /// MagnetPoint が鉄球を吸着完了状態へ移すための入口。
+    /// 通常の壁 Hook と同じ固定・スイング・再射出経路を使う。
+    /// </summary>
+    public bool TryAttachToMagnet(MagnetPoint magnet, Rigidbody2D targetBody, Vector2 anchorPosition)
+    {
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
+            return false;
+        if (magnet == null || targetBody == null || targetBody != morningStarRb)
+            return false;
+
+        if (_state == MorningStarState.RecallBeforeThrow
+            || _state == MorningStarState.Returning
+            || _state == MorningStarState.SpinCharging)
+        {
+            return false;
+        }
+
+        if (_isHooked)
+        {
+            if (_attachedMagnet != magnet)
+                return false;
+
+            _hookPoint = anchorPosition;
+            return true;
+        }
+
+        BeginHook(anchorPosition);
+        _attachedMagnet = magnet;
+        BeginSwinging();
+        GrantMagnetEscapeThrow();
+        if (_isHooked && _state == MorningStarState.Swinging)
+            EndLaunchPose();
+        return _isHooked && _state == MorningStarState.Swinging;
+    }
+
+    public bool IsAttachedToMagnet(MagnetPoint magnet, Rigidbody2D targetBody)
+    {
+        return magnet != null
+            && targetBody != null
+            && targetBody == morningStarRb
+            && _attachedMagnet == magnet
+            && _isHooked
+            && (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging);
+    }
+
+    private void Awake()
+    {
+        MigrateLegacyDefaults();
+
+        if (usePlayerOnSameObject && playerRigidbody2D == null)
+            playerRigidbody2D = GetComponent<Rigidbody2D>();
+        if (hookRopeJoint == null)
+            hookRopeJoint = GetComponent<DistanceJoint2D>();
+        if (hookRopeJoint != null)
+            hookRopeJoint.enabled = false;
+        if (player == null && playerRigidbody2D != null)
+            player = playerRigidbody2D.GetComponent<Player>();
+        if (_playerHealth == null)
+            _playerHealth = GetComponent<PlayerHealth>();
+        if (sfxAudioSource == null)
+        {
+            Transform sfxTransform = transform.Find("SfxAudioSource");
+            if (sfxTransform != null)
+                sfxAudioSource = sfxTransform.GetComponent<AudioSource>();
+        }
+        if (chainFullStretchClip == null)
+            chainFullStretchClip = Resources.Load<AudioClip>("ChainFullStretch");
+        if (cameraShake == null && Camera.main != null)
+            cameraShake = Camera.main.GetComponent<CameraShake2D>();
+        if (animator == null)
+            animator = GetComponent<Animator>();
+        if (handAnchor == null)
+            handAnchor = transform;
+        ResolvePlayerBodySprite();
+        RefreshPhysicalUpperHangContactFilter();
+
+        _hashBackwardAim = Animator.StringToHash(backwardAimParam);
+        _hashLaunchCharge = Animator.StringToHash(launchChargeParam);
+        _hashLaunchFire = Animator.StringToHash(launchFireTrigger);
+        _hashLaunchPoseActive = Animator.StringToHash(launchPoseActiveParam);
+        _hashLaunchRecoil = Animator.StringToHash(launchRecoilTrigger);
+
+        // AnimatorControllerのSerialized Weightが欠落していても、
+        // 実射出Triggerを受けるVisualレイヤーを確実に有効化する。
+        if (animator != null)
+        {
+            int launcherPoseLayer = animator.GetLayerIndex(LauncherPoseLayerName);
+            if (launcherPoseLayer >= 0)
+                animator.SetLayerWeight(launcherPoseLayer, 1f);
+        }
+    }
+
+    private void OnValidate()
+    {
+        launchRopeLengthMultiplier = Mathf.Max(1f, launchRopeLengthMultiplier);
+        horizontalFacingThreshold = Mathf.Clamp01(horizontalFacingThreshold);
+        ballMass = Mathf.Max(0.01f, ballMass);
+        ballGroundLinearDamping = Mathf.Max(0f, ballGroundLinearDamping);
+        ballFlyingLinearDamping = Mathf.Max(0f, ballFlyingLinearDamping);
+        tensionStartRatio = Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
+        tensionStrength = Mathf.Max(0f, tensionStrength);
+        tensionDamping = Mathf.Max(0f, tensionDamping);
+        maxTensionForce = Mathf.Max(0f, maxTensionForce);
+        airTensionMultiplier = Mathf.Max(1f, airTensionMultiplier);
+        groundPullEaseTime = Mathf.Max(0.01f, groundPullEaseTime);
+        movingPullResistance = Mathf.Clamp(movingPullResistance, 0.1f, 0.7f);
+        runJumpMomentumThreshold = Mathf.Max(0f, runJumpMomentumThreshold);
+        jumpMomentumGraceTime = Mathf.Max(0f, jumpMomentumGraceTime);
+        runJumpTensionMultiplier = Mathf.Clamp01(runJumpTensionMultiplier);
+        airLaunchAssistDuration = Mathf.Max(0f, airLaunchAssistDuration);
+        airLaunchGravityMultiplier = Mathf.Clamp01(airLaunchGravityMultiplier);
+        airLaunchFallingVelocityReduction = Mathf.Max(0f, airLaunchFallingVelocityReduction);
+        airLaunchMaxFallSpeedAfterShot = Mathf.Max(0f, airLaunchMaxFallSpeedAfterShot);
+        launchPoseMaxHoldTime = Mathf.Max(0.01f, launchPoseMaxHoldTime);
+        groundLaunchPoseHoldDuration = Mathf.Max(0.01f, groundLaunchPoseHoldDuration);
+        chainAnchorVisualFollowTime = Mathf.Clamp(chainAnchorVisualFollowTime, 0.05f, 0.15f);
+        chainClimbSpeed = Mathf.Max(0.1f, chainClimbSpeed);
+        chainClimbMinimumDistance = Mathf.Max(0.1f, chainClimbMinimumDistance);
+        chainClimbInputThreshold = Mathf.Clamp(chainClimbInputThreshold, 0.1f, 1f);
+        chainClimbAnimationFps = Mathf.Max(1f, chainClimbAnimationFps);
+        if (hookableLayers.value == 0)
+            hookableLayers = LayerMask.GetMask("Walls", "Default");
+        RefreshPhysicalUpperHangContactFilter();
+        if (enemyLayers.value == 0)
+            enemyLayers = LayerMask.GetMask("Enemy");
+        if (breakableLayers.value == 0)
+            breakableLayers = LayerMask.GetMask("Walls");
+        SyncRopeLengthToConstraint();
+    }
+
+    private void OnEnable()
+    {
+        SubscribeToPlayerLanding();
+        SubscribeToPlayerDeath();
+    }
+
+    private void Start()
+    {
+        SubscribeToPlayerLanding();
+        SubscribeToPlayerDeath();
+
+        _playerRb = playerRigidbody2D;
+        EnsureHookRopeJoint();
+        SetHookRopeJointActive(false);
+        if (morningStarRb == null)
+        {
+            GameObject head = GameObject.FindGameObjectWithTag("morningstar");
+            if (head != null)
+                morningStarRb = head.GetComponent<Rigidbody2D>();
+        }
+
+        if (morningStarRb != null)
+        {
+            _restBallConstraints = morningStarRb.constraints;
+            _restBallCollisionDetectionMode = morningStarRb.collisionDetectionMode;
+            _restBallInterpolation = morningStarRb.interpolation;
+            IgnorePlayerBallCollision();
+            EnsureCollisionReporter();
+            if (enableChargeFeedback)
+            {
+                _chargeFeedback = morningStarRb.GetComponent<MorningStarChargeFeedback>();
+                if (_chargeFeedback == null)
+                    _chargeFeedback = morningStarRb.gameObject.AddComponent<MorningStarChargeFeedback>();
+                _chargeFeedback.Initialize(sfxAudioSource);
+            }
+        }
+
+        SyncRopeLengthToConstraint();
+
+        if (chainLineController != null)
+        {
+            chainLineController.SetLauncher(this);
+            chainLineController.ConfigureHookVisual(normalChainColor, hookedChainColor, hookedChainWidthMultiplier);
+        }
+
+        SetSpinGuardActive(false);
+        ApplyHookedChainVisual(false);
+
+        if (lineRenderer != null)
+        {
+            lineRenderer.positionCount = 2;
+            lineRenderer.enabled = chainLineController == null;
+        }
+
+        if (aimGuideLineRenderer != null)
+        {
+            aimGuideLineRenderer.positionCount = 2;
+            aimGuideLineRenderer.enabled = false;
+        }
+
+        EnterDraggingState(true);
+    }
+
+    private void OnDisable()
+    {
+        EndTrampolineJump();
+        CancelHitStop();
+        SetGoalCollisionIgnoredForRecall(false);
+        _activeThrowCharge01 = 0f;
+        if (_chargeFeedback != null)
+            _chargeFeedback.ResetFeedback();
+        UnsubscribeFromPlayerLanding();
+        UnsubscribeFromPlayerDeath();
+        StopAirLaunchAssist();
+        EndLaunchPose();
+        ResetChainClimbState(false);
+        RestoreAnimatorDrivenSprite();
+        SetLaunchRopeLengthActive(false);
+        SetHookRopeJointActive(false);
+    }
+
+    private void Update()
+    {
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
+            return;
+        if (morningStarRb == null)
+            return;
+
+        UpdateLaunchPose();
+        _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
+
+        if (_goalInputBlocked)
+        {
+            UpdateFallbackLineRenderer();
+            return;
+        }
+
+        UpdateGamepadInputState();
+        ProcessRecoilTrigger();
+        UpdateFallbackLineRenderer();
+
+        // 飛翔中、または手元から離れたRestの回収は明示操作だけ。
+        if ((_state == MorningStarState.Thrown
+             || _state == MorningStarState.Dropping
+             || (_state == MorningStarState.Dragging && !IsBallAtReturnSocket()))
+            && WasReleasePressedThisFrame())
+        {
+            BeginReturn();
+            return;
+        }
+
+        // 1. Release（Hooked / HookSwing）
+        if ((_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
+            && WasReleasePressedThisFrame())
+        {
+            BeginRelease();
+            return;
+        }
+
+        // 2. Hooked / HookSwing 専用（Fire Buffer に入れない）
+        if (_state == MorningStarState.Hooked)
+        {
+            HandleHookedClickInput();
+            return;
+        }
+
+        if (_state == MorningStarState.Swinging)
+        {
+            HandleSwingingInput();
+            return;
+        }
+
+        if (_state == MorningStarState.SpinCharging)
+        {
+            HandleSpinChargingReleaseInput();
+            return;
+        }
+
+        // 3. Dragging / Dropping
+        if (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+        {
+            if (enableSpinCharge)
+                HandleSpinChargeInput();
+            else
+                HandleSimpleFireInput();
+        }
+
+        // 4. Returning / RecallBeforeThrow / Thrown の Fire Buffer
+        ProcessBufferedFireInputForRestrictedStates();
+
+        if (_fireBufferTimer > 0f)
+            _fireBufferTimer -= Time.deltaTime;
+
+        if (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+            TryConsumeBufferedFire();
+    }
+
+    private void FixedUpdate()
+    {
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
+            return;
+        if (_playerRb == null || morningStarRb == null)
+            return;
+        if (Time.timeScale < 0.01f)
+            return;
+
+        float dt = Time.fixedDeltaTime;
+        UpdateTrampolineJump();
+        Vector2 hand = GetHandWorld();
+        TryPlayChainFullStretchSound();
+        UpdateAirLaunchAssist(dt);
+        UpdatePhysicalUpperHangDetection(dt);
+        switch (_state)
+        {
+            case MorningStarState.Dragging:
+                TryRestoreBaseRopeLength();
+                UpdateChainClimb(dt);
+                break;
+
+            case MorningStarState.SpinCharging:
+                UpdateSpinChargingFixed(dt);
+                break;
+
+            case MorningStarState.RecallBeforeThrow:
+                UpdateRecallBeforeThrow(dt);
+                break;
+
+            case MorningStarState.Thrown:
+                UpdateThrown(dt, hand);
+                break;
+
+            case MorningStarState.Dropping:
+                TryRestoreBaseRopeLength();
+                UpdateChainClimb(dt);
+                break;
+
+            case MorningStarState.Returning:
+                UpdateReturning(dt);
+                break;
+
+            case MorningStarState.Hooked:
+                UpdateHookedFixed(dt);
+                break;
+
+            case MorningStarState.Swinging:
+                UpdateSwingingFixed(dt);
+                break;
+        }
+
+        LimitBallFallSpeed();
+    }
+
+    private void LateUpdate()
+    {
+        if (_state == MorningStarState.StartIntro || _respawnPresentation)
+            return;
+        if (UpdateChainClimbVisual())
+            return;
+
+        RestoreChainClimbVisual();
+        UpdateUpwardPoseSprite();
+    }
+
+    /// <summary>
+    /// 状態変更の唯一の入口。Rigidbody2Dと鎖の設定はここからだけ変更する。
+    /// </summary>
+    private void TransitionToState(MorningStarState nextState)
+    {
+        // 明示的なHook/Magnet操作と演出状態では通常の状態別物理へ戻す。
+        if (nextState == MorningStarState.Hooked || nextState == MorningStarState.Swinging
+            || nextState == MorningStarState.StartIntro || nextState == MorningStarState.Respawning)
+        {
+            EndTrampolineJump();
+        }
+
+        SetGoalCollisionIgnoredForRecall(nextState == MorningStarState.RecallBeforeThrow
+            || nextState == MorningStarState.Returning);
+        if (nextState != MorningStarState.Thrown)
+            _activeThrowCharge01 = 0f;
+        if (_chargeFeedback != null)
+        {
+            if (nextState == MorningStarState.SpinCharging)
+                _chargeFeedback.BeginCharge();
+            else if (nextState == MorningStarState.RecallBeforeThrow)
+                _chargeFeedback.PrepareThrow(_pendingCharge01);
+            else if (nextState != MorningStarState.Thrown)
+                _chargeFeedback.StopChargeAndFlight();
+        }
+        if (nextState != MorningStarState.Thrown)
+            StopAirLaunchAssist();
+
+        _state = nextState;
+
+        bool useLaunchLength = nextState == MorningStarState.Thrown
+            || ShouldKeepLaunchRopeLengthAfterFlight(nextState);
+        SetLaunchRopeLengthActive(useLaunchLength);
+        if (nextState == MorningStarState.Thrown)
+            _chainFullStretchSoundPending = true;
+
+        bool useFreeRope = nextState == MorningStarState.Dragging
+            || nextState == MorningStarState.Thrown
+            || nextState == MorningStarState.Dropping;
+        SetChainConstraintActive(useFreeRope);
+        if (chainConstraint != null)
+        {
+            chainConstraint.SetPlayerPullSuppressed(_trampolineJumpActive);
+            chainConstraint.SetFlyingTrajectoryPriority(nextState == MorningStarState.Thrown);
+        }
+
+        bool useHookRope = (nextState == MorningStarState.Hooked
+                            || nextState == MorningStarState.Swinging)
+                           && _isHooked;
+        SetHookRopeJointActive(useHookRope);
+
+        ConfigureBallForState(nextState);
+    }
+
+    private void MigrateLegacyDefaults()
+    {
+        if ((launchReadyAnchorLocalPosition - new Vector2(-2.03f, -1.02f)).sqrMagnitude < 0.0001f)
+            launchReadyAnchorLocalPosition = new Vector2(-1.68f, -1.15f);
+
+        if ((launchAnchorLocalPosition - new Vector2(2.87f, 0.39f)).sqrMagnitude < 0.0001f)
+            launchAnchorLocalPosition = new Vector2(2.28f, -0.05f);
+
+        // 旧既定値の組だけを軽いDragging設定へ移行し、個別調整値は保持する。
+        if (Mathf.Approximately(groundPullEaseTime, 0.45f)
+            && Mathf.Approximately(movingPullResistance, 0.35f))
+        {
+            groundPullEaseTime = 0.20f;
+            movingPullResistance = 0.12f;
+        }
+    }
+
+    private void ConfigureBallForState(MorningStarState state)
+    {
+        if (morningStarRb == null)
+            return;
+
+        // すべての状態を同じ基準値から構築し、前状態の物理値を持ち越さない。
+        morningStarRb.bodyType = RigidbodyType2D.Dynamic;
+        morningStarRb.mass = Mathf.Max(0.01f, ballMass);
+        morningStarRb.constraints = _restBallConstraints;
+        morningStarRb.collisionDetectionMode = _restBallCollisionDetectionMode;
+        morningStarRb.interpolation = _restBallInterpolation;
+        morningStarRb.gravityScale = normalBallGravityScale;
+        morningStarRb.linearDamping = ballGroundLinearDamping;
+
+        switch (state)
+        {
+            case MorningStarState.StartIntro:
+            case MorningStarState.Respawning:
+                morningStarRb.simulated = false;
+                morningStarRb.linearVelocity = Vector2.zero;
+                morningStarRb.angularVelocity = 0f;
+                break;
+
+            case MorningStarState.SpinCharging:
+                morningStarRb.gravityScale = spinChargeBallGravityScale;
+                morningStarRb.linearDamping = 0f;
+                break;
+
+            case MorningStarState.RecallBeforeThrow:
+            case MorningStarState.Returning:
+                morningStarRb.gravityScale = 0f;
+                morningStarRb.linearDamping = 0f;
+                break;
+
+            case MorningStarState.Thrown:
+                morningStarRb.gravityScale = thrownBallGravityScale;
+                morningStarRb.linearDamping = ballFlyingLinearDamping;
+                break;
+
+            case MorningStarState.Dropping:
+                // 旧Scene/外部コードとの互換用。物理はRestと完全に同じ。
+                morningStarRb.gravityScale = normalBallGravityScale;
+                morningStarRb.linearDamping = ballGroundLinearDamping;
+                break;
+
+            case MorningStarState.Hooked:
+            case MorningStarState.Swinging:
+                morningStarRb.gravityScale = hookedBallGravityScale;
+                morningStarRb.linearDamping = 0f;
+                break;
+        }
+    }
+
+    /// <summary>トランポリンから着地までPlayerへの牽引を止め、張った鎖で鉄球側を追従させる。</summary>
+    public void BeginTrampolineJump()
+    {
+        if (!isActiveAndEnabled || _playerRb == null || morningStarRb == null
+            || _respawnPresentation || _state == MorningStarState.StartIntro)
+            return;
+
+        // 跳躍を既存のHook/Jointで止めない。移動や発射の入力は引き続き受け付ける。
+        if (_isHooked)
+            EnterDraggingState(false);
+
+        // 鉄球の重力・速度は変えない。Playerが先に跳び、鎖が張ってから鉄球を引き上げる。
+        _trampolineJumpActive = true;
+        _trampolineJumpLeftGround = false;
+        ResetChainClimbState(false);
+        if (chainConstraint != null)
+            chainConstraint.SetPlayerPullSuppressed(true);
+    }
+
+    private void UpdateTrampolineJump()
+    {
+        if (!_trampolineJumpActive)
+            return;
+
+        // 接地判定の猶予が跳ねた直後に残っていても、離陸前に解除しない。
+        if (!IsPlayerGrounded())
+            _trampolineJumpLeftGround = true;
+        else if (_trampolineJumpLeftGround && _playerRb.linearVelocity.y <= 0.05f)
+            EndTrampolineJump();
+    }
+
+    private void EndTrampolineJump()
+    {
+        if (!_trampolineJumpActive)
+            return;
+
+        _trampolineJumpActive = false;
+        _trampolineJumpLeftGround = false;
+        if (chainConstraint != null)
+            chainConstraint.SetPlayerPullSuppressed(false);
+    }
+
+    private void LimitBallFallSpeed()
+    {
+        if (morningStarRb == null || maxBallFallSpeed <= 0f)
+            return;
+
+        Vector2 velocity = morningStarRb.linearVelocity;
+        if (velocity.y < -maxBallFallSpeed)
+        {
+            velocity.y = -maxBallFallSpeed;
+            morningStarRb.linearVelocity = velocity;
+        }
+    }
+
+    private void BeginAirLaunchAssist(bool launchedInAir)
+    {
+        StopAirLaunchAssist();
+        if (!launchedInAir || !enableAirLaunchAssist || _playerRb == null)
+            return;
+
+        _airLaunchAssistRemaining = airLaunchAssistDuration;
+
+        Vector2 velocity = _playerRb.linearVelocity;
+        if (velocity.y < 0f)
+        {
+            if (airLaunchFallingVelocityReduction > 0f)
+            {
+                velocity.y = Mathf.Min(
+                    0f,
+                    velocity.y + airLaunchFallingVelocityReduction);
+            }
+
+            if (airLaunchMaxFallSpeedAfterShot > 0f)
+                velocity.y = Mathf.Max(velocity.y, -airLaunchMaxFallSpeedAfterShot);
+
+            _playerRb.linearVelocity = velocity;
+        }
+
+    }
+
+    private void UpdateAirLaunchAssist(float dt)
+    {
+        if (_airLaunchAssistRemaining <= 0f)
+            return;
+        if (_state != MorningStarState.Thrown || IsPlayerGrounded())
+        {
+            StopAirLaunchAssist();
+            return;
+        }
+
+        _airLaunchAssistRemaining = Mathf.Max(0f, _airLaunchAssistRemaining - dt);
+
+        // Rigidbody設定は変更せず、短時間だけ通常重力の一部を相殺する。
+        // 上向き速度は与えないため、二段ジャンプにはならない。
+        float gravityCompensation = -Physics2D.gravity.y
+            * (1f - airLaunchGravityMultiplier)
+            * _playerRb.mass;
+        if (gravityCompensation > 0f)
+            _playerRb.AddForce(Vector2.up * gravityCompensation, ForceMode2D.Force);
+    }
+
+    private void StopAirLaunchAssist()
+    {
+        _airLaunchAssistRemaining = 0f;
+    }
+
+    private void EnterDraggingState(bool snapBallToSocket)
+    {
+        EndLaunchPose();
+        _isHooked = false;
+        _attachedMagnet = null;
+        _hookPoint = Vector2.zero;
+        _recallTimer = 0f;
+        _recallHoldTimer = 0f;
+        _recallDelayTimer = 0f;
+        _pendingThrowSpeedMultiplier = 1f;
+        _pendingCharge01 = 0f;
+        _pendingLaunchDir = Vector2.zero;
+        _thrownElapsed = 0f;
+        _lastCharge01 = 0f;
+        _lastSpeedMultiplier = 1f;
+        _fireHoldTime = 0f;
+        _isFireHolding = false;
+        _shoulderChargeInput = false;
+        _hookClickHoldTimer = 0f;
+        _hookClickHolding = false;
+        _requireReleaseBeforeHookClick = false;
+        _chargeTime = 0f;
+        SetSpinGuardActive(false);
+        ApplyHookedChainVisual(false);
+        SetAnimatorBool(_hashLaunchCharge, false);
+
+        TransitionToState(MorningStarState.Dragging);
+
+        if (snapBallToSocket && morningStarRb != null)
+            SnapBallToSocket(zeroVelocity: true);
+
+        TryConsumeBufferedFire();
+    }
+
+    private bool WasFirePressedThisFrame()
+    {
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            return true;
+
+        return _gamepadFirePressedThisFrame;
+    }
+
+    private static bool WasReleasePressedThisFrame()
+    {
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.rightButton.wasPressedThisFrame)
+            return true;
+
+        Keyboard kb = Keyboard.current;
+        if (kb != null && kb.bKey.wasPressedThisFrame)
+            return true;
+
+        Gamepad pad = Gamepad.current;
+        if (pad != null && pad.buttonEast.wasPressedThisFrame)
+            return true;
+
+        return false;
+    }
+
+    private void BufferFireInput(Vector2 aimDir)
+    {
+        if (aimDir.sqrMagnitude <= 0.001f)
+            return;
+
+        _bufferedAimDirection = aimDir.normalized;
+        _fireBufferTimer = fireInputBufferTime;
+        _pendingAimDirection = _bufferedAimDirection;
+    }
+
+    private void ProcessBufferedFireInputForRestrictedStates()
+    {
+        if (_state != MorningStarState.Returning
+            && _state != MorningStarState.RecallBeforeThrow
+            && _state != MorningStarState.Thrown)
+            return;
+
+        if (!WasFirePressedThisFrame())
+            return;
+
+        Vector2 aimDir = CalculateAimDirection();
+        if (aimDir.sqrMagnitude > 0.001f)
+            BufferFireInput(aimDir);
+    }
+
+    private void HandleHookedClickInput()
+    {
+        Mouse mouse = Mouse.current;
+
+        // 投擲クリックの押しっぱなしを Hook 後の短押し再射出と誤認しない
+        if (_requireReleaseBeforeHookClick)
+        {
+            if (!((mouse != null && mouse.leftButton.isPressed) || IsGamepadSwingHoldPressed()))
+                _requireReleaseBeforeHookClick = false;
+            return;
+        }
+
+        bool holdPressedThisFrame = (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            || WasGamepadSwingHoldPressedThisFrame();
+        bool holdPressed = (mouse != null && mouse.leftButton.isPressed)
+            || IsGamepadSwingHoldPressed();
+
+        if (holdPressedThisFrame)
+        {
+            _hookClickHolding = true;
+            _hookClickHoldTimer = 0f;
+        }
+
+        if (_hookClickHolding && holdPressed)
+        {
+            _hookClickHoldTimer += Time.deltaTime;
+
+            Vector2 aim = CalculateAimDirectionFromHook();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+
+            if (_hookClickHoldTimer >= holdToSwingTime)
+            {
+                BeginSwinging();
+                _hookClickHolding = false;
+            }
+        }
+
+        if (_hookClickHolding && ((mouse != null && mouse.leftButton.wasReleasedThisFrame) || WasGamepadSwingHoldReleasedThisFrame()))
+        {
+            if (_state == MorningStarState.Hooked
+                && _hookClickHoldTimer < holdToSwingTime
+                && shortClickRethrowFromHook)
+            {
+                Vector2 aimDir = CalculateAimDirection();
+                if (aimDir.sqrMagnitude <= 0.001f)
+                    aimDir = _pendingAimDirection;
+                if (aimDir.sqrMagnitude > 0.001f)
+                    BeginReThrowFromHook(aimDir);
+            }
+
+            _hookClickHolding = false;
+            _hookClickHoldTimer = 0f;
+        }
+    }
+
+    private void HandleSwingingInput()
+    {
+        Mouse mouse = Mouse.current;
+        bool swingHold = (mouse != null && mouse.leftButton.isPressed)
+            || IsGamepadSwingHoldPressed();
+
+        // Magnetへ到達した瞬間に残っている発射入力を、即時再射出と誤認しない。
+        if (_requireReleaseBeforeHookClick)
+        {
+            if (!swingHold)
+                _requireReleaseBeforeHookClick = false;
+            return;
+        }
+
+        if (swingHold)
+        {
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+        }
+
+        bool swingReleased = (mouse != null && mouse.leftButton.wasReleasedThisFrame)
+            || WasGamepadSwingHoldReleasedThisFrame();
+        if (!swingReleased)
+            return;
+
+        if (releaseFromSwingToThrow)
+        {
+            Vector2 aimDir = CalculateAimDirection();
+            if (aimDir.sqrMagnitude <= 0.001f)
+                aimDir = _pendingAimDirection;
+            if (aimDir.sqrMagnitude > 0.001f)
+                BeginReThrowFromHook(aimDir);
+        }
+        else
+        {
+            TransitionToState(MorningStarState.Hooked);
+            _hookClickHolding = false;
+            _hookClickHoldTimer = 0f;
+        }
+    }
+
+    private void HandleSpinChargeInput()
+    {
+        if (_shoulderChargeInput && (!enableGamepadInput || Gamepad.current == null
+            || !IsGamepadShoulderChargePressed(Gamepad.current)))
+        {
+            CancelShoulderCharge();
+            return;
+        }
+
+        if (TryHandleGamepadFireTriggerInput())
+            return;
+
+        if (TryHandleGamepadSpinChargeInput())
+            return;
+
+        HandleMouseSpinChargeInput();
+    }
+
+    private bool TryHandleGamepadFireTriggerInput()
+    {
+        if (!enableGamepadInput || !_gamepadFirePressedThisFrame)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null || pad.rightStickButton.isPressed)
+            return false;
+
+        Vector2 aim = CalculateAimDirection();
+        if (aim.sqrMagnitude <= 0.001f)
+            return false;
+
+        FireImmediate(aim);
+        return true;
+    }
+
+    private bool TryHandleGamepadSpinChargeInput()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (!_isFireHolding && WasGamepadChargePressedThisFrame(pad))
+        {
+            _shoulderChargeInput = IsGamepadShoulderChargePressed(pad);
+            _fireHoldTime = 0f;
+            _isFireHolding = true;
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+            return true;
+        }
+
+        if (IsGamepadChargePressed(pad) && _isFireHolding)
+        {
+            _fireHoldTime += Time.deltaTime;
+
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+
+            if (_fireHoldTime >= holdThreshold)
+                BeginSpinCharging();
+
+            return true;
+        }
+
+        if (WasGamepadChargeReleasedThisFrame(pad) && _isFireHolding)
+        {
+            _isFireHolding = false;
+
+            if ((_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+                && _fireHoldTime >= 0f
+                && _fireHoldTime < holdThreshold
+                && _pendingAimDirection.sqrMagnitude > 0.001f)
+            {
+                FireImmediate(_pendingAimDirection);
+            }
+
+            _fireHoldTime = -1f;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void HandleMouseSpinChargeInput()
+    {
+        Mouse mouse = Mouse.current;
+        if (mouse == null)
+            return;
+
+        if (mouse.leftButton.wasPressedThisFrame)
+        {
+            _fireHoldTime = 0f;
+            _isFireHolding = true;
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+        }
+
+        if (mouse.leftButton.isPressed && _isFireHolding)
+        {
+            _fireHoldTime += Time.deltaTime;
+
+            Vector2 aim = CalculateAimDirection();
+            if (aim.sqrMagnitude > 0.001f)
+                _pendingAimDirection = aim;
+
+            if (_fireHoldTime >= holdThreshold)
+                BeginSpinCharging();
+        }
+
+        if (mouse.leftButton.wasReleasedThisFrame && _isFireHolding)
+        {
+            _isFireHolding = false;
+
+            if ((_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+                && _fireHoldTime >= 0f
+                && _fireHoldTime < holdThreshold
+                && _pendingAimDirection.sqrMagnitude > 0.001f)
+            {
+                FireImmediate(_pendingAimDirection);
+            }
+
+            _fireHoldTime = -1f;
+        }
+    }
+
+    private void HandleSimpleFireInput()
+    {
+        if (TryHandleGamepadFireTriggerInput())
+            return;
+
+        Mouse mouse = Mouse.current;
+        if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            return;
+
+        Vector2 aim = CalculateAimDirection();
+        if (aim.sqrMagnitude > 0.001f)
+            FireImmediate(aim);
+    }
+
+    private void FireImmediate(Vector2 aimDir)
+    {
+        if (Time.time < _nextLaunchTime)
+            return;
+        if (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
+            return;
+
+        _lastSpeedMultiplier = 1f;
+        BeginRecallBeforeThrow(aimDir.normalized);
+    }
+
+    private void HandleSpinChargingReleaseInput()
+    {
+        if (_shoulderChargeInput)
+        {
+            Gamepad pad = Gamepad.current;
+            if (!enableGamepadInput || pad == null || !IsGamepadShoulderChargePressed(pad))
+                CancelShoulderCharge();
+            else if (_gamepadFirePressedThisFrame)
+            {
+                _pendingAimDirection = _lastGamepadAimDirection;
+                ExecuteChargedThrow();
+            }
+            return;
+        }
+
+        Mouse mouse = Mouse.current;
+        Vector2 aim = CalculateAimDirection();
+        if (aim.sqrMagnitude > 0.001f)
+            _pendingAimDirection = aim;
+
+        bool mouseReleased = mouse != null && mouse.leftButton.wasReleasedThisFrame;
+        bool gamepadReleased = enableGamepadInput
+            && Gamepad.current != null
+            && WasGamepadChargeReleasedThisFrame(Gamepad.current);
+        if (gamepadReleased)
+        {
+            _pendingAimDirection = _lastGamepadAimDirection.sqrMagnitude > 0.001f
+                ? _lastGamepadAimDirection.normalized
+                : Vector2.right;
+            _rightStickReady = false;
+        }
+
+        if (mouseReleased || gamepadReleased)
+            ExecuteChargedThrow();
+    }
+
+    private void CancelShoulderCharge()
+    {
+        // Cancel in place through the common Rest setup, without consuming a queued shot.
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        _rightStickReady = false;
+        EnterDraggingState(false);
+    }
+
+    private void BeginSpinCharging()
+    {
+        if (!enableSpinCharge)
+            return;
+        if (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
+            return;
+        if (Time.time < _nextLaunchTime)
+            return;
+        if (!CanStartAnotherThrow())
+            return;
+
+        TransitionToState(MorningStarState.SpinCharging);
+        _chargeTime = 0f;
+        _spinAngle = 0f;
+        _fireHoldTime = -1f;
+        _isFireHolding = false;
+        SetSpinGuardActive(true);
+        SetAnimatorBool(_hashLaunchCharge, true);
+        LogDebug("MorningStar SpinCharge");
+
+        if (morningStarRb != null)
+        {
+            morningStarRb.linearVelocity = Vector2.zero;
+            morningStarRb.angularVelocity = 0f;
+        }
+    }
+
+    private void UpdateSpinChargingFixed(float dt)
+    {
+        if (morningStarRb == null)
+            return;
+
+        _chargeTime = Mathf.Min(_chargeTime + dt, maxChargeTime);
+        if (_chargeFeedback != null)
+            _chargeFeedback.SetCharge(ChargeProgress);
+        _spinAngle += spinAngularSpeed * dt * Mathf.Deg2Rad;
+
+        Vector2 center = GetHandWorld();
+        Vector2 offset = new Vector2(Mathf.Cos(_spinAngle), Mathf.Sin(_spinAngle)) * spinRadius;
+        morningStarRb.MovePosition(center + offset);
+        morningStarRb.linearVelocity = Vector2.zero;
+        morningStarRb.angularVelocity = 0f;
+    }
+
+    private void ExecuteChargedThrow()
+    {
+        if (_state != MorningStarState.SpinCharging || morningStarRb == null)
+            return;
+
+        float charge01 = ChargeProgress;
+        _lastCharge01 = charge01;
+        _lastSpeedMultiplier = Mathf.Lerp(minChargedThrowMultiplier, maxChargedThrowMultiplier, charge01);
+
+        Vector2 aimDir = _pendingAimDirection.sqrMagnitude > 0.001f
+            ? _pendingAimDirection.normalized
+            : Vector2.right;
+
+        SetSpinGuardActive(false);
+        LogDebug("MorningStar Charged Throw");
+        BeginRecallBeforeThrow(aimDir, chargedRecallTimeMultiplier, _lastSpeedMultiplier, charge01);
+    }
+
+    private void SetSpinGuardActive(bool active)
+    {
+        if (spinGuardCollider != null)
+            spinGuardCollider.enabled = active;
+    }
+
+    private void LogDebug(string message)
+    {
+        if (debugLog)
+            Debug.Log(message);
+    }
+
+    private Vector2 CalculateAimDirection()
+    {
+        return CalculateAimDirectionFrom(GetThrowOriginPosition());
+    }
+
+    private Vector2 CalculateAimDirectionFromHook()
+    {
+        Vector2 origin = _hookPoint.sqrMagnitude > 1e-8f
+            ? _hookPoint
+            : (Vector2)morningStarRb.position;
+        return CalculateAimDirectionFrom(origin);
+    }
+
+    private Vector2 CalculateAimDirectionFrom(Vector2 origin)
+    {
+        if (handAnchor == null)
+            return Vector2.zero;
+
+        if (TryGetGamepadAimDirection(out Vector2 gamepadDir))
+        {
+            _lastValidAimDirection = gamepadDir;
+            return gamepadDir;
+        }
+
+        if (!TryGetPointerScreen(out Vector2 screenPos))
+        {
+            if (_lastValidAimDirection.sqrMagnitude > 1e-6f)
+                return _lastValidAimDirection;
+            return Vector2.zero;
+        }
+
+        Vector2 mouseWorld = WorldFromScreen(screenPos);
+        Vector2 dir = mouseWorld - origin;
+
+        if (dir.sqrMagnitude < minAimDistance * minAimDistance)
+        {
+            if (_lastValidAimDirection.sqrMagnitude > 1e-6f)
+                return _lastValidAimDirection;
+            return Vector2.zero;
+        }
+
+        _lastValidAimDirection = dir.normalized;
+        return _lastValidAimDirection;
+    }
+
+    private void UpdateGamepadInputState()
+    {
+        _gamepadFirePressedThisFrame = false;
+
+        if (!enableGamepadInput)
+            return;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+        {
+            _rightStickReady = true;
+            return;
+        }
+
+        Vector2 stick = pad.rightStick.ReadValue();
+        float magnitude = stick.magnitude;
+
+        if (magnitude > 0.0001f)
+        {
+            _lastGamepadAimDirection = stick.normalized;
+            _pendingAimDirection = _lastGamepadAimDirection;
+        }
+
+        if (magnitude >= gamepadFireThreshold)
+        {
+            if (_rightStickReady && !pad.rightStickButton.isPressed)
+            {
+                _gamepadFirePressedThisFrame = true;
+                _rightStickReady = false;
+            }
+        }
+        else if (magnitude <= gamepadResetThreshold)
+        {
+            _rightStickReady = true;
+        }
+
+    }
+
+    private bool TryGetGamepadAimDirection(out Vector2 direction)
+    {
+        direction = Vector2.zero;
+
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        Vector2 stick = pad.rightStick.ReadValue();
+        float magnitude = stick.magnitude;
+        if (magnitude <= gamepadResetThreshold)
+            return false;
+
+        direction = stick.normalized;
+        _lastGamepadAimDirection = direction;
+        return true;
+    }
+
+    private bool IsGamepadChargePressed(Gamepad pad)
+    {
+        return _shoulderChargeInput ? IsGamepadShoulderChargePressed(pad)
+            : useRightStickClickForCharge && pad.rightStickButton.isPressed;
+    }
+
+    private static bool IsGamepadShoulderChargePressed(Gamepad pad)
+    {
+        return pad.leftShoulder.isPressed || pad.leftTrigger.isPressed;
+    }
+
+    private bool WasGamepadChargePressedThisFrame(Gamepad pad)
+    {
+        return (useRightStickClickForCharge && pad.rightStickButton.wasPressedThisFrame)
+            || pad.leftShoulder.wasPressedThisFrame || pad.leftTrigger.wasPressedThisFrame;
+    }
+
+    private bool WasGamepadChargeReleasedThisFrame(Gamepad pad)
+    {
+        return !_shoulderChargeInput && useRightStickClickForCharge
+            && pad.rightStickButton.wasReleasedThisFrame;
+    }
+
+    private bool IsGamepadSwingHoldPressed()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.leftShoulder.isPressed)
+            return true;
+
+        if (useLeftTriggerForSwingHold && pad.leftTrigger.ReadValue() > 0.05f)
+            return true;
+
+        return false;
+    }
+
+    private bool WasGamepadSwingHoldPressedThisFrame()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.leftShoulder.wasPressedThisFrame)
+            return true;
+
+        if (useLeftTriggerForSwingHold)
+            return pad.leftTrigger.wasPressedThisFrame;
+
+        return false;
+    }
+
+    private bool WasGamepadSwingHoldReleasedThisFrame()
+    {
+        if (!enableGamepadInput)
+            return false;
+
+        Gamepad pad = Gamepad.current;
+        if (pad == null)
+            return false;
+
+        if (pad.leftShoulder.wasReleasedThisFrame)
+            return true;
+
+        if (useLeftTriggerForSwingHold)
+            return pad.leftTrigger.wasReleasedThisFrame;
+
+        return false;
+    }
+
+    private Vector2 GetThrowOriginPosition()
+    {
+        Transform origin = GetThrowSocket();
+        return origin != null ? (Vector2)origin.position : GetHandWorld();
+    }
+
+    private void TryConsumeBufferedFire()
+    {
+        if (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
+            return;
+        if (_fireBufferTimer <= 0f)
+            return;
+        if (Time.time < _nextLaunchTime)
+            return;
+
+        BeginRecallBeforeThrow(_bufferedAimDirection);
+        _fireBufferTimer = 0f;
+    }
+
+    private void BeginSwinging()
+    {
+        if (_state != MorningStarState.Hooked || !_isHooked)
+            return;
+
+        TransitionToState(MorningStarState.Swinging);
+        _hookClickHolding = false;
+        _hookClickHoldTimer = 0f;
+
+        LogDebug("MorningStar HookSwing");
+    }
+
+    private void BeginRelease()
+    {
+        ReleaseHookAndBeginReturn(true);
+    }
+
+    /// <summary>
+    /// Magnet吸着中だけ通常のRelease boostなしで拘束を解除し、Player側のJumpへ制御を返す。
+    /// </summary>
+    public bool TryReleaseMagnetForJump()
+    {
+        if (_attachedMagnet == null)
+            return false;
+
+        return ReleaseHookAndBeginReturn(false);
+    }
+
+    private bool ReleaseHookAndBeginReturn(bool applyReleaseBoost)
+    {
+        if ((_state != MorningStarState.Hooked && _state != MorningStarState.Swinging) || !_isHooked)
+            return false;
+
+        EndLaunchPose();
+        if (applyReleaseBoost)
+            ApplyReleaseBoostToPlayer();
+        SetHookRopeJointActive(false);
+
+        _isHooked = false;
+        _attachedMagnet = null;
+        _hookPoint = Vector2.zero;
+
+        if (morningStarRb != null)
+        {
+            morningStarRb.linearVelocity = Vector2.zero;
+            morningStarRb.angularVelocity = 0f;
+            morningStarRb.WakeUp();
+        }
+
+        _rehookLockoutTimer = rehookLockoutTime;
+        _hookClickHolding = false;
+        _hookClickHoldTimer = 0f;
+        _requireReleaseBeforeHookClick = false;
+        ApplyHookedChainVisual(false);
+
+        // Hook解除後にSwingingのままだと回収が拒否されるため、互換Rest状態を経由する。
+        TransitionToState(MorningStarState.Dropping);
+        BeginReturn();
+        return true;
+    }
+
+    private void ApplyReleaseBoostToPlayer()
+    {
+        if (_playerRb == null || releaseBoost <= 0f)
+            return;
+
+        Vector2 v = _playerRb.linearVelocity;
+        Vector2 boostDir;
+        if (v.sqrMagnitude > 0.25f)
+            boostDir = v.normalized;
+        else
+        {
+            boostDir = (Vector2)_playerRb.position - _hookPoint;
+            if (boostDir.sqrMagnitude < 1e-6f)
+                boostDir = Vector2.right;
+            else
+                boostDir.Normalize();
+        }
+
+        if (player != null)
+            player.ApplyExternalImpulse(boostDir * releaseBoost, ForceMode2D.Impulse);
+        else
+            _playerRb.AddForce(boostDir * releaseBoost, ForceMode2D.Impulse);
+    }
+
+    public void OnMorningStarCollision(Collision2D collision)
+    {
+        if (morningStarRb == null || collision.collider == null)
+            return;
+
+        GoalPoint goal = collision.collider.GetComponentInParent<GoalPoint>();
+        int groundShakeCountBeforeImpact = GroundImpactShakeCount;
+        TryPlayGroundImpactCameraShake(collision);
+        if (IsPowerThrow && !_powerImpactPlayed
+            && Mathf.Max(collision.relativeVelocity.magnitude, morningStarRb.linearVelocity.magnitude) >= minCombatHitSpeed)
+        {
+            _powerImpactPlayed = true;
+            Vector2 point = collision.contactCount > 0 ? collision.GetContact(0).point : morningStarRb.position;
+            Vector2 direction = collision.contactCount > 0 ? -collision.GetContact(0).normal : _pendingLaunchDir;
+            if (_chargeFeedback != null)
+                _chargeFeedback.PlayImpact(point, direction);
+            // Floor and Goal already own their collision shake; a charged hit must not request it twice.
+            if (cameraShake != null && goal == null && GroundImpactShakeCount == groundShakeCountBeforeImpact)
+                cameraShake.Shake(0.12f, maximumShakeStrength);
+        }
+
+        if ((_state == MorningStarState.Thrown || _state == MorningStarState.Dropping)
+            && HasFloorContact(collision)
+            && morningStarRb.linearVelocity.y < -dropTransitionSpeed)
+        {
+            LogDebug("MorningStar Heavy Land");
+        }
+
+        if (goal != null)
+        {
+            // Goal自身が命中回数を数える。combat Layer設定による二重処理を避ける。
+            // 衝突前の法線方向の勢いだけを返し、接線方向の滑りは残す。
+            if (!goal.IsBroken && (_state == MorningStarState.Thrown
+                || _state == MorningStarState.Dragging || _state == MorningStarState.Dropping))
+                ApplyGoalBallRebound(collision, goal.BallRestitution);
+            return;
+        }
+
+        if (TryProcessCombatHit(collision))
+            return;
+
+        // 地形への衝突では固定しない。固定支点への移行はMagnet経由だけ。
+        if (_state == MorningStarState.Thrown && HasFloorContact(collision))
+            BeginDropAfterThrow();
+    }
+
+    private bool CanStateDealCombatDamage()
+    {
+        return _state == MorningStarState.Dragging
+            || _state == MorningStarState.SpinCharging
+            || _state == MorningStarState.Thrown
+            || _state == MorningStarState.Dropping
+            || _state == MorningStarState.Hooked
+            || _state == MorningStarState.Swinging;
+    }
+
+    private void ApplyGoalBallRebound(Collision2D collision, float restitution)
+    {
+        Vector2 velocity = morningStarRb.linearVelocity;
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            ContactPoint2D contact = collision.GetContact(i);
+            Vector2 normal = contact.normal;
+            if (Vector2.Dot(normal, morningStarRb.position - contact.point) < 0f)
+                normal = -normal;
+            // Ball側のCollision2D.relativeVelocityは相手から見た接近速度。
+            float approachSpeed = Mathf.Max(0f, Vector2.Dot(collision.relativeVelocity, normal));
+            float outwardSpeed = Vector2.Dot(velocity, normal);
+            float reboundSpeed = approachSpeed * Mathf.Clamp01(restitution);
+            if (outwardSpeed < reboundSpeed)
+                velocity += normal * (reboundSpeed - outwardSpeed);
+        }
+        morningStarRb.linearVelocity = velocity;
+    }
+
+    private void SetGoalCollisionIgnoredForRecall(bool ignore)
+    {
+        if (!ignore)
+        {
+            foreach (var pair in _recallGoalCollisionPairs)
+            {
+                if (pair.Ball != null && pair.Goal != null)
+                    Physics2D.IgnoreCollision(pair.Ball, pair.Goal, false);
+            }
+            _recallGoalCollisionPairs.Clear();
+            return;
+        }
+        if (morningStarRb == null || _recallGoalCollisionPairs.Count > 0)
+            return;
+
+        // 回収中の手元への移動とGoalの接触解決を競合させない。
+        // 自分が変更したPairだけを記録し、次の状態・死亡・無効化で戻す。
+        Collider2D[] ballColliders = morningStarRb.GetComponentsInChildren<Collider2D>();
+        foreach (GoalPoint goal in FindObjectsByType<GoalPoint>(FindObjectsSortMode.None))
+        {
+            Collider2D goalCollider = goal.GetComponent<Collider2D>();
+            if (goalCollider == null || !goalCollider.enabled)
+                continue;
+            foreach (Collider2D ballCollider in ballColliders)
+            {
+                if (!ballCollider.enabled || Physics2D.GetIgnoreCollision(ballCollider, goalCollider))
+                    continue;
+                Physics2D.IgnoreCollision(ballCollider, goalCollider, true);
+                _recallGoalCollisionPairs.Add((ballCollider, goalCollider));
+            }
+        }
+    }
+
+    private bool TryProcessCombatHit(Collision2D collision)
+    {
+        if (!CanStateDealCombatDamage())
+            return false;
+
+        Collider2D other = collision.collider;
+        if (other.CompareTag("Player"))
+            return false;
+
+        IMorningStarHitReceiver receiver = other.GetComponentInParent<IMorningStarHitReceiver>();
+        if (receiver == null)
+            return false;
+
+        if (!AllowsCombatHitOnLayer(other.gameObject.layer))
+            return false;
+
+        // 衝突解決後に速度が落ちていても、命中直前の勢いでダメージを評価する。
+        float impactSpeed = Mathf.Max(morningStarRb.linearVelocity.magnitude, collision.relativeVelocity.magnitude);
+        if (impactSpeed < minCombatHitSpeed)
+            return false;
+
+        EntityId colliderId = other.GetEntityId();
+        if (_lastCombatHitTimeByColliderId.TryGetValue(colliderId, out float lastHitTime)
+            && Time.time - lastHitTime < hitCooldownPerTarget)
+            return false;
+
+        MorningStarHitContext context = BuildHitContext(collision, impactSpeed);
+        receiver.OnMorningStarHit(context);
+
+        _lastCombatHitTimeByColliderId[colliderId] = Time.time;
+        ApplyPostHitBallResponse(context);
+        // 各Receiverが実際の被弾・破壊を確定した時だけヒットストップを依頼する。
+
+        return true;
+    }
+
+    private bool AllowsCombatHitOnLayer(int layer)
+    {
+        if (enemyLayers.value == 0 && breakableLayers.value == 0)
+            return true;
+
+        int layerBit = 1 << layer;
+        if (enemyLayers.value != 0 && (enemyLayers.value & layerBit) != 0)
+            return true;
+        return breakableLayers.value != 0 && (breakableLayers.value & layerBit) != 0;
+    }
+
+    private MorningStarHitContext BuildHitContext(Collision2D collision, float impactSpeed)
+    {
+        Vector2 impactDir = morningStarRb.linearVelocity.sqrMagnitude > 1e-6f
+            ? morningStarRb.linearVelocity.normalized
+            : Vector2.right;
+
+        if (collision.contactCount > 0)
+        {
+            Vector2 normal = collision.GetContact(0).normal;
+            if (normal.sqrMagnitude > 1e-6f)
+                impactDir = -normal.normalized;
+        }
+
+        float chargeMult = Mathf.Lerp(1f, Mathf.Max(1f, fullChargeDamageMultiplier), _activeThrowCharge01);
+
+        int damage = Mathf.RoundToInt((baseDamage + impactSpeed * damagePerSpeed) * chargeMult);
+        damage = Mathf.Clamp(damage, minDamage, maxDamage);
+
+        float knockbackMult = Mathf.Lerp(1f, Mathf.Max(1f, fullChargeKnockbackMultiplier), _activeThrowCharge01);
+        float knockbackMag = Mathf.Clamp((baseKnockback + impactSpeed * knockbackPerSpeed) * knockbackMult,
+            0f, maxKnockback * knockbackMult);
+        Vector2 knockback = impactDir * knockbackMag;
+
+        float hitStop = Mathf.Clamp(damage * hitStopPerDamage, minCombatHitStop, maxCombatHitStop);
+        hitStop *= Mathf.Lerp(0.85f, 1.15f, Mathf.InverseLerp(minDamage, maxDamage, damage));
+        if (IsPowerThrow)
+            hitStop = Mathf.Max(hitStop, maxCombatHitStop);
+
+        Vector2 impactPoint = collision.contactCount > 0
+            ? collision.GetContact(0).point
+            : morningStarRb.position;
+
+        return new MorningStarHitContext(
+            damage,
+            knockback,
+            hitStop,
+            impactPoint,
+            impactDir,
+            impactSpeed,
+            chargeMult,
+            this);
+    }
+
+    private void ApplyPostHitBallResponse(MorningStarHitContext context)
+    {
+        if (postHitSpeedRetention >= 1f || morningStarRb == null)
+            return;
+
+        morningStarRb.linearVelocity *= postHitSpeedRetention;
+    }
+
+    public void PlayEnemyHitStop(float duration, bool defeated)
+    {
+        PlayCombatHitStop(defeated ? Mathf.Max(duration, enemyDefeatHitStop) : duration);
+        EnemyHitConfirmed?.Invoke();
+    }
+
+    public void PlayBlockBreakHitStop(float impactHitStop = 0f)
+    {
+        float duration = Mathf.Max(blockBreakHitStop, impactHitStop);
+        if (IsPowerThrow)
+            duration = Mathf.Max(duration, maxCombatHitStop);
+        PlayCombatHitStop(duration);
+    }
+
+    public void CancelHitStop()
+    {
+        if (_hitStopRoutine == null)
+            return;
+        StopCoroutine(_hitStopRoutine);
+        _hitStopRoutine = null;
+        // 別の演出が既に変更した時間倍率は上書きしない。
+        if (Mathf.Approximately(Time.timeScale, 0f))
+            Time.timeScale = _savedTimeScale;
+    }
+
+    private void PlayCombatHitStop(float duration)
+    {
+        if (!isActiveAndEnabled || _goalInputBlocked || _respawnPresentation || duration <= 0f
+            || (_playerHealth != null && _playerHealth.IsDead))
+            return;
+
+        if (_hitStopRoutine != null)
+        {
+            // 元の倍率を0で保存し直さず、最長の要求までだけ延長する。
+            _hitStopEndsAt = System.Math.Min(_hitStopStartedAt + maxContinuousHitStop,
+                System.Math.Max(_hitStopEndsAt, Time.realtimeSinceStartupAsDouble + duration));
+            return;
+        }
+
+        // ポーズ・結果表示等による停止中には、新しく時間を取得しない。
+        if (Time.timeScale <= 0f)
+            return;
+
+        _savedTimeScale = Time.timeScale;
+        _hitStopStartedAt = Time.realtimeSinceStartupAsDouble;
+        _hitStopEndsAt = _hitStopStartedAt + Mathf.Min(duration, maxContinuousHitStop);
+        _hitStopRoutine = StartCoroutine(HitStopRoutine());
+    }
+
+    private void TryPlayGroundImpactCameraShake(Collision2D collision)
+    {
+        if (!IsFloorTagged(collision.collider)
+            || collision.collider.GetComponentInParent<IMorningStarHitReceiver>() != null
+            || Time.time < _nextGroundImpactShakeTime)
+            return;
+
+        float impactSpeed = GetGroundNormalImpactSpeed(collision);
+        if (impactSpeed < minimumGroundImpactSpeed)
+            return;
+
+        if (cameraShake == null && Camera.main != null)
+            cameraShake = Camera.main.GetComponent<CameraShake2D>();
+        if (groundImpactAudioSource == null)
+            groundImpactAudioSource = OneShotAudioUtility.FindWorldImpactSource();
+        if (cameraShake == null)
+            return;
+
+        if (!cameraShake.enabled)
+            cameraShake.enabled = true;
+
+        float upperImpactSpeed = Mathf.Max(minimumGroundImpactSpeed, maxImpactSpeed);
+        float impact01 = Mathf.InverseLerp(minimumGroundImpactSpeed, upperImpactSpeed, impactSpeed);
+        float minStrength = Mathf.Min(minimumShakeStrength, maximumShakeStrength);
+        float maxStrength = Mathf.Max(minimumShakeStrength, maximumShakeStrength);
+        float strength = Mathf.Lerp(minStrength, maxStrength, impact01);
+
+        if (OneShotAudioUtility.Play2D(
+                groundImpactAudioSource,
+                groundImpactClip,
+                groundImpactVolume,
+                morningStarRb != null ? morningStarRb.position : transform.position))
+        {
+            GroundImpactSoundCount++;
+        }
+
+        cameraShake.Shake(shakeDuration, strength);
+        _nextGroundImpactShakeTime = Time.time + shakeCooldown;
+        LastGroundImpactSpeed = impactSpeed;
+        LastGroundImpactShakeStrength = strength;
+        GroundImpactShakeCount++;
+    }
+
+    private float GetGroundNormalImpactSpeed(Collision2D collision)
+    {
+        float impactSpeed = 0f;
+        Vector2 relativeVelocity = collision.relativeVelocity;
+
+        foreach (ContactPoint2D contact in collision.contacts)
+        {
+            if (contact.normal.y <= floorNormalThreshold)
+                continue;
+
+            Vector2 normal = contact.normal.normalized;
+            impactSpeed = Mathf.Max(impactSpeed, Mathf.Abs(Vector2.Dot(relativeVelocity, normal)));
+        }
+
+        return impactSpeed;
+    }
+
+    private static bool IsFloorTagged(Collider2D collider)
+    {
+        for (Transform current = collider.transform; current != null; current = current.parent)
+        {
+            if (current.CompareTag("Floor"))
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool HasFloorContact(Collision2D collision)
+    {
+        if (collision.contactCount == 0)
+            return false;
+
+        foreach (ContactPoint2D contact in collision.contacts)
+        {
+            if (contact.normal.y > floorNormalThreshold)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void BeginHook(Vector2 hookPoint)
+    {
+        // Hook/Magnet Swingは常に通常鎖長。Constraintを先に外して急補正を防ぐ。
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
+        _hookPoint = hookPoint;
+        _isHooked = true;
+        _attachedMagnet = null;
+        _hookedAtTime = Time.time;
+        _thrownElapsed = 0f;
+        _fireBufferTimer = 0f;
+        _hookClickHoldTimer = 0f;
+        _hookClickHolding = false;
+        _requireReleaseBeforeHookClick = Mouse.current != null && Mouse.current.leftButton.isPressed;
+
+        morningStarRb.position = _hookPoint;
+        morningStarRb.linearVelocity = Vector2.zero;
+        morningStarRb.angularVelocity = 0f;
+        morningStarRb.WakeUp();
+
+        TransitionToState(MorningStarState.Hooked);
+
+        _rehookLockoutTimer = Mathf.Max(rehookLockoutTime, hookStickMinTime);
+        SetAnimatorBool(_hashLaunchCharge, false);
+        SetSpinGuardActive(false);
+        ApplyHookedChainVisual(true);
+        PlayHookFeedback();
+        LogDebug("MorningStar Hooked");
+    }
+
+    private void PlayHookFeedback()
+    {
+        PlayCombatHitStop(hookHitStopTime);
+
+        if (hookSparkPrefab != null)
+            Instantiate(hookSparkPrefab, _hookPoint, Quaternion.identity);
+    }
+
+    private IEnumerator HitStopRoutine()
+    {
+        Time.timeScale = 0f;
+        while (Time.realtimeSinceStartupAsDouble < _hitStopEndsAt && Mathf.Approximately(Time.timeScale, 0f))
+            yield return null;
+        if (Mathf.Approximately(Time.timeScale, 0f))
+            Time.timeScale = _savedTimeScale;
+        _hitStopRoutine = null;
+    }
+
+    private void ApplyHookedChainVisual(bool hooked)
+    {
+        if (chainLineController != null)
+        {
+            chainLineController.SetHookedVisual(hooked);
+            return;
+        }
+
+        if (lineRenderer == null)
+            return;
+
+        if (!_lineVisualDefaultsCached)
+        {
+            _defaultLineColor = lineRenderer.startColor;
+            _defaultLineWidth = lineRenderer.startWidth;
+            _lineVisualDefaultsCached = true;
+        }
+
+        Color c = hooked ? hookedChainColor : normalChainColor;
+        lineRenderer.startColor = c;
+        lineRenderer.endColor = c;
+        float w = hooked ? _defaultLineWidth * hookedChainWidthMultiplier : _defaultLineWidth;
+        lineRenderer.startWidth = w;
+        lineRenderer.endWidth = w;
+    }
+
+    private void BeginReThrowFromHook(Vector2 aimDir)
+    {
+        if ((_state != MorningStarState.Hooked && _state != MorningStarState.Swinging) || !_isHooked)
+            return;
+        if (aimDir.sqrMagnitude < 1e-6f)
+            return;
+        if (Time.time < _nextLaunchTime)
+            return;
+        if (Time.time - _hookedAtTime < hookStickMinTime)
+            return;
+        if (!CanStartAnotherThrow())
+            return;
+
+        Vector2 d = aimDir.normalized;
+        Vector2 hand = GetHandWorld();
+        Vector2 worldTarget = (Vector2)morningStarRb.position + d * Mathf.Max(minAimDistance, maxThrowDistance);
+        UpdateAimFacing(worldTarget);
+        ShowClickAimVisuals(worldTarget, hand);
+
+        _isHooked = false;
+        SetHookRopeJointActive(false);
+        _attachedMagnet = null;
+        _hookPoint = Vector2.zero;
+        _rehookLockoutTimer = rehookLockoutTime;
+        ApplyHookedChainVisual(false);
+        _lastSpeedMultiplier = 1f;
+        _fireBufferTimer = 0f;
+        _hookClickHolding = false;
+        _hookClickHoldTimer = 0f;
+        _requireReleaseBeforeHookClick = false;
+
+        BeginRecallBeforeThrow(d);
+    }
+
+    private void UpdateHookedFixed(float dt)
+    {
+        if (morningStarRb == null)
+        {
+            EnterDraggingState(false);
+            return;
+        }
+
+        if (_state != MorningStarState.Hooked || !_isHooked)
+            return;
+
+        UpdateChainClimb(dt);
+        UpdateHookRopeJointForCurrentPose();
+        PinBallAtHook();
+    }
+
+    private void UpdateSwingingFixed(float dt)
+    {
+        if (morningStarRb == null)
+        {
+            EnterDraggingState(false);
+            return;
+        }
+
+        if (_state != MorningStarState.Swinging || !_isHooked)
+            return;
+
+        UpdateChainClimb(dt);
+        UpdateHookRopeJointForCurrentPose();
+        PinBallAtHook();
+        if (!_isChainClimbing)
+            ApplySwingPullToPlayer();
+    }
+
+    private void PinBallAtHook()
+    {
+        morningStarRb.position = _hookPoint;
+        morningStarRb.linearVelocity = Vector2.zero;
+        morningStarRb.angularVelocity = 0f;
+    }
+
+    private void ApplySwingPullToPlayer()
+    {
+        if (_playerRb == null)
+            return;
+
+        Vector2 ropeStart = GetPlayerRopeAnchorWorld();
+        Vector2 toHook = _hookPoint - ropeStart;
+        float distance = toHook.magnitude;
+        if (distance <= 0.01f)
+            return;
+
+        Vector2 dirToHook = toHook / distance;
+        Vector2 v = _playerRb.linearVelocity;
+        float ropeLength = GetEffectiveRopeLength();
+        bool ropeIsTaut = distance >= Mathf.Max(0.1f, ropeLength - 0.05f);
+
+        if (_attachedMagnet != null)
+        {
+            // 最大距離とRadial方向の解決はDistanceJoint2Dへ任せる。
+            // ここでは鎖が張った時だけ、入力を接線方向へ変換して補助する。
+            if (!ropeIsTaut)
+                return;
+
+            Vector2 magnetTangent = new Vector2(dirToHook.y, -dirToHook.x);
+            if (magnetTangent.x < 0f)
+                magnetTangent = -magnetTangent;
+
+            float magnetMoveX = player != null ? player.MoveInputX : 0f;
+            if (Mathf.Abs(magnetMoveX) > 0.01f && magnetSwingForce > 0f)
+                _playerRb.AddForce(magnetTangent * magnetMoveX * magnetSwingForce, ForceMode2D.Force);
+
+            if (magnetMaxSwingSpeed > 0f)
+            {
+                float tangentSpeed = Vector2.Dot(v, magnetTangent);
+                float limitedTangentSpeed = Mathf.Clamp(
+                    tangentSpeed,
+                    -magnetMaxSwingSpeed,
+                    magnetMaxSwingSpeed);
+                if (!Mathf.Approximately(tangentSpeed, limitedTangentSpeed))
+                    _playerRb.linearVelocity = v + magnetTangent * (limitedTangentSpeed - tangentSpeed);
+            }
+
+            return;
+        }
+
+        // 鎖がたるんでいる間はPlayerを支点へ吸い込まない。
+        // 最大長付近だけ既存Forceを張力として使い、外向き速度を抑える。
+        if (ropeIsTaut)
+        {
+            _playerRb.AddForce(dirToHook * swingPullForce, ForceMode2D.Force);
+
+            Vector2 awayDir = -dirToHook;
+            float awaySpeed = Vector2.Dot(v, awayDir);
+            if (awaySpeed > 0f)
+                v -= awayDir * awaySpeed * swingRadialDamping;
+        }
+
+        Vector2 tangent = new Vector2(-dirToHook.y, dirToHook.x);
+        float moveX = player != null ? player.MoveInputX : 0f;
+        if (Mathf.Abs(moveX) > 0.01f)
+            _playerRb.AddForce(tangent * moveX * swingInputForce, ForceMode2D.Force);
+
+        float radialAlong = Vector2.Dot(v, dirToHook);
+        float tangentAlong = Vector2.Dot(v, tangent);
+        v = dirToHook * radialAlong + tangent * (tangentAlong * swingTangentKeepRate);
+
+        if (maxSwingSpeed > 0f && v.sqrMagnitude > maxSwingSpeed * maxSwingSpeed)
+            v = v.normalized * maxSwingSpeed;
+
+        _playerRb.linearVelocity = v;
+    }
+
+    private bool IsPlayerGrounded()
+    {
+        return player != null && player.IsGrounded;
+    }
+
+    private void SubscribeToPlayerLanding()
+    {
+        if (_playerLandingSubscribed)
+            return;
+
+        if (player == null && playerRigidbody2D != null)
+            player = playerRigidbody2D.GetComponent<Player>();
+
+        if (player == null)
+            return;
+
+        player.Landed += HandlePlayerLanded;
+        _playerLandingSubscribed = true;
+    }
+
+    private void UnsubscribeFromPlayerLanding()
+    {
+        if (!_playerLandingSubscribed)
+            return;
+
+        if (player != null)
+            player.Landed -= HandlePlayerLanded;
+        _playerLandingSubscribed = false;
+    }
+
+    private void HandlePlayerLanded()
+    {
+        if (_trampolineJumpLeftGround && _playerRb != null && _playerRb.linearVelocity.y <= 0.05f)
+            EndTrampolineJump();
+        _airThrowsUsed = 0;
+        ResetChainClimbState(false);
+    }
+
+    private void SubscribeToPlayerDeath()
+    {
+        if (_playerDeathSubscribed)
+            return;
+
+        if (_playerHealth == null)
+            _playerHealth = GetComponent<PlayerHealth>();
+        if (_playerHealth == null)
+            return;
+
+        _playerHealth.OnDead += HandlePlayerDead;
+        _playerDeathSubscribed = true;
+    }
+
+    private void UnsubscribeFromPlayerDeath()
+    {
+        if (!_playerDeathSubscribed)
+            return;
+
+        if (_playerHealth != null)
+            _playerHealth.OnDead -= HandlePlayerDead;
+        _playerDeathSubscribed = false;
+    }
+
+    private void HandlePlayerDead()
+    {
+        EndTrampolineJump();
+        CancelHitStop();
+        SetGoalCollisionIgnoredForRecall(false);
+        _activeThrowCharge01 = 0f;
+        if (_chargeFeedback != null)
+            _chargeFeedback.ResetFeedback();
+        StopAirLaunchAssist();
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetHookRopeJointActive(false);
+        SetLaunchRopeLengthActive(false);
+    }
+
+    private bool CanStartAnotherThrow()
+    {
+        if (!limitAirThrows || IsPlayerGrounded())
+            return true;
+
+        return _airThrowsUsed < Mathf.Max(0, maxAirThrows);
+    }
+
+    private bool TryConsumeAirThrow()
+    {
+        if (!limitAirThrows || IsPlayerGrounded())
+            return true;
+
+        int allowedAirThrows = Mathf.Max(0, maxAirThrows);
+
+        if (_airThrowsUsed >= allowedAirThrows)
+            return false;
+
+        _airThrowsUsed++;
+        return true;
+    }
+
+    public void GrantMagnetEscapeThrow()
+    {
+        if (!limitAirThrows)
+            return;
+
+        int allowedAirThrows = Mathf.Max(0, maxAirThrows);
+
+        if (allowedAirThrows <= 0)
+            return;
+
+        // maxAirThrows = 1 の場合、
+        // 次の空中射出を1回だけ可能にする。
+        _airThrowsUsed = Mathf.Min(
+            _airThrowsUsed,
+            allowedAirThrows - 1
+        );
+    }
+
+    private void BeginRecallBeforeThrow(
+        Vector2 launchDir,
+        float recallTimeMultiplier = 1f,
+        float throwSpeedMultiplier = 1f,
+        float charge01 = 0f)
+    {
+        if (launchDir.sqrMagnitude < 1e-6f || morningStarRb == null)
+            return;
+
+        if (!TryConsumeAirThrow())
+            return;
+
+        // 前回Launch Poseが残っている場合も、新しいRecall開始時点で必ず解除する。
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
+
+        Vector2 hand = GetHandWorld();
+        Vector2 d = launchDir.normalized;
+        Vector2 worldTarget = hand + d * Mathf.Max(minAimDistance, maxThrowDistance);
+
+        UpdateAimFacing(worldTarget);
+        FacePlayerForLaunch(d);
+        ShowClickAimVisuals(worldTarget, hand);
+
+        _pendingLaunchDir = d;
+        _pendingThrowSpeedMultiplier = throwSpeedMultiplier;
+        _pendingCharge01 = Mathf.Clamp01(charge01);
+
+        if (!useVisibleRecallBeforeThrow)
+        {
+            FirePendingThrow();
+            return;
+        }
+
+        _recallStartPosition = morningStarRb.position;
+        _recallTargetPosition = GetThrowOriginPosition();
+        _recallTimer = 0f;
+        _recallHoldTimer = 0f;
+        _recallDelayTimer = recallStartDelay;
+        _activeRecallDuration = Mathf.Max(0.01f, visibleRecallTime * Mathf.Max(0.05f, recallTimeMultiplier));
+
+        TransitionToState(MorningStarState.RecallBeforeThrow);
+
+        morningStarRb.linearVelocity = Vector2.zero;
+        morningStarRb.angularVelocity = 0f;
+        morningStarRb.WakeUp();
+        SetAnimatorBool(_hashLaunchCharge, true);
+    }
+
+    private void UpdateRecallBeforeThrow(float dt)
+    {
+        if (morningStarRb == null)
+        {
+            EnterDraggingState(false);
+            return;
+        }
+
+        morningStarRb.linearVelocity = Vector2.zero;
+        morningStarRb.angularVelocity = 0f;
+
+        if (_recallDelayTimer > 0f)
+        {
+            _recallDelayTimer -= dt;
+            return;
+        }
+
+        _recallTimer += dt;
+        float t = Mathf.Clamp01(_recallTimer / _activeRecallDuration);
+        float eased = 1f - Mathf.Pow(1f - t, recallEasePower);
+        Vector2 pos = Vector2.Lerp(_recallStartPosition, _recallTargetPosition, eased);
+        morningStarRb.position = pos;
+
+        if (t < 1f)
+            return;
+
+        morningStarRb.position = _recallTargetPosition;
+        _recallHoldTimer += dt;
+
+        if (_recallHoldTimer >= recallHoldTime)
+            FirePendingThrow();
+    }
+
+    private void FirePendingThrow()
+    {
+        if (morningStarRb == null)
+            return;
+
+        bool launchedInAir = !IsPlayerGrounded();
+        Vector2 d = _pendingLaunchDir.sqrMagnitude > 1e-12f ? _pendingLaunchDir.normalized : Vector2.right;
+        FacePlayerForLaunch(d);
+        Vector2 origin = GetThrowOriginPosition();
+
+        morningStarRb.position = origin;
+        morningStarRb.linearVelocity = Vector2.zero;
+        morningStarRb.angularVelocity = 0f;
+
+        _activeThrowCharge01 = _pendingCharge01;
+        _lastCharge01 = _pendingCharge01;
+        _powerImpactPlayed = false;
+        TransitionToState(MorningStarState.Thrown);
+
+        float speed = throwSpeed * _pendingThrowSpeedMultiplier;
+        float speedLimit = EffectiveBallSpeedLimit;
+        if (speedLimit > 0f)
+            speed = Mathf.Min(speed, speedLimit);
+
+        float offset = Mathf.Max(0f, launchStartOffset);
+        morningStarRb.position = origin + d * offset;
+        Vector2 launchVelocity = d * speed;
+        if (postThrowDownwardBias > 0f)
+            launchVelocity += Vector2.down * postThrowDownwardBias;
+        if (speedLimit > 0f && launchVelocity.sqrMagnitude > speedLimit * speedLimit)
+            launchVelocity = launchVelocity.normalized * speedLimit;
+
+        morningStarRb.linearVelocity = launchVelocity;
+        morningStarRb.WakeUp();
+        BeginAirLaunchAssist(launchedInAir);
+        PlayMorningStarLaunchSound();
+        LaunchCommitted?.Invoke(_activeThrowCharge01);
+        if (_chargeFeedback != null)
+            _chargeFeedback.PlayLaunch(d, _activeThrowCharge01);
+        if (IsPowerThrow && cameraShake != null)
+            cameraShake.Shake(0.07f, minimumShakeStrength * 0.7f);
+
+        _thrownElapsed = 0f;
+        _lastSpeedMultiplier = _pendingThrowSpeedMultiplier;
+        SetAnimatorBool(_hashLaunchCharge, false);
+        BeginLaunchPose(launchedInAir);
+        SetAnimatorTrigger(_hashLaunchFire);
+        _recoilTriggerTime = Time.time + launchRecoilDelay;
+
+        if (aimLaunchCooldown > 0f)
+            _nextLaunchTime = Time.time + aimLaunchCooldown;
+    }
+
+    private void PlayMorningStarLaunchSound()
+    {
+        if (sfxAudioSource != null && morningStarLaunchClip != null)
+            sfxAudioSource.PlayOneShot(morningStarLaunchClip, morningStarLaunchVolume);
+    }
+
+    private void TryPlayChainFullStretchSound()
+    {
+        if (!_chainFullStretchSoundPending)
+            return;
+
+        // 飛翔終了後も射出時の鎖長が残る間は待ち、地形を回り込んだ経路も含める。
+        if (GetCurrentRopeSpan() < GetEffectiveRopeLength() - 0.001f)
+            return;
+
+        _chainFullStretchSoundPending = false;
+        OneShotAudioUtility.Play2D(sfxAudioSource, chainFullStretchClip,
+            chainFullStretchVolume, GetHandWorld());
+    }
+
+    private void UpdateThrown(float dt, Vector2 hand)
+    {
+        if (_state != MorningStarState.Thrown)
+            return;
+
+        _thrownElapsed += dt;
+
+        if (_thrownElapsed >= maxThrownTime)
+        {
+            BeginDropAfterThrow();
+            return;
+        }
+
+        float dist = Vector2.Distance(hand, morningStarRb.position);
+        float flightEndDistance = Mathf.Max(maxThrowDistance, GetEffectiveRopeLength());
+        if (dist >= flightEndDistance)
+        {
+            BeginDropAfterThrow();
+            return;
+        }
+
+        if (_thrownElapsed > 0.1f && morningStarRb.linearVelocity.magnitude <= dropTransitionSpeed)
+            BeginDropAfterThrow();
+    }
+
+    private void BeginDropAfterThrow()
+    {
+        if (_state != MorningStarState.Thrown)
+            return;
+
+        // 飛翔終了後は履歴依存のDropping物理を残さず、その場で共通Restへ戻る。
+        EnterDraggingState(false);
+    }
+
+    private void BeginReturn()
+    {
+        if (_state == MorningStarState.Returning)
+            return;
+        if ((_state == MorningStarState.Hooked || _state == MorningStarState.Swinging) && _isHooked)
+            return;
+
+        bool canManualReturn = _state == MorningStarState.Thrown
+            || _state == MorningStarState.Dropping
+            || (_state == MorningStarState.Dragging && !IsBallAtReturnSocket());
+        if (!canManualReturn)
+            return;
+
+        EndLaunchPose();
+        SetChainConstraintActive(false);
+        SetLaunchRopeLengthActive(false);
+
+        _isHooked = false;
+        _attachedMagnet = null;
+        _hookPoint = Vector2.zero;
+        TransitionToState(MorningStarState.Returning);
+        _rehookLockoutTimer = Mathf.Max(_rehookLockoutTimer, rehookLockoutTime);
+
+        SetAnimatorBool(_hashLaunchCharge, false);
+        ApplyHookedChainVisual(false);
+
+        if (morningStarRb != null)
+            morningStarRb.WakeUp();
+    }
+
+    private void UpdateReturning(float dt)
+    {
+        if (morningStarRb == null)
+        {
+            EnterDraggingState(false);
+            return;
+        }
+
+        Vector2 target = GetThrowSocketWorld();
+        Vector2 current = morningStarRb.position;
+        Vector2 toTarget = target - current;
+        float dist = toTarget.magnitude;
+
+        if (dist <= returnFinishDistance)
+        {
+            FinishReturn();
+            return;
+        }
+
+        float speed = Mathf.Min(returnSpeed, maxBallLinearSpeed > 0f ? maxBallLinearSpeed : returnSpeed);
+        morningStarRb.linearVelocity = toTarget.normalized * speed;
+        morningStarRb.angularVelocity = 0f;
+    }
+
+    private void FinishReturn()
+    {
+        if (morningStarRb == null)
+        {
+            EnterDraggingState(false);
+            return;
+        }
+
+        // Game Start / Respawnと同じDragging初期化経路を必ず通す。
+        EnterDraggingState(true);
+    }
+
+    private bool IsBallAtReturnSocket()
+    {
+        return morningStarRb == null
+            || Vector2.Distance(morningStarRb.position, GetThrowSocketWorld())
+            <= returnFinishDistance;
+    }
+
+    private void SnapBallToSocket(bool zeroVelocity = true)
+    {
+        if (morningStarRb == null)
+            return;
+
+        morningStarRb.position = GetThrowSocketWorld();
+        if (zeroVelocity)
+        {
+            morningStarRb.linearVelocity = Vector2.zero;
+            morningStarRb.angularVelocity = 0f;
+        }
+        morningStarRb.WakeUp();
+    }
+
+    private void EnsureCollisionReporter()
+    {
+        MorningStarCollisionReporter reporter = morningStarRb.GetComponent<MorningStarCollisionReporter>();
+        if (reporter == null)
+            reporter = morningStarRb.gameObject.AddComponent<MorningStarCollisionReporter>();
+        reporter.Initialize(this);
+    }
+
+    private Transform GetThrowSocket() => throwSocket != null ? throwSocket : handAnchor;
+
+    private Vector2 GetThrowSocketWorld()
+    {
+        Transform socket = GetThrowSocket();
+        return socket != null ? (Vector2)socket.position : GetHandWorld();
+    }
+
+    private void SetChainConstraintActive(bool active)
+    {
+        if (chainConstraint != null)
+            chainConstraint.enabled = active;
+    }
+
+    private void EnsureHookRopeJoint()
+    {
+        if (hookRopeJoint != null || _playerRb == null)
+            return;
+
+        hookRopeJoint = _playerRb.GetComponent<DistanceJoint2D>();
+        if (hookRopeJoint == null)
+            hookRopeJoint = _playerRb.gameObject.AddComponent<DistanceJoint2D>();
+    }
+
+    private void SetHookRopeJointActive(bool active)
+    {
+        EnsureHookRopeJoint();
+        if (hookRopeJoint == null)
+            return;
+
+        if (!active || !_isHooked || _playerRb == null)
+        {
+            ResetChainClimbState(false);
+            hookRopeJoint.maxDistanceOnly = true;
+            hookRopeJoint.enabled = false;
+            return;
+        }
+
+        // connectedBody == null の場合、connectedAnchorはworld固定点になる。
+        // MagnetPointは鉄球だけをこの同じ支点へ固定する。
+        hookRopeJoint.connectedBody = null;
+        hookRopeJoint.autoConfigureConnectedAnchor = false;
+        hookRopeJoint.autoConfigureDistance = false;
+        hookRopeJoint.enableCollision = false;
+        hookRopeJoint.connectedAnchor = _hookPoint;
+        hookRopeJoint.distance = GetEffectiveRopeLength();
+        UpdateHookRopeJointForCurrentPose();
+        if (!hookRopeJoint.enabled)
+            hookRopeJoint.enabled = true;
+    }
+
+    private void UpdateHookRopeJointForCurrentPose()
+    {
+        if (hookRopeJoint == null || _playerRb == null || !_isHooked)
+            return;
+
+        bool upperHanging = IsUpperHangingSupport();
+        Vector2 anchorWorld = upperHanging
+            ? GetUpwardPoseChainAnchorWorld()
+            : GetHandWorld();
+
+        hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
+
+        if (_isChainClimbing && upperHanging)
+        {
+            // 登り中は短縮中の長さで鎖を張り、慣性で最小距離の内側へ
+            // 入り込むのを防ぐ。入力解除時は下の再張力待ちでMax Distance Onlyへ戻す。
+            hookRopeJoint.maxDistanceOnly = false;
+            hookRopeJoint.distance = Mathf.Max(0.1f, _chainClimbDistance);
+            return;
+        }
+
+        float normalRopeLength = GetEffectiveRopeLength();
+        if (_waitingForUpperHangRetension && upperHanging)
+        {
+            float currentSpan = Vector2.Distance(anchorWorld, _hookPoint);
+            if (currentSpan < normalRopeLength - 0.05f)
+            {
+                hookRopeJoint.maxDistanceOnly = true;
+                hookRopeJoint.distance = normalRopeLength;
+                return;
+            }
+
+            _waitingForUpperHangRetension = false;
+        }
+
+        if (!upperHanging)
+            _waitingForUpperHangRetension = false;
+
+        // 上側支点から吊られている間だけ定長にし、見た目と物理のたるみをなくす。
+        // それ以外は従来どおり最大長制約に戻す。
+        hookRopeJoint.maxDistanceOnly = !upperHanging;
+        hookRopeJoint.distance = normalRopeLength;
+    }
+
+    private void SyncRopeLengthToConstraint()
+    {
+        if (chainConstraint != null)
+        {
+            chainConstraint.SetMaxRopeLength(MaxRopeLength);
+            chainConstraint.ConfigureTension(
+                tensionStartRatio,
+                tensionStrength,
+                tensionDamping,
+                maxTensionForce,
+                airTensionMultiplier,
+                groundPullEaseTime,
+                movingPullResistance,
+                runJumpMomentumThreshold,
+                jumpMomentumGraceTime,
+                runJumpTensionMultiplier,
+                chainAnchorVisualFollowTime);
+            if (chainLineController != null)
+            {
+                chainConstraint.ConfigureTerrainPath(
+                    chainLineController.GroundLayerMask,
+                    chainLineController.ChainCollisionRadius,
+                    chainLineController.CollisionSkin,
+                    chainLineController.SagStrength,
+                    chainLineController.MaxSag);
+            }
+            chainConstraint.MaxBallSpeed = EffectiveBallSpeedLimit;
+        }
+    }
+
+    private void SetLaunchRopeLengthActive(bool active)
+    {
+        _launchRopeLengthActive = active;
+        if (!active)
+            _chainFullStretchSoundPending = false;
+        SyncRopeLengthToConstraint();
+
+        // Hook/Magnet用Jointは通常長でのみ使用するが、状態変更と同フレームでも整合させる。
+        if (hookRopeJoint != null && hookRopeJoint.enabled)
+            hookRopeJoint.distance = GetEffectiveRopeLength();
+    }
+
+    private bool ShouldKeepLaunchRopeLengthAfterFlight(MorningStarState nextState)
+    {
+        if (!_launchRopeLengthActive
+            || (nextState != MorningStarState.Dragging && nextState != MorningStarState.Dropping))
+        {
+            return false;
+        }
+
+        return GetCurrentRopeSpan() > BaseMaxRopeLength + 0.01f;
+    }
+
+    private void TryRestoreBaseRopeLength()
+    {
+        if (!_launchRopeLengthActive
+            || (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
+            || GetCurrentRopeSpan() > BaseMaxRopeLength + 0.01f)
+        {
+            return;
+        }
+
+        SetLaunchRopeLengthActive(false);
+    }
+
+    private float GetCurrentRopeSpan()
+    {
+        Vector2 anchor = _isChainClimbing && !_isHooked
+            ? GetUpwardPoseChainAnchorWorld()
+            : GetHandWorld();
+        float directDistance = morningStarRb != null
+            ? Vector2.Distance(anchor, morningStarRb.position)
+            : 0f;
+        float pathDistance = chainConstraint != null
+            ? chainConstraint.CurrentRopeLength
+            : 0f;
+        return Mathf.Max(directDistance, pathDistance);
+    }
+
+    private float GetEffectiveRopeLength()
+    {
+        float multiplier = _launchRopeLengthActive
+            ? Mathf.Max(1f, launchRopeLengthMultiplier)
+            : 1f;
+        return Mathf.Max(0.1f, maxRopeLength) * multiplier;
+    }
+
+    private Vector2 GetHandWorld()
+    {
+        return handAnchor != null ? (Vector2)handAnchor.position : (Vector2)transform.position;
+    }
+
+    private Vector2 GetPlayerRopeAnchorWorld()
+    {
+        // HandAnchorはUpdateで左右反転するため、Physics step間ではJoint anchorと
+        // 1フレームだけ異なることがある。Hook中の物理・表示は実際のJoint支点を正とする。
+        if (_isHooked && hookRopeJoint != null && hookRopeJoint.enabled && _playerRb != null)
+            return _playerRb.transform.TransformPoint(hookRopeJoint.anchor);
+
+        return GetHandWorld();
+    }
+
+    private Vector2 GetVisualRopeAnchorWorld()
+    {
+        Vector2 targetWorld = ShouldUseUpwardPose()
+            ? GetUpwardPoseChainAnchorWorld()
+            : GetPlayerRopeAnchorWorld();
+        Transform playerTransform = _playerRb != null ? _playerRb.transform : transform;
+        Vector3 targetLocal = playerTransform.InverseTransformPoint(targetWorld);
+
+        if (!Application.isPlaying)
+            return targetWorld;
+
+        if (!_visualRopeAnchorInitialized)
+        {
+            _visualRopeAnchorLocal = targetLocal;
+            _visualRopeAnchorLocalVelocity = Vector3.zero;
+            _visualRopeAnchorInitialized = true;
+        }
+        else if (_visualRopeAnchorUpdatedFrame != Time.frameCount)
+        {
+            _visualRopeAnchorLocal = Vector3.SmoothDamp(
+                _visualRopeAnchorLocal,
+                targetLocal,
+                ref _visualRopeAnchorLocalVelocity,
+                Mathf.Max(0.01f, chainAnchorVisualFollowTime));
+        }
+
+        _visualRopeAnchorUpdatedFrame = Time.frameCount;
+        return playerTransform.TransformPoint(_visualRopeAnchorLocal);
+    }
+
+    private void UpdateFallbackLineRenderer()
+    {
+        if (chainLineController != null || lineRenderer == null || morningStarRb == null)
+            return;
+
+        if (chainLineController != null)
+        {
+            lineRenderer.enabled = false;
+            return;
+        }
+
+        lineRenderer.enabled = IsRopeLineVisible;
+        if (!lineRenderer.enabled)
+            return;
+
+        lineRenderer.positionCount = 2;
+        Vector3 start = GetVisualRopeAnchorWorld();
+        Vector3 end = morningStarRb.position;
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
+    }
+
+    private void ShowClickAimVisuals(Vector2 aimWorld, Vector2 hand)
+    {
+        if (aimMark != null)
+        {
+            aimMark.gameObject.SetActive(true);
+            aimMark.position = aimWorld;
+        }
+
+        if (aimGuideLineRenderer == null || !showAimGuide)
+            return;
+
+        Vector2 toAim = aimWorld - hand;
+        float len = Mathf.Min(toAim.magnitude, aimGuideMaxLength > 0f ? aimGuideMaxLength : GetEffectiveRopeLength());
+        if (toAim.sqrMagnitude <= 1e-8f)
+        {
+            aimGuideLineRenderer.enabled = false;
+            return;
+        }
+
+        aimGuideLineRenderer.enabled = true;
+        aimGuideLineRenderer.positionCount = 2;
+        aimGuideLineRenderer.SetPosition(0, hand);
+        aimGuideLineRenderer.SetPosition(1, hand + toAim.normalized * len);
+    }
+
+    private void UpdateAimFacing(Vector2 aimWorld)
+    {
+        if (player == null)
+            return;
+
+        float moveX = player.MoveInputX;
+        float aimDirX = aimWorld.x - player.transform.position.x;
+        bool backward = Mathf.Abs(moveX) > 0.01f
+            && Mathf.Abs(aimDirX) > 0.01f
+            && Mathf.Sign(moveX) != Mathf.Sign(aimDirX);
+
+        player.SetAimFacing(aimWorld.x, backward);
+        SetAnimatorBool(_hashBackwardAim, backward);
+    }
+
+    private void FacePlayerForLaunch(Vector2 launchDirection)
+    {
+        if (player == null)
+            return;
+
+        player.SetLaunchFacing(launchDirection.x, horizontalFacingThreshold);
+        SetAnimatorBool(_hashBackwardAim, false);
+    }
+
+    private void IgnorePlayerBallCollision()
+    {
+        if (_playerRb == null || morningStarRb == null)
+            return;
+
+        Collider2D[] playerCols = _playerRb.GetComponents<Collider2D>();
+        Collider2D[] ballCols = morningStarRb.GetComponents<Collider2D>();
+        foreach (Collider2D pc in playerCols)
+        {
+            if (pc == null) continue;
+            foreach (Collider2D bc in ballCols)
+            {
+                if (bc != null)
+                    Physics2D.IgnoreCollision(pc, bc, true);
+            }
+        }
+    }
+
+    private bool TryGetPointerScreen(out Vector2 screenPos)
+    {
+        screenPos = default;
+        Mouse mouse = Mouse.current;
+        if (mouse == null)
+            return false;
+
+        screenPos = mouse.position.ReadValue();
+        if (!restrictPointerToGameView)
+            return true;
+
+        Camera cam = GetAimCamera();
+        if (cam == null)
+            return true;
+
+        return cam.pixelRect.Contains(screenPos);
+    }
+
+    private Camera GetAimCamera() => aimCamera != null ? aimCamera : Camera.main;
+
+    private Vector2 WorldFromScreen(Vector2 screen)
+    {
+        Camera cam = GetAimCamera();
+        if (cam == null)
+            return GetHandWorld();
+
+        Vector3 world = cam.ScreenToWorldPoint(new Vector3(screen.x, screen.y, screenZ));
+        return new Vector2(world.x, world.y);
+    }
+
+    public void ApplyRecallThenLaunch(Vector2 worldDirection)
+    {
+        if (_goalInputBlocked || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+            return;
+
+        _bufferedAimDirection = worldDirection.normalized;
+        _fireBufferTimer = fireInputBufferTime;
+
+        if (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+            TryConsumeBufferedFire();
+    }
+
+    public void RequestReturn()
+    {
+        if (_goalInputBlocked || _respawnPresentation)
+            return;
+        if (_state == MorningStarState.Thrown
+            || _state == MorningStarState.Dropping
+            || (_state == MorningStarState.Dragging && !IsBallAtReturnSocket()))
+            BeginReturn();
+        else if (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
+            BeginRelease();
+    }
+
+    private void BeginLaunchPose(bool launchedInAir)
+    {
+        _launchPoseActive = true;
+        _upwardLaunchPoseSelected = IsUpwardLaunchDirection(_pendingLaunchDir);
+        _launchForwardAnchorApplied = false;
+        _launchPoseElapsed = 0f;
+        _activeLaunchPoseHoldDuration = launchedInAir
+            ? launchPoseMaxHoldTime
+            : groundLaunchPoseHoldDuration;
+        SetAnimatorBool(_hashLaunchPoseActive, true);
+
+        if (player != null && !_upwardLaunchPoseSelected)
+            player.SetWeaponHandAnchorPose(launchReadyAnchorLocalPosition);
+    }
+
+    private void UpdateLaunchPose()
+    {
+        if (!_launchPoseActive)
+            return;
+
+        _launchPoseElapsed += Time.deltaTime;
+
+        if (!_upwardLaunchPoseSelected
+            && !_launchForwardAnchorApplied
+            && _launchPoseElapsed >= Mathf.Max(0f, launchPoseForwardFrameTime))
+        {
+            _launchForwardAnchorApplied = true;
+            if (player != null)
+                player.SetWeaponHandAnchorPose(launchAnchorLocalPosition);
+        }
+
+        if (_launchPoseElapsed >= Mathf.Max(0.01f, _activeLaunchPoseHoldDuration))
+            EndLaunchPose();
+    }
+
+    private void EndLaunchPose()
+    {
+        _launchPoseActive = false;
+        _upwardLaunchPoseSelected = false;
+        _launchForwardAnchorApplied = false;
+        _launchPoseElapsed = 0f;
+        _activeLaunchPoseHoldDuration = 0f;
+        SetAnimatorBool(_hashLaunchPoseActive, false);
+
+        if (player != null)
+            player.ClearWeaponHandAnchorPose();
+    }
+
+    private bool ShouldUseUpwardPose()
+    {
+        return (_launchPoseActive && _upwardLaunchPoseSelected)
+            || IsUpperHangingPose();
+    }
+
+    private static bool IsUpwardLaunchDirection(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 1e-6f)
+            return false;
+
+        Vector2 normalized = direction.normalized;
+        return normalized.y > 0f
+            && normalized.y + 0.0001f >= Mathf.Abs(normalized.x);
+    }
+
+    private bool IsUpperHangingPose()
+    {
+        return IsUpperHangingSupport();
+    }
+
+    private void UpdateChainClimb(float dt)
+    {
+        // 鎖登りはMagnetへの吸着中だけ許可し、地形による吊り下がりでは開始しない。
+        if (_attachedMagnet == null || !IsExplicitUpperHangingSupport())
+        {
+            ResetChainClimbState(false);
+            return;
+        }
+
+        bool climbInputHeld = player != null
+            && player.MoveInputY >= Mathf.Clamp(chainClimbInputThreshold, 0.1f, 1f);
+        if (!climbInputHeld)
+        {
+            if (_isChainClimbing)
+                ResetChainClimbState(true);
+            return;
+        }
+
+        bool explicitUpperSupport = IsExplicitUpperHangingSupport();
+        Vector2 anchorWorld = GetUpwardPoseChainAnchorWorld();
+        Vector2 supportWorld = GetUpperHangSupportWorld();
+        float currentSpan = explicitUpperSupport
+            ? Vector2.Distance(anchorWorld, supportWorld)
+            : GetCurrentRopeSpan();
+        float normalRopeLength = GetEffectiveRopeLength();
+        float minimumDistance = Mathf.Min(
+            Mathf.Max(0.1f, chainClimbMinimumDistance),
+            normalRopeLength);
+
+        if (!_isChainClimbing)
+        {
+            _isChainClimbing = true;
+            _waitingForUpperHangRetension = false;
+            _chainClimbAnimationTime = 0f;
+            _chainClimbMovedThisFixedStep = false;
+            _previousChainClimbSpan = currentSpan;
+        }
+        else
+        {
+            _chainClimbMovedThisFixedStep = _previousChainClimbSpan - currentSpan > 0.001f;
+        }
+
+        // 実距離から1 physics step分だけ短くする。障害物で止められた時に
+        // 短縮量を蓄積しないため、解消後のSnapやCollider貫通を避けられる。
+        _chainClimbDistance = Mathf.Max(
+            minimumDistance,
+            currentSpan - Mathf.Max(0.1f, chainClimbSpeed) * Mathf.Max(0f, dt));
+
+        if (currentSpan <= minimumDistance + 0.01f)
+        {
+            _chainClimbDistance = minimumDistance;
+            _chainClimbMovedThisFixedStep = false;
+        }
+
+        _previousChainClimbSpan = currentSpan;
+        if (!explicitUpperSupport)
+        {
+            SyncRopeLengthToConstraint();
+            if (chainConstraint != null && _playerRb != null)
+                chainConstraint.ConfigurePlayerClimb(
+                    _playerRb.transform.InverseTransformPoint(anchorWorld),
+                    chainClimbSpeed, minimumDistance);
+        }
+    }
+
+    private void ResetChainClimbState(bool waitForRetension)
+    {
+        if (chainConstraint != null)
+            chainConstraint.StopPlayerClimb();
+        bool wasClimbing = _isChainClimbing;
+        _isChainClimbing = false;
+        _chainClimbMovedThisFixedStep = false;
+        _chainClimbDistance = 0f;
+        _previousChainClimbSpan = 0f;
+        _chainClimbAnimationTime = 0f;
+        _waitingForUpperHangRetension = waitForRetension
+            && wasClimbing
+            && IsUpperHangingSupport();
+        if (wasClimbing)
+            SyncRopeLengthToConstraint();
+        RestoreChainClimbVisual();
+    }
+
+    private bool IsUpperHangingSupport()
+    {
+        return IsExplicitUpperHangingSupport() || IsPhysicalUpperHangingSupport();
+    }
+
+    private bool IsExplicitUpperHangingSupport()
+    {
+        return _isHooked
+            && (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
+            && player != null
+            && !IsPlayerGrounded()
+            && _hookPoint.y > player.transform.position.y + PhysicalUpperHangMinimumClearance;
+    }
+
+    private bool IsPhysicalUpperHangingSupport()
+    {
+        return _physicalUpperHangDetected && CanUsePhysicalUpperHangFallback();
+    }
+
+    private bool CanUsePhysicalUpperHangFallback()
+    {
+        return !_isHooked
+            && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
+            && player != null
+            && morningStarRb != null
+            && !IsPlayerGrounded()
+            && morningStarRb.position.y > player.transform.position.y + PhysicalUpperHangMinimumClearance;
+    }
+
+    private void UpdatePhysicalUpperHangDetection(float dt)
+    {
+        if (!CanUsePhysicalUpperHangFallback())
+        {
+            _physicalUpperHangDetected = false;
+            _physicalUpperHangCandidateTime = 0f;
+            _physicalUpperHangGraceRemaining = 0f;
+            return;
+        }
+
+        float currentSpan = GetCurrentRopeSpan();
+        float expectedLength = _isChainClimbing && _chainClimbDistance > 0f
+            ? _chainClimbDistance
+            : GetEffectiveRopeLength();
+        float ropeTolerance = Mathf.Max(
+            PhysicalUpperHangRopeTolerance,
+            expectedLength * 0.02f);
+        float tensionStartDistance = expectedLength
+            * Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
+        bool ropeTaut = currentSpan >= tensionStartDistance + ropeTolerance;
+        bool touchingTerrain = IsMorningStarTouchingTerrain();
+
+        float normalRetensionDistance = GetEffectiveRopeLength()
+            * Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
+        if (_waitingForUpperHangRetension
+            && touchingTerrain
+            && currentSpan >= normalRetensionDistance + ropeTolerance)
+        {
+            _waitingForUpperHangRetension = false;
+            ropeTaut = true;
+        }
+
+        bool physicallySupported = touchingTerrain
+            && (ropeTaut || _waitingForUpperHangRetension);
+        if (physicallySupported)
+        {
+            _physicalUpperHangCandidateTime += Mathf.Max(0f, dt);
+            if (_physicalUpperHangDetected
+                || _physicalUpperHangCandidateTime >= PhysicalUpperHangEnterTime)
+            {
+                _physicalUpperHangDetected = true;
+                _physicalUpperHangGraceRemaining = PhysicalUpperHangGraceTime;
+            }
+            return;
+        }
+
+        _physicalUpperHangCandidateTime = 0f;
+        _physicalUpperHangGraceRemaining = Mathf.Max(
+            0f,
+            _physicalUpperHangGraceRemaining - Mathf.Max(0f, dt));
+        _physicalUpperHangDetected = _physicalUpperHangGraceRemaining > 0f;
+    }
+
+    private bool IsMorningStarTouchingTerrain()
+    {
+        if (morningStarRb == null)
+            return false;
+
+        Collider2D ballCollider = morningStarRb.GetComponent<Collider2D>();
+        return ballCollider != null
+            && ballCollider.GetContacts(_physicalUpperHangContactFilter, _physicalUpperHangContacts) > 0;
+    }
+
+    private void RefreshPhysicalUpperHangContactFilter()
+    {
+        _physicalUpperHangContactFilter = new ContactFilter2D();
+        _physicalUpperHangContactFilter.SetLayerMask(hookableLayers);
+        _physicalUpperHangContactFilter.useTriggers = false;
+    }
+
+    private Vector2 GetUpperHangSupportWorld()
+    {
+        if (IsExplicitUpperHangingSupport())
+            return _hookPoint;
+
+        return morningStarRb != null ? morningStarRb.position : _hookPoint;
+    }
+
+    private Vector2 GetUpwardPoseChainAnchorWorld()
+    {
+        Transform playerTransform = player != null ? player.transform : transform;
+        Vector3 localPosition = upwardPoseChainAnchorLocalPosition;
+        if (player != null && !player.FacingRight)
+            localPosition.x = -localPosition.x;
+        return playerTransform.TransformPoint(localPosition);
+    }
+
+    private void ResolvePlayerBodySprite()
+    {
+        if (_playerBodySprite == null && player != null)
+            _playerBodySprite = player.GetComponentInChildren<SpriteRenderer>();
+    }
+
+    private bool UpdateChainClimbVisual()
+    {
+        ResolvePlayerBodySprite();
+        if (!_isChainClimbing || _playerBodySprite == null || chainClimbSpriteA == null)
+            return false;
+
+        RestoreAnimatorDrivenSprite();
+        EnsureChainClimbSpriteRenderer();
+        if (_chainClimbSpriteRenderer == null)
+            return false;
+
+        if (_playerBodySprite.sprite != null)
+            _animatorDrivenSpriteBeforeChainClimb = _playerBodySprite.sprite;
+
+        if (_chainClimbMovedThisFixedStep)
+            _chainClimbAnimationTime += Time.deltaTime;
+
+        bool useSecondFrame = chainClimbSpriteB != null
+            && Mathf.FloorToInt(_chainClimbAnimationTime * Mathf.Max(1f, chainClimbAnimationFps)) % 2 != 0;
+        _chainClimbSpriteRenderer.sprite = useSecondFrame
+            ? chainClimbSpriteB
+            : chainClimbSpriteA;
+        CopyChainClimbRendererSettings();
+
+        Vector2 ropeAnchor = GetVisualRopeAnchorWorld();
+        Vector2 directionTarget = RopeContactPointCount > 0
+            ? GetRopeContactPoint(0)
+            : GetUpperHangSupportWorld();
+        Vector2 ropeDirection = directionTarget - ropeAnchor;
+        if (ropeDirection.sqrMagnitude > 0.0001f)
+        {
+            float worldAngle = Mathf.Atan2(ropeDirection.y, ropeDirection.x) * Mathf.Rad2Deg - 90f;
+            Quaternion worldRotation = Quaternion.Euler(0f, 0f, worldAngle);
+            Vector3 bodyPosition = _playerBodySprite.transform.position;
+            Vector3 ropeOffsetLocal = Quaternion.Inverse(worldRotation) * (ropeAnchor - (Vector2)bodyPosition);
+            Vector2 resolvedVisualOffset = chainClimbVisualOffset;
+            resolvedVisualOffset.x += ropeOffsetLocal.x;
+            _chainClimbSpriteRenderer.transform.SetPositionAndRotation(
+                bodyPosition + worldRotation * (Vector3)resolvedVisualOffset,
+                worldRotation);
+        }
+
+        _playerBodySprite.sprite = null;
+        return true;
+    }
+
+    private void EnsureChainClimbSpriteRenderer()
+    {
+        if (_chainClimbSpriteRenderer != null || _playerBodySprite == null)
+            return;
+
+        GameObject visual = new GameObject("ChainClimbVisual");
+        visual.hideFlags = HideFlags.DontSave;
+        visual.transform.SetParent(_playerBodySprite.transform, false);
+        _chainClimbSpriteRenderer = visual.AddComponent<SpriteRenderer>();
+    }
+
+    private void CopyChainClimbRendererSettings()
+    {
+        _chainClimbSpriteRenderer.enabled = _playerBodySprite.enabled;
+        _chainClimbSpriteRenderer.color = _playerBodySprite.color;
+        _chainClimbSpriteRenderer.sharedMaterial = _playerBodySprite.sharedMaterial;
+        _chainClimbSpriteRenderer.sortingLayerID = _playerBodySprite.sortingLayerID;
+        _chainClimbSpriteRenderer.sortingOrder = _playerBodySprite.sortingOrder;
+        _chainClimbSpriteRenderer.maskInteraction = _playerBodySprite.maskInteraction;
+        _chainClimbSpriteRenderer.spriteSortPoint = _playerBodySprite.spriteSortPoint;
+        _chainClimbSpriteRenderer.flipX = false;
+        _chainClimbSpriteRenderer.flipY = false;
+    }
+
+    private void RestoreChainClimbVisual()
+    {
+        if (_chainClimbSpriteRenderer != null)
+        {
+            _chainClimbSpriteRenderer.sprite = null;
+            _chainClimbSpriteRenderer.enabled = false;
+            _chainClimbSpriteRenderer.transform.localPosition = Vector3.zero;
+            _chainClimbSpriteRenderer.transform.localRotation = Quaternion.identity;
+        }
+
+        if (_playerBodySprite != null
+            && _playerBodySprite.sprite == null
+            && _animatorDrivenSpriteBeforeChainClimb != null)
+        {
+            _playerBodySprite.sprite = _animatorDrivenSpriteBeforeChainClimb;
+        }
+
+        _animatorDrivenSpriteBeforeChainClimb = null;
+    }
+
+    private void UpdateUpwardPoseSprite()
+    {
+        ResolvePlayerBodySprite();
+        if (_playerBodySprite == null || upwardPoseSprite == null)
+            return;
+
+        if (!ShouldUseUpwardPose())
+        {
+            RestoreAnimatorDrivenSprite();
+            return;
+        }
+
+        if (_playerBodySprite.sprite != upwardPoseSprite)
+            _animatorDrivenSpriteBeforeUpwardPose = _playerBodySprite.sprite;
+
+        _playerBodySprite.sprite = upwardPoseSprite;
+        _upwardSpriteOverrideActive = true;
+    }
+
+    private void RestoreAnimatorDrivenSprite()
+    {
+        if (!_upwardSpriteOverrideActive || _playerBodySprite == null)
+            return;
+
+        if (_playerBodySprite.sprite == upwardPoseSprite
+            && _animatorDrivenSpriteBeforeUpwardPose != null)
+        {
+            _playerBodySprite.sprite = _animatorDrivenSpriteBeforeUpwardPose;
+        }
+
+        _animatorDrivenSpriteBeforeUpwardPose = null;
+        _upwardSpriteOverrideActive = false;
+    }
+
+    private void ProcessRecoilTrigger()
+    {
+        if (_recoilTriggerTime < 0f || Time.time < _recoilTriggerTime)
+            return;
+        SetAnimatorTrigger(_hashLaunchRecoil);
+        _recoilTriggerTime = -1f;
+    }
+
+    private void SetAnimatorBool(int hash, bool value)
+    {
+        if (animator == null || !HasAnimatorParam(hash, AnimatorControllerParameterType.Bool))
+            return;
+        animator.SetBool(hash, value);
+    }
+
+    private void SetAnimatorTrigger(int hash)
+    {
+        if (animator == null || !HasAnimatorParam(hash, AnimatorControllerParameterType.Trigger))
+            return;
+        animator.SetTrigger(hash);
+    }
+
+    private bool HasAnimatorParam(int hash, AnimatorControllerParameterType type)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null)
+            return false;
+
+        foreach (AnimatorControllerParameter p in animator.parameters)
+        {
+            if (p.nameHash == hash && p.type == type)
+                return true;
+        }
+
+        return false;
+    }
+}

@@ -16,7 +16,7 @@ using UnityEngine.U2D;
 public static class TitleSceneBuilder
 {
     public const string TitleScenePath = "Assets/Scenes/TitleScene.unity";
-    public const string StageScenePath = "Assets/Scenes/CompletScene.unity";
+    public const string StageScenePath = "Assets/Scenes/Stage1.unity";
     public const string BuildRequestPath = "Temp/TitleSceneBuild.request";
     public const string PreviewPath = "Temp/TitleScreenPreview.png";
 

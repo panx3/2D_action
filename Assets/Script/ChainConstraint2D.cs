@@ -1121,14 +1121,33 @@ public class ChainConstraint2D : MonoBehaviour
         // Restでは弱い反作用だけを返し、方向転換時の遅れと慣性を残す。
         if (!_prioritizeFlyingTrajectory)
         {
-            // 境界ではPlayerだけをBallへ引き、Ball側の反作用は0へ収束させる。
-            // SafetyLimitが外向き速度を止めた直後に内向きForceが残る跳ね返りを防ぐ。
-            float ballReactionRatio = RestBallReactionMultiplier * (1f - tautness);
+            // 空中のPlayerを床上のBallが支えている時も張力を伝え続ける。
+            // 最大長で反作用を消すと崖上のBallが固定支点のように残ってしまう。
+            bool supportingPlayer = !grounded
+                && playerRb.worldCenterOfMass.y < morningStarRb.worldCenterOfMass.y
+                && HasBallFloorSupport();
+            float ballReactionRatio = RestBallReactionMultiplier * (supportingPlayer ? 1f : (1f - tautness));
             float ballForce = forceMagnitude
                 / playerMultiplier
                 * ballReactionRatio;
             AddBallTerrainAwareForce(-ballPathDirection * ballForce);
         }
+    }
+
+    private bool HasBallFloorSupport()
+    {
+        int count = morningStarRb.GetContacts(_ballContacts);
+        for (int i = 0; i < count; i++)
+        {
+            ContactPoint2D contact = _ballContacts[i];
+            Collider2D other = contact.collider != null && contact.collider.attachedRigidbody == morningStarRb
+                ? contact.otherCollider : contact.collider;
+            if (other != null && !other.isTrigger
+                && (_terrainLayerMask.value & (1 << other.gameObject.layer)) != 0
+                && contact.normal.y > 0.5f)
+                return true;
+        }
+        return false;
     }
 
     private float GetGroundPullResistanceMultiplier(bool grounded, Vector2 directionToBall)

@@ -343,8 +343,18 @@ public class MorningStarLauncher : MonoBehaviour
     private double _hitStopStartedAt;
     private double _hitStopEndsAt;
     private bool _goalInputBlocked;
+    private bool _gimmickInputBlocked;
 
     public bool IsHitStopping => _hitStopRoutine != null;
+
+    public void SetGimmickInputBlocked(bool blocked)
+    {
+        _gimmickInputBlocked = blocked;
+        if (!blocked) return;
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        CancelHitStop();
+    }
 
     public void SetGoalInputBlocked(bool blocked)
     {
@@ -808,7 +818,7 @@ public class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked)
         {
             UpdateFallbackLineRenderer();
             return;
@@ -2147,7 +2157,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void PlayCombatHitStop(float duration)
     {
-        if (!isActiveAndEnabled || _goalInputBlocked || _respawnPresentation || duration <= 0f
+        if (!isActiveAndEnabled || _goalInputBlocked || _gimmickInputBlocked || _respawnPresentation || duration <= 0f
             || (_playerHealth != null && _playerHealth.IsDead))
             return;
 
@@ -3225,7 +3235,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _gimmickInputBlocked || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3237,7 +3247,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _respawnPresentation)
+        if (_goalInputBlocked || _gimmickInputBlocked || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping

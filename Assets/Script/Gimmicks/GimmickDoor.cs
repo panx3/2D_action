@@ -16,6 +16,19 @@ public class GimmickDoor : MonoBehaviour
     [SerializeField] private Color openColor = Color.white;
     [SerializeField, Min(0.01f)] private float transitionDuration = 0.22f;
 
+    [Header("Open Sound")]
+    [SerializeField] private AudioClip openClip;
+    [SerializeField, Range(0f, 1f)] private float openVolume = 0.9f;
+
+    private AudioSource openAudioSource;
+
+    [Header("Layered Stone Artwork")]
+    [SerializeField] private bool alignArtworkLayers;
+    [SerializeField] private Vector3 artworkLocalPosition = new Vector3(0f, -0.55f, 0f);
+    [SerializeField] private Vector3 artworkLocalScale = new Vector3(1.65f, 0.825f, 1f);
+    [SerializeField, Min(0.01f), Tooltip("膜の中央に置く通行止め判定の厚み（world units）。")]
+    private float barrierThickness = 0.12f;
+
     private Collider2D doorCollider;
     private bool isOpen;
     private bool initialized;
@@ -23,11 +36,14 @@ public class GimmickDoor : MonoBehaviour
 
     public bool IsOpen => isOpen;
     public bool TransitionHadIntermediateFrame { get; private set; }
+    public Vector3 RevealFocusPosition => frontRenderer != null ? frontRenderer.bounds.center : transform.position;
 
     private void Awake()
     {
         doorCollider = GetComponent<Collider2D>();
         ResolveRenderers();
+        AlignArtworkLayers();
+        openAudioSource = OneShotAudioUtility.FindWorldImpactSource();
         isOpen = startsOpen;
         ApplyStateImmediate();
         initialized = true;
@@ -67,12 +83,44 @@ public class GimmickDoor : MonoBehaviour
         if (!changed)
             return;
 
+        if (!isActiveAndEnabled)
+        {
+            ApplyStateImmediate();
+            return;
+        }
+
         if (transitionRoutine != null)
             StopCoroutine(transitionRoutine);
+        if (open)
+            OneShotAudioUtility.Play2D(openAudioSource, openClip, openVolume, transform.position);
         TransitionHadIntermediateFrame = false;
         transitionRoutine = StartCoroutine(AnimateBarrier(isOpen ? 0f : 1f));
 
-        Debug.Log(isOpen ? "GimmickDoor OPEN" : "GimmickDoor CLOSE");
+    }
+
+    private void AlignArtworkLayers()
+    {
+        if (!alignArtworkLayers)
+            return;
+
+        Vector3 scale = artworkLocalScale;
+        scale.y = scale.x * Mathf.Abs(transform.lossyScale.x) / Mathf.Max(0.001f, Mathf.Abs(transform.lossyScale.y));
+        // Old scene instances may override the separately aligned legacy sprites.
+        foreach (SpriteRenderer renderer in new[] { backRenderer, barrierRenderer, frontRenderer })
+        {
+            if (renderer == null)
+                continue;
+            renderer.transform.localPosition = artworkLocalPosition;
+            renderer.transform.localRotation = Quaternion.identity;
+            renderer.transform.localScale = scale;
+        }
+        if (barrierRenderer != null)
+            barrierRenderer.sortingOrder = 1;
+        if (doorCollider is BoxCollider2D blocker)
+        {
+            blocker.size = new Vector2(barrierThickness / Mathf.Max(0.001f, Mathf.Abs(transform.lossyScale.x)), 1.30f * scale.y);
+            blocker.offset = (Vector2)artworkLocalPosition + new Vector2(0f, 0.65f * scale.y);
+        }
     }
 
     private IEnumerator AnimateBarrier(float targetAlpha)
@@ -86,7 +134,7 @@ public class GimmickDoor : MonoBehaviour
 
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
             float alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
             if (alpha > 0.001f && alpha < 0.999f)

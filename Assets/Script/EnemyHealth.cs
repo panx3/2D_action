@@ -196,10 +196,13 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         if (debugLog)
             Debug.Log($"[EnemyHealth] HandleDeath on {name}", this);
 
+        // 配置用Rootと表示用の子の原点は一致するとは限らない。
+        Vector3 fragmentOrigin = hitFlashRenderer != null
+            ? hitFlashRenderer.bounds.center : transform.position;
         DisableAfterDeath();
         FragmentBurst2D.Spawn(
             fragmentPrefab,
-            transform.position,
+            fragmentOrigin,
             _lastImpactDirection,
             fragmentCount,
             fragmentSpread * fragmentScatterScale,
