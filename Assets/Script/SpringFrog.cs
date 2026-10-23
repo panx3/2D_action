@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
+[SelectionBase]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
 public sealed class SpringFrog : MonoBehaviour
 {
@@ -15,7 +16,8 @@ public sealed class SpringFrog : MonoBehaviour
     [SerializeField] private InitialDirection _initialDirection = InitialDirection.Right;
 
     [Header("Terrain Checks")]
-    [SerializeField] private Transform _groundCheck;
+    [SerializeField, Tooltip("接地確認の水平位置。高さは身体Colliderの底面から計算します。")]
+    private Transform _groundCheck;
     [SerializeField, Tooltip("右向き時の前方の足元。左向きでは判定位置を左右反転します。")]
     private Transform _edgeCheck;
     [SerializeField, Tooltip("右向き時の壁判定位置。左向きでは判定位置を左右反転します。")]
@@ -133,9 +135,9 @@ public sealed class SpringFrog : MonoBehaviour
 
     private bool IsGrounded(ContactFilter2D filter)
     {
-        Vector2 origin = _groundCheck != null
-            ? (Vector2)_groundCheck.position
-            : new Vector2(_collider.bounds.center.x, _collider.bounds.min.y + Skin);
+        Bounds bounds = _collider.bounds;
+        Vector2 origin = new Vector2(_groundCheck != null ? _groundCheck.position.x : bounds.center.x,
+            bounds.min.y + Skin);
         if (!HasGround(origin, _groundCheckDistance, filter))
             return false;
         int count = _collider.Cast(Vector2.down, filter, _hits, _groundCheckDistance);
@@ -156,6 +158,7 @@ public sealed class SpringFrog : MonoBehaviour
         Bounds bounds = _collider.bounds;
         Vector2 origin = CheckPosition(_edgeCheck, direction,
             new Vector2(bounds.center.x + direction * (bounds.extents.x + Skin), bounds.min.y + Skin));
+        origin.y = bounds.min.y + Skin;
         float step = Mathf.Max(0.05f, Mathf.Min(bounds.extents.x, 0.15f));
         int samples = Mathf.Max(1, Mathf.CeilToInt(travel / step));
         for (int sample = 0; sample <= samples; sample++)

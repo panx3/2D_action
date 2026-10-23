@@ -34,13 +34,25 @@ public static class EnemyPlacementTools
         foreach (GameObject root in SelectedEnemies()) FitCollider(root);
     }
 
+    [MenuItem("Tools/Enemies/Repair Selected Placement")]
+    private static void RepairSelected()
+    {
+        Undo.IncrementCurrentGroup();
+        int group = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Repair Enemy Placement");
+        foreach (GameObject root in SelectedEnemies()) RepairPlacement(root);
+        Undo.CollapseUndoOperations(group);
+    }
+
     [MenuItem("Tools/Enemies/Align Selected To Ground", true)]
     [MenuItem("Tools/Enemies/Fit Selected Colliders To Feet", true)]
+    [MenuItem("Tools/Enemies/Repair Selected Placement", true)]
     private static bool CanEditSelection() => !EditorApplication.isPlayingOrWillChangePlaymode
         && SelectedEnemies().Any();
 
     [MenuItem("CONTEXT/Enemy/Align To Ground")]
     [MenuItem("CONTEXT/WrenchCrab/Align To Ground")]
+    [MenuItem("CONTEXT/SpringFrog/Align To Ground")]
     private static void AlignContext(MenuCommand command)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
@@ -49,17 +61,19 @@ public static class EnemyPlacementTools
         SnapToGround(root);
     }
 
-    private static IEnumerable<GameObject> SelectedEnemies() => Selection.transforms
-        .Select(t => t.GetComponentInParent<Enemy>() as Component
-            ?? t.GetComponentInParent<WrenchCrab>())
+    private static Component Owner(Transform t) => t.GetComponentInParent<Enemy>() as Component
+        ?? t.GetComponentInParent<WrenchCrab>() as Component ?? t.GetComponentInParent<SpringFrog>();
+
+    private static IEnumerable<GameObject> SelectedEnemies() => Selection.transforms.Select(Owner)
         .Where(c => c != null && !EditorUtility.IsPersistent(c))
         .Select(c => c.gameObject).Distinct();
 
     public static void CalculateCollider(GameObject root, out Vector2 size, out Vector2 offset)
     {
         bool rat = root.GetComponent<Enemy>() != null;
-        if (!rat && root.GetComponent<WrenchCrab>() == null)
-            throw new ArgumentException("Rat / WrenchCrab only", nameof(root));
+        bool frog = root.GetComponent<SpringFrog>() != null;
+        if (!rat && !frog && root.GetComponent<WrenchCrab>() == null)
+            throw new ArgumentException("Rat / WrenchCrab / SpringFrog only", nameof(root));
         Transform visual = root.transform.Find("Visual");
         SpriteRenderer renderer = visual != null ? visual.GetComponent<SpriteRenderer>() : null;
         if (renderer == null || renderer.sprite == null)
@@ -71,7 +85,11 @@ public static class EnemyPlacementTools
 
         Vector3 scale = visual.localScale;
         // 既存の胴体判定の比率を維持。尻尾・レンチまで判定を広げない。
-        size = Vector2.Scale(rat ? new Vector2(0.76f, 0.62f) : new Vector2(0.98f, 0.82f),
+        Vector2 referenceSize = rat ? new Vector2(0.76f, 0.62f)
+            : frog ? new Vector2(0.28f, 0.22f) : new Vector2(0.98f, 0.82f);
+        // カニは50 PPU、カエルは100 PPUで設計された胴体比率を維持する。
+        float densityScale = rat ? 1f : (frog ? 100f : 50f) / renderer.sprite.pixelsPerUnit;
+        size = Vector2.Scale(referenceSize * densityScale,
             new Vector2(Mathf.Abs(scale.x), scale.y));
         float feet = visual.localPosition.y + LowestFoot(renderer) * scale.y;
         float clearance = FootClearance / Mathf.Max(0.0001f, Mathf.Abs(root.transform.lossyScale.y));
@@ -101,9 +119,11 @@ public static class EnemyPlacementTools
         Physics2D.SyncTransforms();
         Bounds bounds = body.bounds;
         var filter = new ContactFilter2D { useTriggers = false };
-        Component owner = root.GetComponent<Enemy>() as Component ?? root.GetComponent<WrenchCrab>();
+        Component owner = Owner(root.transform);
+        if (owner == null) return false;
         // AIが実際に歩けるTerrainだけを配置先にする。
-        filter.SetLayerMask(new SerializedObject(owner).FindProperty("_terrainLayers").intValue);
+        filter.SetLayerMask(new SerializedObject(owner)
+            .FindProperty(owner is SpringFrog ? "_groundLayer" : "_terrainLayers").intValue);
         var hits = new RaycastHit2D[64];
         RaycastHit2D floor = default;
         float nearest = float.PositiveInfinity;
@@ -129,11 +149,44 @@ public static class EnemyPlacementTools
         return true;
     }
 
+    public static bool RepairPlacement(GameObject root)
+    {
+        Transform visual = root.transform.Find("Visual");
+        if (visual == null) throw new InvalidOperationException(root.name + ": Visual is missing");
+        Transform source = PrefabUtility.GetCorrespondingObjectFromSource(visual);
+        Vector3 basePosition = source != null ? source.localPosition : Vector3.zero;
+        Vector3 shift = visual.position - root.transform.TransformPoint(basePosition);
+        if (shift.sqrMagnitude > 0.00000001f)
+        {
+            // 置いた画像の位置を本体へ移し、Physicsと判定用の子も一緒に移動させる。
+            Undo.RecordObjects(new UnityEngine.Object[] { root.transform, visual }, "Repair Enemy Visual Offset");
+            root.transform.position += shift;
+            visual.localPosition = basePosition;
+            if (PrefabUtility.IsPartOfPrefabInstance(root))
+            {
+                PrefabUtility.RecordPrefabInstancePropertyModifications(root.transform);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(visual);
+            }
+        }
+        FitCollider(root);
+        return SnapToGround(root);
+    }
+
     private static float LowestFoot(SpriteRenderer renderer)
     {
-        var sprites = new HashSet<Sprite> { renderer.sprite };
+        var sprites = new HashSet<Sprite>();
+        SpringFrog frog = renderer.GetComponentInParent<SpringFrog>();
+        if (frog != null)
+        {
+            // 空中の伸びた足に合わせて地上のColliderを下げない。
+            SerializedProperty frames = new SerializedObject(frog).FindProperty("_jumpFrames");
+            foreach (int index in new[] { 0, 5 })
+                if (index < frames.arraySize && frames.GetArrayElementAtIndex(index).objectReferenceValue is Sprite frame)
+                    sprites.Add(frame);
+        }
+        else sprites.Add(renderer.sprite);
         Animator animator = renderer.GetComponent<Animator>();
-        if (animator != null && animator.runtimeAnimatorController != null)
+        if (frog == null && animator != null && animator.runtimeAnimatorController != null)
             foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
                 foreach (EditorCurveBinding binding in AnimationUtility.GetObjectReferenceCurveBindings(clip))
                     if (binding.path == "" && binding.type == typeof(SpriteRenderer)

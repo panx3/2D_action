@@ -214,7 +214,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.76}
+  m_Offset: {x: 0, y: -0.38}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -224,7 +224,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.98, y: 0.82}
+  m_Size: {x: 0.49, y: 0.41}
   m_EdgeRadius: 0
 --- !u!114 &6116554413951923266
 MonoBehaviour:
@@ -307,7 +307,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GroundProjectedShadow
   body: {fileID: 6894150940415235163}
   groundShadow: {fileID: 6096710511026154149}
-  width: 2
+  width: 1
   scaleWithOwner: 1
   opacity: 0.52
   probeDistance: 8

@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>レンチカニ。安全な巡回・低速接近から、足を止めて前方を叩く近接制圧型。</summary>
 [DisallowMultipleComponent]
+[SelectionBase]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
 [RequireComponent(typeof(EnemyHealth))]
 public sealed class WrenchCrab : MonoBehaviour
