@@ -108,8 +108,7 @@ public static class EnemyDamageFeedbackChecks
                 Hit(main); firstHitAt = Time.time;
                 Check(main.CurrentHp == 2 && acceptedHits == 1, "Charged damage24 is capped to one HP.");
                 Check(feedback.GaugeVisible && feedback.FlashActive && !feedback.CriticalActive, "First hit shows gauge and flash only.");
-                Check(Gauge(feedback).GetComponentsInChildren<SpriteRenderer>().Count(r => r.name.StartsWith("HP") && r.sprite.name == "GaugeAtlas_01") == 2,
-                    "Three segments show two remaining HP.");
+                CheckBar(Gauge(feedback), 2f / 3f);
                 int hitCount = Roots("Hit").Length;
                 Hit(main);
                 Check(main.CurrentHp == 2 && acceptedHits == 1 && Roots("Hit").Length == hitCount, "Rejected invincible contact does not repeat feedback.");
@@ -118,7 +117,7 @@ public static class EnemyDamageFeedbackChecks
                 foreach (var health in reusable)
                 {
                     Hit(health, 1); var view = health.GetComponent<EnemyDamageFeedback>();
-                    Check(Gauge(view).GetComponentsInChildren<SpriteRenderer>().Length == health.MaxHp * 2, "Reusable gauge builds every HP segment.");
+                    CheckBar(Gauge(view), (health.MaxHp - 1f) / health.MaxHp);
                 }
                 var reset = reusable[0]; reset.ResetHealth(); var resetView = reset.GetComponent<EnemyDamageFeedback>();
                 Check(reset.CurrentHp == 2 && !resetView.GaugeVisible && !resetView.CriticalActive && !resetView.FlashActive,
@@ -144,8 +143,7 @@ public static class EnemyDamageFeedbackChecks
                 Check(!feedback.FlashActive && ((SpriteRenderer[])Get(feedback, "overlays")).All(r => !r.enabled), "White flash ends after 0.1 seconds.");
                 Hit(main); secondHitAt = Time.time;
                 Check(main.CurrentHp == 1 && acceptedHits == 2 && feedback.CriticalActive, "Second accepted hit enters critical HP1.");
-                Check(Gauge(feedback).GetComponentsInChildren<SpriteRenderer>().Count(r => r.name.StartsWith("HP") && r.sprite.name == "GaugeAtlas_01") == 1,
-                    "Gauge shows one HP remaining.");
+                CheckBar(Gauge(feedback), 1f / 3f);
                 phase = 3;
             }
             if (phase == 3 && Time.time - secondHitAt > 0.14f)
@@ -176,7 +174,14 @@ public static class EnemyDamageFeedbackChecks
             {
                 Check(main == null && defeat != null, "Destruction VFX outlives the destroyed enemy."); phase = 7;
             }
-            if (phase == 7 && Time.time - deathAt > 0.65f)
+            if (phase == 7 && Time.time - deathAt > 0.4f)
+            {
+                var smoke = defeat.GetComponent<SpriteRenderer>();
+                Check(smoke.enabled && smoke.color.a > 0f && smoke.color.a < 1f,
+                    "Destruction smoke fades before the final frame is removed.");
+                phase = 8;
+            }
+            if (phase == 8 && Time.time - deathAt > 0.75f)
             {
                 Check(defeat == null && Roots("Hit").Length == 0, "One-shot VFX clean themselves up.");
                 Check(errors == 0, "No runtime Error/Exception.");
@@ -185,6 +190,14 @@ public static class EnemyDamageFeedbackChecks
             if (elapsed > 12f) Finish("FAIL timeout at phase " + phase);
         }
         catch (Exception e) { Finish("FAIL: " + e.Message); }
+    }
+    private static void CheckBar(EnemyMiniHealthGauge gauge, float expected)
+    {
+        var fill = gauge.transform.Find("Fill").GetComponent<SpriteRenderer>();
+        var background = gauge.transform.Find("Background").GetComponent<SpriteRenderer>();
+        Check(gauge.transform.childCount == 3 && Mathf.Abs(fill.bounds.size.x / background.bounds.size.x - expected) < 0.001f
+            && Mathf.Abs(fill.bounds.min.x - background.bounds.min.x) < 0.001f,
+            "One continuous bar keeps its left edge and displays the HP ratio.");
     }
     private static GameObject[] Roots(string prefix) => scene.GetRootGameObjects().Where(go => go.name.StartsWith(prefix, StringComparison.Ordinal)).ToArray();
     private static void Snapshot(string name)

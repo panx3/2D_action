@@ -42,6 +42,10 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0f)] private float minFragmentForce = 1.5f;
     [SerializeField, Min(0f)] private float maxFragmentForce = 3f;
     [SerializeField, Min(0f)] private float fragmentLifeTime = 2f;
+    [SerializeField, Min(0f), Tooltip("敵破片の初期位置と飛ぶ強さの共通倍率。壁の破片には影響しない。")]
+    private float fragmentScatterScale = 1.15f;
+    [SerializeField, Range(0f, 2f), Tooltip("命中方向からの散り幅。従来は0.8。")]
+    private float fragmentDirectionSpread = 1.1f;
 
     private int _currentHp;
     private Rigidbody2D _rigidbody2D;
@@ -198,10 +202,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             transform.position,
             _lastImpactDirection,
             fragmentCount,
-            fragmentSpread,
-            minFragmentForce,
-            maxFragmentForce,
-            fragmentLifeTime);
+            fragmentSpread * fragmentScatterScale,
+            minFragmentForce * fragmentScatterScale,
+            maxFragmentForce * fragmentScatterScale,
+            fragmentLifeTime,
+            fragmentDirectionSpread);
 
         if (destroyOnDeath)
         {

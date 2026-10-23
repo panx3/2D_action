@@ -27,7 +27,7 @@ public static class EnemyDamageFeedbackSetup
         }
         CreateGauge(gauge);
         CreateOneShot("Hit", hit, 14f);
-        CreateOneShot("Defeat", defeat, 14f);
+        CreateOneShot("Defeat", defeat, 12f);
         CreateCritical(critical);
         ApplyToScorpion(); Validate();
     }
@@ -108,7 +108,7 @@ public static class EnemyDamageFeedbackSetup
         string path = PrefabFolder + "/" + name + ".prefab";
         if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) return;
         var root = new GameObject("Enemy" + name);
-        try { AddFlipbook(root, sprites, fps, false, 0f, 0f, Vector2.zero); PrefabUtility.SaveAsPrefabAsset(root, path); }
+        try { AddFlipbook(root, sprites, fps, false, 0f, 0f, Vector2.zero, name == "Defeat" ? 0.18f : 0f); PrefabUtility.SaveAsPrefabAsset(root, path); }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
     private static void CreateCritical(Sprite[] sprites)
@@ -129,7 +129,7 @@ public static class EnemyDamageFeedbackSetup
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
-    private static void AddFlipbook(GameObject root, Sprite[] sprites, float fps, bool loop, float gap, float delay, Vector2 drift)
+    private static void AddFlipbook(GameObject root, Sprite[] sprites, float fps, bool loop, float gap, float delay, Vector2 drift, float fade = 0f)
     {
         var renderer = root.AddComponent<SpriteRenderer>(); renderer.sprite = sprites[0]; renderer.sortingOrder = 23;
         var effect = root.AddComponent<EnemySpriteEffect>(); var data = new SerializedObject(effect);
@@ -138,6 +138,7 @@ public static class EnemyDamageFeedbackSetup
         for (int i = 0; i < sprites.Length; i++) frames.GetArrayElementAtIndex(i).objectReferenceValue = sprites[i];
         data.FindProperty("framesPerSecond").floatValue = fps; data.FindProperty("loop").boolValue = loop;
         data.FindProperty("loopGap").floatValue = gap; data.FindProperty("startDelay").floatValue = delay;
-        data.FindProperty("drift").vector2Value = drift; data.ApplyModifiedPropertiesWithoutUndo();
+        data.FindProperty("drift").vector2Value = drift; data.FindProperty("fadeOutDuration").floatValue = fade;
+        data.ApplyModifiedPropertiesWithoutUndo();
     }
 }

@@ -112,8 +112,9 @@ MonoBehaviour:
   - {fileID: -70592509, guid: 9fc74ee9f8901884d8ea4620bb4b40f7, type: 3}
   - {fileID: 110365747, guid: 9fc74ee9f8901884d8ea4620bb4b40f7, type: 3}
   - {fileID: -665840642, guid: 9fc74ee9f8901884d8ea4620bb4b40f7, type: 3}
-  framesPerSecond: 14
+  framesPerSecond: 12
   loop: 0
   loopGap: 0
   startDelay: 0
   drift: {x: 0, y: 0}
+  fadeOutDuration: 0.18

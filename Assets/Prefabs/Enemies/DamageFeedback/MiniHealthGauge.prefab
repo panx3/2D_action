@@ -47,7 +47,5 @@ MonoBehaviour:
   frameSprite: {fileID: 53240530, guid: 388e73912e2f08f42b7359eeb1be5199, type: 3}
   litSprite: {fileID: 2103594034, guid: 388e73912e2f08f42b7359eeb1be5199, type: 3}
   emptySprite: {fileID: -1149800799, guid: 388e73912e2f08f42b7359eeb1be5199, type: 3}
-  cellSize: {x: 0.5, y: 0.2}
-  fillSize: {x: 0.4, y: 0.12}
-  spacing: 0.05
-  maxWidth: 2.8
+  barSize: {x: 1.6, y: 0.2}
+  fillSize: {x: 1.48, y: 0.12}

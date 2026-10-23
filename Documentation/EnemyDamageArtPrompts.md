@@ -36,12 +36,12 @@ Refine this exact production pixel-art explosion sprite sheet. Preserve the SIX 
 
 | Kind | Workspace asset | Generated source |
 |---|---|---|
-| Mini gauge | `Assets/Art/EnemyDamageFeedback/GaugeAtlas.png` | `exec-b91184f8-e4b4-48ed-8dbe-0fea42045062.png` |
+| Mini gauge | `Assets/Art/EnemyDamageFeedback/GaugeAtlas.png` | `exec-d7f2dbb0-ecf4-40b0-9133-2123e41e2679.png` |
 | Hit spark | `Assets/Art/EnemyDamageFeedback/HitAtlas.png` | `exec-6910202b-e2f5-436b-8f5b-b55e245f5ab9.png` |
 | Critical spark/smoke | `Assets/Art/EnemyDamageFeedback/CriticalAtlas.png` | `exec-6f683864-db69-45a4-a3ba-76f7546cc4ef.png` |
-| Defeat | `Assets/Art/EnemyDamageFeedback/DefeatAtlas.png` | `exec-38097231-2e07-4469-a0c5-d0ec5898fe82.png` |
+| Defeat | `Assets/Art/EnemyDamageFeedback/DefeatAtlas.png` | `exec-c51536bf-0307-45db-aebb-d21c569d7f08.png` |
 
-The initial gauge atlas was `exec-8eef0c77-3f9f-4fec-bf54-d4bb77a997b3.png`; the simplification prompt below produced the selected final source. The initial defeat atlas was `exec-8500db43-96aa-4252-b11c-40dbfa3ee926.png`; the refinement above produced the selected final source. Originals remain in `C:/Users/PCUser/.codex/generated_images/01a16636-704d-7900-8c23-9aac71125e22/`.
+The initial gauge atlas was `exec-8eef0c77-3f9f-4fec-bf54-d4bb77a997b3.png`, simplified as `exec-b91184f8-e4b4-48ed-8dbe-0fea42045062.png` before the continuous pink bar revision. The initial defeat atlas was `exec-8500db43-96aa-4252-b11c-40dbfa3ee926.png`, refined as `exec-38097231-2e07-4469-a0c5-d0ec5898fe82.png` before the dissolving-smoke revision. The final two revision prompts are below. Originals remain in `C:/Users/PCUser/.codex/generated_images/01a16636-704d-7900-8c23-9aac71125e22/`.
 
 ## Gauge simplification requested during visual review
 
@@ -49,4 +49,20 @@ Built-in `image_gen`, `transparent_background=true`. This new atlas replaces the
 
 ```text
 Use case: stylized-concept. Asset type: VERY SIMPLE production pixel-art enemy health-bar components, genuine transparent PNG. EXACTLY three separate components in a strict horizontal 1 row by 3 equal-cell atlas, each component centered, same proportions about 3:1, plenty of transparent margins. LEFT: a plain rectangular HP-cell FRAME only: one crisp dark charcoal pixel-outline border with a very subtle thin light-gray top rim; completely alpha-zero transparent interior. No decorative corners, rivets, bolts, metal panels or bevels. MIDDLE: a solid warm red-pink rectangular HP fill tile with only a narrow pale coral 1-pixel highlight along the top edge; flat clean shape, no frame. RIGHT: an exactly matching solid dark slate-gray empty HP tile, same dimensions, flat and simple. Deliberate chunky pixel-art grid with clean stepped edges, restrained palette of at most 6 colors, no gradients, no shadows, no blurred glow, no antialiasing, no text, no numbers, no labels, no character, no backdrop or checkerboard. These pieces repeat side by side into a large readable three-segment enemy gauge above a red mechanical scorpion. Prioritize immediate readability at tiny on-screen sizes over ornament. Keep all three components aligned to the same horizontal baseline.
+```
+
+## Continuous pink bar revision
+
+Built-in `image_gen`, `transparent_background=true`.
+
+```text
+Use case: precise-object-edit. Image 1 is the EDIT TARGET: a three-component enemy health bar atlas. Image 2 is COLOR REFERENCE ONLY: the existing player's pink HP HUD. Keep the target's EXACT one-row THREE equal-cell layout with exactly one isolated component centered in each cell: left EMPTY OUTLINE FRAME with fully transparent inside, middle SOLID PINK FILL tile, right SOLID DARK SLATE EMPTY tile. Redesign all three pieces as very simple long straight pixel-art rectangles for ONE continuous unsegmented bar. No dividers, separate HP boxes, heart, lettering, ornaments, bolts, chains or UI symbols. Frame should be dark charcoal with just a thin muted gray-pink top rim, very wide and low with roughly 8:1 proportions. Both interior tiles match each other with about 12:1 proportions. Middle fill hue should match the player's vivid candy pink/magenta (core approximately #FF2D91, small pale #FF91CA top highlight), clearly pink rather than red/coral/orange. Right empty tile is flat dark gray-purple. Deliberately coarse crisp pixel edges and at most 5 flat color tones; no gradients, bevel, realistic material, anti-aliasing, blur, glow or shadows. Genuine transparent PNG, all space outside parts alpha-zero, central opening of frame alpha-zero, wide transparent margins in every equal cell. Do not include the player's reference HUD itself. This is three REUSABLE COMPONENTS for assembling a single continuous bar, not three separate completed gauges.
+```
+
+## Dissolving destruction smoke revision
+
+Built-in `image_gen`, `transparent_background=true`.
+
+```text
+Use case: precise-object-edit. Edit target: this production 2D pixel-art mechanical destruction animation sprite sheet. Preserve the EXACT 3 columns by 2 rows grid, SIX chronological frames, identical equal-cell dimensions, centered anchors, genuine transparent background, mechanical coral-pink / ivory / orange color palette, and the compact initial ignition and explosion in the first two frames. Correct the unnatural stone-like gray smoke lumps: smoke must be an airy connected puff that expands, breaks into thin irregular wisps, then visibly dissipates. In frame3 retain the bright compact explosion but replace big dark boulders with a few tiny angular metal flecks and the start of one small lighter slate-gray smoke puff. Bottom row frame4: one coherent modest expanding gray-pink puff with a few ember pixels. Frame5: wider, thinner, broken gray wisps with transparent holes and almost no embers. Frame6: just two or three extremely sparse pale-gray pixel wisps, almost disappeared. The smoke progression must read as ONE continuous expanding and dissolving motion, NOT separate rocks teleporting around, NOT three solid balls, NOT shrinking inward. Make every mark crisp coarse deliberate pixel clusters with stepped edges, at most 12-16 flat tones, no gradients, no airbrush, no soft glow or haze around the sprites. No debris rocks, text, labels, grid lines, backgrounds or checkerboard. Every frame has wide fully alpha-zero transparent padding. Preserve transparency; no opaque or smoky full-cell background.
 ```
