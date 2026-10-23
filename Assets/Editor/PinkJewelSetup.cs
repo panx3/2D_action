@@ -7,7 +7,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>Imports generated UI/VFX, preserves the supplied world sprite, and installs three editable prefab instances.</summary>
-public static class PinkJewelSetup
+public static partial class PinkJewelSetup
 {
     public const string Art = "Assets/Art/PinkJewel";
     public const string PickupPath = "Assets/Prefabs/Items/PinkJewel.prefab";
@@ -32,9 +32,11 @@ public static class PinkJewelSetup
         }
         MakeEffectTextures();
         if (AssetDatabase.LoadAssetAtPath<GameObject>(EffectPath) == null) CreatePickupEffect();
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(PickupPath) == null) CreatePickup();
+        bool createdPickup = AssetDatabase.LoadAssetAtPath<GameObject>(PickupPath) == null;
+        if (createdPickup) CreatePickup();
         if (AssetDatabase.LoadAssetAtPath<GameObject>(HudPath) == null) CreateRow(false);
         if (AssetDatabase.LoadAssetAtPath<GameObject>(ResultPath) == null) CreateRow(true);
+        if (createdPickup) UpgradeRadiance();
         AssetDatabase.SaveAssets();
     }
 

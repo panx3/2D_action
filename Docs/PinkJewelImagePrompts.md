@@ -1,5 +1,11 @@
 # Pink Jewel generated image prompts
 
+## RadianceAtlas (2026-10-23)
+
+Generated with built-in image_gen on transparency. Original: `Assets/Art/PinkJewel/Source/RadianceAtlas.png`. Unity prepares two four-frame 128x32 strips (`RadianceStars`, `RadianceDiamonds`) and a 32x32 peak glint (`RadianceGlint`), using nearest sampling, binary alpha, Point filtering, and no compression/mipmaps. The supplied jewel body and HUD artwork are unchanged.
+
+undefined
+
 Built-in image_gen was used. The supplied world image was a design reference for UI only and was copied unchanged to Assets/Art/PinkJewel/PinkJewel.png. Generated originals are preserved in Assets/Art/PinkJewel/Source. The Unity importer prepares nearest-neighbour small grids and a limited palette; the world sprite is never rewritten.
 
 ## HudCollected
