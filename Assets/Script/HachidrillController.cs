@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>空中巡回と表示のみを制御する。HP・被弾Impulse・撃破はEnemyHealthが所有する。</summary>
+/// <summary>飛行速度とホバリングの所有者。攻撃AIは目標位置を渡し、HP/被弾はEnemyHealthに委譲する。</summary>
 [DisallowMultipleComponent, SelectionBase]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
 public sealed class HachidrillController : MonoBehaviour
@@ -8,7 +8,7 @@ public sealed class HachidrillController : MonoBehaviour
     public enum InitialDirection { Left = -1, Right = 1 }
 
     [Header("Flight patrol")]
-    [SerializeField, Min(0f)] private float moveSpeed = 1.2f;
+    [SerializeField, Min(0f), InspectorName("Patrol Speed")] private float moveSpeed = 1.2f;
     [SerializeField, Min(0f), Tooltip("初期配置位置から左右への距離（ワールド単位）。")]
     private float patrolHalfRange = 3f;
     [SerializeField] private InitialDirection startDirection = InitialDirection.Left;
@@ -37,11 +37,29 @@ public sealed class HachidrillController : MonoBehaviour
     private Vector3 visualRest;
     private int direction;
     private float hoverTime, nextContact;
+    private bool hasFlightTarget;
+    private Vector2 flightTarget;
+    private float flightSpeed, flightAcceleration;
 
-    // 将来の攻撃制御は巡回を一時停止できる。HPや接触判定には介入しない。
     public bool PatrolPaused { get; set; }
+    public bool AttackPresentation { get; set; }
+    public bool SuppressContactDamage { get; set; }
+    public event System.Action BeforeFlightStep;
     public Vector2 PatrolCenter => patrolCenter;
+    public float PatrolHalfRange => Mathf.Max(0f, patrolHalfRange);
     public int Facing => direction;
+    public SpriteRenderer VisualRenderer => visualRenderer;
+    public Animator VisualAnimator => visualAnimator;
+
+    public void SetFlightTarget(Vector2 target, float speed, float acceleration)
+    {
+        hasFlightTarget = true; flightTarget = target;
+        flightSpeed = Mathf.Max(0f, speed); flightAcceleration = Mathf.Max(0.01f, acceleration);
+    }
+
+    public void ClearFlightTarget() => hasFlightTarget = false;
+    public void BlockContactAfterAttack() => nextContact = Mathf.Max(nextContact, Time.time + Mathf.Max(0.02f, contactCooldown));
+    public void Face(int facing) => direction = facing >= 0 ? 1 : -1;
 
     private void Awake()
     {
@@ -60,7 +78,7 @@ public sealed class HachidrillController : MonoBehaviour
     {
         direction = startDirection == InitialDirection.Right ? 1 : -1;
         hoverTime = nextContact = 0f;
-        PatrolPaused = false;
+        PatrolPaused = AttackPresentation = SuppressContactDamage = hasFlightTarget = false;
     }
 
     private void OnDisable()
@@ -85,9 +103,25 @@ public sealed class HachidrillController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        BeforeFlightStep?.Invoke();
         if (health.CurrentHp <= 0 || health.IsDeathHandled) return;
         // 被弾硬直中はEnemyHealthだけがノックバック速度を扱う。
         if (health.IsHitStunned) return;
+        if (hasFlightTarget && !PatrolPaused)
+        {
+            SetAltitudeLock(false);
+            DriveToTarget(flightTarget, flightSpeed, flightAcceleration);
+            return;
+        }
+        // AIを手動で無効化した場合も、初期高度へ復帰してから巡回を再開する。
+        if (!PatrolPaused && Mathf.Abs(body.position.y - patrolCenter.y) > 0.03f)
+        {
+            SetAltitudeLock(false);
+            DriveToTarget(new Vector2(Mathf.Clamp(body.position.x, patrolCenter.x - PatrolHalfRange,
+                patrolCenter.x + PatrolHalfRange), patrolCenter.y), moveSpeed, 8f);
+            return;
+        }
+        SetAltitudeLock(true);
         if (PatrolPaused || patrolHalfRange <= 0f || moveSpeed <= 0f)
         {
             body.linearVelocity = Vector2.zero;
@@ -110,6 +144,55 @@ public sealed class HachidrillController : MonoBehaviour
         body.linearVelocity = new Vector2(direction * distance / Time.fixedDeltaTime, 0f);
     }
 
+    private void SetAltitudeLock(bool locked)
+    {
+        var constraints = body.constraints;
+        var desired = locked ? constraints | RigidbodyConstraints2D.FreezePositionY
+            : constraints & ~RigidbodyConstraints2D.FreezePositionY;
+        if (constraints != desired) body.constraints = desired;
+    }
+
+    private void DriveToTarget(Vector2 target, float speed, float acceleration)
+    {
+        Vector2 delta = target - body.position;
+        float distance = delta.magnitude;
+        if (distance < 0.015f) { body.linearVelocity = Vector2.zero; return; }
+        float desiredSpeed = Mathf.Min(speed, Mathf.Sqrt(2f * acceleration * distance), distance / Time.fixedDeltaTime);
+        Vector2 velocity = Vector2.MoveTowards(body.linearVelocity, delta / distance * desiredSpeed,
+            acceleration * Time.fixedDeltaTime);
+        // 斜め移動も本体Colliderで掃引。地形沿いの成分だけを残し、壁/地面を跨がない。
+        Vector2 displacement = velocity * Time.fixedDeltaTime;
+        Vector2 safe = Sweep(displacement, out Vector2 normal);
+        if (normal != Vector2.zero)
+        {
+            Vector2 remaining = displacement - safe;
+            Vector2 slide = remaining - normal * Vector2.Dot(remaining, normal);
+            // Castは現在位置を基準にするため、保守的に滑り成分だけを採用する。
+            if (safe.sqrMagnitude < 0.000001f) safe = Sweep(slide, out _);
+        }
+        body.linearVelocity = safe / Time.fixedDeltaTime;
+    }
+
+    private Vector2 Sweep(Vector2 displacement, out Vector2 blockingNormal)
+    {
+        blockingNormal = Vector2.zero;
+        float distance = displacement.magnitude;
+        if (distance < 0.00001f) return Vector2.zero;
+        Vector2 forward = displacement / distance;
+        var filter = new ContactFilter2D { useTriggers = false }; filter.SetLayerMask(terrainLayers);
+        int count = bodyCollider.Cast(forward, filter, hits, distance + Skin);
+        float free = distance;
+        for (int i = 0; i < count; i++)
+        {
+            var hit = hits[i];
+            if (hit.collider == null || hit.collider.attachedRigidbody == body || hit.collider.transform.IsChildOf(transform)
+                || Vector2.Dot(hit.normal, forward) >= -0.001f) continue;
+            float available = Mathf.Max(0f, hit.distance - Skin);
+            if (available <= free) { free = available; blockingNormal = hit.normal; }
+        }
+        return forward * free;
+    }
+
     private float FreeDistance(int facing, float step, ContactFilter2D filter)
     {
         Vector2 forward = Vector2.right * facing;
@@ -129,7 +212,7 @@ public sealed class HachidrillController : MonoBehaviour
     {
         if (health.CurrentHp <= 0) return;
         if (visualRenderer != null) visualRenderer.flipX = direction > 0;
-        if (visualAnimator != null) visualAnimator.speed = animationFPS / 6f;
+        if (visualAnimator != null && !AttackPresentation) visualAnimator.speed = animationFPS / 6f;
         hoverTime += Time.deltaTime;
         if (visualRoot == null) return;
         float offset = Mathf.Sin(hoverTime * hoverFrequency * Mathf.PI * 2f) * hoverAmplitude;
@@ -147,7 +230,7 @@ public sealed class HachidrillController : MonoBehaviour
 
     private void TryContactDamage(Collider2D other)
     {
-        if (!isActiveAndEnabled || !enableContactDamage || contactDamage <= 0 || health.CurrentHp <= 0
+        if (!isActiveAndEnabled || SuppressContactDamage || !enableContactDamage || contactDamage <= 0 || health.CurrentHp <= 0
             || health.IsDeathHandled || health.IsHitStunned || Time.time < nextContact
             || !PlayerColliderUtility.IsPlayerBody(other)) return;
         var player = other.GetComponentInParent<PlayerHealth>();
