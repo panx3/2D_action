@@ -10,7 +10,8 @@ public sealed class RisingPlatform : MonoBehaviour
     [Header("Move Settings")]
     [SerializeField, Tooltip("ON: repeat automatically. OFF: wait for a player standing on top.")]
     private bool autoMove = true;
-    [SerializeField, Min(0f)] private float moveDistance = 3f;
+    [SerializeField, Min(0.01f), Tooltip("World-space rise from the placed lower endpoint, in Unity units.")]
+    private float moveDistance = 3f;
     [SerializeField, Min(0.01f)] private float moveSpeed = 2f;
     [SerializeField, Min(0f), Tooltip("Automatic mode only.")]
     private float topWaitTime = 1f;
@@ -39,6 +40,7 @@ public sealed class RisingPlatform : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         platformCollider = GetComponent<BoxCollider2D>();
+        moveDistance = Mathf.Max(0.01f, moveDistance);
         body.bodyType = RigidbodyType2D.Kinematic;
         body.gravityScale = 0f;
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -170,7 +172,7 @@ public sealed class RisingPlatform : MonoBehaviour
 
     private void OnValidate()
     {
-        moveDistance = Mathf.Max(0f, moveDistance);
+        moveDistance = Mathf.Max(0.01f, moveDistance);
         moveSpeed = Mathf.Max(0.01f, moveSpeed);
         topWaitTime = Mathf.Max(0f, topWaitTime);
         bottomWaitTime = Mathf.Max(0f, bottomWaitTime);

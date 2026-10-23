@@ -27,6 +27,17 @@ public static class RisingPlatformValidation
     [MenuItem("Tools/Validation/Rising Platform")]
     public static void Run()
     {
+        Start(false);
+    }
+
+    [MenuItem("Tools/Validation/Platforms (Rising + One Way)")]
+    public static void RunAll()
+    {
+        Start(true);
+    }
+
+    private static void Start(bool includeOneWay)
+    {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorUtility.scriptCompilationFailed)
             throw new InvalidOperationException("Run from Edit Mode with no compilation errors.");
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null)
@@ -39,6 +50,7 @@ public static class RisingPlatformValidation
         SceneManager.SetActiveScene(active);
         EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
         SessionState.SetBool(Key + "Running", true);
+        SessionState.SetBool(Key + "IncludeOneWay", includeOneWay);
         SessionState.SetString(Key + "Result", "Pending");
         EditorApplication.isPlaying = true;
     }
@@ -71,7 +83,12 @@ public static class RisingPlatformValidation
             ValidateAutomatic();
             ValidateDetection();
             ValidateCarryAndJump();
-            SessionState.SetString(Key + "Result", "PASS: prefab, automatic waits/repeat/independence, player-only top detection, activation cancellation, early departure, return cancellation, descent reboarding, carry, movement, jump and upward impulse.");
+            ValidateDistances();
+            bool includeOneWay = SessionState.GetBool(Key + "IncludeOneWay", false);
+            if (includeOneWay)
+                OneWayPlatformValidation.Validate();
+            SessionState.SetString(Key + "Result", "PASS: Rising distance 2/3/5 in both modes, prefab, automatic waits/repeat/independence, detection, reboarding, carry, movement, jump and upward impulse."
+                + (includeOneWay ? " OneWay: underside/side passage, landing, movement/jump, ball collision above/below and independent copies." : ""));
         }
         catch (Exception exception)
         {
@@ -204,11 +221,51 @@ public static class RisingPlatformValidation
 
     private static float Y => lift.GetComponent<Rigidbody2D>().position.y;
 
-    private static void Setup(bool automatic)
+    private static void ValidateDistances()
+    {
+        foreach (bool automatic in new[] { true, false })
+        foreach (float distance in new[] { 2f, 3f, 5f })
+        {
+            Vector2 origin = new Vector2(7f, -4f);
+            Setup(automatic, origin);
+            Set(lift, "moveDistance", distance);
+            Set(lift, "moveSpeed", 2f);
+            if (!automatic)
+            {
+                AddPlayer(Vector2.zero);
+                Board();
+            }
+            UntilState("Top");
+            Require(Mathf.Abs(Y - origin.y - distance) < 0.001f,
+                "Incorrect distance " + distance + " auto=" + automatic);
+            Require(Mathf.Abs(lift.GetComponent<Rigidbody2D>().position.x - origin.x) < 0.001f,
+                "Vertical lift changed X position");
+            if (!automatic)
+            {
+                Require(player.IsGrounded, "Rider lost grounding at distance " + distance);
+                Tick(20);
+                Require(Mathf.Abs(Y - origin.y - distance) < 0.001f, "Top did not hold rider");
+                Leave();
+            }
+            UntilState("Bottom");
+            Require(Mathf.Abs(Y - origin.y) < 0.001f, "Did not return to placed lower endpoint");
+            Set(lift, "moveDistance", 0f);
+            Invoke(lift, "OnValidate");
+            Require((float)typeof(RisingPlatform).GetField("moveDistance", Private).GetValue(lift) > 0f,
+                "Zero distance was accepted");
+            Set(lift, "moveDistance", -2f);
+            Invoke(lift, "OnValidate");
+            Require((float)typeof(RisingPlatform).GetField("moveDistance", Private).GetValue(lift) > 0f,
+                "Negative distance was accepted");
+            Cleanup();
+        }
+    }
+
+    private static void Setup(bool automatic, Vector2 origin = default)
     {
         root = new GameObject("RisingPlatformValidationFixture");
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gimmicks/RisingPlatform.prefab");
-        lift = UnityEngine.Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root.transform).GetComponent<RisingPlatform>();
+        lift = UnityEngine.Object.Instantiate(prefab, origin, Quaternion.identity, root.transform).GetComponent<RisingPlatform>();
         Set(lift, "autoMove", automatic);
         Set(lift, "moveDistance", 0.8f);
         Set(lift, "moveSpeed", 1f);
@@ -236,7 +293,8 @@ public static class RisingPlatformValidation
     private static void Board()
     {
         float footOffset = playerBody.position.y - playerCollider.bounds.min.y;
-        playerBody.position = new Vector2(0f, lift.GetComponent<BoxCollider2D>().bounds.max.y + footOffset + 0.01f);
+        playerBody.position = new Vector2(lift.GetComponent<Rigidbody2D>().position.x,
+            lift.GetComponent<BoxCollider2D>().bounds.max.y + footOffset + 0.01f);
         playerBody.linearVelocity = Vector2.zero;
         playerBody.gravityScale = 1f;
         Set(player, "_bjump", false);
@@ -265,7 +323,7 @@ public static class RisingPlatformValidation
 
     private static void UntilState(string expected)
     {
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 400; i++)
         {
             if (typeof(RisingPlatform).GetField("state", Private).GetValue(lift).ToString() == expected)
                 return;
