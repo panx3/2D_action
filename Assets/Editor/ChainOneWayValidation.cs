@@ -83,7 +83,7 @@ public static class ChainOneWayValidation
             ValidateRenderers(fixture, constraint, playerBody, ball, start, end);
 
             // Real simulated contacts, including the different Player/ball effector
-            // colliders, must resolve to exactly the same platform instance.
+            // colliders, must each resolve to a OneWayPlatform instance.
             for (int i = 0; i < 20; i++)
             {
                 Physics2D.Simulate(0.02f);
@@ -110,8 +110,12 @@ public static class ChainOneWayValidation
             Physics2D.Simulate(0.02f);
             Rebuild(constraint, playerBody.position, ball.position);
             Require(!constraint.HasOneWaySupport, "Player-only A contact supported rope");
-            CheckPair(constraint, playerBody, ball, origin.x, origin.x + 10f, top, false, "Player A / ball B");
-            CheckPair(constraint, playerBody, ball, origin.x + 10f, origin.x, top, false, "Player B / ball A");
+            constraint.SetMaxRopeLength(16f); // Slack across the gap between A and B.
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x + 10f, top, true, "Player A / ball B");
+            ValidateRenderers(fixture, constraint, playerBody, ball, playerBody.position, ball.position);
+            CheckPair(constraint, playerBody, ball, origin.x + 10f, origin.x, top, true, "Player B / ball A");
+            ValidateRenderers(fixture, constraint, playerBody, ball, playerBody.position, ball.position);
+            constraint.SetMaxRopeLength(4.5f);
             CheckPair(constraint, playerBody, ball, origin.x + 10f, origin.x + 10f, top, true, "Both on B");
             Move(playerBody, playerBody.position + Vector2.up * 2f);
             Move(ball, ball.position + Vector2.up * 2f);
@@ -178,6 +182,14 @@ public static class ChainOneWayValidation
             wall.size = new Vector2(4f, 1f);
             wallObject.transform.position = origin + Vector2.right * 30f;
             Physics2D.SyncTransforms();
+            Land(playerBody, ball, origin.x, origin.x + 30f, top);
+            Rebuild(constraint, start, end);
+            Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0,
+                "Player on OneWay / ball on ordinary ground enabled support");
+            Land(playerBody, ball, origin.x + 30f, origin.x + 10f, top);
+            Rebuild(constraint, start, end);
+            Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0,
+                "Player on ordinary ground / ball on OneWay enabled support");
             Land(playerBody, ball, origin.x + 30f, origin.x + 30f, origin.y + 0.5f);
             // Keep the probe curve on A: generic grounded flags alone would
             // wrongly allow this support despite both bodies resting elsewhere.

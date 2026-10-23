@@ -45,21 +45,28 @@ public sealed class OneWayRopeSupport2D
         float radius, float skin, ContactFilter2D filter, Rigidbody2D player, Rigidbody2D ball)
     {
         // Read the live physics contacts together, never Player's cached grounded
-        // flag. The two layer-filtered colliders resolve to the same floor owner.
+        // flag. Each endpoint must rest on a OneWayPlatform, but their floor
+        // owners may differ. The existing approach test still decides which
+        // surfaces the rope can actually acquire.
         playerContacts.Clear();
         ballContacts.Clear();
         if (player != null && player.simulated) player.GetContacts(playerContacts);
         if (ball != null && ball.simulated) ball.GetContacts(ballContacts);
         eligible.Clear();
         IReadOnlyList<OneWayPlatform> platforms = OneWayPlatform.RopeSurfaces;
+        bool playerOnOneWay = false;
+        bool ballOnOneWay = false;
         for (int p = 0; p < platforms.Count; p++)
         {
             OneWayPlatform platform = platforms[p];
-            if (platform != null && platform.TryGetRopeSurface(out Vector2 left, out _, out Vector2 up)
-                && HasTopContact(player, playerContacts, platform, left, up)
-                && HasTopContact(ball, ballContacts, platform, left, up))
-                eligible.Add(platform);
+            if (platform == null || !platform.TryGetRopeSurface(out Vector2 left, out _, out Vector2 up))
+                continue;
+            playerOnOneWay |= HasTopContact(player, playerContacts, platform, left, up);
+            ballOnOneWay |= HasTopContact(ball, ballContacts, platform, left, up);
         }
+        if (playerOnOneWay && ballOnOneWay)
+            for (int p = 0; p < platforms.Count; p++)
+                eligible.Add(platforms[p]);
         float baseLength = Length(path);
         float sag = Mathf.Min(maxSag, Mathf.Max(0f, maxLength - baseLength) * sagStrength);
         for (int i = 0; i <= Samples; i++)
