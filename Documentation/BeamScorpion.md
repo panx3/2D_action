@@ -10,12 +10,12 @@ Prefab内の参照、Layer、AudioSource、Animatorは設定済みです。
 
 ## 動作と既存システム
 
-- ゆっくり左右巡回。胴体ColliderのCastで接地・壁を、予測移動先からの下向きRaycastで足場端を確認します。
-- 前方7以内にPlayerが見える場合、巡回時間が3秒を超えると停止して攻撃します。追尾せず、予備動作開始時の向きを保持します。
-- 予備動作0.65秒 → ビーム0.55秒 → 硬直0.8秒 → 巡回。次の攻撃には巡回時間3秒が必要です。
+- 初期位置から左右それぞれ2.5の範囲をゆっくり巡回。壁や足場端では範囲に達する前でも反転します。
+- 射程7以内にPlayerが見える場合、左右どちらからでも反応して停止・向き直り・射撃します。追跡移動はせず、予備動作開始後は向きを固定します。
+- 巡回中の待機1.2秒 → 予備動作0.5秒 → ビーム0.55秒 → 硬直0.55秒 → 巡回。射程内に留まる場合の発射周期は約2.8秒です。
 - `EnemyHealth` がHP1、Morning Starの `IMorningStarHitReceiver`、撃破破片、被弾SE、ヒットストップ、復帰を担当します。
-- ビーム／本体接触は `PlayerColliderUtility.IsPlayerBody` を通し、`PlayerHealth.TakeDamage` を使用します。既存の無敵・死亡・復帰中は追加ダメージを与えません。
-- 本体接触とビームは同じ0.7秒のダメージ間隔を共有します。撃破／無効化時にビーム・チャージ・移動・接触攻撃を停止します。
+- 本体への接触はダメージを与えません。ビームだけが `PlayerColliderUtility.IsPlayerBody` を通して `PlayerHealth.TakeDamage` を使用し、既存の無敵・死亡・復帰中は追加ダメージを与えません。
+- ビームのダメージ間隔は0.7秒。撃破／無効化時にビーム・チャージ・移動を停止します。
 - `GroundProjectedShadow`、既存の影画像、敵の物理Material、`OneShotAudioUtility` を再利用しています。
 
 ## スプライトとAnimator
@@ -32,8 +32,11 @@ Prefab内の参照、Layer、AudioSource、Animatorは設定済みです。
 ## ビームとVFX
 
 最大長8、太さ0.14、継続0.55秒、色RGBA `(1, 0.08, 0.32, 1)`、ダメージ1。
-固定方向のRaycastで最も近いPlayer本体または非Triggerの環境Colliderまで伸びます。
+固定方向のRaycastで最も近いPlayer本体・鉄球・非Triggerの環境Colliderまで伸びます。
 壁が先なら壁で停止します。判定は中心線で、外周光は演出です。
+鉄球に命中すると交点に火花を出して、その一射全体を打ち消して硬直へ移ります。
+壁の奥にある鉄球には反応しません。鉄球のRigidbody2D・Launcherの状態は変更しません。
+鉄球は `MorningStarCollisionReporter.Launcher.BallBody` と一致する物理Bodyで識別するため、鎖や同じLayerの別オブジェクトでは打ち消せません。
 
 `Assets/Prefabs/Enemies/BeamScorpionVFX/` の6つのPrefabをControllerから差し替えできます。
 
@@ -56,25 +59,27 @@ Prefab内の参照、Layer、AudioSource、Animatorは設定済みです。
 | 設定 | 初期値 |
 |---|---|
 | Move Speed / Start Facing Right | 0.8 / OFF（左向き） |
+| Patrol Half Width | 2.5（初期位置から片側の幅、Rootスケールに追従） |
 | Turn Delay / Probe Distance | 0.15秒 / 0.12 |
-| Attack Interval / Attack Cooldown | 3秒 / 0.8秒 |
-| Windup Time / Detection Range | 0.65秒 / 7 |
+| Attack Interval / Attack Cooldown | 1.2秒 / 0.55秒 |
+| Windup Time / Detection Range | 0.5秒 / 7 |
 | Beam Duration / Length / Thickness | 0.55秒 / 8 / 0.14 |
 | Beam Color | 赤ピンク `(1, 0.08, 0.32, 1)` |
-| Beam Damage / Contact Damage | 1 / 1 |
+| Beam Damage | 1（本体接触ダメージなし） |
 | Damage Interval / Knockback | 0.7秒 / 5 |
 | Ground Layer / Obstacle Layer | Default + Walls |
 | Player Layer | player |
-| Beam SE Volume | 0.55 |
+| Morning Star Layer | morningstar |
+| Beam SE Volume | 0.65 |
 
 `Beam Origin`、Visual Renderer／Animator、攻撃コマと発射口オフセット、Audio Source、
 Beam Fire SE／Beam Hit SE、6種のVFX PrefabもInspectorから調整できます。
 GroundCheck／EdgeCheck／WallCheckはPrefab内の確認用マーカーです。安全判定には実際の胴体Colliderの境界を使用します。
 既存の他の敵・Player・本番Sceneの調整値は変更していません。
 
-## 仮SE
+## SE
 
-- 発射: `Assets/Audio/SFX/tekkyu_launch.wav`
+- 発射: `Assets/Audio/SFX/BeamScorpionFire.wav`（専用の0.42秒の合成レーザー音。下降音・倍音・発射ノイズ、44.1kHz/mono/PCM）
 - 着弾: `Assets/Audio/SFX/Imported/打撃6.mp3`（発射より抑えた音量、連続再生を制限）
 - AudioSourceは2D、Play On Awakeなし、Loopなし。現在のWorldImpactSfxと同じMixer Groupに接続します。
 - 専用音への差し替えはControllerのSEスロットで行います。
@@ -87,6 +92,7 @@ GroundCheck／EdgeCheck／WallCheckはPrefab内の確認用マーカーです。
 - VFX: `Assets/Prefabs/Enemies/BeamScorpionVFX/` 内の上記6Prefab。
 - Animator: `Assets/Animation/BeamScorpion/BeamScorpion.controller`、`Patrol.anim`、`Windup.anim`、`Firing.anim`、`Recovery.anim`。
 - 仮画像: `Assets/Generated/BeamScorpion/BeamPixel.png`。
+- 専用SE: `Assets/Audio/SFX/BeamScorpionFire.wav` と `.meta`。
 - 上記新規アセットの `.meta` とフォルダ `.meta`。
 - 既存2画像の `.meta`（Importer設定とPivotのみ）。
 - 本書 `Documentation/BeamScorpion.md`。
@@ -97,11 +103,14 @@ GroundCheck／EdgeCheck／WallCheckはPrefab内の確認用マーカーです。
 ## 検証
 
 - Unity 6000.4.2f1でコンパイル成功。
-- `Tools > Beam Scorpion > Run Play Mode Checks`: **PASS (24), runtimeErrors=0**。
-- 3体の巡回、壁／足場端での反転、歩行コマ、攻撃中停止、攻撃状態遷移、左右のビーム・発射口・Player着弾VFX・発射SE呼び出しを確認。
-- PlayerのHP減少と無敵、本体接触、壁遮蔽、環境着弾VFX、1回のMorning Star攻撃による撃破、撃破後の攻撃停止、ResetHealth復帰を確認。
+- `Tools > Beam Scorpion > Run Play Mode Checks`: **PASS (38), runtimeErrors=0**。
+- 壁／足場端と広い床での巡回範囲反転、歩行コマ、射程外での待機・射程内への反応、左右の向き直り、射撃間隔を検証。
+- PlayerのHP減少と無敵、本体接触でダメージがないこと、壁遮蔽、環境着弾VFX、1回のMorning Star攻撃による撃破、撃破後の停止、ResetHealth復帰を検証。
+- 鉄球で一射全体が消えること、鉄球の物理設定が保持されること、壁の奥の鉄球には反応しないこと、打ち消し後に再射撃できること、専用SEの割り当てとAudioSourceの再生を検証。
 - 長さ・太さ・色の変更反映も確認。
 - 一時Preview Sceneで発射ポーズとビーム表示を確認。本番Sceneの未保存状態は維持。
 - 本番ステージへの配置後の難易度、ゲームパッド実操作、最終的な見た目・効果音の聴感はユーザー確認が必要です。
 
 新たな必須設定はありません。残る作業は本番への配置と、必要に応じた演出・SE・難易度の調整です。
+
+API確認: Unity 6000.4の [PhysicsScene2D.Raycast](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/PhysicsScene2D.Raycast.html) と [Collider2D.attachedRigidbody](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Collider2D-attachedRigidbody.html)。

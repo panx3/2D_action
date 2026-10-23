@@ -352,6 +352,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BeamScorpionController
   moveSpeed: 0.8
+  patrolHalfWidth: 2.5
   startFacingRight: 0
   turnDelay: 0.15
   probeDistance: 0.12
@@ -361,9 +362,9 @@ MonoBehaviour:
   groundCheck: {fileID: 1386721652590996279}
   edgeCheck: {fileID: 3546625351904706356}
   wallCheck: {fileID: 546419432186842957}
-  attackInterval: 3
-  attackCooldown: 0.8
-  windupTime: 0.65
+  attackInterval: 1.2
+  attackCooldown: 0.55
+  windupTime: 0.5
   beamDuration: 0.55
   detectionRange: 7
   beamOrigin: {fileID: 6868470539851955536}
@@ -371,7 +372,6 @@ MonoBehaviour:
   beamThickness: 0.14
   beamColor: {r: 1, g: 0.08, b: 0.32, a: 1}
   beamDamage: 1
-  contactDamage: 1
   damageInterval: 0.7
   knockback: 5
   playerLayer:
@@ -380,6 +380,9 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 65
+  morningStarLayer:
+    serializedVersion: 2
+    m_Bits: 128
   visualRenderer: {fileID: 8377431386023412996}
   visualAnimator: {fileID: 6201829369715041555}
   attackFrames:
@@ -403,9 +406,9 @@ MonoBehaviour:
   environmentHitVfxPrefab: {fileID: 7837202237823663954, guid: 472a0db7a95c38a4c9d4c88c3acb611d, type: 3}
   afterglowVfxPrefab: {fileID: 5511041887906435910, guid: b7ffa7854fe752e48babd09c8d970fe8, type: 3}
   audioSource: {fileID: 8456111066456089678}
-  beamFireSE: {fileID: 8300000, guid: 00d2ceb8b3a5b8948b49fbaa0097125b, type: 3}
+  beamFireSE: {fileID: 8300000, guid: a476965020a34ea4389e0e43ae78d531, type: 3}
   beamHitSE: {fileID: 8300000, guid: 5423a6a881679504fb9984e7cf6b0276, type: 3}
-  beamSEVolume: 0.55
+  beamSEVolume: 0.65
 --- !u!114 &2374081426561630526
 MonoBehaviour:
   m_ObjectHideFlags: 0

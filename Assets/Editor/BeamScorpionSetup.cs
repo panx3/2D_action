@@ -13,6 +13,7 @@ public static class BeamScorpionSetup
     public const string AnimationFolder = "Assets/Animation/BeamScorpion";
     public const string WalkPath = "Assets/image_/ビームサソリ_wolk.png";
     public const string AttackPath = "Assets/image_/ビームサソリ_attack.png";
+    public const string FireSoundPath = "Assets/Audio/SFX/BeamScorpionFire.wav";
 
     [MenuItem("Tools/Beam Scorpion/Create Prefab")]
     public static void CreatePrefab()
@@ -22,6 +23,7 @@ public static class BeamScorpionSetup
         Sprite[] walk = Frames(WalkPath), attack = Frames(AttackPath);
         if (walk.Length != 4 || attack.Length != 6) throw new InvalidOperationException("Expected four walk and six attack sprites.");
         Folder(VfxFolder); Folder(AnimationFolder); Folder("Assets/Generated/BeamScorpion");
+        AudioClip fireSound = CreateFireSound();
         Sprite pixel = CreatePixel();
         var beam = CreateBeam("Beam", pixel);
         var afterglow = CreateBeam("Afterglow", pixel);
@@ -67,7 +69,7 @@ public static class BeamScorpionSetup
             Ref(settings, "wallCheck", Child(root.transform, "WallCheck", new Vector2(-1.1f, 0.55f)));
             Ref(settings, "beamOrigin", Child(root.transform, "BeamOrigin", new Vector2(-0.6f, 2.4f)));
             Ref(settings, "audioSource", audio);
-            Ref(settings, "beamFireSE", AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/SFX/tekkyu_launch.wav"));
+            Ref(settings, "beamFireSE", fireSound);
             Ref(settings, "beamHitSE", AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/SFX/Imported/打撃6.mp3"));
             Ref(settings, "beamVfxPrefab", beam); Ref(settings, "afterglowVfxPrefab", afterglow);
             Ref(settings, "chargeVfxPrefab", charge); Ref(settings, "muzzleVfxPrefab", muzzle);
@@ -134,6 +136,47 @@ public static class BeamScorpionSetup
     }
 
     private static Sprite[] Frames(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s => s.rect.x).ToArray();
+
+    /// <summary>短い下降音・機械的な倍音・発射ノイズを重ねた専用の合成SE。</summary>
+    public static AudioClip CreateFireSound()
+    {
+        if (!File.Exists(FireSoundPath))
+        {
+            const int sampleRate = 44100;
+            int count = (int)(sampleRate * 0.42f);
+            var random = new System.Random(731);
+            double phase = 0d, lowNoise = 0d;
+            using (var writer = new BinaryWriter(File.Create(FireSoundPath)))
+            {
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF")); writer.Write(36 + count * 2);
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt ")); writer.Write(16);
+                writer.Write((short)1); writer.Write((short)1); writer.Write(sampleRate); writer.Write(sampleRate * 2);
+                writer.Write((short)2); writer.Write((short)16);
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("data")); writer.Write(count * 2);
+                for (int i = 0; i < count; i++)
+                {
+                    double t = (double)i / sampleRate;
+                    double frequency = 340d + 2100d * Math.Exp(-t * 17d);
+                    phase += 2d * Math.PI * frequency / sampleRate;
+                    double envelope = Math.Min(1d, t / 0.004d) * Math.Exp(-t * 7d) * Math.Pow(1d - (double)i / count, 0.5d);
+                    double noise = random.NextDouble() * 2d - 1d;
+                    lowNoise += (noise - lowNoise) * 0.18d;
+                    double tone = Math.Sin(phase) * 0.58d + Math.Sin(phase * 1.99d) * 0.16d
+                        + Math.Sin(phase * 0.5d) * 0.12d;
+                    double transient = (noise - lowNoise) * 0.2d * Math.Exp(-t * 45d);
+                    double value = (tone * envelope + transient) * 0.75d;
+                    writer.Write((short)(Math.Max(-0.95d, Math.Min(0.95d, value)) * short.MaxValue));
+                }
+            }
+            AssetDatabase.ImportAsset(FireSoundPath, ImportAssetOptions.ForceSynchronousImport);
+            var importer = (AudioImporter)AssetImporter.GetAtPath(FireSoundPath);
+            var settings = importer.defaultSampleSettings;
+            settings.loadType = AudioClipLoadType.DecompressOnLoad;
+            settings.compressionFormat = AudioCompressionFormat.PCM;
+            importer.defaultSampleSettings = settings; importer.forceToMono = true; importer.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<AudioClip>(FireSoundPath);
+    }
     private static void Ref(SerializedObject target, string name, UnityEngine.Object value) => target.FindProperty(name).objectReferenceValue = value;
     private static Transform Child(Transform parent, string name, Vector2 position)
     {
