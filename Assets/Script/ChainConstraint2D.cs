@@ -77,6 +77,9 @@ public class ChainConstraint2D : MonoBehaviour
     private readonly Vector2[] _cachedRoute = new Vector2[4];
     private readonly RopeContact[] _refinedRouteContacts = new RopeContact[4];
     private readonly RopeContact[] _fallbackRouteContacts = new RopeContact[4];
+    private readonly OneWayRopeSupport2D _oneWaySupport = new OneWayRopeSupport2D();
+    private float _ropeSagStrength = 0.6f;
+    private float _ropeMaxSag = 1.5f;
 
     private Player _player;
     private MorningStarRollingVisual _rollingVisual;
@@ -93,6 +96,7 @@ public class ChainConstraint2D : MonoBehaviour
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
+    public bool HasOneWaySupport => _oneWaySupport.IsSupporting;
 
     public void ConfigurePlayerClimb(Vector2 anchorLocal, float speed, float minimumLength)
     {
@@ -156,11 +160,14 @@ public class ChainConstraint2D : MonoBehaviour
         anchorFollowTime = Mathf.Max(0.01f, anchorSmoothingTime);
     }
 
-    public void ConfigureTerrainPath(LayerMask layerMask, float ropeRadius, float skin)
+    public void ConfigureTerrainPath(LayerMask layerMask, float ropeRadius, float skin,
+        float sagStrength = 0.6f, float maxSag = 1.5f)
     {
         _terrainLayerMask = layerMask;
         _ropeCollisionRadius = Mathf.Max(0.001f, ropeRadius);
         _collisionSkin = Mathf.Max(0f, skin);
+        _ropeSagStrength = Mathf.Max(0f, sagStrength);
+        _ropeMaxSag = Mathf.Max(0f, maxSag);
         RefreshTerrainFilter();
     }
 
@@ -188,6 +195,7 @@ public class ChainConstraint2D : MonoBehaviour
 
     private void OnEnable()
     {
+        _oneWaySupport.Clear();
         _physicsAnchorInitialized = false;
         _anchorLocalVelocity = Vector2.zero;
         _ropePathPoints.Clear();
@@ -197,6 +205,7 @@ public class ChainConstraint2D : MonoBehaviour
 
     private void OnDisable()
     {
+        _oneWaySupport.Clear();
         StopPlayerClimb();
         _ropePathPoints.Clear();
         _ropeContactPoints.Clear();
@@ -376,6 +385,14 @@ public class ChainConstraint2D : MonoBehaviour
         }
 
         RebuildPointLists(start, end);
+        _oneWaySupport.Rebuild(_ropePathPoints, maxRopeLength, _ropeSagStrength,
+            _ropeMaxSag, _ropeCollisionRadius, _collisionSkin, _terrainFilter);
+        if (_oneWaySupport.IsSupporting)
+        {
+            _ropeContactPoints.Clear();
+            for (int i = 1; i < _ropePathPoints.Count - 1; i++)
+                _ropeContactPoints.Add(_ropePathPoints[i]);
+        }
     }
 
     private void RefreshStoredContacts()
@@ -634,6 +651,8 @@ public class ChainConstraint2D : MonoBehaviour
             RaycastHit2D hit = _ropeCastHits[i];
             if (hit.collider != targetCollider)
                 continue;
+            if (hit.collider.GetComponentInParent<OneWayPlatform>() != null)
+                continue;
             if (hit.collider == startCollider && hit.distance <= endpointTolerance)
                 continue;
             if (hit.collider == endCollider && distance - hit.distance <= endpointTolerance)
@@ -699,6 +718,11 @@ public class ChainConstraint2D : MonoBehaviour
             {
                 continue;
             }
+
+            // One-way surfaces are resolved with temporal top-support history after
+            // ordinary wrapping. A spatial hand-to-ball cast has no approach time.
+            if (hit.collider.GetComponentInParent<OneWayPlatform>() != null)
+                continue;
 
             if (hit.collider == startCollider && hit.distance <= endpointTolerance)
                 continue;
@@ -1294,6 +1318,9 @@ public class ChainConstraint2D : MonoBehaviour
         {
             RaycastHit2D hit = _bodyCastHits[i];
             if (hit.collider == null || hit.collider.isTrigger)
+                continue;
+            OneWayPlatform oneWay = hit.collider.GetComponentInParent<OneWayPlatform>();
+            if (oneWay != null && !oneWay.BlocksBodyCorrection(body, direction, hit.normal))
                 continue;
             // 接線方向・接触面から離れる方向の移動は妨げない。
             if (Vector2.Dot(direction, hit.normal) >= -0.0001f)

@@ -2874,7 +2874,9 @@ public class MorningStarLauncher : MonoBehaviour
                 chainConstraint.ConfigureTerrainPath(
                     chainLineController.GroundLayerMask,
                     chainLineController.ChainCollisionRadius,
-                    chainLineController.CollisionSkin);
+                    chainLineController.CollisionSkin,
+                    chainLineController.SagStrength,
+                    chainLineController.MaxSag);
             }
             chainConstraint.MaxBallSpeed = EffectiveBallSpeedLimit;
         }

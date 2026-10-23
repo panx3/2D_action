@@ -100,7 +100,7 @@ public static class RisingPlatformValidation
                 OneWayPlatformValidation.Validate();
             SessionState.SetString(Key + "Result", "PASS: "
                 + (onlyOneWay ? "" : "Rising distance 2/3/5 in both modes, prefab, automatic waits/repeat/independence, detection, reboarding, carry, movement, jump and upward impulse. ")
-                + (includeOneWay ? "OneWay: Player passage/landing/movement/jump, ball passage from below at speed 4/30 and subsequent landing, independent copies and single terrain-query shape." : ""));
+                + (includeOneWay ? "OneWay: Player/ball passage and landing; chain underside length, top support, shared render route, edge release, reset and ordinary terrain." : ""));
         }
         catch (Exception exception)
         {
