@@ -136,6 +136,7 @@ public static class OneWayPlatformValidation
             for (int i = 0; i < 20; i++) Physics2D.Simulate(Dt);
             Require(secondSolid.IsTouching(circle) && !solid.IsTouching(circle)
                 && platform.transform.position == Vector3.zero, "Multiple copies interfered");
+            ChainOneWayValidation.Validate();
         }
         finally
         {

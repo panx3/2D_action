@@ -126,6 +126,11 @@ public static class ChainVisualCollision2D
             RaycastHit2D hit = hitBuffer[i];
             if (hit.collider == null || hit.collider.isTrigger)
                 continue;
+            // The constraint owns one-way support history and supplies the same
+            // supported polyline to both renderers. Never recapture it from below
+            // with a directionless visual cast, including while recalling.
+            if (hit.collider.GetComponentInParent<OneWayPlatform>() != null)
+                continue;
 
             if (hit.distance >= nearestDistance)
                 continue;

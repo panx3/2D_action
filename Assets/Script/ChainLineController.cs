@@ -71,7 +71,7 @@ public class ChainLineController : MonoBehaviour
     private ContactFilter2D _groundFilter;
 
     public int SagSegments => Mathf.Max(2, sagSegments);
-    public float SagStrength => sagStrength;
+    public float SagStrength => useSag ? sagStrength : 0f;
     public float MaxSag => maxSag;
     public float LastSagAmount { get; private set; }
     public float LastDirectDistance { get; private set; }
