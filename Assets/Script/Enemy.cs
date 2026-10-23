@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>ネジネズミのヒット＆アウェイ。被弾の物理とHPはEnemyHealthが所有する。</summary>
 [DisallowMultipleComponent]
+[SelectionBase]
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D), typeof(EnemyHealth))]
 public class Enemy : MonoBehaviour
 {

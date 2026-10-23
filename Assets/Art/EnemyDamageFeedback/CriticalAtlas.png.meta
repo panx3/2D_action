@@ -1,0 +1,500 @@
+fileFormatVersion: 2
+guid: 8ef29acd482735e4e83e392fd1911e66
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 9093850088301650561
+    second: CriticalAtlas_0
+  - first:
+      213: -1952811600804322078
+    second: CriticalAtlas_1
+  - first:
+      213: -1829220798893858911
+    second: CriticalAtlas_2
+  - first:
+      213: -8308336618922592528
+    second: CriticalAtlas_3
+  - first:
+      213: 1600767061533501818
+    second: CriticalAtlas_4
+  - first:
+      213: -6381099621827418411
+    second: CriticalAtlas_5
+  - first:
+      213: 2351323296463401807
+    second: CriticalAtlas_6
+  - first:
+      213: -4916764005395339251
+    second: CriticalAtlas_7
+  - first:
+      213: -4159581944251139768
+    second: CriticalAtlas_8
+  - first:
+      213: -8378939833089877475
+    second: CriticalAtlas_9
+  - first:
+      213: 8071967992071532762
+    second: CriticalAtlas_10
+  - first:
+      213: -7796129266088047408
+    second: CriticalAtlas_11
+  - first:
+      213: -8861281587544336054
+    second: CriticalAtlas_12
+  - first:
+      213: 2198753472512495997
+    second: CriticalAtlas_13
+  - first:
+      213: 5754252881627617573
+    second: CriticalAtlas_14
+  - first:
+      213: 1135780008727313277
+    second: CriticalAtlas_15
+  - first:
+      213: -2873115935604668105
+    second: CriticalAtlas_16
+  - first:
+      213: -5090411794127823649
+    second: CriticalAtlas_17
+  - first:
+      213: 1736083212437093623
+    second: CriticalAtlas_18
+  - first:
+      213: -2007382080631694564
+    second: CriticalAtlas_19
+  - first:
+      213: -1167783165531536633
+    second: CriticalAtlas_20
+  - first:
+      213: 6760193656889444150
+    second: CriticalAtlas_21
+  - first:
+      213: -6618892093525031339
+    second: CriticalAtlas_22
+  - first:
+      213: -4863914471541370209
+    second: CriticalAtlas_23
+  - first:
+      213: -5815328370661848625
+    second: CriticalAtlas_24
+  - first:
+      213: -7268493984567393972
+    second: CriticalAtlas_25
+  - first:
+      213: -1425327986299239987
+    second: CriticalAtlas_26
+  - first:
+      213: 1357107234660400935
+    second: CriticalAtlas_27
+  - first:
+      213: 7208920010019883529
+    second: CriticalAtlas_28
+  - first:
+      213: -4762709306937593584
+    second: CriticalAtlas_29
+  - first:
+      213: 6237909344327493816
+    second: CriticalAtlas_30
+  - first:
+      213: 950958090042284860
+    second: CriticalAtlas_31
+  - first:
+      213: -5871724141026624839
+    second: CriticalAtlas_32
+  - first:
+      213: -5226234251431869570
+    second: CriticalAtlas_33
+  - first:
+      213: 2692072872379500721
+    second: CriticalAtlas_34
+  - first:
+      213: 3944809669505632576
+    second: CriticalAtlas_35
+  - first:
+      213: -4400208969575347092
+    second: CriticalAtlas_36
+  - first:
+      213: -4254967586498926139
+    second: CriticalAtlas_37
+  - first:
+      213: 6162966761282468711
+    second: CriticalAtlas_38
+  - first:
+      213: -7560008841549981777
+    second: CriticalAtlas_39
+  - first:
+      213: -1056527856198288212
+    second: CriticalAtlas_40
+  - first:
+      213: 802811988350745543
+    second: CriticalAtlas_41
+  - first:
+      213: -8019641638906902577
+    second: CriticalAtlas_42
+  - first:
+      213: -2681227419736289339
+    second: CriticalAtlas_43
+  - first:
+      213: -7475970375640118493
+    second: CriticalAtlas_44
+  - first:
+      213: -3065258147739150348
+    second: CriticalAtlas_45
+  - first:
+      213: -1025134176047898420
+    second: CriticalAtlas_46
+  - first:
+      213: 3309327237107257220
+    second: CriticalAtlas_47
+  - first:
+      213: -890937389138398123
+    second: CriticalAtlas_48
+  - first:
+      213: 1194103386353007438
+    second: CriticalAtlas_49
+  - first:
+      213: -2714385878304944045
+    second: CriticalAtlas_50
+  - first:
+      213: 3696724306169907074
+    second: CriticalAtlas_51
+  - first:
+      213: -3617268035851780455
+    second: CriticalAtlas_52
+  - first:
+      213: -7171873479903564019
+    second: CriticalAtlas_53
+  - first:
+      213: 4596810860990187092
+    second: CriticalAtlas_54
+  - first:
+      213: 7041025164860813796
+    second: CriticalAtlas_55
+  - first:
+      213: -6437297836211055523
+    second: CriticalAtlas_56
+  - first:
+      213: -5017008063121831445
+    second: CriticalAtlas_57
+  - first:
+      213: -9185953462831316022
+    second: CriticalAtlas_58
+  - first:
+      213: 3187318886288626529
+    second: CriticalAtlas_59
+  - first:
+      213: -6721129977917963278
+    second: CriticalAtlas_60
+  - first:
+      213: -4999050075621423541
+    second: CriticalAtlas_61
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 512
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: CriticalAtlas_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 443
+        width: 443
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e2500f5c578850b48b51a197d6b54ced
+      internalID: 1765476638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_01
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 443
+        width: 444
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 221feb2807cadc74baadeffe947c75eb
+      internalID: 1706374684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_02
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 443
+        width: 443
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f2eb1011ce989fc4795612af04e3d588
+      internalID: -1140839036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_03
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 443
+        width: 444
+        height: 444
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 092fe70470a20e847aeb82bcd44ea0bb
+      internalID: -1417574255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b06ded647e11c07458cdeb75f6b8f58e
+      internalID: -1827873018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_05
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 0
+        width: 444
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1ef7e0534df85b48972e7b96c04cb7a
+      internalID: -445596124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_06
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c8a2417ae0675044b1e58ba9f6e9fb3
+      internalID: -490004340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CriticalAtlas_07
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 0
+        width: 444
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30de49fccf4319d40bbab7a2665c51ae
+      internalID: -564244219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 47de1f146e5b6424ca7887710653f0ce
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      CriticalAtlas_00: 1765476638
+      CriticalAtlas_01: 1706374684
+      CriticalAtlas_02: -1140839036
+      CriticalAtlas_03: -1417574255
+      CriticalAtlas_04: -1827873018
+      CriticalAtlas_05: -445596124
+      CriticalAtlas_06: -490004340
+      CriticalAtlas_07: -564244219
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

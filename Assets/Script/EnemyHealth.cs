@@ -8,7 +8,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 {
-    [SerializeField] private int maxHp = 3;
+    [SerializeField, Min(1)] private int maxHp = 3;
+    [SerializeField, Min(0), Tooltip("0は従来どおり。1なら強い鉄球でも確定被弾1回につきHPを1だけ減らす。")]
+    private int maxDamagePerHit;
     [SerializeField, Min(0.01f)] private float knockbackResistance = 1f;
     [SerializeField] private bool destroyOnDeath = true;
     [SerializeField] private float hitStunDuration = 0.18f;
@@ -40,6 +42,10 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0f)] private float minFragmentForce = 1.5f;
     [SerializeField, Min(0f)] private float maxFragmentForce = 3f;
     [SerializeField, Min(0f)] private float fragmentLifeTime = 2f;
+    [SerializeField, Min(0f), Tooltip("敵破片の初期位置と飛ぶ強さの共通倍率。壁の破片には影響しない。")]
+    private float fragmentScatterScale = 1.15f;
+    [SerializeField, Range(0f, 2f), Tooltip("命中方向からの散り幅。従来は0.8。")]
+    private float fragmentDirectionSpread = 1.1f;
 
     private int _currentHp;
     private Rigidbody2D _rigidbody2D;
@@ -57,6 +63,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     public int HitSoundPlayCount { get; private set; }
     // 確定した被弾だけをAI/表示へ通知する。HP・ノックバックの所有者はこのComponent。
     public event Action<MorningStarHitContext, bool> HitConfirmed;
+    public event Action HealthReset;
 
     private void Awake()
     {
@@ -92,7 +99,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             return;
 
         _lastDamageTime = Time.time;
-        _currentHp = Mathf.Max(0, _currentHp - context.Damage);
+        int damage = maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
+        _currentHp = Mathf.Max(0, _currentHp - damage);
         // 無敵・撃破済みの接触では止めず、実際にダメージを受けた時だけ通知する。
         if (context.Source != null)
             context.Source.PlayEnemyHitStop(context.HitStopSeconds, _currentHp <= 0);
@@ -194,10 +202,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             transform.position,
             _lastImpactDirection,
             fragmentCount,
-            fragmentSpread,
-            minFragmentForce,
-            maxFragmentForce,
-            fragmentLifeTime);
+            fragmentSpread * fragmentScatterScale,
+            minFragmentForce * fragmentScatterScale,
+            maxFragmentForce * fragmentScatterScale,
+            fragmentLifeTime,
+            fragmentDirectionSpread);
 
         if (destroyOnDeath)
         {
@@ -269,6 +278,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _rigidbody2D.freezeRotation = true;
             _rigidbody2D.angularVelocity = 0f;
         }
+        HealthReset?.Invoke();
     }
 
     private void SetDeathBehavioursEnabled(bool value)

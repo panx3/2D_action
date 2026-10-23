@@ -1,0 +1,300 @@
+fileFormatVersion: 2
+guid: d14d9dc916fc15348bca9bd114f59110
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2399721279861510151
+    second: HitAtlas_0
+  - first:
+      213: -8542470040566525050
+    second: HitAtlas_1
+  - first:
+      213: 5957536157421210533
+    second: HitAtlas_2
+  - first:
+      213: -7452140353138938889
+    second: HitAtlas_3
+  - first:
+      213: 1021361930823176532
+    second: HitAtlas_4
+  - first:
+      213: -6585398241312998867
+    second: HitAtlas_5
+  - first:
+      213: 4139117524144622866
+    second: HitAtlas_6
+  - first:
+      213: 1578046681122651214
+    second: HitAtlas_7
+  - first:
+      213: 8281348526630847886
+    second: HitAtlas_8
+  - first:
+      213: 897487285321802288
+    second: HitAtlas_9
+  - first:
+      213: 4031599472321303866
+    second: HitAtlas_10
+  - first:
+      213: -6003936353135508000
+    second: HitAtlas_11
+  - first:
+      213: -5367561411348336903
+    second: HitAtlas_12
+  - first:
+      213: 7590663769390653064
+    second: HitAtlas_13
+  - first:
+      213: -4857522509899596031
+    second: HitAtlas_14
+  - first:
+      213: -4227954159643547587
+    second: HitAtlas_15
+  - first:
+      213: -6704569386222272569
+    second: HitAtlas_16
+  - first:
+      213: 5506976328407452411
+    second: HitAtlas_17
+  - first:
+      213: 4673562737420859971
+    second: HitAtlas_18
+  - first:
+      213: 1427148122406345406
+    second: HitAtlas_19
+  - first:
+      213: 3470322562712993602
+    second: HitAtlas_20
+  - first:
+      213: -3353158366948771752
+    second: HitAtlas_21
+  - first:
+      213: -328743660192077862
+    second: HitAtlas_22
+  - first:
+      213: 2586421622199214636
+    second: HitAtlas_23
+  - first:
+      213: 5915587019462108318
+    second: HitAtlas_24
+  - first:
+      213: 8325890126394436186
+    second: HitAtlas_25
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 512
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: HitAtlas_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 543
+        height: 724
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cca0dfc3abffbb040b30543edb764b98
+      internalID: 1353375547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HitAtlas_01
+      rect:
+        serializedVersion: 2
+        x: 543
+        y: 0
+        width: 543
+        height: 724
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c11aaaaf58b79374287ca70b1ef649b5
+      internalID: -749848694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HitAtlas_02
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 0
+        width: 543
+        height: 724
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9f14d343efc754848b6e5464f183055a
+      internalID: -2090573724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HitAtlas_03
+      rect:
+        serializedVersion: 2
+        x: 1629
+        y: 0
+        width: 543
+        height: 724
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b15f1eff8ce2f6d419e4ed0237050bb5
+      internalID: -291201407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6e0357b65e849f74a98c3c3fab735561
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      HitAtlas_00: 1353375547
+      HitAtlas_01: -749848694
+      HitAtlas_02: -2090573724
+      HitAtlas_03: -291201407
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,472 @@
+fileFormatVersion: 2
+guid: 9fc74ee9f8901884d8ea4620bb4b40f7
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 448086489552498753
+    second: DefeatAtlas_0
+  - first:
+      213: 7338013095604477408
+    second: DefeatAtlas_1
+  - first:
+      213: 7170124212650596991
+    second: DefeatAtlas_2
+  - first:
+      213: -8941743138334596632
+    second: DefeatAtlas_3
+  - first:
+      213: -6079260279535381356
+    second: DefeatAtlas_4
+  - first:
+      213: 8696604727310474399
+    second: DefeatAtlas_5
+  - first:
+      213: 3749657248551921470
+    second: DefeatAtlas_6
+  - first:
+      213: -4481097148756620835
+    second: DefeatAtlas_7
+  - first:
+      213: 3599825677732358508
+    second: DefeatAtlas_8
+  - first:
+      213: 6123166634672959302
+    second: DefeatAtlas_9
+  - first:
+      213: -8163763281017240520
+    second: DefeatAtlas_10
+  - first:
+      213: 1796893788836127957
+    second: DefeatAtlas_11
+  - first:
+      213: 5856094048637263943
+    second: DefeatAtlas_12
+  - first:
+      213: 8334799238021146353
+    second: DefeatAtlas_13
+  - first:
+      213: 6254997393033916481
+    second: DefeatAtlas_14
+  - first:
+      213: 7336068860474204503
+    second: DefeatAtlas_15
+  - first:
+      213: -7935245167559147615
+    second: DefeatAtlas_16
+  - first:
+      213: -3504966198629885516
+    second: DefeatAtlas_17
+  - first:
+      213: 1157220542031209
+    second: DefeatAtlas_18
+  - first:
+      213: -3034453065959628901
+    second: DefeatAtlas_19
+  - first:
+      213: 9141431604704946744
+    second: DefeatAtlas_20
+  - first:
+      213: 2113265195168529335
+    second: DefeatAtlas_21
+  - first:
+      213: 3794604690425665994
+    second: DefeatAtlas_22
+  - first:
+      213: -1349478741646325853
+    second: DefeatAtlas_23
+  - first:
+      213: 8872989751971646805
+    second: DefeatAtlas_24
+  - first:
+      213: -2766307797756624053
+    second: DefeatAtlas_25
+  - first:
+      213: -7969094705850316014
+    second: DefeatAtlas_26
+  - first:
+      213: 3176136185763451692
+    second: DefeatAtlas_27
+  - first:
+      213: 516009958661380537
+    second: DefeatAtlas_28
+  - first:
+      213: 3457200687796306691
+    second: DefeatAtlas_29
+  - first:
+      213: 798879683714551321
+    second: DefeatAtlas_30
+  - first:
+      213: 6809545475036007762
+    second: DefeatAtlas_31
+  - first:
+      213: -2689355889260286340
+    second: DefeatAtlas_32
+  - first:
+      213: -9216912975119493821
+    second: DefeatAtlas_33
+  - first:
+      213: -3586169939617079075
+    second: DefeatAtlas_34
+  - first:
+      213: 3802754573856441348
+    second: DefeatAtlas_35
+  - first:
+      213: 8771597764303290434
+    second: DefeatAtlas_36
+  - first:
+      213: 7992215199282014508
+    second: DefeatAtlas_37
+  - first:
+      213: -4442460912735855360
+    second: DefeatAtlas_38
+  - first:
+      213: 2026439726245198417
+    second: DefeatAtlas_39
+  - first:
+      213: 7759681250508525374
+    second: DefeatAtlas_40
+  - first:
+      213: 8475887391327625808
+    second: DefeatAtlas_41
+  - first:
+      213: -4504738844618232634
+    second: DefeatAtlas_42
+  - first:
+      213: -6172529460735368933
+    second: DefeatAtlas_43
+  - first:
+      213: 2465635569286763856
+    second: DefeatAtlas_44
+  - first:
+      213: 1991203388299592575
+    second: DefeatAtlas_45
+  - first:
+      213: 723638246810361691
+    second: DefeatAtlas_46
+  - first:
+      213: 4319253668779003967
+    second: DefeatAtlas_47
+  - first:
+      213: -4664633212198005423
+    second: DefeatAtlas_48
+  - first:
+      213: 623866087581127688
+    second: DefeatAtlas_49
+  - first:
+      213: -4510361941023227199
+    second: DefeatAtlas_50
+  - first:
+      213: -1903035027610388511
+    second: DefeatAtlas_51
+  - first:
+      213: 7164343862723982812
+    second: DefeatAtlas_52
+  - first:
+      213: 694321886217339559
+    second: DefeatAtlas_53
+  - first:
+      213: 5689695175525086650
+    second: DefeatAtlas_54
+  - first:
+      213: -2492823212512896069
+    second: DefeatAtlas_55
+  - first:
+      213: -6486791023543286569
+    second: DefeatAtlas_56
+  - first:
+      213: 4648022528394642716
+    second: DefeatAtlas_57
+  - first:
+      213: 7276542331057702540
+    second: DefeatAtlas_58
+  - first:
+      213: -6612497988720316882
+    second: DefeatAtlas_59
+  - first:
+      213: 3349154618375069112
+    second: DefeatAtlas_60
+  - first:
+      213: -2198681733618335857
+    second: DefeatAtlas_61
+  - first:
+      213: -4633497139464447780
+    second: DefeatAtlas_62
+  - first:
+      213: -191870207279936518
+    second: DefeatAtlas_63
+  - first:
+      213: -935358285986725790
+    second: DefeatAtlas_64
+  - first:
+      213: -7803723042597634263
+    second: DefeatAtlas_65
+  - first:
+      213: 7985682507609738831
+    second: DefeatAtlas_66
+  - first:
+      213: -1575719760946477896
+    second: DefeatAtlas_67
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: DefeatAtlas_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 512
+        width: 512
+        height: 512
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb701bb4ed4456f45b5605a6394485f0
+      internalID: 1034568863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DefeatAtlas_01
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 512
+        width: 512
+        height: 512
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: baea299b8fc02c94b9d6f7d58a2d3d6f
+      internalID: 2134383512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DefeatAtlas_02
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 512
+        width: 512
+        height: 512
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1584ca496fadcb741b7596f5be4613a7
+      internalID: 2115858477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DefeatAtlas_03
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 512
+        height: 512
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e3b441239d1ca6b46bfa929328fbad77
+      internalID: -70592509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DefeatAtlas_04
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 512
+        height: 512
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0104bae212096524d8edc97334d37a31
+      internalID: 110365747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DefeatAtlas_05
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 512
+        height: 512
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f19ef80487fbc224697c8485b58d6315
+      internalID: -665840642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 94f29a036c5f76749bd30e6b0e913f72
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      DefeatAtlas_00: 1034568863
+      DefeatAtlas_01: 2134383512
+      DefeatAtlas_02: 2115858477
+      DefeatAtlas_03: -70592509
+      DefeatAtlas_04: 110365747
+      DefeatAtlas_05: -665840642
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
