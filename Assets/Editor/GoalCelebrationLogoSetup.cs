@@ -19,7 +19,7 @@ public static class GoalCelebrationLogoSetup
     {
         ConfigureLogoImporter();
         ConfigurePrefab();
-        AssetDatabase.SaveAssets();
+        GoalCelebrationRewardSetup.Apply();
         AssetDatabase.Refresh();
         Debug.Log("[GoalCelebrationLogoSetup] Goal logo, flash, dimmer and pixel sparkles applied.");
     }
@@ -129,28 +129,29 @@ public static class GoalCelebrationLogoSetup
             SetObjectArray(serialized.FindProperty("sparkleVisuals"), sparkles.Cast<UnityEngine.Object>().ToArray());
             serialized.FindProperty("pauseMenu").objectReferenceValue = null;
 
-            serialized.FindProperty("logoStartDelay").floatValue = 0.16f;
-            serialized.FindProperty("popDuration").floatValue = 0.42f;
+            serialized.FindProperty("logoStartDelay").floatValue = 0.24f;
+            serialized.FindProperty("popDuration").floatValue = 0.26f;
             serialized.FindProperty("logoDisplayDuration").floatValue = 1.15f;
             serialized.FindProperty("fadeOutDuration").floatValue = 0.16f;
             serialized.FindProperty("clearScreenDelay").floatValue = 0.08f;
-            serialized.FindProperty("logoFinalScale").floatValue = 1f;
-            serialized.FindProperty("logoStartScale").floatValue = 0.25f;
-            serialized.FindProperty("overshootScale").floatValue = 1.16f;
-            serialized.FindProperty("undershootScale").floatValue = 0.95f;
-            serialized.FindProperty("logoStartYOffset").floatValue = -34f;
-            serialized.FindProperty("logoStartRotation").floatValue = -4f;
-            serialized.FindProperty("flashDuration").floatValue = 0.1f;
-            serialized.FindProperty("slowMotionScale").floatValue = 0.18f;
-            serialized.FindProperty("slowMotionDuration").floatValue = 0.24f;
+            serialized.FindProperty("logoFinalScale").floatValue = 1.6f;
+            serialized.FindProperty("logoStartScale").floatValue = 0.6f;
+            serialized.FindProperty("overshootScale").floatValue = 1.12f;
+            serialized.FindProperty("undershootScale").floatValue = 0.985f;
+            serialized.FindProperty("logoStartYOffset").floatValue = -20f;
+            serialized.FindProperty("logoStartRotation").floatValue = -2f;
+            serialized.FindProperty("flashDuration").floatValue = 0.075f;
+            serialized.FindProperty("flashStrength").floatValue = 0.38f;
+            serialized.FindProperty("impactStretch").floatValue = 0.035f;
+            serialized.FindProperty("goalStopDuration").floatValue = 0.24f;
             serialized.FindProperty("darkenAlpha").floatValue = 0.42f;
             serialized.FindProperty("darkenDelay").floatValue = 0.1f;
             serialized.FindProperty("darkenFadeDuration").floatValue = 0.18f;
             serialized.FindProperty("particlesEnabled").boolValue = true;
-            serialized.FindProperty("sparkleBurstDuration").floatValue = 0.46f;
-            serialized.FindProperty("sparkleRotationSpeed").floatValue = 95f;
-            serialized.FindProperty("sparklePulseSpeed").floatValue = 3.2f;
-            serialized.FindProperty("sparklePulseAmount").floatValue = 0.18f;
+            serialized.FindProperty("sparkleBurstDuration").floatValue = 0.34f;
+            serialized.FindProperty("sparkleRotationSpeed").floatValue = 55f;
+            serialized.FindProperty("sparklePulseSpeed").floatValue = 2.2f;
+            serialized.FindProperty("sparklePulseAmount").floatValue = 0.12f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             presentation.gameObject.SetActive(false);

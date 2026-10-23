@@ -4,10 +4,12 @@ using UnityEngine;
 /// カメラ移動量に応じて、係数だけ遅れて追従する単一スプライト層。
 /// </summary>
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(1000)]
 public class ParallaxLayer2D : MonoBehaviour
 {
-    [SerializeField, Range(0f, 1f)] private float _parallaxX = 0.25f;
-    [SerializeField, Range(0f, 1f)] private float _parallaxY = 0.12f;
+    [SerializeField, Range(-1f, 1f), Tooltip("カメラへの追従率。0はワールド固定、負の値はカメラより手前の視差です。")]
+    private float _parallaxX = 0.25f;
+    [SerializeField, Range(-1f, 1f)] private float _parallaxY = 0.12f;
 
     private Transform _cameraTransform;
     private Vector3 _startLocalPosition;
@@ -16,13 +18,13 @@ public class ParallaxLayer2D : MonoBehaviour
     public float ParallaxX
     {
         get => _parallaxX;
-        set => _parallaxX = Mathf.Clamp01(value);
+        set => _parallaxX = Mathf.Clamp(value, -1f, 1f);
     }
 
     public float ParallaxY
     {
         get => _parallaxY;
-        set => _parallaxY = Mathf.Clamp01(value);
+        set => _parallaxY = Mathf.Clamp(value, -1f, 1f);
     }
 
     public void Initialize(Transform cameraTransform)
@@ -38,9 +40,12 @@ public class ParallaxLayer2D : MonoBehaviour
             return;
 
         Vector3 cameraDelta = _cameraTransform.position - _cameraStartPosition;
-        transform.localPosition = _startLocalPosition + new Vector3(
+        Vector3 offset = new Vector3(
             cameraDelta.x * _parallaxX,
             cameraDelta.y * _parallaxY,
             0f);
+        // Prefabの親を拡大・回転しても視差のワールド移動量を維持する。
+        transform.localPosition = _startLocalPosition +
+            (transform.parent != null ? transform.parent.InverseTransformVector(offset) : offset);
     }
 }

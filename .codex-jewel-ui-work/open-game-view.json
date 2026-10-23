@@ -1,0 +1,5 @@
+{
+  "csharpCode": "using UnityEngine;\nusing UnityEditor;\npublic static class JewelUiOpenGameView {\n public static string Run() {\n var type=typeof(Editor).Assembly.GetType(\"UnityEditor.GameView\");\n var window=EditorWindow.GetWindow(type,false,\"Game\",false);\n window.Show();window.Repaint();EditorApplication.QueuePlayerLoopUpdate();\n return \"Game View opened for edit-mode UI layout capture; Play Mode remains stopped\";\n }\n}",
+  "methodName": "Run",
+  "className": "JewelUiOpenGameView"
+}

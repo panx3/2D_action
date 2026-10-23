@@ -1,0 +1,33 @@
+ M Assets/Editor/CRTOverlayInstaller.cs
+ M Assets/Editor/DeathRespawnPlayModeChecks.cs
+ M Assets/Prefabs/Gimmicks/Checkpoint.prefab
+ M Assets/Scenes/CompletScene.unity
+ M Assets/Script/CameraFollow.cs
+ M Assets/Script/DeathRespawnManager.cs
+ M Assets/Script/GameBgmController.cs
+ M Assets/Script/Gimmicks/Checkpoint.cs
+ M Assets/Script/Gimmicks/GimmickRespawnController.cs
+ M Assets/Script/Gimmicks/RespawnZone.cs
+ M Assets/Script/GoalMenuController.cs
+ M Assets/Script/MorningStarLauncher.cs
+ M Assets/Script/PlayerHealth.cs
+?? .codex-jewel-ui-work/
+?? Assets/Art/Environment.meta
+?? Assets/Art/Environment/
+?? Assets/Audio/SFX/Crystal/CheckpointActivate.wav
+?? Assets/Audio/SFX/Crystal/CheckpointActivate.wav.meta
+?? Assets/PinkTreeWind.shader
+?? Assets/PinkTreeWind.shader.meta
+?? Assets/Prefabs/Environment.meta
+?? Assets/Prefabs/Environment/
+?? Assets/Resources/ChainFullStretch.wav
+?? Assets/Resources/ChainFullStretch.wav.meta
+?? Assets/Resources/UI/GameOverMenu.prefab
+?? Assets/Resources/UI/GameOverMenu.prefab.meta
+?? Assets/Script/Gimmicks/CheckpointFeedback.cs
+?? Assets/Script/Gimmicks/CheckpointFeedback.cs.meta
+?? Assets/Script/UI/GameOverMenuController.cs
+?? Assets/Script/UI/GameOverMenuController.cs.meta
+?? Assets/image_/CheckpointActivationHalo.png
+?? Assets/image_/CheckpointActivationHalo.png.meta
+?? Docs/PinkTree.md

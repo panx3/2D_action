@@ -59,8 +59,12 @@ public static class RatEnemyVisualSetup
             "EnemyFragment does not contain multiple fragment sprites");
         Check(fragmentPrefab.GetComponent<SpriteRenderer>() != null, "EnemyFragment SpriteRenderer is missing");
         Check(fragmentPrefab.GetComponent<Rigidbody2D>() != null, "EnemyFragment Rigidbody2D is missing");
-        Check(fragmentPrefab.GetComponent<Collider2D>() == null,
-            "EnemyFragment must not collide with Player or other fragments");
+        BoxCollider2D fragmentCollider = fragmentPrefab.GetComponent<BoxCollider2D>();
+        Check(fragmentCollider != null && !fragmentCollider.isTrigger,
+            "EnemyFragment terrain collider is missing");
+        int excludedLayers = LayerMask.GetMask("player", "Enemy", "morningstar", "chain", "WallFragment");
+        Check((fragmentCollider.excludeLayers.value & excludedLayers) == excludedLayers,
+            "EnemyFragment must exclude Player, Enemy, Morning Star and other fragments");
     }
 
     private static void ConfigureSpriteSheet(string path, float pixelsPerUnit, float pivotY)
@@ -105,14 +109,13 @@ public static class RatEnemyVisualSetup
         GameObject root = PrefabUtility.LoadPrefabContents(FragmentPrefabPath);
         try
         {
-            foreach (Collider2D collider in root.GetComponents<Collider2D>())
-                UnityEngine.Object.DestroyImmediate(collider);
-
             SpriteRenderer renderer = Require<SpriteRenderer>(root);
             renderer.sprite = sprites[0];
             EnemyFragment fragment = root.GetComponent<EnemyFragment>();
             if (fragment == null)
                 fragment = root.AddComponent<EnemyFragment>();
+            Require<BoxCollider2D>(root);
+            fragment.ConfigurePhysics();
 
             SerializedObject serialized = new SerializedObject(fragment);
             SerializedProperty array = serialized.FindProperty("fragmentSprites");
@@ -162,6 +165,7 @@ public static class RatEnemyVisualSetup
             collider.size = colliderSize;
             collider.offset = colliderOffset;
             collider.isTrigger = false;
+            EnemyPlacementTools.FitCollider(root, false);
 
             Enemy enemy = Require<Enemy>(root);
             SerializedObject enemySerialized = new SerializedObject(enemy);
@@ -218,8 +222,9 @@ public static class RatEnemyVisualSetup
             $"Visual scale is unexpected: {path}");
 
         BoxCollider2D collider = root.GetComponent<BoxCollider2D>();
-        Check(collider != null && Vector2.Distance(collider.size, colliderSize) < 0.001f
-              && Vector2.Distance(collider.offset, colliderOffset) < 0.001f,
+        EnemyPlacementTools.CalculateCollider(root, out Vector2 fittedSize, out Vector2 fittedOffset);
+        Check(collider != null && Vector2.Distance(collider.size, fittedSize) < 0.001f
+              && Vector2.Distance(collider.offset, fittedOffset) < 0.001f,
             $"Root collider is not fixed to the rat body/feet: {path}");
     }
 

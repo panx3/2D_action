@@ -186,4 +186,12 @@ MonoBehaviour:
   idleColor: {r: 0, g: 1, b: 1, a: 1}
   activeColor: {r: 1, g: 1, b: 1, a: 1}
   flashDuration: 0.08
+  visualRenderer: {fileID: 0}
+  compressedScale: {x: 1.08, y: 0.58}
+  stretchedScale: {x: 0.94, y: 1.24}
+  compressionDuration: 0.04
+  extensionDuration: 0.08
+  settleDuration: 0.22
+  bounceClip: {fileID: 8300000, guid: 60ae0316ac4b05449b0c5e38fd8023e8, type: 3}
+  bounceVolume: 0.8
   showDebugLog: 1

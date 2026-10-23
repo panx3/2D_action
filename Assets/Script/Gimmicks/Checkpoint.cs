@@ -29,6 +29,7 @@ public class Checkpoint : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
     private Color[] _glowBaseColors;
     private Coroutine _glowRoutine;
+    private CheckpointFeedback _feedback;
     private bool _isActivated;
 
     public bool IsActivated => _isActivated;
@@ -36,16 +37,17 @@ public class Checkpoint : MonoBehaviour
     private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
+        _feedback = GetComponent<CheckpointFeedback>();
 
         if (respawnPoint == null)
             respawnPoint = transform;
 
         if (deathRespawnManager == null)
         {
-            deathRespawnManager = FindAnyObjectByType<DeathRespawnManager>(FindObjectsInactive.Exclude);
-            if (deathRespawnManager != null)
-                Debug.LogWarning("[Checkpoint] DeathRespawnManager was auto-found. Assign it in Inspector to avoid wrong references.", this);
+            deathRespawnManager = FindInScene<DeathRespawnManager>();
         }
+        if (gimmickRespawnController == null)
+            gimmickRespawnController = FindInScene<GimmickRespawnController>();
 
         CacheGlowColors();
         SetVisualImmediate(false);
@@ -85,6 +87,24 @@ public class Checkpoint : MonoBehaviour
         if (_glowRoutine != null)
             StopCoroutine(_glowRoutine);
         _glowRoutine = StartCoroutine(GlowOnRoutine());
+        if (_feedback != null)
+            _feedback.PlayActivation();
+    }
+
+    private void OnDisable()
+    {
+        if (_glowRoutine != null)
+            StopCoroutine(_glowRoutine);
+        _glowRoutine = null;
+        SetVisualImmediate(_isActivated);
+    }
+
+    private T FindInScene<T>() where T : Component
+    {
+        foreach (T candidate in FindObjectsByType<T>(FindObjectsInactive.Exclude))
+            if (candidate.gameObject.scene == gameObject.scene)
+                return candidate;
+        return null;
     }
 
     private IEnumerator GlowOnRoutine()
@@ -107,6 +127,18 @@ public class Checkpoint : MonoBehaviour
 
     private void CacheGlowColors()
     {
+        // 古いSceneのPrefab overrideで参照だけが切れていても、既存の発光パーツを再利用する。
+        if (glowRenderers == null || glowRenderers.Length == 0
+            || System.Array.TrueForAll(glowRenderers, renderer => renderer == null))
+        {
+            Transform top = transform.Find("GlowTopCrystal");
+            Transform front = transform.Find("GlowFrontEmblem");
+            glowRenderers = new[]
+            {
+                top != null ? top.GetComponent<SpriteRenderer>() : null,
+                front != null ? front.GetComponent<SpriteRenderer>() : null
+            };
+        }
         if (glowRenderers == null)
         {
             _glowBaseColors = System.Array.Empty<Color>();

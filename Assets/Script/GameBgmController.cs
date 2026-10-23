@@ -32,7 +32,24 @@ public sealed class GameBgmController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float goalVolume = 0.15f;
     [SerializeField, Min(0f)] private float switchFadeDuration = 0.5f;
 
+    [Header("Goal Approach")]
+    [SerializeField, Range(0f, 1f), Tooltip("ゴールが見えてきたときのステージBGM音量倍率。クリア後の曲には適用しません。")]
+    private float goalApproachVolumeMultiplier = 0.3f;
+    [SerializeField, Min(0.01f)] private float goalApproachSmoothTime = 0.7f;
+
+    [Header("Pause Tone")]
+    [SerializeField, Range(10f, 22000f)] private float pauseCutoffFrequency = 2200f;
+    [SerializeField, Min(0f)] private float pauseToneFadeDuration = 0.18f;
+
     private Coroutine _transitionRoutine;
+    private AudioLowPassFilter pauseFilter;
+    private bool ownsPauseTone;
+    private bool pauseToneRequested;
+    private bool previousFilterEnabled;
+    private float previousCutoff;
+    private float pauseToneBlend;
+    private float goalApproachAmount;
+    private float goalApproachVolumeVelocity;
 
     public static GameBgmController Instance { get; private set; }
     public BgmState CurrentState { get; private set; } = BgmState.None;
@@ -65,6 +82,84 @@ public sealed class GameBgmController : MonoBehaviour
             Instance = null;
     }
 
+    /// <summary>Pause alone owns the muffled tone. Clip playback, pitch and volume stay with the existing BGM flow.</summary>
+    public void SetPauseMuffled(bool muffled)
+    {
+        if (!muffled)
+        {
+            pauseToneRequested = false;
+            return;
+        }
+        if (CurrentState == BgmState.Goal || bgmSource == null)
+            return;
+        if (!ownsPauseTone)
+        {
+            if (pauseFilter == null)
+            {
+                pauseFilter = bgmSource.GetComponent<AudioLowPassFilter>();
+                if (pauseFilter == null)
+                {
+                    pauseFilter = bgmSource.gameObject.AddComponent<AudioLowPassFilter>();
+                    pauseFilter.enabled = false;
+                }
+            }
+            previousFilterEnabled = pauseFilter.enabled;
+            previousCutoff = pauseFilter.cutoffFrequency;
+            pauseToneBlend = 0f;
+            ownsPauseTone = true;
+        }
+        pauseToneRequested = true;
+    }
+
+    private void Update()
+    {
+        // Track fades retain sole volume ownership while switching or stopping a clip.
+        if (CurrentState == BgmState.Stage && _transitionRoutine == null && bgmSource != null)
+        {
+            float volume = stageVolume * Mathf.Lerp(1f, goalApproachVolumeMultiplier, goalApproachAmount);
+            bgmSource.volume = Mathf.SmoothDamp(bgmSource.volume, volume, ref goalApproachVolumeVelocity,
+                Mathf.Max(0.01f, goalApproachSmoothTime), Mathf.Infinity, Time.unscaledDeltaTime);
+        }
+        if (!ownsPauseTone || pauseFilter == null)
+            return;
+        float target = pauseToneRequested ? 1f : 0f;
+        pauseToneBlend = pauseToneFadeDuration > 0f
+            ? Mathf.MoveTowards(pauseToneBlend, target, Time.unscaledDeltaTime / pauseToneFadeDuration)
+            : target;
+        float openCutoff = previousFilterEnabled ? previousCutoff : 22000f;
+        float closedCutoff = Mathf.Min(openCutoff, pauseCutoffFrequency);
+        pauseFilter.enabled = true;
+        pauseFilter.cutoffFrequency = Mathf.Exp(Mathf.Lerp(Mathf.Log(openCutoff), Mathf.Log(closedCutoff), pauseToneBlend));
+        if (!pauseToneRequested && pauseToneBlend <= 0f)
+            RestorePauseTone();
+    }
+
+    private void RestorePauseTone()
+    {
+        if (ownsPauseTone && pauseFilter != null)
+        {
+            pauseFilter.cutoffFrequency = previousCutoff;
+            pauseFilter.enabled = previousFilterEnabled;
+        }
+        ownsPauseTone = false;
+        pauseToneRequested = false;
+        pauseToneBlend = 0f;
+    }
+
+    /// <summary>CameraFollowから近接演出の強さだけを受け取り、音量はBGM側で滑らかに変える。</summary>
+    public void SetGoalApproach(float amount)
+    {
+        goalApproachAmount = CurrentState == BgmState.Stage ? Mathf.Clamp01(amount) : 0f;
+    }
+
+    private void OnDisable()
+    {
+        RestorePauseTone();
+        goalApproachAmount = goalApproachVolumeVelocity = 0f;
+        if (CurrentState == BgmState.Stage && _transitionRoutine == null && bgmSource != null)
+            bgmSource.volume = stageVolume;
+    }
+
     public void PlayTitle() => Play(BgmState.Title);
     public void PlayStage() => Play(BgmState.Stage);
     public void PlayGoal() => Play(BgmState.Goal);
@@ -82,10 +177,13 @@ public sealed class GameBgmController : MonoBehaviour
             return;
         }
 
+        if (state == BgmState.Goal)
+            RestorePauseTone();
         if (CurrentState == state)
             return;
 
         CurrentState = state;
+        goalApproachAmount = goalApproachVolumeVelocity = 0f;
         if (_transitionRoutine != null)
         {
             StopCoroutine(_transitionRoutine);
@@ -93,6 +191,11 @@ public sealed class GameBgmController : MonoBehaviour
         }
 
         float targetVolume = GetVolume(state);
+        if (state == BgmState.Stage && TitleStageTransition.IsTransitioning)
+        {
+            _transitionRoutine = StartCoroutine(EnterStageAfterTitle(nextClip, targetVolume));
+            return;
+        }
         if (immediate || !bgmSource.isPlaying || switchFadeDuration <= 0f)
         {
             StartClip(nextClip, targetVolume);
@@ -108,9 +211,19 @@ public sealed class GameBgmController : MonoBehaviour
             return;
 
         CurrentState = BgmState.None;
+        goalApproachAmount = goalApproachVolumeVelocity = 0f;
         if (_transitionRoutine != null)
             StopCoroutine(_transitionRoutine);
         _transitionRoutine = StartCoroutine(FadeOutRoutine(Mathf.Max(0f, duration)));
+    }
+
+    private IEnumerator EnterStageAfterTitle(AudioClip clip, float volume)
+    {
+        // The existing intro starts when the veil clears. Bring its music in on that same gate.
+        while (TitleStageTransition.IsTransitioning) yield return null;
+        StartClip(clip, 0);
+        yield return FadeVolume(0, volume, Mathf.Max(.1f, switchFadeDuration));
+        _transitionRoutine = null;
     }
 
     private IEnumerator SwitchRoutine(AudioClip nextClip, float targetVolume)

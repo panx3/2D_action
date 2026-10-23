@@ -77,6 +77,7 @@ public class ChainLineController : MonoBehaviour
     public float LastDirectDistance { get; private set; }
     public int LastCollisionAdjustedPointCount { get; private set; }
     public float ChainCollisionRadius => chainCollisionRadius;
+    public float CollisionSkin => collisionSkin;
     public LayerMask GroundLayerMask => groundLayerMask;
     public string SortingLayerName => sortingLayerName;
     public int SortingOrder => sortingOrder;
@@ -201,7 +202,7 @@ public class ChainLineController : MonoBehaviour
         }
 
         bool hooked = _hookedVisualActive;
-        if (launcher != null && launcher.IsHookedState)
+        if (launcher != null && (launcher.IsHookedState || launcher.IsUpperHanging))
             hooked = true;
 
         Color normalStart = _visualConfigured ? _configuredNormalColor : _defaultStartColor;
@@ -224,8 +225,11 @@ public class ChainLineController : MonoBehaviour
 
     private void DrawStraightChain()
     {
-        Vector3 start = launcher != null ? (Vector3)launcher.RopeAnchorWorld : startPoint.position;
-        Vector3 end = ClampEndToMaxLength(start, endPoint.position);
+        Vector3 start = launcher != null ? (Vector3)launcher.VisualRopeAnchorWorld : startPoint.position;
+        Vector3 end = endPoint.position;
+        if (TryDrawWrappedChain(start, end))
+            return;
+
         LastDirectDistance = Vector3.Distance(start, end);
         LastSagAmount = 0f;
         BuildAndDrawVisualPath(start, end, 0f);
@@ -233,15 +237,46 @@ public class ChainLineController : MonoBehaviour
 
     private void DrawSagChain()
     {
-        Vector3 start = launcher != null ? (Vector3)launcher.RopeAnchorWorld : startPoint.position;
-        Vector3 end = ClampEndToMaxLength(start, endPoint.position);
+        Vector3 start = launcher != null ? (Vector3)launcher.VisualRopeAnchorWorld : startPoint.position;
+        Vector3 end = endPoint.position;
+        if (TryDrawWrappedChain(start, end))
+            return;
+
         int count = Mathf.Max(2, sagSegments);
         float directDistance = Vector3.Distance(start, end);
-        float resolvedSag = CalculateSagForDistance(directDistance);
+        float resolvedSag = launcher != null && launcher.IsChainClimbing
+            ? 0f
+            : CalculateSagForDistance(directDistance);
 
         LastDirectDistance = directDistance;
         LastSagAmount = resolvedSag;
         BuildAndDrawVisualPath(start, end, resolvedSag);
+    }
+
+    private bool TryDrawWrappedChain(Vector3 start, Vector3 end)
+    {
+        int contactCount = launcher != null ? launcher.RopeContactPointCount : 0;
+        if (contactCount <= 0)
+            return false;
+
+        int pointCount = contactCount + 2;
+        EnsureVisualPointCapacity(pointCount);
+        _visualPoints[0] = start;
+        for (int i = 0; i < contactCount; i++)
+            _visualPoints[i + 1] = launcher.GetRopeContactPoint(i);
+        _visualPoints[pointCount - 1] = end;
+
+        float pathLength = 0f;
+        for (int i = 1; i < pointCount; i++)
+            pathLength += Vector3.Distance(_visualPoints[i - 1], _visualPoints[i]);
+
+        LastDirectDistance = pathLength;
+        LastSagAmount = 0f;
+        LastCollisionAdjustedPointCount = contactCount;
+        _line.positionCount = pointCount;
+        for (int i = 0; i < pointCount; i++)
+            _line.SetPosition(i, _visualPoints[i]);
+        return true;
     }
 
     private void BuildAndDrawVisualPath(Vector3 start, Vector3 end, float sag)
@@ -310,20 +345,6 @@ public class ChainLineController : MonoBehaviour
     {
         float slack = Mathf.Max(0f, maxRopeLength - Mathf.Max(0f, directDistance));
         return Mathf.Min(maxSag, slack * sagStrength);
-    }
-
-    private Vector3 ClampEndToMaxLength(Vector3 start, Vector3 end)
-    {
-        float maxLen = maxRopeLength;
-        if (maxLen <= 0f)
-            return end;
-
-        Vector3 off = end - start;
-        float sqr = off.sqrMagnitude;
-        if (sqr <= maxLen * maxLen || sqr < 1e-10f)
-            return end;
-
-        return start + off.normalized * maxLen;
     }
 
     public void SetPoints(Transform newStart, Transform newEnd)

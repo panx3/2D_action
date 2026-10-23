@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6878306624798780104}
   - component: {fileID: 4634535540716105857}
   - component: {fileID: 106950947548250908}
+  - component: {fileID: 5615114373840382105}
   m_Layer: 0
   m_Name: Checkpoint
   m_TagString: Untagged
@@ -165,6 +166,24 @@ MonoBehaviour:
   glowTransitionDuration: 0.25
   glowPulseMinimum: 0.72
   glowPulseSpeed: 1.8
+--- !u!114 &5615114373840382105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5273356435021031006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58cca754826d3f64b8ed89c00fcf8549, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CheckpointFeedback
+  activationHalo: {fileID: 21300000, guid: ebca8d70cc9829a489720452d12e9ccb, type: 3}
+  activationClip: {fileID: 8300000, guid: fe79bfca8254375409d5bb4a7f4d552e, type: 3}
+  activationVolume: 0.65
+  burstDuration: 1.1
+  pink: {r: 1, g: 0.24, b: 0.65, a: 1}
+  cyan: {r: 0.38, g: 0.95, b: 1, a: 1}
 --- !u!1 &5368892959616218259
 GameObject:
   m_ObjectHideFlags: 0

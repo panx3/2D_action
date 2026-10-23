@@ -65,7 +65,9 @@ public sealed class CRTFilterController : MonoBehaviour
     private CRTFilterRenderer filterRenderer;
     private bool ownsRenderer;
     private bool ownsCameraRenderer;
+    private CRTOverlayController overlayOwner;
     private readonly Dictionary<Canvas, CanvasState> convertedCanvases = new Dictionary<Canvas, CanvasState>();
+    public bool IsOverlayActive => overlayOwner != null;
 
     private struct CanvasState
     {
@@ -156,6 +158,42 @@ public sealed class CRTFilterController : MonoBehaviour
         SetCRTEnabled(!crtEnabled);
     }
 
+    public bool TryBeginOverlay(CRTOverlayController requester, float blur, float brightness, System.Action<RenderTexture, RenderTexture> captured)
+    {
+        if (overlayOwner != null && overlayOwner != requester)
+            return false;
+        InitializeRenderer();
+        if (filterRenderer == null || targetCamera == null)
+            return false;
+
+        // Capture the natural camera frame before its CRT pass. A manual Camera.Render
+        // changes the viewport with pixel-perfect/upscaled cameras and crops the snapshot.
+        overlayOwner = requester;
+        filterRenderer.RequestBackdrop(blur, brightness, captured);
+        ApplySettings();
+        return true;
+    }
+
+    public void SetOverlayFrame(CRTOverlayController requester, float curvature, float scanlines,
+        float noise, float rgb, float vignette, float glass, float pulse, float scale, float transitionNoise, float blend)
+    {
+        if (overlayOwner == requester && filterRenderer != null)
+            filterRenderer.SetOverlay(curvature, scanlines, noise, rgb, vignette, glass, pulse, scale, transitionNoise, blend);
+    }
+
+    public void EndOverlay(CRTOverlayController requester)
+    {
+        if (overlayOwner != requester)
+            return;
+        overlayOwner = null;
+        if (filterRenderer != null)
+        {
+            filterRenderer.CancelBackdrop();
+            filterRenderer.ClearOverlay();
+        }
+        ApplySettings();
+    }
+
     private void LoadPreferences()
     {
         if (PlayerPrefs.HasKey(EnabledPrefsKey))
@@ -209,7 +247,7 @@ public sealed class CRTFilterController : MonoBehaviour
         if (filterRenderer == null)
             return;
 
-        bool shouldRender = isActiveAndEnabled && crtEnabled && masterStrength > 0f;
+        bool shouldRender = isActiveAndEnabled && (overlayOwner != null || (crtEnabled && masterStrength > 0f));
         if (!shouldRender)
         {
             StopVisualEffect();
@@ -260,16 +298,18 @@ public sealed class CRTFilterController : MonoBehaviour
             || targetCamera == null
             || canvas.gameObject.scene != gameObject.scene
             || !canvas.isRootCanvas
-            || canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            || convertedCanvases.ContainsKey(canvas))
+            || canvas.renderMode != RenderMode.ScreenSpaceOverlay)
             return;
 
-        convertedCanvases.Add(canvas, new CanvasState
-        {
-            RenderMode = canvas.renderMode,
-            WorldCamera = canvas.worldCamera,
-            PlaneDistance = canvas.planeDistance
-        });
+        // A screen-fixed UI may return to Overlay between menus. Reconvert it on
+        // the next acquisition while retaining the original state for restoration.
+        if (!convertedCanvases.ContainsKey(canvas))
+            convertedCanvases.Add(canvas, new CanvasState
+            {
+                RenderMode = canvas.renderMode,
+                WorldCamera = canvas.worldCamera,
+                PlaneDistance = canvas.planeDistance
+            });
 
         canvas.renderMode = RenderMode.ScreenSpaceCamera;
         canvas.worldCamera = targetCamera;
@@ -316,6 +356,41 @@ internal sealed class CRTFilterRenderer : MonoBehaviour
     private float chromaticStrength;
     private float contrastStrength;
     private CRTFilterController owner;
+    private Vector4 overlayShape;
+    private Vector4 overlaySignal;
+    private float overlayGlass;
+    private bool overlayActive;
+    private float overlayBlend;
+    private System.Action<RenderTexture, RenderTexture> backdropCaptured;
+    private float backdropBlur;
+    private float backdropBrightness;
+
+    public void RequestBackdrop(float blur, float brightness, System.Action<RenderTexture, RenderTexture> captured)
+    {
+        backdropBlur = blur;
+        backdropBrightness = brightness;
+        backdropCaptured = captured;
+    }
+
+    public void CancelBackdrop() => backdropCaptured = null;
+
+    public void SetOverlay(float curve, float scan, float noise, float rgb, float vignette, float glass, float pulse, float scale, float transitionNoise, float blend)
+    {
+        overlayActive = true;
+        overlayShape = new Vector4(curve, vignette, pulse, scale);
+        overlaySignal = new Vector4(scan, noise, rgb, transitionNoise);
+        overlayGlass = glass;
+        overlayBlend = Mathf.Clamp01(blend);
+    }
+
+    public void ClearOverlay() => overlayActive = false;
+
+    public void BlurBackdrop(RenderTexture source, RenderTexture destination, float blur, float brightness)
+    {
+        material.SetFloat("_BackdropBlur", blur);
+        material.SetFloat("_BackdropBrightness", brightness);
+        Graphics.Blit(source, destination, material, 1);
+    }
 
     public bool TryClaim(CRTFilterController requestedOwner, Shader shader)
     {
@@ -377,6 +452,19 @@ internal sealed class CRTFilterRenderer : MonoBehaviour
             return;
         }
 
+        if (backdropCaptured != null)
+        {
+            var frame = new RenderTexture(source.width, source.height, 0, RenderTextureFormat.ARGB32)
+            { name = "CRT Frozen Backdrop", filterMode = FilterMode.Bilinear };
+            var softened = new RenderTexture(source.width, source.height, 0, RenderTextureFormat.ARGB32)
+            { name = "CRT Softened Backdrop", filterMode = FilterMode.Bilinear };
+            Graphics.Blit(source, frame);
+            BlurBackdrop(source, softened, backdropBlur, backdropBrightness);
+            System.Action<RenderTexture, RenderTexture> callback = backdropCaptured;
+            backdropCaptured = null;
+            callback(frame, softened);
+        }
+
         material.SetFloat(MasterStrengthId, masterStrength);
         material.SetFloat(ScanlineStrengthId, scanlineStrength);
         material.SetFloat(NoiseStrengthId, noiseStrength);
@@ -384,6 +472,11 @@ internal sealed class CRTFilterRenderer : MonoBehaviour
         material.SetFloat(ChromaticStrengthId, chromaticStrength);
         material.SetFloat(ContrastStrengthId, contrastStrength);
         material.SetFloat(CrtTimeId, Time.unscaledTime);
+        material.SetFloat("_OverlayActive", overlayActive ? 1f : 0f);
+        material.SetFloat("_OverlayBlend", overlayActive ? overlayBlend : 0f);
+        material.SetVector("_OverlayShape", overlayShape);
+        material.SetVector("_OverlaySignal", overlaySignal);
+        material.SetFloat("_OverlayGlass", overlayGlass);
         Graphics.Blit(source, destination, material, 0);
     }
 

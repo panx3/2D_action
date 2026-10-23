@@ -1,0 +1,10 @@
+PASS production ball collider callback / inherited-body chain contact / neutral contact rejected
+PASS out-of-order slot 3 / duplicate guard / HUD / detached full particle tail / HP unchanged
+PASS actual checkpoint and fall-respawn lifecycle retains collected jewels
+PASS 2/3 result snapshot, clear freeze, paused CRT, no jewel text
+PASS actual goal Retry starts with all jewels restored
+PASS explicit scene-reload respawn preserves state and hides collected instance
+PASS actual HP0 game-over Retry resets every jewel
+PASS Title -> new stage starts fresh
+PASS All integration checks passed; final visual/game-feel evaluation remains manual.
+runtimeErrors=0

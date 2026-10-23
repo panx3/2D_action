@@ -12,6 +12,8 @@ public class PlayerHealth : MonoBehaviour
     [Header("HP 設定")]
     [SerializeField, Tooltip("プレイヤーの最大 HP。")]
     private int _maxHp = 14;
+    [SerializeField, Min(0), Tooltip("奈落からの復帰時に失うHP。標準の敵の攻撃と同じ1ダメージ。無敵中も適用し、HP0でゲームオーバーになる。")]
+    private int _fallRespawnDamage = 1;
     [SerializeField, Tooltip("被弾後の無敵時間（秒）。")]
     private float _invincibleDuration = 1.2f;
 
@@ -40,7 +42,10 @@ public class PlayerHealth : MonoBehaviour
     public int MaxHp => _maxHp;
     public bool IsDead { get; private set; }
     public bool IsInvincible { get; private set; }
+    public bool IsRespawning { get; private set; }
     public int DamageSoundPlayCount { get; private set; }
+    /// <summary>遅延回復を死亡・復帰・無効化の前後で持ち越さないための世代番号。</summary>
+    public int RecoveryVersion { get; private set; }
 
     public event Action OnDamaged;
     public event Action OnDead;
@@ -85,12 +90,14 @@ public class PlayerHealth : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R)) ResetToFullHp();
     }
 
+    private void OnDisable() => RecoveryVersion++;
+
     /// <summary>
     /// ダメージを受ける。無敵中・死亡中は無視。ノックバックは knockbackImpulse で指定。
     /// </summary>
     public void TakeDamage(int amount, Vector2 knockbackImpulse = default)
     {
-        if (IsDead || IsInvincible) return;
+        if (IsDead || IsInvincible || IsRespawning) return;
         if (amount <= 0) return;
 
         CurrentHp = Mathf.Max(0, CurrentHp - amount);
@@ -125,7 +132,7 @@ public class PlayerHealth : MonoBehaviour
     // Reserved for future heal items. Do not call this from enemy death rewards.
     public void Heal(int amount)
     {
-        if (IsDead || amount <= 0) return;
+        if (IsDead || IsRespawning || amount <= 0) return;
         int before = CurrentHp;
         CurrentHp = Mathf.Min(_maxHp, CurrentHp + amount);
         if (_debugLogHeal && CurrentHp != before)
@@ -138,6 +145,7 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void ResetToFullHp()
     {
+        RecoveryVersion++;
         int before = CurrentHp;
         CurrentHp = _maxHp;
         IsDead = false;
@@ -156,10 +164,21 @@ public class PlayerHealth : MonoBehaviour
         if (CurrentHp <= 0)
             return;
 
+        RecoveryVersion++;
         IsDead = false;
         StopInvincible();
         if (_spriteRenderer != null) _spriteRenderer.enabled = true;
         NotifyHealthChanged();
+    }
+
+    /// <summary>奈落のHPペナルティ。被弾無敵・復帰保護とは独立し、HP0なら通常と同じ死亡を通知する。</summary>
+    public void ApplyFallRespawnPenalty()
+    {
+        if (IsDead || CurrentHp <= 0) return;
+        int before = CurrentHp;
+        CurrentHp = Mathf.Max(0, CurrentHp - Mathf.Max(0, _fallRespawnDamage));
+        if (CurrentHp != before) NotifyHealthChanged();
+        if (CurrentHp <= 0) Die();
     }
 
     /// <summary>互換用。新規コードは ResetToFullHp を使う。</summary>
@@ -187,6 +206,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
+        RecoveryVersion++;
         IsDead = true;
         StopInvincible();
         OnDead?.Invoke();
@@ -197,6 +217,18 @@ public class PlayerHealth : MonoBehaviour
         if (_invincibleDuration <= 0f) return;
         if (_invincibleRoutine != null) StopCoroutine(_invincibleRoutine);
         _invincibleRoutine = StartCoroutine(InvincibleRoutine());
+    }
+
+    public void BeginRespawnProtection()
+    {
+        IsRespawning = true;
+        StopInvincible();
+    }
+
+    public void EndRespawnProtection()
+    {
+        IsRespawning = false;
+        if (isActiveAndEnabled) StartInvincible();
     }
 
     private void StopInvincible()

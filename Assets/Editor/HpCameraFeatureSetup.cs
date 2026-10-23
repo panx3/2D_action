@@ -65,10 +65,10 @@ public static class HpCameraFeatureSetup
         EditorUtility.SetDirty(hpUi);
 
         SerializedObject cameraSerialized = new SerializedObject(cameraFollow);
-        cameraSerialized.FindProperty("_horizontalLookAhead").floatValue = 2.2f;
-        cameraSerialized.FindProperty("_lookAheadSmoothTime").floatValue = 0.15f;
-        cameraSerialized.FindProperty("_lookAheadVelocityThreshold").floatValue = 0.1f;
-        cameraSerialized.FindProperty("_swingLookAheadMultiplier").floatValue = 0.35f;
+        cameraSerialized.FindProperty("_forwardViewportX").floatValue = 0.4f;
+        cameraSerialized.FindProperty("_lookAheadSmoothTime").floatValue = 0.65f;
+        cameraSerialized.FindProperty("_lookAheadVelocityThreshold").floatValue = 0.75f;
+        cameraSerialized.FindProperty("_directionChangeDelay").floatValue = 0.12f;
         cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
 
         GimmickRespawnController gimmickRespawn = UnityEngine.Object.FindAnyObjectByType<GimmickRespawnController>(FindObjectsInactive.Include);

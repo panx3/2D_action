@@ -15,6 +15,10 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0f)] private float hitCooldown = 0.15f;
     [SerializeField] private Sprite[] crystalStages;
 
+    [Header("Ball Contact")]
+    [SerializeField, Range(0f, 1f), Tooltip("鉄球が命中した面から離れる反発率。Playerには反発を加えません")]
+    private float ballRestitution = 0.4f;
+
     [Header("Fragments")]
     [SerializeField] private CrystalFragment fragmentPrefab;
     [SerializeField, Min(0)] private int fragmentsPerHit = 3;
@@ -50,6 +54,8 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 
     private SpriteRenderer _spriteRenderer;
     private Collider2D _hitCollider;
+    private PhysicsMaterial2D _contactMaterial;
+    private PhysicsMaterial2D _originalMaterial;
     private int _hitCount;
     private float _nextHitTime;
     private bool _isBroken;
@@ -62,6 +68,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
     public int RequiredHits => requiredHits;
     public bool IsBroken => _isBroken;
     public bool IsCleared => _isCleared;
+    public float BallRestitution => ballRestitution;
     public int CrackSoundPlayCount { get; private set; }
     public int ShatterSoundPlayCount { get; private set; }
 
@@ -81,6 +88,18 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             _visualInitialLocalPosition = visual.localPosition;
 
         _hitCollider = GetComponent<Collider2D>();
+        _hitCollider.isTrigger = false;
+        // 接触面に摩擦で貼り付かない。鉄球だけの反発はLauncherで処理し、
+        // Playerを弾ませたり、他の地形へMaterial設定を持ち越したりしない。
+        _originalMaterial = _hitCollider.sharedMaterial;
+        _contactMaterial = new PhysicsMaterial2D("Goal Crystal Contact (Runtime)")
+        {
+            friction = 0f,
+            bounciness = 0f,
+            frictionCombine = PhysicsMaterialCombine2D.Minimum,
+            bounceCombine = PhysicsMaterialCombine2D.Minimum
+        };
+        _hitCollider.sharedMaterial = _contactMaterial;
         if (crystalAudioSource == null)
             crystalAudioSource = GetComponent<AudioSource>();
         if (crystalAudioSource != null)
@@ -106,16 +125,15 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         if (_isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
             return;
 
-        // BreakableWall と同じ実衝突経路を使う。
-        // Launcher の combat LayerMask に含まれない GoalPoint でも、
-        // morningstar Tag と衝突転送Componentを持つ鉄球だけを受け付ける。
-        float impactSpeed = Mathf.Max(
-            collision.relativeVelocity.magnitude,
-            morningStarBody.linearVelocity.magnitude);
-        Vector2 impactDirection = GetCollisionDirection(collision, morningStarBody);
+        // 衝突解決後に速度が落ちていても、命中直前の勢いを使う。
+        // Enterだけで数え、接触し続けている間は追加Hitにしない。
+        float impactSpeed = Mathf.Max(collision.relativeVelocity.magnitude, morningStarBody.linearVelocity.magnitude);
+        Vector2 impactDirection = collision.relativeVelocity.sqrMagnitude > 1e-6f
+            ? collision.relativeVelocity.normalized
+            : ((Vector2)_hitCollider.bounds.center - morningStarBody.position).normalized;
         Vector2 impactPoint = collision.contactCount > 0
             ? collision.GetContact(0).point
-            : morningStarBody.position;
+            : _hitCollider.ClosestPoint(morningStarBody.position);
 
         OnMorningStarHit(new MorningStarHitContext(
             1,
@@ -151,7 +169,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         if (cameraShake != null)
             cameraShake.Shake(breakShakeDuration, breakShakeStrength);
 
-        BeginGoalSequence();
+        BeginGoalSequence(context.ImpactPoint);
     }
 
     private void OnDisable()
@@ -163,6 +181,14 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         }
 
         ResetVisualPosition();
+    }
+
+    private void OnDestroy()
+    {
+        if (_hitCollider != null)
+            _hitCollider.sharedMaterial = _originalMaterial;
+        if (_contactMaterial != null)
+            Destroy(_contactMaterial);
     }
 
     private void PlayHitFeedback(bool finalHit)
@@ -185,7 +211,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
 
     private void StartVisualShake(bool finalHit)
     {
-        if (visual == null)
+        if (visual == null || visual == transform)
             return;
 
         if (_visualShakeRoutine != null)
@@ -230,30 +256,16 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             && morningStarBody.GetComponent<MorningStarCollisionReporter>() != null;
     }
 
-    private static Vector2 GetCollisionDirection(Collision2D collision, Rigidbody2D morningStarBody)
-    {
-        if (collision.contactCount > 0)
-        {
-            Vector2 direction = -collision.GetContact(0).normal;
-            if (direction.sqrMagnitude > 1e-6f)
-                return direction.normalized;
-        }
-
-        if (morningStarBody.linearVelocity.sqrMagnitude > 1e-6f)
-            return morningStarBody.linearVelocity.normalized;
-
-        return Vector2.right;
-    }
-
-    private void BeginGoalSequence()
+    private void BeginGoalSequence(Vector3 impactPosition)
     {
         if (_goalSequenceStarted)
             return;
 
         _goalSequenceStarted = true;
+        if (goalMenu != null) goalMenu.CaptureClearTime();
         // 最終破壊が成立し、獲得演出へ進むことが確定した時点で一度だけ切り替える。
         GameBgmController.Instance?.PlayGoal();
-        if (crystalAcquiredUI != null && crystalAcquiredUI.Play(ReachGoal))
+        if (crystalAcquiredUI != null && crystalAcquiredUI.Play(ReachGoal, impactPosition))
             return;
 
         StartCoroutine(CompleteGoalRoutine());

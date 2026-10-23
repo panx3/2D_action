@@ -1,0 +1,10 @@
+
+Run Tool
+  Tool: screenshot-game-view
+  URL: http://localhost:27289/api/tools/screenshot-game-view
+  Auth: from config or machine store
+──────────────────────────────────────────────────
+Calling screenshot-game-view...
+INFO: {
+  "error": "Game View render texture is not available. Ensure the Game View window is open and visible."
+}

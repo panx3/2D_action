@@ -171,7 +171,7 @@ public static class EnemyGoalTransitionPlayModeTest
                         VerifyCelebrationInProgress();
                         celebrationVerified = true;
                     }
-                    if (elapsed < 2.15d)
+                    if (elapsed < 3.6d)
                         return;
                     VerifyGoalState();
                     Finish(true, "enemyDeath+fragments+fragmentLifetime+playerContactIgnored+goal3Hits+goalUI+pauseLock+timeScale; warnings="
@@ -271,7 +271,7 @@ public static class EnemyGoalTransitionPlayModeTest
     {
         Time.timeScale = 1f;
         Collider2D goalCollider = goalPoint.GetComponent<Collider2D>();
-        Require(goalCollider != null && !goalCollider.isTrigger, "Goal crystal must use a collision collider");
+        Require(goalCollider != null && !goalCollider.isTrigger, "Goal crystal must use a solid collision collider");
         playerBody.linearVelocity = Vector2.zero;
         playerBody.angularVelocity = 0f;
         playerBody.position = goalCollider.bounds.center;
@@ -307,9 +307,9 @@ public static class EnemyGoalTransitionPlayModeTest
         Require(!pauseMenu.IsPaused, "Pause UI remained open with Goal UI");
         pauseMenu.OpenPause();
         Require(!pauseMenu.IsPaused, "Pause opened while Goal UI was active");
-        Transform celebration = goalMenu.transform.Find("GoalPresentation/GoalStonePanel/GoalCelebration");
-        Require(celebration != null && celebration.childCount == 14,
-            "Goal celebration hierarchy does not contain fourteen editable sparkle elements");
+        CRTOverlayController overlay = goalMenu.GetComponent<CRTOverlayController>();
+        Require(overlay != null && overlay.IsVisible && overlay.IsReady,
+            "CRT result overlay is not ready");
         Require(UnityEngine.Object.FindObjectsByType<CrystalFragment>(FindObjectsInactive.Exclude).Length >= 8,
             "Final Goal crystal fragment burst was not generated");
     }
@@ -338,9 +338,9 @@ public static class EnemyGoalTransitionPlayModeTest
             "Pause was not blocked during the goal celebration");
         Transform logo = celebration.transform.Find("GoalCelebrationPresentation/CongratulationLogo");
         Require(logo != null && logo.gameObject.activeInHierarchy,
-            "CONGRATULATION logo is not active during the goal celebration");
-        Require(celebration.GetComponentsInChildren<TextMeshProUGUI>(true).Length == 0,
-            "Legacy crystal-acquired text remains in the celebration UI");
+            "Original goal celebration logo is not visible");
+        Require(celebration.GetComponent<CRTOverlayController>() == null,
+            "CRT result presentation started before the goal logo finished");
     }
 
     private static void VerifyGoalUiText()
@@ -348,9 +348,9 @@ public static class EnemyGoalTransitionPlayModeTest
         string[] texts = goalMenu.GetComponentsInChildren<TextMeshProUGUI>(true)
             .Select(text => text.text)
             .ToArray();
-        Require(texts.Contains("GOAL"), "GOAL title missing");
-        Require(texts.Contains("ステージをクリアしました"), "clear message missing");
-        Require(texts.Contains("つぎへ") && texts.Contains("もういちど") && texts.Contains("タイトルへ戻る"),
+        Require(texts.Contains("STAGE CLEAR"), "STAGE CLEAR title missing");
+        Require(texts.Contains("CRYSTAL ACQUIRED"), "clear message missing");
+        Require(texts.Contains("CONTINUE") && texts.Contains("RETRY") && texts.Contains("TITLE"),
             "Goal menu buttons missing");
         string combined = string.Join(" ", texts);
         Require(!combined.Contains("クリアタイム") && !combined.Contains("回収率")
