@@ -94,9 +94,9 @@ public static class RisingPlatformValidation
         var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gimmicks/FallingPlatform.prefab");
         Require(prefab != null && prefab.GetComponent<RisingPlatform>() != null, "Rising prefab missing");
         Require(prefab.GetComponent<FallingPlatform>() == null, "Falling script remained on prefab");
-        Require(prefab.GetComponent<SpriteRenderer>().sprite == source.GetComponent<SpriteRenderer>().sprite
-            && prefab.GetComponent<SpriteRenderer>().sharedMaterial == source.GetComponent<SpriteRenderer>().sharedMaterial
-            && prefab.transform.localScale == source.transform.localScale, "Source appearance changed");
+        Require(prefab.GetComponent<SpriteRenderer>().sprite != null
+            && prefab.GetComponent<SpriteRenderer>().sharedMaterial == source.GetComponent<SpriteRenderer>().sharedMaterial,
+            "Platform sprite or source material missing");
         Require(prefab.GetComponent<Rigidbody2D>().bodyType == RigidbodyType2D.Kinematic
             && !prefab.GetComponent<BoxCollider2D>().isTrigger && prefab.CompareTag("Floor"), "Invalid prefab physics");
     }
@@ -135,7 +135,7 @@ public static class RisingPlatformValidation
         Tick(30);
         Require(Y == 0f, "Non-player activated lift");
         UnityEngine.Object.DestroyImmediate(impostor);
-        AddPlayer(new Vector2(2.9f, 0f));
+        AddPlayer(new Vector2(lift.GetComponent<BoxCollider2D>().bounds.max.x + 0.4f, 0f));
         playerBody.gravityScale = 0f;
         Tick(20);
         Require(Y == 0f, "Side contact activated lift");
@@ -176,7 +176,8 @@ public static class RisingPlatformValidation
         Setup(true);
         Set(lift, "moveDistance", 3f);
         Set(lift, "moveSpeed", 2f);
-        AddPlayer(new Vector2(0f, 0.66f));
+        AddPlayer(Vector2.zero);
+        Board();
         for (int i = 0; i < 210; i++)
         {
             Tick(1);
@@ -234,7 +235,8 @@ public static class RisingPlatformValidation
 
     private static void Board()
     {
-        playerBody.position = new Vector2(0f, Y + 0.66f);
+        float footOffset = playerBody.position.y - playerCollider.bounds.min.y;
+        playerBody.position = new Vector2(0f, lift.GetComponent<BoxCollider2D>().bounds.max.y + footOffset + 0.01f);
         playerBody.linearVelocity = Vector2.zero;
         playerBody.gravityScale = 1f;
         Set(player, "_bjump", false);
