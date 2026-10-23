@@ -51,6 +51,7 @@ public class ChainConstraint2D : MonoBehaviour
         public int ClearFixedSteps;
     }
     private bool _prioritizeFlyingTrajectory;
+    private bool _suppressPlayerPull;
     private float _groundPullElapsed;
     private float _groundPullDirection;
     private bool _groundStateInitialized;
@@ -91,6 +92,7 @@ public class ChainConstraint2D : MonoBehaviour
     public float TensionDamping => tensionDamping;
     public float AirTensionMultiplier => airTensionMultiplier;
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
+    public bool IsPlayerPullSuppressed => _suppressPlayerPull;
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
 
@@ -173,6 +175,19 @@ public class ChainConstraint2D : MonoBehaviour
             _runJumpTensionScale = 1f;
             _runJumpMomentumDirectionX = 0f;
         }
+    }
+
+    public void SetPlayerPullSuppressed(bool suppressed)
+    {
+        if (_suppressPlayerPull == suppressed)
+            return;
+
+        _suppressPlayerPull = suppressed;
+        ResetGroundPullEase();
+        _runJumpMomentumGraceRemaining = 0f;
+        _physicsAnchorInitialized = false;
+        if (suppressed)
+            StopPlayerClimb();
     }
 
     private void Reset()
@@ -998,6 +1013,10 @@ public class ChainConstraint2D : MonoBehaviour
 
     private void ApplyRopeTension(Vector2 handPosition)
     {
+        // トランポリン跳躍中はBall側の長さ補正だけで追従させ、Playerへ力を返さない。
+        if (_suppressPlayerPull)
+            return;
+
         float distance = GetRopePathLength();
         if (distance <= 0.001f)
         {
@@ -1325,7 +1344,7 @@ public class ChainConstraint2D : MonoBehaviour
 
             RebuildRopePath(handPosition, morningStarRb.position);
             float blockedRemainder = GetRopePathLength() - maxRopeLength;
-            if (blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
+            if (!_suppressPlayerPull && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
                 Vector2 playerCorrection = GetSafeEndpointCorrection(
                     playerRb, handPosition, _ropePathPoints[1], blockedRemainder);
@@ -1358,7 +1377,7 @@ public class ChainConstraint2D : MonoBehaviour
                 0f,
                 excessSeparatingSpeed);
             float blockedRemainder = excessSeparatingSpeed - correctedByBall;
-            if (blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
+            if (!_suppressPlayerPull && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
                 // 補正差分でなく最終速度を接触面へ投影する。
                 // 壁から離れる速度の打ち消しまで禁止すると鎖が伸び続けてしまう。

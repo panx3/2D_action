@@ -227,6 +227,7 @@ public static class CRTOverlayInstaller
                 var clearTime = Text(safe, "ClearTime", "CLEAR TIME  <color=#FFE066><size=38>00:00.00</size></color>", new Vector2(0, -258),
                     new Vector2(720, 56), 32, new Color(0.94f, 0.95f, 1f, 1f), TextAlignmentOptions.Center);
                 Set(controller, "clearTimeLabel", clearTime);
+                DemoEndingSetup.ApplyTo(root);
             }
             else
             {

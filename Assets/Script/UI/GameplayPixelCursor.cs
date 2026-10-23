@@ -61,9 +61,13 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     private bool focused = true, applicationPaused;
     private bool styleKnown, chainStyle, targetChainStyle;
     private float styleChangedAt = float.NegativeInfinity;
+    private float visibilityChangedAt = float.NegativeInfinity;
+    private Gamepad activityGamepad;
+    private Vector2 previousLeftStick, previousRightStick;
     public bool IsShowing => view != null && view.enabled;
     public bool IsChainStyle => styleKnown && chainStyle;
     public bool IsChangingDesign => styleKnown && Time.unscaledTime - styleChangedAt < transitionDuration;
+    private bool IsChangingVisibility => Time.unscaledTime - visibilityChangedAt < transitionDuration;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetOwner() => owner = null;
@@ -114,14 +118,7 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         }
 
         Vector2 point = mouse.position.ReadValue();
-        // Device activity changes presentation only. Existing input readers retain authority.
-        bool mouseMoved = pointerKnown && (point - lastMousePosition).sqrMagnitude > 0.01f;
-        if (mouseMoved || mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
-            usingGamepad = false;
-        else if (GamepadIsActive())
-            usingGamepad = true;
-        lastMousePosition = point;
-        pointerKnown = true;
+        UpdateInputDevice(mouse, point);
 
         bool inside = point.x >= 0f && point.y >= 0f && point.x < Screen.width && point.y < Screen.height;
         if (!HasGameViewFocus() || applicationPaused || !inside || Cursor.lockState == CursorLockMode.Locked)
@@ -133,9 +130,30 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         ShowCursor(point);
     }
 
+    private void UpdateInputDevice(Mouse mouse, Vector2 point)
+    {
+        // Sample both devices even when mouse activity wins this frame. A held stick
+        // must not reclaim the pointer on the next unchanged gamepad report.
+        bool gamepadActive = GamepadIsActive();
+        bool mouseActive = pointerKnown && (point - lastMousePosition).sqrMagnitude > 0.01f;
+        mouseActive |= mouse.scroll.ReadValue().sqrMagnitude > 0.01f;
+        foreach (var control in mouse.allControls)
+            if (control is ButtonControl button && (button.wasPressedThisFrame || button.wasReleasedThisFrame))
+                mouseActive = true;
+
+        bool nextUsingGamepad = mouseActive ? false : gamepadActive || usingGamepad;
+        if (nextUsingGamepad != usingGamepad)
+        {
+            usingGamepad = nextUsingGamepad;
+            visibilityChangedAt = Time.unscaledTime;
+        }
+        lastMousePosition = point;
+        pointerKnown = true;
+    }
+
     private void ShowCursor(Vector2 point)
     {
-        bool styleChanged = UpdateStyle(IsGameplay() && !usingGamepad);
+        bool styleChanged = UpdateStyle(IsGameplay());
         bool reset = !IsShowing || lastResolution != new Vector2Int(Screen.width, Screen.height)
             || !Mathf.Approximately(previousScale, cursorScale) || styleChanged;
         // CRTFilterController can convert all scene canvases. The cursor must always stay
@@ -150,7 +168,8 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         // last draws the pointer above it without changing the scene/transition owners.
         if (view.sortingOrder != short.MaxValue) view.sortingOrder = short.MaxValue;
         if (transform.GetSiblingIndex() < gameObject.scene.rootCount - 1) transform.SetAsLastSibling();
-        if (!view.enabled) view.enabled = true;
+        bool showView = !usingGamepad || IsChangingVisibility;
+        if (view.enabled != showView) view.enabled = showView;
         bool acquiringCursor = !ownsOSCursor;
         if (acquiringCursor)
         {
@@ -167,6 +186,15 @@ public sealed class GameplayPixelCursor : MonoBehaviour
 #endif
         if (Cursor.visible) Cursor.visible = false;
 
+        if (!showView)
+        {
+            if (noiseRoot != null && noiseRoot.gameObject.activeSelf) noiseRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        bool showPointer = !usingGamepad || Time.unscaledTime - visibilityChangedAt < transitionDuration * 0.45f;
+        arrowSprite.enabled = showPointer;
+        chainRoot.gameObject.SetActive(chainStyle && showPointer);
         UpdateView(point, reset);
         UpdateNoise();
         lastResolution = new Vector2Int(Screen.width, Screen.height);
@@ -224,11 +252,11 @@ public sealed class GameplayPixelCursor : MonoBehaviour
     {
         if (noiseRoot == null || noisePixels == null)
             return;
-        bool visible = IsShowing && IsChangingDesign;
+        bool visible = IsShowing && (IsChangingDesign || IsChangingVisibility);
         noiseRoot.gameObject.SetActive(visible);
         if (!visible)
             return;
-        float age = Time.unscaledTime - styleChangedAt;
+        float age = Time.unscaledTime - Mathf.Max(styleChangedAt, visibilityChangedAt);
         // The first frame must already show a faint signal: opening the CRT menu can
         // spend most of this short duration capturing its frozen background.
         float pulse = 0.35f + 0.65f * Mathf.Sin(Mathf.Clamp01(age / transitionDuration) * Mathf.PI);
@@ -266,14 +294,22 @@ public sealed class GameplayPixelCursor : MonoBehaviour
 #endif
     }
 
-    private static bool GamepadIsActive()
+    private bool GamepadIsActive()
     {
         Gamepad pad = Gamepad.current;
+        if (pad != activityGamepad)
+        {
+            activityGamepad = pad;
+            previousLeftStick = previousRightStick = Vector2.zero;
+        }
         if (pad == null || !pad.wasUpdatedThisFrame)
             return false;
-        if (pad.leftStick.ReadValue().sqrMagnitude > 0.0625f
-            || pad.rightStick.ReadValue().sqrMagnitude > 0.0625f)
-            return true;
+        Vector2 left = pad.leftStick.ReadValue(), right = pad.rightStick.ReadValue();
+        bool stickActive = (left.sqrMagnitude > 0.0625f && (left - previousLeftStick).sqrMagnitude > 0.0001f)
+            || (right.sqrMagnitude > 0.0625f && (right - previousRightStick).sqrMagnitude > 0.0001f);
+        previousLeftStick = left;
+        previousRightStick = right;
+        if (stickActive) return true;
         foreach (var control in pad.allControls)
             if (control is ButtonControl button && button.wasPressedThisFrame)
                 return true;
