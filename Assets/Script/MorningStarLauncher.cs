@@ -320,6 +320,7 @@ public class MorningStarLauncher : MonoBehaviour
     private float _hookedAtTime = -1f;
     private float _fireHoldTime;
     private bool _isFireHolding;
+    private bool _shoulderChargeInput;
     private float _hookClickHoldTimer;
     private bool _hookClickHolding;
     private bool _requireReleaseBeforeHookClick;
@@ -413,6 +414,8 @@ public class MorningStarLauncher : MonoBehaviour
     public MorningStarState CurrentState => _state;
     private bool _simulatedBeforeStartIntro;
     private bool _respawnPresentation;
+    private bool _trampolineJumpActive;
+    private bool _trampolineJumpLeftGround;
     private bool _simulatedBeforeRespawn;
     public Rigidbody2D BallBody => morningStarRb;
     public Transform ChainVisualRoot => chainLineController != null ? chainLineController.transform : null;
@@ -481,6 +484,7 @@ public class MorningStarLauncher : MonoBehaviour
     public float RestBallGravityScale => normalBallGravityScale;
     public float RestBallLinearDamping => ballGroundLinearDamping;
     public bool IsAirLaunchAssistActive => _airLaunchAssistRemaining > 0f;
+    public bool IsTrampolineJumpActive => _trampolineJumpActive;
     public float AirTensionMultiplier => airTensionMultiplier;
     public float LastCharge01 => _lastCharge01;
     public event System.Action<float> LaunchCommitted;
@@ -536,6 +540,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        EndTrampolineJump();
         CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
         if (_chargeFeedback != null)
@@ -777,6 +782,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        EndTrampolineJump();
         CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
         _activeThrowCharge01 = 0f;
@@ -878,6 +884,7 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         float dt = Time.fixedDeltaTime;
+        UpdateTrampolineJump();
         Vector2 hand = GetHandWorld();
         TryPlayChainFullStretchSound();
         UpdateAirLaunchAssist(dt);
@@ -938,6 +945,13 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     private void TransitionToState(MorningStarState nextState)
     {
+        // 明示的なHook/Magnet操作と演出状態では通常の状態別物理へ戻す。
+        if (nextState == MorningStarState.Hooked || nextState == MorningStarState.Swinging
+            || nextState == MorningStarState.StartIntro || nextState == MorningStarState.Respawning)
+        {
+            EndTrampolineJump();
+        }
+
         SetGoalCollisionIgnoredForRecall(nextState == MorningStarState.RecallBeforeThrow
             || nextState == MorningStarState.Returning);
         if (nextState != MorningStarState.Thrown)
@@ -967,7 +981,10 @@ public class MorningStarLauncher : MonoBehaviour
             || nextState == MorningStarState.Dropping;
         SetChainConstraintActive(useFreeRope);
         if (chainConstraint != null)
+        {
+            chainConstraint.SetPlayerPullSuppressed(_trampolineJumpActive);
             chainConstraint.SetFlyingTrajectoryPriority(nextState == MorningStarState.Thrown);
+        }
 
         bool useHookRope = (nextState == MorningStarState.Hooked
                             || nextState == MorningStarState.Swinging)
@@ -1045,6 +1062,48 @@ public class MorningStarLauncher : MonoBehaviour
                 morningStarRb.linearDamping = 0f;
                 break;
         }
+    }
+
+    /// <summary>トランポリンから着地までPlayerへの牽引を止め、張った鎖で鉄球側を追従させる。</summary>
+    public void BeginTrampolineJump()
+    {
+        if (!isActiveAndEnabled || _playerRb == null || morningStarRb == null
+            || _respawnPresentation || _state == MorningStarState.StartIntro)
+            return;
+
+        // 跳躍を既存のHook/Jointで止めない。移動や発射の入力は引き続き受け付ける。
+        if (_isHooked)
+            EnterDraggingState(false);
+
+        // 鉄球の重力・速度は変えない。Playerが先に跳び、鎖が張ってから鉄球を引き上げる。
+        _trampolineJumpActive = true;
+        _trampolineJumpLeftGround = false;
+        ResetChainClimbState(false);
+        if (chainConstraint != null)
+            chainConstraint.SetPlayerPullSuppressed(true);
+    }
+
+    private void UpdateTrampolineJump()
+    {
+        if (!_trampolineJumpActive)
+            return;
+
+        // 接地判定の猶予が跳ねた直後に残っていても、離陸前に解除しない。
+        if (!IsPlayerGrounded())
+            _trampolineJumpLeftGround = true;
+        else if (_trampolineJumpLeftGround && _playerRb.linearVelocity.y <= 0.05f)
+            EndTrampolineJump();
+    }
+
+    private void EndTrampolineJump()
+    {
+        if (!_trampolineJumpActive)
+            return;
+
+        _trampolineJumpActive = false;
+        _trampolineJumpLeftGround = false;
+        if (chainConstraint != null)
+            chainConstraint.SetPlayerPullSuppressed(false);
     }
 
     private void LimitBallFallSpeed()
@@ -1129,6 +1188,7 @@ public class MorningStarLauncher : MonoBehaviour
         _lastSpeedMultiplier = 1f;
         _fireHoldTime = 0f;
         _isFireHolding = false;
+        _shoulderChargeInput = false;
         _hookClickHoldTimer = 0f;
         _hookClickHolding = false;
         _requireReleaseBeforeHookClick = false;
@@ -1296,6 +1356,13 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandleSpinChargeInput()
     {
+        if (_shoulderChargeInput && (!enableGamepadInput || Gamepad.current == null
+            || !IsGamepadShoulderChargePressed(Gamepad.current)))
+        {
+            CancelShoulderCharge();
+            return;
+        }
+
         if (TryHandleGamepadFireTriggerInput())
             return;
 
@@ -1324,15 +1391,16 @@ public class MorningStarLauncher : MonoBehaviour
 
     private bool TryHandleGamepadSpinChargeInput()
     {
-        if (!enableGamepadInput || !useRightStickClickForCharge)
+        if (!enableGamepadInput)
             return false;
 
         Gamepad pad = Gamepad.current;
         if (pad == null)
             return false;
 
-        if (pad.rightStickButton.wasPressedThisFrame)
+        if (!_isFireHolding && WasGamepadChargePressedThisFrame(pad))
         {
+            _shoulderChargeInput = IsGamepadShoulderChargePressed(pad);
             _fireHoldTime = 0f;
             _isFireHolding = true;
             Vector2 aim = CalculateAimDirection();
@@ -1341,7 +1409,7 @@ public class MorningStarLauncher : MonoBehaviour
             return true;
         }
 
-        if (pad.rightStickButton.isPressed && _isFireHolding)
+        if (IsGamepadChargePressed(pad) && _isFireHolding)
         {
             _fireHoldTime += Time.deltaTime;
 
@@ -1355,7 +1423,7 @@ public class MorningStarLauncher : MonoBehaviour
             return true;
         }
 
-        if (pad.rightStickButton.wasReleasedThisFrame && _isFireHolding)
+        if (WasGamepadChargeReleasedThisFrame(pad) && _isFireHolding)
         {
             _isFireHolding = false;
 
@@ -1444,6 +1512,19 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandleSpinChargingReleaseInput()
     {
+        if (_shoulderChargeInput)
+        {
+            Gamepad pad = Gamepad.current;
+            if (!enableGamepadInput || pad == null || !IsGamepadShoulderChargePressed(pad))
+                CancelShoulderCharge();
+            else if (_gamepadFirePressedThisFrame)
+            {
+                _pendingAimDirection = _lastGamepadAimDirection;
+                ExecuteChargedThrow();
+            }
+            return;
+        }
+
         Mouse mouse = Mouse.current;
         Vector2 aim = CalculateAimDirection();
         if (aim.sqrMagnitude > 0.001f)
@@ -1452,7 +1533,7 @@ public class MorningStarLauncher : MonoBehaviour
         bool mouseReleased = mouse != null && mouse.leftButton.wasReleasedThisFrame;
         bool gamepadReleased = enableGamepadInput
             && Gamepad.current != null
-            && Gamepad.current.rightStickButton.wasReleasedThisFrame;
+            && WasGamepadChargeReleasedThisFrame(Gamepad.current);
         if (gamepadReleased)
         {
             _pendingAimDirection = _lastGamepadAimDirection.sqrMagnitude > 0.001f
@@ -1463,6 +1544,15 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (mouseReleased || gamepadReleased)
             ExecuteChargedThrow();
+    }
+
+    private void CancelShoulderCharge()
+    {
+        // Cancel in place through the common Rest setup, without consuming a queued shot.
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        _rightStickReady = false;
+        EnterDraggingState(false);
     }
 
     private void BeginSpinCharging()
@@ -1641,6 +1731,29 @@ public class MorningStarLauncher : MonoBehaviour
         direction = stick.normalized;
         _lastGamepadAimDirection = direction;
         return true;
+    }
+
+    private bool IsGamepadChargePressed(Gamepad pad)
+    {
+        return _shoulderChargeInput ? IsGamepadShoulderChargePressed(pad)
+            : useRightStickClickForCharge && pad.rightStickButton.isPressed;
+    }
+
+    private static bool IsGamepadShoulderChargePressed(Gamepad pad)
+    {
+        return pad.leftShoulder.isPressed || pad.leftTrigger.isPressed;
+    }
+
+    private bool WasGamepadChargePressedThisFrame(Gamepad pad)
+    {
+        return (useRightStickClickForCharge && pad.rightStickButton.wasPressedThisFrame)
+            || pad.leftShoulder.wasPressedThisFrame || pad.leftTrigger.wasPressedThisFrame;
+    }
+
+    private bool WasGamepadChargeReleasedThisFrame(Gamepad pad)
+    {
+        return !_shoulderChargeInput && useRightStickClickForCharge
+            && pad.rightStickButton.wasReleasedThisFrame;
     }
 
     private bool IsGamepadSwingHoldPressed()
@@ -2394,6 +2507,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerLanded()
     {
+        if (_trampolineJumpLeftGround && _playerRb != null && _playerRb.linearVelocity.y <= 0.05f)
+            EndTrampolineJump();
         _airThrowsUsed = 0;
         ResetChainClimbState(false);
     }
@@ -2424,6 +2539,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void HandlePlayerDead()
     {
+        EndTrampolineJump();
         CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
         _activeThrowCharge01 = 0f;
@@ -3200,8 +3316,8 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void UpdateChainClimb(float dt)
     {
-        bool upperSupport = IsUpperHangingSupport();
-        if (!upperSupport)
+        // 鎖登りはMagnetへの吸着中だけ許可し、地形による吊り下がりでは開始しない。
+        if (_attachedMagnet == null || !IsExplicitUpperHangingSupport())
         {
             ResetChainClimbState(false);
             return;

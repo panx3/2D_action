@@ -130,6 +130,12 @@ public class JumpPad : MonoBehaviour
         // 着地した瞬間だけ、指定した上向き速度に固定する
         playerRb.linearVelocity = new Vector2(horizontalVelocity, jumpVelocity);
 
+        // 跳躍中の鉄球・鎖の扱いは物理の所有者へ任せる。
+        if (playerRb.TryGetComponent<MorningStarLauncher>(out var launcher))
+        {
+            launcher.BeginTrampolineJump();
+        }
+
         nextBounceTime = Time.time + bounceCooldown;
 
         if (showDebugLog)

@@ -43,6 +43,8 @@ public sealed class CRTOverlayController : MonoBehaviour
     private float currentScale = 1f;
     private Vector2 lastPointer;
     private bool pointerKnown;
+    private bool inputBlocked;
+    private float signalInterference;
     public bool IsVisible { get; private set; }
     public bool IsClosing { get; private set; }
     public bool IsReady => IsVisible && !IsClosing && frozenFrame != null && Time.unscaledTime - shownAt >= acquisitionDuration;
@@ -101,6 +103,8 @@ public sealed class CRTOverlayController : MonoBehaviour
     /// <summary>Immediate cleanup for scene changes, disable, or another screen taking priority.</summary>
     public void Hide()
     {
+        inputBlocked = false;
+        signalInterference = 0f;
         IsVisible = false;
         IsClosing = false;
         hidden = null;
@@ -132,6 +136,15 @@ public sealed class CRTOverlayController : MonoBehaviour
         subtitle.text = detail;
     }
 
+    public void SetInputBlocked(bool blocked)
+    {
+        inputBlocked = blocked;
+        content.interactable = IsReady && !blocked;
+    }
+
+    /// <summary>Brief whole-screen signal disturbance without acquiring another overlay.</summary>
+    public void SetSignalInterference(float amount) => signalInterference = Mathf.Clamp01(amount);
+
     private void Update()
     {
         if (!IsVisible || frozenFrame == null)
@@ -144,7 +157,7 @@ public sealed class CRTOverlayController : MonoBehaviour
             onHidden?.Invoke();
             return;
         }
-        if (IsReady)
+        if (IsReady && !inputBlocked)
             HandleCurvedPointer();
     }
 
@@ -165,11 +178,12 @@ public sealed class CRTOverlayController : MonoBehaviour
             pulse = (1f - jitterProgress) * (0.25f + 0.75f * burst);
         }
         currentScale = Mathf.Lerp(1f, screenScale, blend);
-        filter.SetOverlayFrame(this, curvature, scanlines, noise, rgbOffsetPixels,
+        pulse = Mathf.Max(pulse, signalInterference * 0.45f);
+        filter.SetOverlayFrame(this, curvature, scanlines, noise + signalInterference * 0.14f, rgbOffsetPixels,
             vignette, glassReflection, pulse, screenScale, transitionNoiseStrength, blend);
         softenedBackdrop.color = new Color(1f, 1f, 1f, blend);
         content.alpha = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.05f, 0.8f, t));
-        content.interactable = IsReady;
+        content.interactable = IsReady && !inputBlocked;
         for (int i = 0; i < sparkles.Length; i++)
         {
             float wave = 0.65f + 0.35f * Mathf.Sin(age * 2.1f + i * 2.4f);

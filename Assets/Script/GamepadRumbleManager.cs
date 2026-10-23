@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 
 public enum GamepadRumbleEvent { PlayerDamage, EnemyHit, NormalThrow, FullChargeThrow, WeightSwitch, PlayerDeath, Charge, Custom }
@@ -52,6 +54,10 @@ public sealed class GamepadRumbleManager : MonoBehaviour
     private Gamepad gamepad;
     private GamepadRumblePattern active;
     private bool continuous, suspended, hasFocus, applicationPaused;
+    private bool usingGamepad;
+    private Mouse activityMouse;
+    private Gamepad activityGamepad;
+    private Vector2 previousMousePosition, previousLeftStick, previousRightStick;
     private uint generation, activeHandle;
     private float chargeAmount, sentLow, sentHigh;
     private double startedAt, nextWriteAt, refreshAt;
@@ -91,6 +97,12 @@ public sealed class GamepadRumbleManager : MonoBehaviour
     }
     private void OnEnable()
     {
+        usingGamepad = false;
+        activityMouse = Mouse.current;
+        previousMousePosition = activityMouse != null ? activityMouse.position.ReadValue() : Vector2.zero;
+        activityGamepad = null;
+        previousLeftStick = previousRightStick = Vector2.zero;
+        InputSystem.onAfterUpdate += UpdateInputDevice;
         InputSystem.onDeviceChange += DeviceChanged;
         SceneManager.sceneLoaded += SceneLoaded;
         SceneManager.sceneUnloaded += SceneUnloaded;
@@ -98,6 +110,7 @@ public sealed class GamepadRumbleManager : MonoBehaviour
     }
     private void OnDisable()
     {
+        InputSystem.onAfterUpdate -= UpdateInputDevice;
         InputSystem.onDeviceChange -= DeviceChanged;
         SceneManager.sceneLoaded -= SceneLoaded;
         SceneManager.sceneUnloaded -= SceneUnloaded;
@@ -148,7 +161,7 @@ public sealed class GamepadRumbleManager : MonoBehaviour
     }
     private uint Accept(GamepadRumblePattern pattern, bool isContinuous, float amount)
     {
-        if (!isActiveAndEnabled || !rumbleEnabled || suspended || !hasFocus || applicationPaused || masterIntensity <= 0f || pattern == null) return 0;
+        if (!usingGamepad || !isActiveAndEnabled || !rumbleEnabled || suspended || !hasFocus || applicationPaused || masterIntensity <= 0f || pattern == null) return 0;
         SyncDevice();
         if (gamepad == null || failedDevices.Contains(gamepad.deviceId)) return 0;
         double now = Time.unscaledTimeAsDouble;
@@ -173,7 +186,7 @@ public sealed class GamepadRumbleManager : MonoBehaviour
     private void LateUpdate()
     {
         SyncDevice();
-        if ((!rumbleEnabled || suspended || !hasFocus || applicationPaused || masterIntensity <= 0f) && active != null) StopAll();
+        if ((!usingGamepad || !rumbleEnabled || suspended || !hasFocus || applicationPaused || masterIntensity <= 0f) && active != null) StopAll();
         PumpStops();
         if (active == null || gamepad == null) return;
         double now = Time.unscaledTimeAsDouble;
@@ -188,6 +201,65 @@ public sealed class GamepadRumbleManager : MonoBehaviour
         nextWriteAt = now + CommandInterval;
         refreshAt = now + 0.1d;
     }
+
+    private void UpdateInputDevice()
+    {
+        // Run before gameplay Update/FixedUpdate submits feedback, including mouse input
+        // read directly by the Launcher rather than through PlayerInput actions.
+        if (InputState.currentUpdateType != InputUpdateType.Dynamic
+            && InputState.currentUpdateType != InputUpdateType.Fixed) return;
+
+        bool keyboardMouseActive = false;
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.wasUpdatedThisFrame)
+            foreach (var key in keyboard.allKeys)
+                if (key.wasPressedThisFrame || key.wasReleasedThisFrame) { keyboardMouseActive = true; break; }
+
+        Mouse mouse = Mouse.current;
+        if (mouse != activityMouse)
+        {
+            activityMouse = mouse;
+            previousMousePosition = mouse != null ? mouse.position.ReadValue() : Vector2.zero;
+        }
+        if (mouse != null)
+        {
+            Vector2 position = mouse.position.ReadValue();
+            keyboardMouseActive |= (position - previousMousePosition).sqrMagnitude > 0.01f
+                || mouse.scroll.ReadValue().sqrMagnitude > 0.01f;
+            previousMousePosition = position;
+            if (mouse.wasUpdatedThisFrame)
+                foreach (var control in mouse.allControls)
+                    if (control is ButtonControl button && (button.wasPressedThisFrame || button.wasReleasedThisFrame))
+                        keyboardMouseActive = true;
+        }
+
+        Gamepad pad = Gamepad.current;
+        if (pad != activityGamepad)
+        {
+            activityGamepad = pad;
+            previousLeftStick = previousRightStick = Vector2.zero;
+        }
+        bool gamepadActive = false;
+        if (pad != null && pad.wasUpdatedThisFrame)
+        {
+            Vector2 left = pad.leftStick.ReadValue(), right = pad.rightStick.ReadValue();
+            gamepadActive = (left.sqrMagnitude > 0.0625f && (left - previousLeftStick).sqrMagnitude > 0.0001f)
+                || (right.sqrMagnitude > 0.0625f && (right - previousRightStick).sqrMagnitude > 0.0001f);
+            previousLeftStick = left;
+            previousRightStick = right;
+            foreach (var control in pad.allControls)
+                if (control is ButtonControl button && button.wasPressedThisFrame) gamepadActive = true;
+        }
+
+        // Sample both devices so unchanged held sticks cannot reclaim feedback.
+        if (keyboardMouseActive)
+        {
+            usingGamepad = false;
+            if (active != null) StopAll();
+        }
+        else if (gamepadActive) usingGamepad = true;
+    }
+
     public void StopAll()
     {
         active = null; continuous = false; activeHandle = 0;

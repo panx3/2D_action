@@ -19,8 +19,19 @@ public sealed class GoalMenuController : MonoBehaviour
     [SerializeField] private string nextSceneName;
     [SerializeField] private string titleSceneName = "TitleScene";
     [SerializeField] private PauseMenuController pauseMenu;
+    [Header("Demo Ending / 体験版終了画面")]
+    [SerializeField, InspectorName("体験版終了画面を表示"), Tooltip("ON: クリア画面の後に体験版終了画面を表示。OFF: 通常のクリアメニューを維持します。")]
+    private bool showDemoEnding = true;
+    [SerializeField, Min(0f), InspectorName("クリア画面の表示時間（秒）")]
+    private float resultDisplayDuration = 3.5f;
+    [SerializeField, Min(0.1f), InspectorName("ノイズ切り替え時間（秒）")]
+    private float demoTransitionDuration = 0.4f;
+    [SerializeField] private GameObject demoEndingContent;
+    [SerializeField] private GameObject[] resultOnlyContent;
     private bool goalReached;
     private bool transitioning;
+    private bool demoSequenceRunning;
+    private bool demoEndingVisible;
     private Player goalPlayer;
     private Player stagePlayer;
     private PlayerStartIntro startIntro;
@@ -44,6 +55,7 @@ public sealed class GoalMenuController : MonoBehaviour
         stagePlayer = FindAnyObjectByType<Player>(FindObjectsInactive.Include);
         if (stagePlayer != null) startIntro = stagePlayer.GetComponent<PlayerStartIntro>();
         if (clearTimeLabel != null) clearTimeLabel.gameObject.SetActive(false);
+        if (demoEndingContent != null) demoEndingContent.SetActive(false);
         nextButton.interactable = CanLoadNextScene();
         CRTMenuNavigation.Configure(nextButton, retryButton, titleButton);
     }
@@ -109,12 +121,68 @@ public sealed class GoalMenuController : MonoBehaviour
         goalPlayer = FindAnyObjectByType<Player>(FindObjectsInactive.Include);
         if (goalPlayer != null) goalPlayer.SetGoalInputBlocked(true);
         Time.timeScale = 0f;
+        demoSequenceRunning = showDemoEnding && demoEndingContent != null;
+        if (demoSequenceRunning)
+        {
+            overlay.SetInputBlocked(true);
+            CRTMenuNavigation.ClearSelection();
+        }
         StartCoroutine(SelectWhenReady());
     }
     private IEnumerator SelectWhenReady()
     {
         while (!overlay.IsReady) yield return null;
+        if (demoSequenceRunning)
+        {
+            yield return ShowDemoEnding();
+            yield break;
+        }
         EventSystem.current?.SetSelectedGameObject((nextButton.interactable ? nextButton : retryButton).gameObject);
+    }
+    private IEnumerator ShowDemoEnding()
+    {
+        // The result and both halves of the signal transition continue at timeScale = 0.
+        float displayUntil = Time.unscaledTime + Mathf.Max(0f, resultDisplayDuration);
+        while (Time.unscaledTime < displayUntil && showDemoEnding) yield return null;
+        if (!showDemoEnding)
+        {
+            demoSequenceRunning = false;
+            overlay.SetInputBlocked(false);
+            EventSystem.current?.SetSelectedGameObject((nextButton.interactable ? nextButton : retryButton).gameObject);
+            yield break;
+        }
+
+        float duration = Mathf.Max(0.1f, demoTransitionDuration);
+        float startedAt = Time.unscaledTime;
+        while (Time.unscaledTime - startedAt < duration)
+        {
+            float progress = (Time.unscaledTime - startedAt) / duration;
+            overlay.SetSignalInterference(Mathf.Sin(progress * Mathf.PI));
+            if (!demoEndingVisible && progress >= 0.5f)
+                RevealDemoEnding();
+            yield return null;
+        }
+        if (!demoEndingVisible) RevealDemoEnding();
+        overlay.SetSignalInterference(0f);
+        demoSequenceRunning = false;
+        overlay.SetInputBlocked(false);
+        CRTMenuNavigation.Configure(titleButton);
+        // Do not carry a submit pressed during the transition into the new screen.
+        yield return null;
+        EventSystem.current?.SetSelectedGameObject(titleButton.gameObject);
+    }
+    private void RevealDemoEnding()
+    {
+        demoEndingVisible = true;
+        foreach (GameObject item in resultOnlyContent)
+            if (item != null) item.SetActive(false);
+        // Result jewels can be scene-added children rather than part of the menu prefab.
+        foreach (PinkJewelIconRow row in GetComponentsInChildren<PinkJewelIconRow>(true))
+            row.gameObject.SetActive(false);
+        nextButton.gameObject.SetActive(false);
+        retryButton.gameObject.SetActive(false);
+        ((RectTransform)titleButton.transform).anchoredPosition = new Vector2(0f, -254f);
+        demoEndingContent.SetActive(true);
     }
     public void RetryStage() => LoadScene(SceneManager.GetActiveScene().name);
     public void ReturnToTitle() => LoadScene(titleSceneName);
@@ -122,7 +190,8 @@ public sealed class GoalMenuController : MonoBehaviour
     private bool CanLoadNextScene() => !string.IsNullOrWhiteSpace(nextSceneName) && Application.CanStreamedLevelBeLoaded(nextSceneName);
     private void LoadScene(string scene)
     {
-        if (!goalReached || !overlay.IsReady || transitioning || !Application.CanStreamedLevelBeLoaded(scene)) return;
+        if (!goalReached || !overlay.IsReady || demoSequenceRunning || transitioning
+            || (demoEndingVisible && scene != titleSceneName) || !Application.CanStreamedLevelBeLoaded(scene)) return;
         transitioning = true;
         overlay.Hide();
         CRTMenuNavigation.ClearSelection();
@@ -131,6 +200,7 @@ public sealed class GoalMenuController : MonoBehaviour
     }
     private void OnDisable()
     {
+        StopAllCoroutines();
         if (startIntro != null) startIntro.Completed -= TryStartTimer;
         if (pauseMenu != null) pauseMenu.PauseStateChanged -= SetTimerPaused;
         if (!goalReached) return;

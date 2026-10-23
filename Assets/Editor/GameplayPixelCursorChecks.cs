@@ -39,15 +39,20 @@ public static class GameplayPixelCursorChecks
         if (SessionState.GetBool(Key, false)) Subscribe();
     }
 
-    public static void Run()
+    public static void Run() => Start(false);
+
+    public static void RunControllerCheck() => Start(true);
+
+    private static void Start(bool controllerOnly)
     {
-        if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().isDirty)
+        if (EditorApplication.isPlayingOrWillChangePlaymode || (!controllerOnly && EditorSceneManager.GetActiveScene().isDirty))
             throw new InvalidOperationException("Start from saved CompletScene in Edit Mode.");
         if (EditorSceneManager.GetActiveScene().path != "Assets/Scenes/CompletScene.unity")
             throw new InvalidOperationException("Open CompletScene first.");
         SessionState.SetBool(Key, true);
         SessionState.SetBool(Key + ".EscapeOnly", false);
         SessionState.SetBool(Key + ".HitStopOnly", false);
+        SessionState.SetBool(Key + ".ControllerOnly", controllerOnly);
         SessionState.EraseString(Key + ".Result");
         Subscribe();
         EditorApplication.isPlaying = true;
@@ -83,7 +88,8 @@ public static class GameplayPixelCursorChecks
             Application.runInBackground = true;
             Application.logMessageReceived += OnLog;
             EditorWindow.GetWindow(Type.GetType("UnityEditor.GameView,UnityEditor")).Focus();
-            routine = SessionState.GetBool(Key + ".HitStopOnly", false)
+            routine = SessionState.GetBool(Key + ".ControllerOnly", false) ? CheckControllerInput()
+                : SessionState.GetBool(Key + ".HitStopOnly", false)
                 ? CheckHitStop(SessionState.GetBool(Key + ".HitStopBaseline", false))
                 : SessionState.GetBool(Key + ".EscapeOnly", false) ? CheckEscape() : Check();
             new GameObject("CursorCheckDriver").AddComponent<GameplayPixelCursorCheckDriver>();
@@ -359,31 +365,9 @@ public static class GameplayPixelCursorChecks
         cursor.enabled = true;
         Report.AppendLine("PASS both shadows, paused menu sprite, unscaled switch noise, exact tip throughout switch, no residual noise, chain on Resume");
 
-        originalMouse = Mouse.current; originalKeyboard = Keyboard.current; originalPad = Gamepad.current;
-        mouse = InputSystem.AddDevice<Mouse>("CursorCheckMouse");
-        keyboard = InputSystem.AddDevice<Keyboard>("CursorCheckKeyboard");
-        pad = InputSystem.AddDevice<Gamepad>("CursorCheckGamepad");
-        mouseState = new MouseState { position = point };
-        keyboardState = new KeyboardState(); padState = new GamepadState();
-        InputSystem.onBeforeUpdate += FeedInput;
-        yield return null;
-        padState = new GamepadState { leftStick = new Vector2(0.5f, 0f) };
-        yield return null; yield return null;
-        Call("LateUpdate");
-        Require(Get<bool>("usingGamepad"), "Gamepad presentation detected");
-        for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
-        { Call("ShowCursor", point); yield return null; }
-        Call("ShowCursor", point);
-        Require(!cursor.IsChainStyle && cursor.IsShowing && !Cursor.visible, "Gamepad fallback uses new custom pointer");
-        padState = new GamepadState();
-        mouseState.position += Vector2.right * 10f;
-        yield return null; yield return null;
-        Call("LateUpdate");
-        Require(!Get<bool>("usingGamepad"), "Mouse restores custom pointer mode");
-        for (float end = Time.unscaledTime + 0.2f; Time.unscaledTime < end;)
-        { Call("ShowCursor", point); yield return null; }
-        Call("ShowCursor", point);
-        Require(cursor.IsChainStyle, "Mouse restores chain design");
+        CreateTestDevices(point);
+        var deviceCheck = CheckDeviceSwitching(point);
+        while (deviceCheck.MoveNext()) yield return deviceCheck.Current;
         Report.AppendLine("PASS pause/resume, CRT overlay isolation and gamepad/mouse presentation switching");
 
         var body = player.GetComponent<Rigidbody2D>();
@@ -459,6 +443,199 @@ public static class GameplayPixelCursorChecks
         Report.AppendLine("PASS quit cleanup; runtime Errors/Exceptions=0");
     }
 
+    private static void CreateTestDevices(Vector2 point)
+    {
+        originalMouse = Mouse.current; originalKeyboard = Keyboard.current; originalPad = Gamepad.current;
+        mouse = InputSystem.AddDevice<Mouse>("CursorCheckMouse");
+        keyboard = InputSystem.AddDevice<Keyboard>("CursorCheckKeyboard");
+        pad = InputSystem.AddDevice<Gamepad>("CursorCheckGamepad");
+        mouseState = new MouseState { position = point };
+        keyboardState = new KeyboardState(); padState = new GamepadState();
+        InputSystem.onBeforeUpdate += FeedInput;
+    }
+
+    private static void SampleDeviceCursor()
+    {
+        Call("UpdateInputDevice", mouse, mouse.position.ReadValue());
+        Call("ShowCursor", mouse.position.ReadValue());
+    }
+
+    private static IEnumerator CheckDeviceSwitching(Vector2 point)
+    {
+        yield return null; yield return null;
+        SampleDeviceCursor();
+        padState = new GamepadState { rightStick = new Vector2(0.6f, 0f) };
+        yield return null;
+        SampleDeviceCursor();
+        Require(Get<bool>("usingGamepad") && Get<RectTransform>("noiseRoot").gameObject.activeSelf,
+            "Controller input starts existing glitch");
+        for (float end = Time.unscaledTime + Get<float>("transitionDuration") + 0.05f; Time.unscaledTime < end;)
+        { SampleDeviceCursor(); yield return null; }
+        SampleDeviceCursor();
+        Require(!cursor.IsShowing && !Cursor.visible && !Get<RectTransform>("noiseRoot").gameObject.activeSelf,
+            "Controller hides both custom and OS cursor after glitch");
+
+        mouseState.position = point + Vector2.right * 10f;
+        yield return null;
+        SampleDeviceCursor();
+        Require(!Get<bool>("usingGamepad") && cursor.IsShowing && Get<UnityEngine.UI.Image>("arrowSprite").enabled
+            && Get<RectTransform>("noiseRoot").gameObject.activeSelf, "Mouse immediately returns with glitch while controller stays connected");
+        for (int i = 0; i < 3; i++) { yield return null; SampleDeviceCursor(); }
+        Require(!Get<bool>("usingGamepad") && cursor.IsShowing, "Unchanged held stick cannot reclaim pointer");
+
+        padState.rightStick = new Vector2(0f, 0.6f);
+        yield return null;
+        SampleDeviceCursor();
+        Require(Get<bool>("usingGamepad"), "New stick input hides cursor again");
+        mouseState.scroll = Vector2.up * 120f;
+        yield return null;
+        SampleDeviceCursor();
+        Require(!Get<bool>("usingGamepad") && cursor.IsShowing, "Mouse wheel immediately restores cursor");
+        mouseState.scroll = Vector2.zero;
+        padState = new GamepadState().WithButton(GamepadButton.LeftStick);
+        yield return null;
+        SampleDeviceCursor();
+        Require(Get<bool>("usingGamepad"), "Controller button starts hide transition");
+        Time.timeScale = 0f;
+        for (float end = Time.unscaledTime + Get<float>("transitionDuration") + 0.05f; Time.unscaledTime < end;)
+        { SampleDeviceCursor(); yield return null; }
+        Require(!cursor.IsShowing && !Cursor.visible, "Hide transition finishes at timeScale zero");
+        mouseState = mouseState.WithButton(MouseButton.Middle, true);
+        yield return null;
+        SampleDeviceCursor();
+        Require(!Get<bool>("usingGamepad") && cursor.IsShowing && Get<RectTransform>("noiseRoot").gameObject.activeSelf,
+            "Mouse middle button immediately restores cursor at timeScale zero");
+        mouseState = mouseState.WithButton(MouseButton.Middle, false);
+        padState = new GamepadState();
+        Time.timeScale = 1f;
+        Report.AppendLine("PASS controller hide and mouse move/wheel/middle return with existing glitch, held-stick priority, unscaled transitions, OS cursor remains hidden");
+    }
+
+    private static IEnumerator CheckControllerInput()
+    {
+        var player = Object.FindAnyObjectByType<Player>();
+        var launcher = Object.FindAnyObjectByType<MorningStarLauncher>();
+        cursor = Object.FindAnyObjectByType<GameplayPixelCursor>();
+        Require(player != null && launcher != null && cursor != null, "Required production owners");
+        while (!player.InputEnabled || !player.IsGrounded) yield return null;
+        // Test the presentation methods directly, independent of the physical pointer's Editor focus.
+        cursor.enabled = false;
+        Vector2 point = new Vector2(Screen.width * 0.58f, Screen.height * 0.55f);
+        CreateTestDevices(point);
+        var deviceCheck = CheckDeviceSwitching(point);
+        while (deviceCheck.MoveNext()) yield return deviceCheck.Current;
+
+        var input = player.GetComponent<PlayerInput>();
+        input.SwitchCurrentControlScheme("Gamepad", pad);
+        var shoulderStates = new[] {
+            new GamepadState().WithButton(GamepadButton.LeftShoulder),
+            new GamepadState { leftTrigger = 1f }
+        };
+        foreach (var held in shoulderStates)
+        {
+            padState = new GamepadState();
+            launcher.ResetForRespawn();
+            float restGravity = launcher.BallBody.gravityScale;
+            float restDamping = launcher.BallBody.linearDamping;
+            var restConstraints = launcher.BallBody.constraints;
+            yield return null; yield return null;
+            padState = held;
+            for (float end = Time.time + 0.05f; Time.time < end;) yield return null;
+            padState = new GamepadState();
+            for (float end = Time.time + 0.35f; Time.time < end;)
+            {
+                yield return null;
+                Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging
+                    && launcher.LastCharge01 == 0f, "L/L2 short tap cancels without any shot");
+            }
+
+            padState = held;
+            for (float end = Time.time + 1.6f; Time.time < end;) yield return null;
+            Require(launcher.State == MorningStarLauncher.MorningStarState.SpinCharging && launcher.ChargeProgress > 0.5f,
+                "L/L2 hold builds charge with neutral stick");
+            padState = new GamepadState { leftTrigger = 1f }.WithButton(GamepadButton.LeftShoulder);
+            yield return null;
+            padState = held.leftTrigger > 0f
+                ? new GamepadState().WithButton(GamepadButton.LeftShoulder) : new GamepadState { leftTrigger = 1f };
+            yield return null; yield return null;
+            Require(launcher.State == MorningStarLauncher.MorningStarState.SpinCharging, "Other shoulder button keeps charge held");
+            // Cancellation wins even when the stick crosses its fire threshold on release.
+            padState = new GamepadState { rightStick = Vector2.up };
+            for (float end = Time.time + 0.35f; Time.time < end;)
+            {
+                yield return null;
+                Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging
+                    && launcher.ChargeProgress == 0f && launcher.LastCharge01 == 0f,
+                    "Last L/L2 release cancels charge without a delayed stick shot");
+            }
+            Require(Mathf.Approximately(launcher.BallBody.gravityScale, restGravity)
+                && Mathf.Approximately(launcher.BallBody.linearDamping, restDamping)
+                && launcher.BallBody.constraints == restConstraints, "Cancellation restores common Rest physics");
+
+            padState = new GamepadState();
+            launcher.ResetForRespawn();
+            yield return null; yield return null;
+            padState = held;
+            for (float end = Time.time + 1.6f; Time.time < end;) yield return null;
+            padState.rightStick = Vector2.up;
+            bool launched = false, aimedUp = false;
+            float observedCharge = 0f;
+            for (float end = Time.time + 0.8f; Time.time < end;)
+            {
+                launched |= launcher.State == MorningStarLauncher.MorningStarState.Thrown;
+                aimedUp |= launcher.State == MorningStarLauncher.MorningStarState.Thrown
+                    && Vector2.Dot(launcher.BallBody.linearVelocity.normalized, Vector2.up) > 0.9f;
+                observedCharge = Mathf.Max(observedCharge, launcher.LastCharge01);
+                yield return null;
+            }
+            Require(launched && aimedUp && observedCharge > 0.5f,
+                $"Right-stick flick while L/L2 held launches charged ball in its direction: launched={launched}, aimedUp={aimedUp}, charge={observedCharge}");
+        }
+        Report.AppendLine("PASS L/L2 tap and charged release cancel without firing, overlapping shoulders, no delayed shot, Rest physics, held-shoulder stick direction fires charged ball");
+
+        padState = new GamepadState();
+        launcher.ResetForRespawn();
+        yield return null; yield return null;
+        padState = new GamepadState().WithButton(GamepadButton.RightStick);
+        yield return null;
+        padState.rightStick = Vector2.up;
+        for (float end = Time.time + 1.6f; Time.time < end;) yield return null;
+        Require(launcher.State == MorningStarLauncher.MorningStarState.SpinCharging, "Existing R3 holds charge while aiming");
+        padState = new GamepadState { rightStick = Vector2.up };
+        bool legacyChargeLaunch = false;
+        for (float end = Time.time + 0.8f; Time.time < end;)
+        {
+            legacyChargeLaunch |= launcher.State == MorningStarLauncher.MorningStarState.Thrown && launcher.LastCharge01 > 0.5f;
+            yield return null;
+        }
+        Require(legacyChargeLaunch, "Existing R3 release still launches charged ball");
+        padState = new GamepadState();
+        launcher.ResetForRespawn();
+        yield return null; yield return null;
+        padState.rightStick = Vector2.up;
+        bool normalLaunch = false;
+        for (float end = Time.time + 0.8f; Time.time < end;)
+        { normalLaunch |= launcher.State == MorningStarLauncher.MorningStarState.Thrown; yield return null; }
+        Require(normalLaunch && launcher.LastCharge01 == 0f, "Existing right-stick flick launches normally");
+        padState = new GamepadState();
+        launcher.ResetForRespawn();
+        Report.AppendLine("PASS existing R3 charge/release and right-stick normal launch");
+
+        foreach (var jump in new[] { new GamepadState().WithButton(GamepadButton.RightShoulder),
+            new GamepadState { rightTrigger = 1f }, new GamepadState().WithButton(GamepadButton.South) })
+        {
+            while (!player.IsGrounded) yield return null;
+            int jumps = player.JumpVoicePlayCount;
+            padState = jump;
+            for (float end = Time.time + 0.15f; Time.time < end;) yield return null;
+            Require(player.JumpVoicePlayCount > jumps && !player.IsGrounded, "R / R2 / existing face button jumps");
+            padState = new GamepadState();
+            yield return null; yield return null;
+        }
+        Require(errors == 0, "Runtime Errors/Exceptions=" + errors);
+        Report.AppendLine("PASS R/R2 and existing face-button jump through production PlayerInput; runtime Errors/Exceptions=0");
+    }
+
     private static void FeedInput()
     {
         if (InputState.currentUpdateType != InputUpdateType.Dynamic) return;
@@ -512,7 +689,8 @@ public static class GameplayPixelCursorChecks
         EditorApplication.update -= Watchdog;
         Application.logMessageReceived -= OnLog;
         string result = (pass ? "PASS\n" : "FAIL\n") + Report + detail;
-        string filename = SessionState.GetBool(Key + ".HitStopOnly", false)
+        string filename = SessionState.GetBool(Key + ".ControllerOnly", false) ? "controller-input.txt"
+            : SessionState.GetBool(Key + ".HitStopOnly", false)
             ? SessionState.GetBool(Key + ".HitStopBaseline", false) ? "hitstop-baseline.txt" : "hitstop.txt"
             : "result.txt";
         File.WriteAllText(Path.Combine(Output, filename), result);
