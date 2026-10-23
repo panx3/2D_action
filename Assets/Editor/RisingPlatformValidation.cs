@@ -36,7 +36,13 @@ public static class RisingPlatformValidation
         Start(true);
     }
 
-    private static void Start(bool includeOneWay)
+    [MenuItem("Tools/Validation/One Way Platform")]
+    public static void RunOneWay()
+    {
+        Start(true, true);
+    }
+
+    private static void Start(bool includeOneWay, bool onlyOneWay = false)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorUtility.scriptCompilationFailed)
             throw new InvalidOperationException("Run from Edit Mode with no compilation errors.");
@@ -51,6 +57,7 @@ public static class RisingPlatformValidation
         EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
         SessionState.SetBool(Key + "Running", true);
         SessionState.SetBool(Key + "IncludeOneWay", includeOneWay);
+        SessionState.SetBool(Key + "OnlyOneWay", onlyOneWay);
         SessionState.SetString(Key + "Result", "Pending");
         EditorApplication.isPlaying = true;
     }
@@ -79,16 +86,21 @@ public static class RisingPlatformValidation
         {
             Time.fixedDeltaTime = Dt;
             Physics2D.simulationMode = SimulationMode2D.Script;
-            ValidatePrefab();
-            ValidateAutomatic();
-            ValidateDetection();
-            ValidateCarryAndJump();
-            ValidateDistances();
+            bool onlyOneWay = SessionState.GetBool(Key + "OnlyOneWay", false);
+            if (!onlyOneWay)
+            {
+                ValidatePrefab();
+                ValidateAutomatic();
+                ValidateDetection();
+                ValidateCarryAndJump();
+                ValidateDistances();
+            }
             bool includeOneWay = SessionState.GetBool(Key + "IncludeOneWay", false);
             if (includeOneWay)
                 OneWayPlatformValidation.Validate();
-            SessionState.SetString(Key + "Result", "PASS: Rising distance 2/3/5 in both modes, prefab, automatic waits/repeat/independence, detection, reboarding, carry, movement, jump and upward impulse."
-                + (includeOneWay ? " OneWay: underside/side passage, landing, movement/jump, ball collision above/below and independent copies." : ""));
+            SessionState.SetString(Key + "Result", "PASS: "
+                + (onlyOneWay ? "" : "Rising distance 2/3/5 in both modes, prefab, automatic waits/repeat/independence, detection, reboarding, carry, movement, jump and upward impulse. ")
+                + (includeOneWay ? "OneWay: Player passage/landing/movement/jump, ball passage from below at speed 4/30 and subsequent landing, independent copies and single terrain-query shape." : ""));
         }
         catch (Exception exception)
         {

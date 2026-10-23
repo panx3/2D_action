@@ -19,12 +19,12 @@ public static class OneWayPlatformValidation
             var platform = UnityEngine.Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, fixture.transform);
             var surface = platform.GetComponent<BoxCollider2D>();
             var solid = platform.transform.Find("MorningStarSolid").GetComponent<BoxCollider2D>();
+            var ballEffector = solid.GetComponent<PlatformEffector2D>();
             var effector = platform.GetComponent<PlatformEffector2D>();
-            var renderer = platform.GetComponentInChildren<SpriteRenderer>();
-            Require(surface.usedByEffector && !solid.usedByEffector && effector.useOneWay
+            Require(surface.usedByEffector && solid.usedByEffector && effector.useOneWay
                 && effector.useOneWayGrouping && effector.surfaceArc < 180f, "Invalid one-way settings");
-            Require(renderer.sprite != null && platform.transform.localScale == Vector3.one
-                && renderer.transform.localScale == Vector3.one, "Sprite stretched or missing");
+            Require(ballEffector != null && ballEffector.useOneWay && ballEffector.useOneWayGrouping
+                && Mathf.Approximately(ballEffector.surfaceArc, effector.surfaceArc), "Ball is not one-way");
             var terrainHits = new Collider2D[8];
             var terrainFilter = new ContactFilter2D();
             terrainFilter.SetLayerMask(LayerMask.GetMask("Default", "Walls"));
@@ -83,12 +83,14 @@ public static class OneWayPlatformValidation
             Set(player, "_groundedGraceTimer", 0f);
             Set(player, "_moveInput", Vector2.right);
             Physics2D.SyncTransforms();
-            for (int i = 0; i < 70; i++)
+            float sideExitX = surface.bounds.max.x + 0.3f;
+            for (int i = 0; i < 200 && body.position.x <= sideExitX; i++)
             {
                 Step(player);
-                Require(!player.IsGrounded, "Side/ball-only collider incorrectly grounded player");
+                Require(!player.IsGrounded, "Side/ball-only surface incorrectly grounded player");
             }
-            Require(body.position.x > surface.bounds.max.x + 0.3f, "Side passage blocked");
+            Require(body.position.x > sideExitX,
+                "Side passage blocked: position=" + body.position + " velocity=" + body.linearVelocity + " targetX=" + sideExitX);
             UnityEngine.Object.DestroyImmediate(playerObject);
 
             var ballObject = new GameObject("ValidationMorningStar");
@@ -105,18 +107,30 @@ public static class OneWayPlatformValidation
             Physics2D.SyncTransforms();
             for (int i = 0; i < 20; i++) Physics2D.Simulate(Dt);
             Require(circle.bounds.min.y >= top - 0.03f && solid.IsTouching(circle), "Ball passed through from above");
-            Require(!surface.IsTouching(circle), "Ball contacted one-way surface instead of solid collider");
+            Require(!surface.IsTouching(circle), "Ball contacted the Player-only surface");
 
             float bottom = solid.bounds.min.y;
-            ball.position = new Vector2(0f, bottom - 0.7f);
-            ball.linearVelocity = Vector2.up * 4f;
-            Physics2D.SyncTransforms();
-            for (int i = 0; i < 20; i++) Physics2D.Simulate(Dt);
-            Require(circle.bounds.max.y <= bottom + 0.03f && solid.IsTouching(circle), "Ball passed through from below");
+            foreach (float speed in new[] { 4f, 30f })
+            {
+                ball.position = new Vector2(0f, bottom - 0.7f);
+                ball.linearVelocity = Vector2.up * speed;
+                ball.gravityScale = 0f;
+                Physics2D.SyncTransforms();
+                int steps = Mathf.CeilToInt(1.6f / (speed * Dt));
+                for (int i = 0; i < steps; i++) Physics2D.Simulate(Dt);
+                Require(circle.bounds.min.y > top + 0.05f && ball.linearVelocity.y > 0f
+                    && !solid.IsTouching(circle), "Ball was blocked from below at speed " + speed);
+                ball.linearVelocity = Vector2.zero;
+                ball.gravityScale = 1f;
+                for (int i = 0; i < 60; i++) Physics2D.Simulate(Dt);
+                Require(circle.bounds.min.y >= top - 0.03f && solid.IsTouching(circle),
+                    "Ball could not land after passing through from below");
+            }
 
             var second = UnityEngine.Object.Instantiate(prefab, new Vector3(6f, 0f, 0f), Quaternion.identity, fixture.transform);
             var secondSolid = second.transform.Find("MorningStarSolid").GetComponent<BoxCollider2D>();
             ball.position = new Vector2(6f, top + 0.7f);
+            ball.gravityScale = 0f;
             ball.linearVelocity = Vector2.down * 4f;
             Physics2D.SyncTransforms();
             for (int i = 0; i < 20; i++) Physics2D.Simulate(Dt);
