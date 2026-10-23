@@ -884,8 +884,13 @@ public class Player : MonoBehaviour
             _groundCheckResults[i] = null;
 
             if (hit != null && hit != _groundCheckCollider && !hit.transform.IsChildOf(transform))
+            {
+                OneWayPlatform oneWay = hit.GetComponentInParent<OneWayPlatform>();
+                if (oneWay != null && !oneWay.SupportsPlayer(hit, _groundCheckCollider))
+                    continue;
 
                 return true;
+            }
 
         }
 
