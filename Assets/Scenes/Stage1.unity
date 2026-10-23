@@ -639,66 +639,6 @@ MonoBehaviour:
   _healHighlightDuration: 0.45
   _healHighlightColor: {r: 1, g: 0.78, b: 0.92, a: 0.65}
   _itemRecoveryStrength: 0.8
---- !u!1 &193677132
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 193677133}
-  - component: {fileID: 193677134}
-  m_Layer: 0
-  m_Name: StreetlampLight_-5_0_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &193677133
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 193677132}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.62, y: 2.1399999, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &193677134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 193677132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1001 &203615099
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2134,6 +2074,7 @@ GameObject:
   - component: {fileID: 387188713}
   - component: {fileID: 387188712}
   - component: {fileID: 387188711}
+  - component: {fileID: 387188716}
   m_Layer: 0
   m_Name: Ground2
   m_TagString: Floor
@@ -2721,7 +2662,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 0809ca58e89218b45abff0a419a75cf7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3915,6 +3856,23 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!114 &387188716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 387188709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eca51b873dddc3e44b85127942539df9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundTileSeamBlender
+  enableBlending: 0
+  blendStrength: 0.4
+  blendWidth: 2
+  pixelPreservation: 0.8
+  ditherStrength: 0.25
 --- !u!1 &408704671
 GameObject:
   m_ObjectHideFlags: 0
@@ -4648,66 +4606,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c852d0f22fdd95543bfa02b3de368d67, type: 3}
---- !u!1 &573813413
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 573813414}
-  - component: {fileID: 573813415}
-  m_Layer: 0
-  m_Name: StreetlampLight_55_1_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &573813414
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573813413}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 112.38, y: 4.14, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &573813415
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573813413}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1 &580274680
 GameObject:
   m_ObjectHideFlags: 0
@@ -6604,6 +6502,7 @@ MonoBehaviour:
   screenOffset: {x: 0, y: 0.45}
   coverPadding: 1.16
   loopHorizontally: 0
+  loopOverlapPixels: 2
 --- !u!212 &724441444
 SpriteRenderer:
   serializedVersion: 2
@@ -6809,66 +6708,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 16f0b2195e926fc4f83fd224f40dbb6d, type: 3}
---- !u!1 &766424275
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 766424276}
-  - component: {fileID: 766424277}
-  m_Layer: 0
-  m_Name: StreetlampLight_62_3_0
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &766424276
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 766424275}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 123.74, y: 8.14, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &766424277
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 766424275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!114 &802044258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7290,66 +7129,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 625955984}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &882011617
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 882011618}
-  - component: {fileID: 882011619}
-  m_Layer: 0
-  m_Name: StreetlampLight_18_0_0
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &882011618
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 882011617}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 35.74, y: 2.1399999, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &882011619
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 882011617}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1001 &883105232
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7656,6 +7435,7 @@ GameObject:
   - component: {fileID: 955504030}
   - component: {fileID: 955504034}
   - component: {fileID: 955504033}
+  - component: {fileID: 955504035}
   m_Layer: 0
   m_Name: Ground1
   m_TagString: Floor
@@ -7742,7 +7522,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 0809ca58e89218b45abff0a419a75cf7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14736,6 +14516,23 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &955504035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955504028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eca51b873dddc3e44b85127942539df9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundTileSeamBlender
+  enableBlending: 0
+  blendStrength: 0.4
+  blendWidth: 2
+  pixelPreservation: 0.8
+  ditherStrength: 0.25
 --- !u!4 &980382354 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4394694529140979395, guid: c852d0f22fdd95543bfa02b3de368d67, type: 3}
@@ -15519,6 +15316,38 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 717557417}
   m_ActionId: 24908448-c609-4bc3-a128-ea258674378a
+--- !u!1 &1217281984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1217281985}
+  m_Layer: 0
+  m_Name: StageDecorations
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1217281985
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1217281984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1287417520}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1251400730
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15649,66 +15478,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6465581950011872840, guid: ceaf176e6c4bd9a44bb2b68f69ef703d, type: 3}
   m_PrefabInstance: {fileID: 1251400730}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1270689774
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1270689775}
-  - component: {fileID: 1270689776}
-  m_Layer: 0
-  m_Name: StreetlampLight_62_3_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1270689775
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270689774}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 126.38, y: 8.14, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1270689776
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270689774}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1001 &1276162535
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15719,11 +15488,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4397352438029253368, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.11
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4397352438029253368, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.16
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4760093864722752103, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_Name
@@ -15731,11 +15500,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5303270272456403556, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 52.13
+      value: 51.91
       objectReference: {fileID: 0}
     - target: {fileID: 5303270272456403556, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.18
+      value: -1.2940489
       objectReference: {fileID: 0}
     - target: {fileID: 5303270272456403556, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.z
@@ -15779,17 +15548,83 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6894150940415235163, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_Offset.x
-      value: -0.11
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6894150940415235163, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_Offset.y
-      value: -1.28
+      value: -0.38
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
+--- !u!1001 &1287417519
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1217281985}
+    m_Modifications:
+    - target: {fileID: 2232514984707176195, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_Name
+      value: Flag
+      objectReference: {fileID: 0}
+    - target: {fileID: 6972844822391020688, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_SortingOrder
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 151
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+--- !u!4 &1287417520 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8718937455628446099, guid: 64586378d9fcfb24fadfc2c6e66344de, type: 3}
+  m_PrefabInstance: {fileID: 1287417519}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1304316516
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15945,66 +15780,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3528385307640532958, guid: 383870a3127e92e4093e2b462013d4bc, type: 3}
   m_PrefabInstance: {fileID: 1307838679}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1310900451
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1310900452}
-  - component: {fileID: 1310900453}
-  m_Layer: 0
-  m_Name: StreetlampLight_55_1_0
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1310900452
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1310900451}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 109.74, y: 4.14, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1310900453
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1310900451}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1 &1356973203
 GameObject:
   m_ObjectHideFlags: 0
@@ -16643,66 +16418,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7267937652359157966, guid: 16f0b2195e926fc4f83fd224f40dbb6d, type: 3}
   m_PrefabInstance: {fileID: 763118772}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1400290054
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1400290055}
-  - component: {fileID: 1400290056}
-  m_Layer: 0
-  m_Name: StreetlampLight_-5_0_0
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1400290055
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400290054}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.26, y: 2.1399999, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1400290056
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1400290054}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1 &1420355662
 GameObject:
   m_ObjectHideFlags: 0
@@ -16754,6 +16469,7 @@ MonoBehaviour:
   screenOffset: {x: 0, y: 0}
   coverPadding: 1.03
   loopHorizontally: 0
+  loopOverlapPixels: 2
 --- !u!212 &1420355665
 SpriteRenderer:
   serializedVersion: 2
@@ -17687,15 +17403,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1400290055}
-  - {fileID: 193677133}
-  - {fileID: 882011618}
-  - {fileID: 1816282263}
-  - {fileID: 1310900452}
-  - {fileID: 573813414}
-  - {fileID: 766424276}
-  - {fileID: 1270689775}
+  m_Children: []
   m_Father: {fileID: 1574093063}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &1602198370
@@ -17762,17 +17470,7 @@ Tilemap:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1602198368}
   m_Enabled: 1
-  m_Tiles:
-  - first: {x: 75, y: 2, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 5
-      m_TileSpriteIndex: 4294967295
-      m_TileMatrixIndex: 0
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741827
+  m_Tiles: {}
   m_AnimatedTiles: {}
   m_TileAssetArray:
   - serializedVersion: 2
@@ -17791,12 +17489,12 @@ Tilemap:
     m_RefCount: 0
     m_Data: {fileID: 11400000, guid: 40a845794ee82f84db6285bd83614901, type: 2}
   - serializedVersion: 2
-    m_RefCount: 1
+    m_RefCount: 0
     m_Data: {fileID: 11400000, guid: c484e263a4ab3df4291543b843da3eca, type: 2}
   m_TileSpriteArray: []
   m_TileMatrixArray:
   - serializedVersion: 2
-    m_RefCount: 1
+    m_RefCount: 0
     m_Data:
       e00: 3
       e01: 0
@@ -17816,7 +17514,7 @@ Tilemap:
       e33: 1
   m_TileColorArray:
   - serializedVersion: 2
-    m_RefCount: 1
+    m_RefCount: 0
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -18834,66 +18532,6 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
---- !u!1 &1816282262
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1816282263}
-  - component: {fileID: 1816282264}
-  m_Layer: 0
-  m_Name: StreetlampLight_18_0_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1816282263
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1816282262}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 38.38, y: 2.1399999, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1602198369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1816282264
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1816282262}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87e78e357a3b2244497771460842bc3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScreenLocalLight2D
-  lightEnabled: 1
-  color: {r: 1, g: 0.73, b: 0.34, a: 1}
-  intensity: 0.48
-  radius: 3.8
-  falloff: 1.7
-  flickerEnabled: 1
-  flickerSpeed: 1.1
-  flickerAmount: 0.04
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967263
-  emissionSource: {fileID: 0}
-  emissionOwner: {fileID: 1602198370}
-  glowEnabled: 1
-  glowIntensity: 0.28
-  glowRadius: 1.5
 --- !u!1 &1868212175
 GameObject:
   m_ObjectHideFlags: 0
@@ -19921,11 +19559,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4397352438029253368, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.11
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4397352438029253368, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.16
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4760093864722752103, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_Name
@@ -19933,11 +19571,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5303270272456403556, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 81.25
+      value: 81.03
       objectReference: {fileID: 0}
     - target: {fileID: 5303270272456403556, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 18.05
+      value: 15.726891
       objectReference: {fileID: 0}
     - target: {fileID: 5303270272456403556, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_LocalPosition.z
@@ -19981,11 +19619,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6894150940415235163, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_Offset.x
-      value: -0.11
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6894150940415235163, guid: 1e19cc592da5ebc429adbcee5cdd7992, type: 3}
       propertyPath: m_Offset.y
-      value: -1.28
+      value: -0.38
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -20139,6 +19777,7 @@ MonoBehaviour:
   screenOffset: {x: 0, y: -0.55}
   coverPadding: 1.22
   loopHorizontally: 1
+  loopOverlapPixels: 2
 --- !u!212 &2104487204
 SpriteRenderer:
   serializedVersion: 2
@@ -20773,3 +20412,4 @@ SceneRoots:
   - {fileID: 932229945}
   - {fileID: 1641394494}
   - {fileID: 284898716}
+  - {fileID: 1217281985}

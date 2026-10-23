@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Player-body-only collectible. Physics stays fixed while the original artwork floats.</summary>
+/// <summary>Player-body-only collectible with contact checked against its floating artwork.</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class PinkJewelPickup : MonoBehaviour
@@ -55,6 +55,7 @@ public sealed class PinkJewelPickup : MonoBehaviour
     private static readonly int ShinePosition = Shader.PropertyToID("_ShinePosition");
     private static readonly int ShineStrength = Shader.PropertyToID("_ShineStrength");
     private bool collected;
+    private Player pickupPlayer;
     public int Slot => slot;
     public bool IsCollected => collected;
 
@@ -118,6 +119,7 @@ public sealed class PinkJewelPickup : MonoBehaviour
         if (other.isTrigger || player == null || health == null || health.IsDead || health.IsRespawning
             || player.IsGoalInputBlocked || other.attachedRigidbody == null
             || other.attachedRigidbody != player.GetComponent<Rigidbody2D>()) return;
+        if (!PickupContactUtility.Touches(jewelRenderer, player)) return;
         if (!collection.TryCollect(slot)) return;
 
         Vector3 position = jewelRenderer.transform.position;
@@ -173,6 +175,8 @@ public sealed class PinkJewelPickup : MonoBehaviour
             reflection.enabled = false;
         }
         else reflection.enabled = true;
+        if (PickupContactUtility.TryGetTouchingBody(jewelRenderer, ref pickupPlayer, out Collider2D body))
+            TryCollect(body);
     }
 
     private void UpdateSurfaceShine(float deltaTime)

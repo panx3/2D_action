@@ -101,6 +101,12 @@ public class Player : MonoBehaviour
     [FormerlySerializedAs("_spriteRenderer")]
     [SerializeField, Tooltip("体の SpriteRenderer。未設定なら子の SpriteRenderer を使用")]
     private SpriteRenderer _bodySprite;
+    [SerializeField, Range(0.1f, 1f), Tooltip("空中射出点滅の薄い側の不透明度。0にして完全には消しません。")]
+    private float _airLaunchBlinkOpacity = 0.4f;
+    private float _damageBlinkOpacity = 1f;
+    private float _airBlinkOpacity = 1f;
+    private float _bodyBaseAlpha = 1f;
+    private SpriteRenderer _opacityRenderer;
 
     [SerializeField, Tooltip("flipX が使えない場合のみ Visual の localScale.x を反転")]
     private Transform _visualRoot;
@@ -152,6 +158,7 @@ public class Player : MonoBehaviour
     private Vector2 _moveInput;
     private Vector2 _actionMoveInput;
     private bool _goalInputBlocked;
+    private bool _gimmickInputBlocked;
 
     private Rigidbody2D _rigid;
     private MorningStarLauncher _morningStarLauncher;
@@ -174,6 +181,8 @@ public class Player : MonoBehaviour
     private float _coyoteTimer;
 
     private float _jumpBufferTimer;
+    private float _trampolineJumpUntil = float.NegativeInfinity;
+    private float _lastJumpPressedAt = float.NegativeInfinity;
 
     private bool _jumpHeld;
 
@@ -204,6 +213,7 @@ public class Player : MonoBehaviour
         _moveInput = Vector2.zero;
         _jumpHeld = false;
         _jumpBufferTimer = 0f;
+        _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
         _coyoteTimer = 0f;
     }
 
@@ -232,6 +242,21 @@ public class Player : MonoBehaviour
 
     public bool FacingRight => _facingRight;
     public bool IsGoalInputBlocked => _goalInputBlocked;
+    public bool IsGimmickInputBlocked => _gimmickInputBlocked;
+
+    public void SetGimmickInputBlocked(bool blocked)
+    {
+        if (_gimmickInputBlocked == blocked) return;
+        _gimmickInputBlocked = blocked;
+        if (_morningStarLauncher == null) _morningStarLauncher = GetComponent<MorningStarLauncher>();
+        if (_morningStarLauncher != null) _morningStarLauncher.SetGimmickInputBlocked(blocked);
+        if (!blocked) return;
+        _moveInput = _actionMoveInput = Vector2.zero;
+        _jumpBufferTimer = 0f;
+        _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
+        _jumpHeld = false;
+        StopFootstepAudio();
+    }
 
     public void SetGoalInputBlocked(bool blocked)
     {
@@ -247,6 +272,7 @@ public class Player : MonoBehaviour
         _moveInput = Vector2.zero;
         _actionMoveInput = Vector2.zero;
         _jumpBufferTimer = 0f;
+        _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
         _jumpHeld = false;
         StopFootstepAudio();
     }
@@ -324,6 +350,9 @@ public class Player : MonoBehaviour
 
         _rigid = GetComponent<Rigidbody2D>();
 
+        // Fast chain travel must not tunnel through a thin barrier's center plane.
+        if (_rigid != null) _rigid.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
         ResolveGroundCheckCollider();
 
         if (_playerHealth == null)
@@ -349,6 +378,14 @@ public class Player : MonoBehaviour
     private void OnDisable()
 
     {
+        _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
+        if (_airLaunchBlinkRoutine != null)
+        {
+            StopCoroutine(_airLaunchBlinkRoutine);
+            _airLaunchBlinkRoutine = null;
+        }
+        _airBlinkOpacity = 1f;
+        ApplyBlinkOpacity();
 
         if (_playerHealth != null)
 
@@ -462,7 +499,8 @@ public class Player : MonoBehaviour
 
 
 
-        if (_jumpBufferTimer > 0f && canJump && !_bjump)
+        bool trampolineInput = Time.time <= _trampolineJumpUntil && _rigid.linearVelocity.y > 0f;
+        if (_jumpBufferTimer > 0f && ((canJump && !_bjump) || trampolineInput))
 
         {
 
@@ -485,7 +523,7 @@ public class Player : MonoBehaviour
     private void PollMovementInput()
 
     {
-        if (_goalInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked)
         {
             _moveInput = Vector2.zero;
             return;
@@ -655,7 +693,7 @@ public class Player : MonoBehaviour
         bool isAlive = _playerHealth == null || !_playerHealth.IsDead;
 
         bool shouldPlay = grounded
-            && !_goalInputBlocked
+            && !_goalInputBlocked && !_gimmickInputBlocked
 
             && !_bjump
 
@@ -768,6 +806,7 @@ public class Player : MonoBehaviour
     private void HandlePlayerDead()
 
     {
+        _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
 
         StopFootstepAudio();
 
@@ -983,7 +1022,7 @@ public class Player : MonoBehaviour
     public void _OnMove(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked)
             return;
 
         if (!InputEnabled)
@@ -1000,7 +1039,7 @@ public class Player : MonoBehaviour
     public void _OnJump(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked)
             return;
 
         if (!InputEnabled)
@@ -1011,6 +1050,7 @@ public class Player : MonoBehaviour
         {
 
             _jumpHeld = true;
+            _lastJumpPressedAt = Time.time;
 
             if (_morningStarLauncher != null && _morningStarLauncher.TryReleaseMagnetForJump())
             {
@@ -1047,7 +1087,17 @@ public class Player : MonoBehaviour
         _bjump = true;
         ClearGroundedStateForJump();
         _jumpBufferTimer = 0f;
+        _trampolineJumpUntil = float.NegativeInfinity;
         _coyoteTimer = 0f;
+    }
+
+    /// <summary>トランポリン接触の前後だけ追加ジャンプを受け付ける。速度の適用はPlayerが所有する。</summary>
+    public void BeginTrampolineJumpInput(float window)
+    {
+        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled) return;
+        _trampolineJumpUntil = Time.time + Mathf.Max(0f, window);
+        if (Time.time - _lastJumpPressedAt <= window)
+            _jumpBufferTimer = Mathf.Max(_jumpBufferTimer, Time.fixedDeltaTime * 2f);
     }
 
 
@@ -1209,6 +1259,30 @@ public class Player : MonoBehaviour
 
     }
 
+    public SpriteRenderer BodySprite => ResolveBodySprite();
+
+    /// <summary>被弾と空中射出が重なっても、同じ表示所有者が薄い側の不透明度を採用する。</summary>
+    public void SetDamageBlinkOpacity(float opacity)
+    {
+        _damageBlinkOpacity = Mathf.Clamp(opacity, 0.1f, 1f);
+        ApplyBlinkOpacity();
+    }
+
+    private void ApplyBlinkOpacity()
+    {
+        SpriteRenderer sprite = ResolveBodySprite();
+        if (sprite == null) return;
+        if (_opacityRenderer != sprite)
+        {
+            _opacityRenderer = sprite;
+            _bodyBaseAlpha = sprite.color.a;
+        }
+        Color color = sprite.color;
+        color.a = _bodyBaseAlpha * Mathf.Min(_damageBlinkOpacity, _airBlinkOpacity);
+        sprite.color = color;
+        sprite.enabled = true;
+    }
+
 
 
     private void ApplyMovementFacingVisual()
@@ -1311,23 +1385,28 @@ public class Player : MonoBehaviour
 
         float elapsed = 0f;
 
-        var wait = new WaitForSeconds(_airLaunchBlinkInterval);
+        float interval = Mathf.Max(0.01f, _airLaunchBlinkInterval);
+        var wait = new WaitForSeconds(interval);
+        bool dimmed = false;
 
         while (elapsed < _airLaunchBlinkDuration)
 
         {
 
-            sprite.enabled = !sprite.enabled;
+            dimmed = !dimmed;
+            _airBlinkOpacity = dimmed ? Mathf.Clamp(_airLaunchBlinkOpacity, 0.1f, 1f) : 1f;
+            ApplyBlinkOpacity();
 
             yield return wait;
 
-            elapsed += _airLaunchBlinkInterval;
+            elapsed += interval;
 
         }
 
 
 
-        sprite.enabled = true;
+        _airBlinkOpacity = 1f;
+        ApplyBlinkOpacity();
 
         _airLaunchBlinkRoutine = null;
 

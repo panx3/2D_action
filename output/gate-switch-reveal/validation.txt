@@ -1,0 +1,47 @@
+PASS (46)
+Door pillars have no hidden blocking colliders
+Player sorts in front of the back pillar and behind the foreground pillar
+Player draws in front of the blue membrane
+Frame layers remain aligned despite legacy scene offsets
+Production Player uses continuous collision detection for the thin central barrier
+Closed membrane blocks at its center plane, accounting for the Player capsule radius
+Central membrane also blocks a fast approach from the right using the Player collision mode
+Central membrane blocks a fast approach from the left
+Non-Morning-Star contact is ignored
+First Morning Star contact latches ON and fires one event
+Switch opens door and immediately removes its blocking collider
+Pressed switch stops accepting contacts
+Supplied press sound plays on the first contact
+Only membrane fades out, including intermediate opacity
+Switch finishes on the depressed sprite
+Moving cap is hidden after settling
+Player-sized capsule passes completely through the opened gate
+Press sound ends normally
+Recontact and disable/enable preserve ON, with no second event or sound
+No runtime Error/Exception during the checks
+Production CameraFollow exists for reveal checks
+Production Player is ready after its intro
+Production clear-time and Pause owners are present
+Combat hit stop is active before the reveal handoff
+Persistent Open connection resolves its door; first press locks input and freezes the world after sound
+Reveal cancels the earlier hit stop before acquiring time
+Door stays closed at the switch press
+Pause cannot take time ownership during the reveal
+Press sound continues while timeScale is zero
+Actual Player transform remains frozen during the camera move
+Scaled game time is frozen
+Clear-time counter excludes the reveal
+Door remains closed during the outbound pan
+Only arrival at the door dispatches its Open connection once
+Door membrane finishes fading while world time remains stopped
+Reveal visits the closed door, opens it, holds, then returns
+Completion restores the pre-hit-stop non-1 time scale
+Camera returns to the captured Player view faster than the outbound move
+Completion releases camera, input, timer and pause ownership
+Disabling a switch mid-pan commits its latched connection
+Interrupted reveal restores time, controls and the Player view
+Another presentation can own the camera
+Camera contention falls back to direct activation without stealing ownership
+Goal handoff keeps time stopped and preserves the Goal input lock
+Respawn handoff releases reveal time without stealing the held camera
+No runtime Error/Exception including reveal lifecycle checks

@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -116,11 +116,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_0"
       rect:
         serializedVersion: 2
-        x: 0
-        y: 26
-        width: 151
-        height: 128
-      alignment: 9
+        x: 1
+        y: 8
+        width: 47
+        height: 48
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -138,11 +138,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_1"
       rect:
         serializedVersion: 2
-        x: 152
-        y: 24
-        width: 136
-        height: 131
-      alignment: 9
+        x: 49
+        y: 8
+        width: 48
+        height: 48
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -160,11 +160,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_2"
       rect:
         serializedVersion: 2
-        x: 288
-        y: 29
-        width: 138
-        height: 125
-      alignment: 9
+        x: 97
+        y: 8
+        width: 48
+        height: 48
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -182,11 +182,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_wolk_3"
       rect:
         serializedVersion: 2
-        x: 426
-        y: 25
-        width: 142
-        height: 130
-      alignment: 9
+        x: 145
+        y: 8
+        width: 48
+        height: 48
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 

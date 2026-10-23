@@ -37,13 +37,15 @@ public sealed class GoalMenuController : MonoBehaviour
     private PlayerStartIntro startIntro;
     private bool timerStarted;
     private bool timerPaused;
+    private bool gimmickPresentationPaused;
     private bool clearTimeFinalized;
     private double elapsedSeconds;
     private double resumedAt;
     public bool IsGoalReached => goalReached;
     public string NextSceneName => nextSceneName;
     public bool IsClearTimeFinalized => clearTimeFinalized;
-    public double ElapsedSeconds => elapsedSeconds + (timerStarted && !timerPaused && !clearTimeFinalized
+    public bool IsGimmickPresentationPaused => gimmickPresentationPaused;
+    public double ElapsedSeconds => elapsedSeconds + (timerStarted && !timerPaused && !gimmickPresentationPaused && !clearTimeFinalized
         ? System.Math.Max(0d, Time.unscaledTimeAsDouble - resumedAt) : 0d);
 
     private void Awake()
@@ -83,6 +85,12 @@ public sealed class GoalMenuController : MonoBehaviour
         elapsedSeconds = ElapsedSeconds;
         resumedAt = Time.unscaledTimeAsDouble;
         timerPaused = paused;
+    }
+    public void SetGimmickPresentationPaused(bool paused)
+    {
+        elapsedSeconds = ElapsedSeconds;
+        resumedAt = Time.unscaledTimeAsDouble;
+        gimmickPresentationPaused = paused;
     }
     /// <summary>リトライを選ぶまで死亡後の待機時間をプレイ時間へ加算しない。</summary>
     public void StopTimerForGameOver() => SetTimerPaused(true);

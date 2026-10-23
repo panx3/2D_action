@@ -49,6 +49,7 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
     private float idleTime;
     private float pickupTime;
     private bool collected;
+    private Player pickupPlayer;
     private ParticleSystem[] idleEmitters;
     private Vector3 shadowBaseScale;
     private PlayerHealth receiverHealth;
@@ -111,9 +112,11 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
     private void TryCollect(Collider2D other)
     {
         // Unityは無効なBehaviourにもTrigger通知を送るため、enabledも確認する。
-        if (collected || !isActiveAndEnabled || other == null) return;
-        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
-        if (health == null || health.IsDead) return;
+        if (collected || !isActiveAndEnabled || other == null || Time.timeScale <= 0f) return;
+        Player player = other.GetComponent<Player>();
+        PlayerHealth health = other.GetComponent<PlayerHealth>();
+        if (other.isTrigger || player == null || health == null || health.IsDead || health.IsRespawning
+            || player.IsGoalInputBlocked || !PickupContactUtility.Touches(drinkRenderer, player)) return;
         // Player配下の鉄球や鎖では拾わない。Player本人のbodyに属するColliderだけ許可。
         if (other.attachedRigidbody == null
             || other.attachedRigidbody != health.GetComponent<Rigidbody2D>()) return;
@@ -210,6 +213,8 @@ public sealed class TapiocaHealingPickup : MonoBehaviour
         visualRoot.localPosition = restPosition + Vector3.up * (bob * floatAmplitude);
         SetGlow(glowIntensity * (0.85f + Mathf.Sin(phase + 0.8f) * 0.15f));
         UpdateGroundShadow(bob, 1f);
+        if (PickupContactUtility.TryGetTouchingBody(drinkRenderer, ref pickupPlayer, out Collider2D body))
+            TryCollect(body);
     }
 
     private void PlaceGroundShadow()

@@ -130,7 +130,8 @@ public sealed class ScreenVisualController : MonoBehaviour
                 Material original = r.sharedMaterial;
                 if (original == null || original.shader == null) continue;
                 var parallax = r.GetComponent<ParallaxBackgroundLayer>();
-                if (parallax == null && original.shader.name != "Sprites/Default") continue;
+                if (parallax == null && original.shader.name != "Sprites/Default" &&
+                    !(original.shader.name == "IronBallGirl/Ground Tile Seam" && r.GetComponent<GroundTileSeamBlender>() != null)) continue;
                 if (parallax != null && original.shader.name != "IronBallGirl/Background Aerial Perspective") continue;
                 if (r.GetComponentInParent<Canvas>() != null) continue;
                 // Runtime copies inherit the source material; the source owner updates these itself.

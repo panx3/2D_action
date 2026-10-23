@@ -3,12 +3,9 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public static class GimmickVisualSetup
+public static partial class GimmickVisualSetup
 {
     private const string MagnetTexturePath = "Assets/image_/磁石ドット絵.png";
-    private const string DoorTexturePath = "Assets/image_/扉開閉.png";
-    private const string DoorOverlayTexturePath = "Assets/image_/扉開閉オーバーレイ.png";
-    private const string FloorSwitchTexturePath = "Assets/image_/床スイッチドット絵.png";
     private const string HitSwitchTexturePath = "Assets/image_/扉スイッチ.png";
 
     private const string MagnetPrefabPath = "Assets/Prefabs/Gimmicks/MagnetPoint.prefab";
@@ -20,23 +17,14 @@ public static class GimmickVisualSetup
     public static void Apply()
     {
         ConfigureTexture(MagnetTexturePath);
-        ConfigureTexture(DoorTexturePath);
-        ConfigureTexture(DoorOverlayTexturePath);
-        ConfigureTexture(FloorSwitchTexturePath);
         ConfigureTexture(HitSwitchTexturePath);
 
         Sprite magnet = LoadSprite(MagnetTexturePath, "磁石ドット絵_0");
-        Sprite doorClosed = LoadSprite(DoorTexturePath, "扉開閉_0");
-        Sprite doorOpen = LoadSprite(DoorTexturePath, "扉開閉_1");
-        Sprite doorFront = LoadSprite(DoorOverlayTexturePath, "扉開閉オーバーレイ_0");
-        Sprite floorSwitchOff = LoadSprite(FloorSwitchTexturePath, "床スイッチドット絵_0");
-        Sprite floorSwitchOn = LoadSprite(FloorSwitchTexturePath, "床スイッチドット絵_1");
         Sprite hitSwitchOff = LoadSprite(HitSwitchTexturePath, "扉スイッチ_0");
         Sprite hitSwitchOn = LoadSprite(HitSwitchTexturePath, "扉スイッチ_1");
 
         ConfigureMagnetPrefab(magnet);
-        ConfigureDoorPrefab(doorClosed, doorOpen, doorFront);
-        ConfigureWeightSwitchPrefab(floorSwitchOff, floorSwitchOn);
+        ApplyStoneGateAndSwitch();
         ConfigureHitSwitchPrefab(hitSwitchOff, hitSwitchOn);
 
         AssetDatabase.SaveAssets();
@@ -49,10 +37,8 @@ public static class GimmickVisualSetup
     public static void ValidateOrThrow()
     {
         ValidateTexture(MagnetTexturePath, 1);
-        ValidateTexture(DoorTexturePath, 2);
-        ValidateTexture(DoorOverlayTexturePath, 1);
-        ValidateTexture(FloorSwitchTexturePath, 2);
         ValidateTexture(HitSwitchTexturePath, 2);
+        ValidateStoneArtwork();
 
         ValidatePrefab<MagnetPoint>(MagnetPrefabPath, "Visual");
         ValidatePrefab<GimmickDoor>(DoorPrefabPath, "Door_Back", "Door_Barrier", "Door_Front");
@@ -101,73 +87,6 @@ public static class GimmickVisualSetup
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, MagnetPrefabPath);
-        }
-        finally
-        {
-            PrefabUtility.UnloadPrefabContents(root);
-        }
-    }
-
-    private static void ConfigureDoorPrefab(Sprite closedSprite, Sprite openSprite, Sprite frontSprite)
-    {
-        GameObject root = PrefabUtility.LoadPrefabContents(DoorPrefabPath);
-        try
-        {
-            DisableRootRenderer(root);
-            SpriteRenderer back = EnsureRenderer(root.transform, "Door_Back", -2);
-            SpriteRenderer barrier = EnsureRenderer(root.transform, "Door_Barrier", 2);
-            SpriteRenderer front = EnsureRenderer(root.transform, "Door_Front", 8);
-            back.sprite = openSprite;
-            barrier.sprite = closedSprite;
-            front.sprite = frontSprite;
-            back.color = Color.white;
-            barrier.color = Color.white;
-            front.color = Color.white;
-
-            GimmickDoor door = RequireComponent<GimmickDoor>(root);
-            SerializedObject serialized = new SerializedObject(door);
-            SetObject(serialized, "backRenderer", back);
-            SetObject(serialized, "barrierRenderer", barrier);
-            SetObject(serialized, "frontRenderer", front);
-            SetObject(serialized, "closedSprite", closedSprite);
-            SetObject(serialized, "openSprite", openSprite);
-            SetColor(serialized, "closedColor", Color.white);
-            SetColor(serialized, "openColor", Color.white);
-            SetFloat(serialized, "transitionDuration", 0.22f);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            PrefabUtility.SaveAsPrefabAsset(root, DoorPrefabPath);
-        }
-        finally
-        {
-            PrefabUtility.UnloadPrefabContents(root);
-        }
-    }
-
-    private static void ConfigureWeightSwitchPrefab(Sprite offSprite, Sprite onSprite)
-    {
-        GameObject root = PrefabUtility.LoadPrefabContents(WeightSwitchPrefabPath);
-        try
-        {
-            DisableRootRenderer(root);
-            SpriteRenderer visual = EnsureRenderer(root.transform, "Visual", 5);
-            visual.sprite = offSprite;
-            visual.color = Color.white;
-            visual.transform.localScale = new Vector3(1f, 3f, 1f);
-
-            WeightSwitch weightSwitch = RequireComponent<WeightSwitch>(root);
-            SerializedObject serialized = new SerializedObject(weightSwitch);
-            SetObject(serialized, "spriteRenderer", visual);
-            SetObject(serialized, "visualRoot", visual.transform);
-            SetObject(serialized, "offSprite", offSprite);
-            SetObject(serialized, "onSprite", onSprite);
-            SetColor(serialized, "offColor", Color.white);
-            SetColor(serialized, "onColor", Color.white);
-            SetVector3(serialized, "pressedLocalOffset", new Vector3(0f, -0.05f, 0f));
-            SetFloat(serialized, "visualMoveSpeed", 0.5f);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            PrefabUtility.SaveAsPrefabAsset(root, WeightSwitchPrefabPath);
         }
         finally
         {

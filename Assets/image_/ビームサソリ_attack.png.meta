@@ -63,7 +63,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 50
+  spritePixelsToUnits: 64
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -129,10 +129,10 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 3
-        y: 36
-        width: 78
-        height: 68
-      alignment: 9
+        y: 29
+        width: 95
+        height: 88
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -150,11 +150,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_attack_1"
       rect:
         serializedVersion: 2
-        x: 89
-        y: 36
-        width: 74
-        height: 74
-      alignment: 9
+        x: 98
+        y: 29
+        width: 88
+        height: 106
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -172,11 +172,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_attack_2"
       rect:
         serializedVersion: 2
-        x: 169
-        y: 36
-        width: 71
-        height: 68
-      alignment: 9
+        x: 186
+        y: 29
+        width: 92
+        height: 92
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -194,11 +194,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_attack_3"
       rect:
         serializedVersion: 2
-        x: 248
-        y: 36
-        width: 72
-        height: 68
-      alignment: 9
+        x: 279
+        y: 29
+        width: 88
+        height: 86
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -216,11 +216,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_attack_4"
       rect:
         serializedVersion: 2
-        x: 328
-        y: 36
-        width: 71
-        height: 71
-      alignment: 9
+        x: 367
+        y: 29
+        width: 91
+        height: 93
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -238,11 +238,11 @@ TextureImporter:
       name: "\u30D3\u30FC\u30E0\u30B5\u30BD\u30EA_attack_5"
       rect:
         serializedVersion: 2
-        x: 402
-        y: 36
-        width: 69
-        height: 69
-      alignment: 9
+        x: 458
+        y: 29
+        width: 93
+        height: 88
+      alignment: 7
       pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
