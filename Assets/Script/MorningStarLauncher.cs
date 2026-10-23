@@ -483,6 +483,8 @@ public class MorningStarLauncher : MonoBehaviour
     public bool IsAirLaunchAssistActive => _airLaunchAssistRemaining > 0f;
     public float AirTensionMultiplier => airTensionMultiplier;
     public float LastCharge01 => _lastCharge01;
+    public event System.Action<float> LaunchCommitted;
+    public event System.Action EnemyHitConfirmed;
     public float ChargeProgress => maxChargeTime > 0f ? Mathf.Clamp01(_chargeTime / maxChargeTime) : 1f;
     public bool IsChargeReady => _state == MorningStarState.SpinCharging && ChargeProgress >= 1f;
     public bool IsPowerThrow => _state == MorningStarState.Thrown && _activeThrowCharge01 >= 1f;
@@ -2008,6 +2010,7 @@ public class MorningStarLauncher : MonoBehaviour
     public void PlayEnemyHitStop(float duration, bool defeated)
     {
         PlayCombatHitStop(defeated ? Mathf.Max(duration, enemyDefeatHitStop) : duration);
+        EnemyHitConfirmed?.Invoke();
     }
 
     public void PlayBlockBreakHitStop(float impactHitStop = 0f)
@@ -2592,6 +2595,7 @@ public class MorningStarLauncher : MonoBehaviour
         morningStarRb.WakeUp();
         BeginAirLaunchAssist(launchedInAir);
         PlayMorningStarLaunchSound();
+        LaunchCommitted?.Invoke(_activeThrowCharge01);
         if (_chargeFeedback != null)
             _chargeFeedback.PlayLaunch(d, _activeThrowCharge01);
         if (IsPowerThrow && cameraShake != null)

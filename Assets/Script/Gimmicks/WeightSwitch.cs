@@ -29,6 +29,7 @@ public class WeightSwitch : MonoBehaviour
     private Vector3 visualRestLocalPosition;
 
     public bool IsPressed => isPressed;
+    public event System.Action Pressed;
 
     private void Awake()
     {
@@ -79,6 +80,7 @@ public class WeightSwitch : MonoBehaviour
         {
             Debug.Log("WeightSwitch ON");
             onPressed?.Invoke();
+            Pressed?.Invoke();
         }
         else
         {
