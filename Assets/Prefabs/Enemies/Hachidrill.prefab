@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7356271077258401794}
   - component: {fileID: 7482388545095415831}
   - component: {fileID: 6256857833586882140}
+  - component: {fileID: 4806094777628985317}
   m_Layer: 9
   m_Name: Hachidrill
   m_TagString: Untagged
@@ -137,6 +138,7 @@ MonoBehaviour:
   hitFlashRenderer: {fileID: 2414000141599107754}
   disableOnDeath:
   - {fileID: 7482388545095415831}
+  - {fileID: 4806094777628985317}
   hitAudioSource: {fileID: 0}
   morningStarHitClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
   morningStarHitVolume: 0.9
@@ -208,6 +210,58 @@ MonoBehaviour:
   defeatEffectEnabled: 1
   defeatEffectPrefab: {fileID: 2905271716130985749, guid: 630bab7348389f4408dd97bf778c2592, type: 3}
   defeatOffset: {x: 0, y: 0, z: 0}
+--- !u!114 &4806094777628985317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285938631970961242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7edf207356dcb3448960ce75f7633019, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HachidrillAttackController
+  detectionWidth: 14
+  detectionHeightUp: 3
+  detectionHeightDown: 5
+  detectionReentryMargin: 0.15
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 65
+  playerLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  glideSpeed: 2.4
+  glideAcceleration: 7
+  attackRange: 0.12
+  returnSpeed: 1.8
+  attackHitbox: {fileID: 3228976545575982251}
+  attackClip: {fileID: 7400000, guid: 552d5053deace4c41a4d5a4e0285fd20, type: 2}
+  attackFrames:
+  - {fileID: -3008962961360956022, guid: b1b6dca5e2c52b5458ba5b6a14476cc7, type: 3}
+  - {fileID: 3007458035529920655, guid: b1b6dca5e2c52b5458ba5b6a14476cc7, type: 3}
+  - {fileID: 1803765243, guid: b1b6dca5e2c52b5458ba5b6a14476cc7, type: 3}
+  - {fileID: -1423640377, guid: b1b6dca5e2c52b5458ba5b6a14476cc7, type: 3}
+  - {fileID: -1308340615, guid: b1b6dca5e2c52b5458ba5b6a14476cc7, type: 3}
+  - {fileID: -1350060360, guid: b1b6dca5e2c52b5458ba5b6a14476cc7, type: 3}
+  drillOffsets:
+  - {x: 0.17999998, y: 0.05}
+  - {x: 0.16999999, y: -0.14}
+  - {x: 0.01, y: -0.19}
+  - {x: 0.18, y: -0.15}
+  - {x: 0.02, y: -0.24}
+  - {x: 0.14999998, y: 0.06}
+  firstStrikeFrame: 2
+  secondStrikeFrame: 4
+  attackDamage: 1
+  attackKnockback: 5
+  attackAnimationSpeed: 1
+  attackWindup: 0.18
+  attackCooldown: 0.9
+  attackAudioSource: {fileID: 0}
+  attackSE: {fileID: 0}
+  attackSEVolume: 0.6
 --- !u!1 &3179557716487473453
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,7 +292,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2881569001368487944}
   m_Father: {fileID: 7538795796995475340}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2414000141599107754
@@ -322,6 +377,84 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &3871259522785214290
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2881569001368487944}
+  - component: {fileID: 3228976545575982251}
+  m_Layer: 9
+  m_Name: AttackHitbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2881569001368487944
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3871259522785214290}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.01, y: -0.19, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4318656534100516906}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!61 &3228976545575982251
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3871259522785214290}
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.16, y: 0.16}
+  m_EdgeRadius: 0
 --- !u!1 &8381851344694395518
 GameObject:
   m_ObjectHideFlags: 0

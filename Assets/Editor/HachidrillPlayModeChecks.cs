@@ -97,6 +97,8 @@ public static class HachidrillPlayModeChecks
     {
         var root = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(HachidrillSetup.PrefabPath), position, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(root, scene);
+        root.GetComponent<HachidrillAttackController>().enabled = false;
+        root.transform.localScale = Vector3.one;
         return root.GetComponent<HachidrillController>();
     }
 

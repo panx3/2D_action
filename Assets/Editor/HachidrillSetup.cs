@@ -89,7 +89,7 @@ public static class HachidrillSetup
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
-        Validate();
+        HachidrillAttackSetup.Apply();
     }
 
     public static Sprite[] Frames() => AssetDatabase.LoadAllAssetsAtPath(SpritePath).OfType<Sprite>().OrderBy(s => s.rect.x).ToArray();
@@ -129,16 +129,27 @@ public static class HachidrillSetup
             if (feedback.FindProperty(field).objectReferenceValue == null) throw new InvalidOperationException("Missing feedback: " + field);
         var controller = (AnimatorController)root.GetComponentInChildren<Animator>().runtimeAnimatorController;
         var machine = controller.layers[0].stateMachine;
-        if (machine.states.Length != 1 || machine.defaultState.name != "Hover" || machine.anyStateTransitions.Length != 0
+        if (machine.states.Length != 2 || machine.defaultState.name != "Hover" || machine.anyStateTransitions.Length != 0
             || controller.parameters.Length != 0)
-            throw new InvalidOperationException("Only the Hover state is supported.");
+            throw new InvalidOperationException("Expected Hover and Attack states.");
         var clip = (AnimationClip)machine.defaultState.motion;
         var bindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
         if (!clip.isLooping || AnimationUtility.GetCurveBindings(clip).Length != 0 || bindings.Length != 1
             || bindings[0].propertyName != "m_Sprite"
             || AnimationUtility.GetObjectReferenceCurve(clip, bindings[0]).Take(6).Select(k => k.value).Distinct().Count() != 6)
             throw new InvalidOperationException("Expected six sprite-only loop frames.");
-        Debug.Log("[Hachidrill] Prefab PASS: six frames, Hover only, zero gravity, common HP/feedback/death references.");
+        var ai = root.GetComponent<HachidrillAttackController>();
+        if (ai == null) throw new InvalidOperationException("Missing drill AI.");
+        var attackData = new SerializedObject(ai);
+        var hitbox = (BoxCollider2D)attackData.FindProperty("attackHitbox").objectReferenceValue;
+        var attackClip = (AnimationClip)attackData.FindProperty("attackClip").objectReferenceValue;
+        if (hitbox == null || hitbox.enabled || !hitbox.isTrigger || attackClip == null || attackClip.isLooping
+            || attackData.FindProperty("attackFrames").arraySize != 6 || attackData.FindProperty("drillOffsets").arraySize != 6)
+            throw new InvalidOperationException("Invalid attack references/loop/hitbox.");
+        var disable = new SerializedObject(health).FindProperty("disableOnDeath");
+        if (!Enumerable.Range(0, disable.arraySize).Any(i => disable.GetArrayElementAtIndex(i).objectReferenceValue == ai))
+            throw new InvalidOperationException("Death must stop drill AI.");
+        Debug.Log("[Hachidrill] Prefab PASS: Hover + nonloop Attack, six original frames each, disabled drill trigger, common HP/feedback/death.");
     }
 
     private static void Ref(SerializedObject target, string field, UnityEngine.Object value) => target.FindProperty(field).objectReferenceValue = value;
