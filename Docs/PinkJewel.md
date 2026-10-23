@@ -6,7 +6,7 @@ CompletSceneの任意収集アイテム。取得順にかかわらず、配置�
 
 - 本体: `Assets/Art/PinkJewel/PinkJewel.png`。ユーザー提供PNGをバイト単位でそのままコピー。SHA256: `89DCD41479D243D429FA34C0E4F2D91AEC3EA3DCC3BD6C9C2102F4F54EE7A91B`。
 - 実使用UI: `Assets/Art/PinkJewel/JewelUI.png`。ユーザー提供の `DeUI用crystal取得HUD素材t.png` を無加工でコピーし、左のピンクを取得済み、右の白を未取得としてSprite Editorで分割。どちらも18×29pxで、HUDとリザルトで同じSpriteを使用する。
-- UI表示サイズは54×87（元画像の3倍）、アイコン間は6 UI px。以前生成したHUD／リザルト画像は参照しない。
+- UI表示サイズは54×87（元画像の3倍）。HUDのアイコン間は12 UI px（左端固定で右へ拡張）、リザルトは6 UI px。以前生成したHUD／リザルト画像は参照しない。
 - 生成原本: `Assets/Art/PinkJewel/Source/`。VFXは引き続き使用する。初版で生成したHUD／リザルト原本も保管されている。プロンプトは [PinkJewelImagePrompts.md](PinkJewelImagePrompts.md)。
 - 実使用VFX: `Star.png`, `Diamond.png`, `Ring.png`, `Halo.png`, `Flash.png`, `Glint.png`。生成アトラスをUnity側で分割・縮小。すべて別レイヤーで、本体画像への焼き込みはない。
 - SpriteはPoint／非圧縮／Mip Mapなし／Clamp。地面の影だけは既存回復アイテムの `Assets/Generated/Tapioca/GroundShadow.png` を共用する。

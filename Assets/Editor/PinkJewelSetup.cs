@@ -303,7 +303,7 @@ public static class PinkJewelSetup
                 var image = Image("Jewel" + (i + 1), root.transform,
                     empty, new Vector2(54f, 87f));
                 image.rectTransform.anchorMin = image.rectTransform.anchorMax = new Vector2(0f, 0.5f);
-                image.rectTransform.anchoredPosition = new Vector2(27f + i * 60f, 0f);
+                image.rectTransform.anchoredPosition = new Vector2(27f + i * (result ? 60f : 66f), 0f);
                 icons[i] = image;
                 var glint = Image("PickupGlint", image.transform, Sprite("Flash"), new Vector2(96f, 96f));
                 glint.color = Color.clear; glints[i] = glint;
