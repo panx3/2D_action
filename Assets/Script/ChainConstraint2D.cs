@@ -7,6 +7,8 @@ using UnityEngine.Tilemaps;
 /// Playerと鉄球を結ぶゲーム向けロープ制約。
 /// たるみ中は何もせず、張力はPlayer側を主体に連続的に加える。
 /// </summary>
+// Evaluate live contacts after Player jumps and launcher state/velocity writes.
+[DefaultExecutionOrder(100)]
 public class ChainConstraint2D : MonoBehaviour
 {
     [Header("References")]
@@ -249,6 +251,8 @@ public class ChainConstraint2D : MonoBehaviour
         if (_playerClimbActive)
         {
             ApplyPlayerClimbMotion(physicsAnchor);
+            if (_oneWaySupport.IsSupporting)
+                RebuildRopePath(UpdatePhysicsAnchorWorld(), morningStarRb.position);
             ClampBallSpeed();
             return;
         }
@@ -386,7 +390,7 @@ public class ChainConstraint2D : MonoBehaviour
 
         RebuildPointLists(start, end);
         _oneWaySupport.Rebuild(_ropePathPoints, maxRopeLength, _ropeSagStrength,
-            _ropeMaxSag, _ropeCollisionRadius, _collisionSkin, _terrainFilter);
+            _ropeMaxSag, _ropeCollisionRadius, _collisionSkin, _terrainFilter, playerRb, morningStarRb);
         if (_oneWaySupport.IsSupporting)
         {
             _ropeContactPoints.Clear();

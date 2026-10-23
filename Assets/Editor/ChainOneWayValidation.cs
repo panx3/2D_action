@@ -16,6 +16,7 @@ public static class ChainOneWayValidation
             Vector2 origin = new Vector2(1000f, 1000f);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Gimmicks/OneWayPlatform.prefab");
             var platform = UnityEngine.Object.Instantiate(prefab, origin, Quaternion.identity, fixture.transform);
+            var platformB = UnityEngine.Object.Instantiate(prefab, origin + Vector2.right * 10f, Quaternion.identity, fixture.transform);
             var box = platform.transform.Find("MorningStarSolid").GetComponent<BoxCollider2D>();
             Physics2D.SyncTransforms();
             float top = box.bounds.max.y;
@@ -34,6 +35,7 @@ public static class ChainOneWayValidation
             playerObject.tag = "Player";
             var playerBody = playerObject.AddComponent<Rigidbody2D>();
             playerBody.gravityScale = 0f;
+            playerBody.freezeRotation = true;
             playerObject.AddComponent<BoxCollider2D>();
             var player = playerObject.AddComponent<Player>();
             player.enabled = false;
@@ -62,8 +64,12 @@ public static class ChainOneWayValidation
                 Require(!constraint.HasOneWaySupport, "Upward passage acquired support");
             }
             Invoke(constraint, "OnDisable");
-            Vector2 start = new Vector2(origin.x - 1f, top + 0.5f);
-            Vector2 end = new Vector2(origin.x + 1f, top + 0.5f);
+            Land(playerBody, ball, origin.x, origin.x, top);
+            Vector2 start = playerBody.position;
+            Vector2 end = ball.position;
+            Rebuild(constraint, below, above);
+            Require(!constraint.HasOneWaySupport, "Grounding forcibly captured an underside path");
+            Invoke(constraint, "OnDisable");
             Rebuild(constraint, start, end);
             Require(constraint.HasOneWaySupport && constraint.RopeContactPointCount > 0, "Top sag did not acquire support");
             Require(constraint.CurrentRopeLength <= constraint.MaxRopeLength + 0.01f, "Slack support overlength");
@@ -75,6 +81,46 @@ public static class ChainOneWayValidation
                     Require(point.y >= top + 0.139f, "Supported point penetrated top");
             }
             ValidateRenderers(fixture, constraint, playerBody, ball, start, end);
+
+            // Real simulated contacts, including the different Player/ball effector
+            // colliders, must resolve to exactly the same platform instance.
+            for (int i = 0; i < 20; i++)
+            {
+                Physics2D.Simulate(0.02f);
+                Rebuild(constraint, playerBody.position, ball.position);
+                Require(constraint.HasOneWaySupport, "Resting contacts flickered");
+            }
+            playerBody.AddForce(Vector2.up * 3f, ForceMode2D.Impulse);
+            Rebuild(constraint, playerBody.position, ball.position);
+            Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0,
+                "Same-step jump retained a cached ground contact");
+
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x, top, true, "Both on A");
+            ball.AddForce(Vector2.up * 3f, ForceMode2D.Impulse);
+            Rebuild(constraint, playerBody.position, ball.position);
+            Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0,
+                "Same-step ball launch retained support");
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x, top, true, "Ball re-land on A");
+            Move(playerBody, playerBody.position + Vector2.up * 2f);
+            Physics2D.Simulate(0.02f);
+            Rebuild(constraint, playerBody.position, ball.position);
+            Require(!constraint.HasOneWaySupport, "Ball-only A contact supported rope");
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x, top, true, "Re-land on A");
+            Move(ball, ball.position + Vector2.up * 2f);
+            Physics2D.Simulate(0.02f);
+            Rebuild(constraint, playerBody.position, ball.position);
+            Require(!constraint.HasOneWaySupport, "Player-only A contact supported rope");
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x + 10f, top, false, "Player A / ball B");
+            CheckPair(constraint, playerBody, ball, origin.x + 10f, origin.x, top, false, "Player B / ball A");
+            CheckPair(constraint, playerBody, ball, origin.x + 10f, origin.x + 10f, top, true, "Both on B");
+            Move(playerBody, playerBody.position + Vector2.up * 2f);
+            Move(ball, ball.position + Vector2.up * 2f);
+            Physics2D.Simulate(0.02f);
+            Rebuild(constraint, playerBody.position, ball.position);
+            Require(!constraint.HasOneWaySupport, "Airborne pair retained support");
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x, top, true, "Return to A");
+            start = playerBody.position;
+            end = ball.position;
 
             var otherOwner = new GameObject("IndependentConstraint");
             otherOwner.transform.SetParent(fixture.transform);
@@ -102,19 +148,22 @@ public static class ChainOneWayValidation
             constraint.SetFlyingTrajectoryPriority(false);
             constraint.SetMaxRopeLength(4.5f);
 
-            // Pulling either end below the edge keeps an explicit top route, rather
-            // than switching to an underside/shortest-box route on the next frame.
+            // Leaving the platform must discard history, even if the old sag
+            // curve still crosses its surface.
             Vector2 hangingStart = new Vector2(box.bounds.min.x - 0.5f, top - 0.5f);
             Vector2 hangingEnd = new Vector2(box.bounds.max.x + 0.5f, top - 0.5f);
+            Move(playerBody, hangingStart);
+            Move(ball, hangingEnd);
+            Physics2D.Simulate(0.02f);
             Rebuild(constraint, hangingStart, hangingEnd);
-            Require(constraint.HasOneWaySupport, "Support history vanished with opposite-side endpoints");
+            Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0, "Airborne opposite-side endpoints retained support");
             Vector2 leaveStart = new Vector2(box.bounds.max.x + 1f, top - 0.5f);
             Vector2 leaveEnd = new Vector2(box.bounds.max.x + 2f, top - 0.5f);
             Rebuild(constraint, leaveStart, leaveEnd);
             Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0, "Edge exit retained support");
 
             Invoke(constraint, "OnDisable");
-            Rebuild(constraint, start, end);
+            CheckPair(constraint, playerBody, ball, origin.x, origin.x, top, true, "Reacquire after exit");
             Require(constraint.HasOneWaySupport, "Could not reacquire top support");
             constraint.enabled = true;
             constraint.enabled = false;
@@ -123,10 +172,20 @@ public static class ChainOneWayValidation
             Require(!constraint.HasOneWaySupport, "Reset history leaked into a new launch");
 
             // Normal terrain still uses the original bounded wrap solver.
-            platform.SetActive(false);
             var wallObject = new GameObject("OrdinaryTerrain");
             wallObject.transform.SetParent(fixture.transform);
             var wall = wallObject.AddComponent<BoxCollider2D>();
+            wall.size = new Vector2(4f, 1f);
+            wallObject.transform.position = origin + Vector2.right * 30f;
+            Physics2D.SyncTransforms();
+            Land(playerBody, ball, origin.x + 30f, origin.x + 30f, origin.y + 0.5f);
+            // Keep the probe curve on A: generic grounded flags alone would
+            // wrongly allow this support despite both bodies resting elsewhere.
+            Rebuild(constraint, start, end);
+            Require(!constraint.HasOneWaySupport && constraint.RopeContactPointCount == 0,
+                "Ordinary-ground pair enabled OneWay support");
+            platform.SetActive(false);
+            platformB.SetActive(false);
             wall.size = new Vector2(2f, 1f);
             wallObject.transform.position = origin;
             Physics2D.SyncTransforms();
@@ -139,6 +198,33 @@ public static class ChainOneWayValidation
         {
             UnityEngine.Object.DestroyImmediate(fixture);
         }
+    }
+
+    private static void Move(Rigidbody2D body, Vector2 position)
+    {
+        body.transform.position = position;
+        body.position = position;
+        body.linearVelocity = Vector2.zero;
+        Physics2D.SyncTransforms();
+    }
+
+    private static void Land(Rigidbody2D player, Rigidbody2D ball, float playerX, float ballX, float top)
+    {
+        Move(player, new Vector2(playerX - 1f, top + 0.6f));
+        Move(ball, new Vector2(ballX + 1f, top + 0.28f));
+        player.gravityScale = ball.gravityScale = 1f;
+        for (int i = 0; i < 50; i++) Physics2D.Simulate(0.02f);
+        player.gravityScale = ball.gravityScale = 0f;
+        player.linearVelocity = ball.linearVelocity = Vector2.zero;
+    }
+
+    private static void CheckPair(ChainConstraint2D constraint, Rigidbody2D player, Rigidbody2D ball,
+        float playerX, float ballX, float top, bool expected, string label)
+    {
+        Land(player, ball, playerX, ballX, top);
+        Rebuild(constraint, player.position, ball.position);
+        Require(constraint.HasOneWaySupport == expected, label + " support=" + constraint.HasOneWaySupport);
+        if (!expected) Require(constraint.RopeContactPointCount == 0, label + " left stale route contacts");
     }
 
     private static void ValidateRenderers(GameObject fixture, ChainConstraint2D constraint,

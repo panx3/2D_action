@@ -22,6 +22,10 @@ public sealed class OneWayRopeSupport2D
     private readonly List<Vector3> points = new List<Vector3>(48);
     private readonly List<Vector3> scratch = new List<Vector3>(48);
     private readonly RaycastHit2D[] hits = new RaycastHit2D[16];
+    private readonly List<ContactPoint2D> playerContacts = new List<ContactPoint2D>(8);
+    private readonly List<ContactPoint2D> ballContacts = new List<ContactPoint2D>(8);
+    private readonly HashSet<OneWayPlatform> eligible = new HashSet<OneWayPlatform>();
+    private readonly HashSet<OneWayPlatform> previouslyEligible = new HashSet<OneWayPlatform>();
     private bool hasPrevious;
     public bool IsSupporting => supports.Count > 0;
 
@@ -31,11 +35,31 @@ public sealed class OneWayRopeSupport2D
         hasPrevious = false;
         points.Clear();
         scratch.Clear();
+        eligible.Clear();
+        previouslyEligible.Clear();
+        playerContacts.Clear();
+        ballContacts.Clear();
     }
 
     public void Rebuild(List<Vector2> path, float maxLength, float sagStrength, float maxSag,
-        float radius, float skin, ContactFilter2D filter)
+        float radius, float skin, ContactFilter2D filter, Rigidbody2D player, Rigidbody2D ball)
     {
+        // Read the live physics contacts together, never Player's cached grounded
+        // flag. The two layer-filtered colliders resolve to the same floor owner.
+        playerContacts.Clear();
+        ballContacts.Clear();
+        if (player != null && player.simulated) player.GetContacts(playerContacts);
+        if (ball != null && ball.simulated) ball.GetContacts(ballContacts);
+        eligible.Clear();
+        IReadOnlyList<OneWayPlatform> platforms = OneWayPlatform.RopeSurfaces;
+        for (int p = 0; p < platforms.Count; p++)
+        {
+            OneWayPlatform platform = platforms[p];
+            if (platform != null && platform.TryGetRopeSurface(out Vector2 left, out _, out Vector2 up)
+                && HasTopContact(player, playerContacts, platform, left, up)
+                && HasTopContact(ball, ballContacts, platform, left, up))
+                eligible.Add(platform);
+        }
         float baseLength = Length(path);
         float sag = Mathf.Min(maxSag, Mathf.Max(0f, maxLength - baseLength) * sagStrength);
         for (int i = 0; i <= Samples; i++)
@@ -46,16 +70,16 @@ public sealed class OneWayRopeSupport2D
         for (int i = supports.Count - 1; i >= 0; i--)
         {
             OneWayPlatform platform = supports[i].Platform;
-            if (platform == null || !platform.TryGetRopeSurface(out Vector2 left, out Vector2 right, out Vector2 up)
+            if (platform == null || !eligible.Contains(platform)
+                || !platform.TryGetRopeSurface(out Vector2 left, out Vector2 right, out Vector2 up)
                 || IsClear(left, right, up, radius + skin))
                 supports.RemoveAt(i);
         }
 
-        IReadOnlyList<OneWayPlatform> platforms = OneWayPlatform.RopeSurfaces;
         for (int p = 0; p < platforms.Count; p++)
         {
             OneWayPlatform platform = platforms[p];
-            if (platform == null || Contains(platform)
+            if (platform == null || !eligible.Contains(platform) || Contains(platform)
                 || !platform.TryGetRopeSurface(out Vector2 left, out Vector2 right, out Vector2 up))
                 continue;
             // The prefab's Default-layer terrain proxy must be in this rope's mask.
@@ -64,10 +88,11 @@ public sealed class OneWayRopeSupport2D
                 continue;
 
             bool initialAbove = true;
-            if (!hasPrevious)
+            bool usePrevious = hasPrevious && previouslyEligible.Contains(platform);
+            if (!usePrevious)
                 for (int i = 0; i < path.Count; i++)
                     initialAbove &= Vector2.Dot(path[i] - left, up) >= radius + skin - Epsilon;
-            if (!hasPrevious && !initialAbove)
+            if (!usePrevious && !initialAbove)
                 continue;
 
             Vector2 tangent = (right - left).normalized;
@@ -75,7 +100,7 @@ public sealed class OneWayRopeSupport2D
             bool acquired = false;
             for (int i = 1; i < Samples; i++)
             {
-                Vector2 before = hasPrevious ? previous[i] : Sample(path, baseLength, i / (float)Samples, 0f);
+                Vector2 before = usePrevious ? previous[i] : Sample(path, baseLength, i / (float)Samples, 0f);
                 float oldHeight = Vector2.Dot(before - left, up);
                 float newHeight = Vector2.Dot(probes[i] - left, up);
                 float height = radius + skin;
@@ -96,6 +121,8 @@ public sealed class OneWayRopeSupport2D
         for (int i = 0; i <= Samples; i++)
             previous[i] = probes[i];
         hasPrevious = true;
+        previouslyEligible.Clear();
+        previouslyEligible.UnionWith(eligible);
         if (!IsSupporting)
             return;
 
@@ -127,6 +154,43 @@ public sealed class OneWayRopeSupport2D
         path.Clear();
         for (int i = 0; i < points.Count; i++)
             path.Add(points[i]);
+    }
+
+    private static bool HasTopContact(Rigidbody2D body, List<ContactPoint2D> contacts,
+        OneWayPlatform platform, Vector2 left, Vector2 up)
+    {
+        if (body == null || !body.simulated) return false;
+        for (int i = 0; i < contacts.Count; i++)
+        {
+            ContactPoint2D contact = contacts[i];
+            if (!contact.enabled) continue; // Effector-disabled underside contacts are not grounding.
+            Collider2D actor = contact.collider;
+            Collider2D floor = contact.otherCollider;
+            if (actor == null || actor.attachedRigidbody != body)
+            {
+                actor = contact.otherCollider;
+                floor = contact.collider;
+            }
+            if (actor == null || floor == null || actor.attachedRigidbody != body
+                || !actor.enabled || actor.isTrigger || !floor.enabled || floor.isTrigger
+                || floor.GetComponentInParent<OneWayPlatform>() != platform)
+                continue;
+            Bounds bounds = actor.bounds;
+            Vector2 center = (Vector2)bounds.center + body.position - (Vector2)body.transform.position;
+            Vector2 normal = contact.normal;
+            if (Vector2.Dot(normal, center - contact.point) < 0f) normal = -normal;
+            float extent = Mathf.Abs(up.x) * bounds.extents.x + Mathf.Abs(up.y) * bounds.extents.y;
+            Vector2 surfaceVelocity = floor.attachedRigidbody != null
+                ? floor.attachedRigidbody.GetPointVelocity(contact.point) : Vector2.zero;
+            // Reject a jump/launch immediately, even before the next simulation
+            // removes its old contact manifold. No grace period keeps support alive.
+            if (Vector2.Dot(normal, up) >= 0.5f
+                && Vector2.Dot(center - left, up) - extent >= -0.04f
+                && actor.Distance(floor).distance <= 0.04f
+                && Vector2.Dot(body.GetPointVelocity(contact.point) - surfaceVelocity, up) <= 0.05f)
+                return true;
+        }
+        return false;
     }
 
     private void ClampToTop(ref Support support, Vector2 left, Vector2 right, Vector2 up, float clearance)
