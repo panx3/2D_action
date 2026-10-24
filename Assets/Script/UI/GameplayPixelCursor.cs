@@ -206,10 +206,9 @@ public sealed class GameplayPixelCursor : MonoBehaviour
         && chainLinks[0] != null && chainLinks[0].sprite != null
         && chainLinks[1] != null && chainLinks[1].sprite != null;
 
-    // Combat and hook hit stops also set timeScale to zero. Only the actual scene,
-    // input and menu owners determine the design; a brief freeze is still gameplay.
-    private bool IsGameplay() => SceneManager.GetActiveScene().name == "CompletScene"
-        && !TitleStageTransition.IsTransitioning
+    // Combat and hook hit stops also set timeScale to zero. Use the player,
+    // input and menu owners, so every playable stage uses the gameplay design.
+    private bool IsGameplay() => !TitleStageTransition.IsTransitioning
         && player != null && player.isActiveAndEnabled && player.InputEnabled && !player.IsGoalInputBlocked
         && (pauseMenu == null || !pauseMenu.IsPaused)
         && (goalMenu == null || !goalMenu.IsGoalReached)
