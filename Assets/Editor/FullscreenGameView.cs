@@ -72,8 +72,9 @@ internal static class FullscreenGameView
             // Start on the owner's display in Editor points. Native placement below uses physical pixels.
             fullscreen.position = previousFocus != null ? previousFocus.position : new Rect(0, 0, 640, 480);
             api.Configure(fullscreen, source);
-            // Utility framing avoids popup-menu Esc/lost-focus behavior. Win32 removes its chrome.
-            fullscreen.ShowUtility();
+            // Utility windows close on native Esc before UI Toolkit can intercept it.
+            // A normal HostView has no dock/tab strip and leaves Esc to the game.
+            api.Show(fullscreen);
             api.ExcludeFromLayout(fullscreen);
             nativeWindow = Native.FindWindow(title, ProcessId);
             if (nativeWindow == IntPtr.Zero)
@@ -214,7 +215,8 @@ internal static class FullscreenGameView
         private readonly PropertyInfo toolbar, sizeIndex, display, lowResolution, renderSize, viewRect;
         private readonly FieldInfo zoomArea, parent, dontSave;
         private readonly PropertyInfo container;
-        private readonly MethodInfo updateZoom, fitScale, setTransform, constrain;
+        private readonly MethodInfo updateZoom, fitScale, setTransform, constrain, showWindow;
+        private readonly object normalWindowMode;
 
         internal GameViewApi()
         {
@@ -236,6 +238,9 @@ internal static class FullscreenGameView
                 ?? throw new MissingMemberException("GUIView", "window");
             dontSave = container.PropertyType.GetField("m_DontSaveToLayout", InstanceMembers)
                 ?? throw new MissingFieldException("ContainerWindow", "m_DontSaveToLayout");
+            var showModeType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ShowMode", true);
+            normalWindowMode = Enum.Parse(showModeType, "NormalWindow");
+            showWindow = Method(typeof(EditorWindow), "ShowWithMode", new[] { showModeType });
         }
 
         private PropertyInfo Property(string name) => Type.GetProperty(name, InstanceMembers)
@@ -258,6 +263,8 @@ internal static class FullscreenGameView
 
         internal void ExcludeFromLayout(EditorWindow window) =>
             dontSave.SetValue(container.GetValue(parent.GetValue(window)), true);
+
+        internal void Show(EditorWindow window) => showWindow.Invoke(window, new[] { normalWindowMode });
 
         internal void Fit(EditorWindow window)
         {
