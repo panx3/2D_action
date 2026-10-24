@@ -80,6 +80,7 @@ public class ChainConstraint2D : MonoBehaviour
     private readonly Vector2[] _cachedRoute = new Vector2[4];
     private readonly RopeContact[] _refinedRouteContacts = new RopeContact[4];
     private readonly RopeContact[] _fallbackRouteContacts = new RopeContact[4];
+    private readonly List<Vector2> _tilePhysicsShape = new List<Vector2>(32);
     private readonly OneWayRopeSupport2D _oneWaySupport = new OneWayRopeSupport2D();
     private float _ropeSagStrength = 0.6f;
     private float _ropeMaxSag = 1.5f;
@@ -382,6 +383,7 @@ public class ChainConstraint2D : MonoBehaviour
                     segmentStart,
                     segmentEnd,
                     routingBounds,
+                    hit.collider,
                     obstacleId,
                     availablePointCount);
                 int insertedCount = InsertRouteContacts(
@@ -759,6 +761,7 @@ public class ChainConstraint2D : MonoBehaviour
         Vector2 start,
         Vector2 end,
         Bounds routingBounds,
+        Collider2D collider,
         int obstacleId,
         int availablePointCount)
     {
@@ -791,6 +794,8 @@ public class ChainConstraint2D : MonoBehaviour
                         out float length);
                     if (count <= 0 || count > availablePointCount || length >= bestLength)
                         continue;
+                    if (!IsCandidateRouteClear(start, end, _routeCandidate, count, collider))
+                        continue;
 
                     bestCount = count;
                     bestLength = length;
@@ -811,6 +816,7 @@ public class ChainConstraint2D : MonoBehaviour
                 out float cachedLength);
             if (cachedCount > 0
                 && cachedCount <= availablePointCount
+                && IsCandidateRouteClear(start, end, _cachedRoute, cachedCount, collider)
                 && cachedLength <= bestLength + WrapRouteHysteresis)
             {
                 CopyRoute(_cachedRoute, _bestRoute, cachedCount);
@@ -830,6 +836,20 @@ public class ChainConstraint2D : MonoBehaviour
         }
 
         return bestCount;
+    }
+
+    private bool IsCandidateRouteClear(Vector2 start, Vector2 end, Vector2[] points, int count, Collider2D collider)
+    {
+        // Tilemapの1セルの下端は、隣接セルと合成された地面の内部にあることがある。
+        // 短い経路でも地面の内部へ回り込む候補は採用しない。
+        for (int i = 0; i < count; i++)
+            if (collider.OverlapPoint(points[i]))
+                return false;
+        for (int i = 0; i <= count; i++)
+            if (SegmentCrossesCollider(i == 0 ? start : points[i - 1], i == count ? end : points[i],
+                collider, i > 0 ? collider : null, i < count ? collider : null))
+                return false;
+        return true;
     }
 
     private Bounds GetRoutingBounds(RaycastHit2D hit)
@@ -869,6 +889,28 @@ public class ChainConstraint2D : MonoBehaviour
             }
 
             cell = nearestCell;
+        }
+
+        // セル全体の矩形には草や透明余白も含まれる。Spriteの物理形状で範囲を取る。
+        // 特に坂の終端では透明な上端を回避しようとして、鎖が床下へ迂回してしまう。
+        Sprite sprite = tilemap.GetSprite(cell);
+        if (sprite != null && tilemap.GetColliderType(cell) == Tile.ColliderType.Sprite)
+        {
+            Vector3 min = Vector3.positiveInfinity, max = Vector3.negativeInfinity;
+            Vector3 origin = tilemap.CellToLocalInterpolated((Vector3)cell + tilemap.tileAnchor);
+            Matrix4x4 tileTransform = tilemap.orientationMatrix * tilemap.GetTransformMatrix(cell);
+            int shapeCount = sprite.GetPhysicsShapeCount();
+            for (int shape = 0; shape < shapeCount; shape++)
+            {
+                sprite.GetPhysicsShape(shape, _tilePhysicsShape);
+                foreach (Vector2 point in _tilePhysicsShape)
+                {
+                    Vector3 world = tilemap.transform.TransformPoint(origin + tileTransform.MultiplyPoint3x4(point));
+                    min = Vector3.Min(min, world); max = Vector3.Max(max, world);
+                }
+            }
+            if (shapeCount > 0 && min.x <= max.x && min.y <= max.y)
+                return new Bounds((min + max) * 0.5f, max - min);
         }
 
         Vector3 center = tilemap.GetCellCenterWorld(cell);

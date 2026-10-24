@@ -128,6 +128,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHp: 1
+  maxDamagePerHit: 0
   knockbackResistance: 1
   destroyOnDeath: 1
   hitStunDuration: 0.18
@@ -150,6 +151,8 @@ MonoBehaviour:
   minFragmentForce: 1.5
   maxFragmentForce: 3
   fragmentLifeTime: 2
+  fragmentScatterScale: 1.15
+  fragmentDirectionSpread: 1.1
 --- !u!114 &7307825789804956481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,7 +310,8 @@ MonoBehaviour:
   _contactCooldown: 0.7
   _audioSource: {fileID: 9174165206758605774}
   _jumpSE: {fileID: 8300000, guid: 60ae0316ac4b05449b0c5e38fd8023e8, type: 3}
-  _jumpSEVolume: 0.65
+  _jumpSEVolume: 0.3
+  _jumpSEMaxDistance: 6
 --- !u!1 &735695105935814061
 GameObject:
   m_ObjectHideFlags: 0

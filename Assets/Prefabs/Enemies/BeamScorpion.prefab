@@ -220,7 +220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7cad5c721a30444a8a8d436ddd30e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 3
+  maxHp: 5
   maxDamagePerHit: 1
   knockbackResistance: 1
   destroyOnDeath: 1
@@ -229,7 +229,7 @@ MonoBehaviour:
   freezeRotationOnHit: 1
   stopAngularVelocityOnHit: 1
   debugLog: 0
-  hitInvincibleDuration: 0.25
+  hitInvincibleDuration: 0.75
   hitFlashDuration: 0
   hitFlashInterval: 0.06
   hitFlashRenderer: {fileID: 8377431386023412996}
@@ -244,6 +244,8 @@ MonoBehaviour:
   minFragmentForce: 1.5
   maxFragmentForce: 3
   fragmentLifeTime: 2
+  fragmentScatterScale: 1.15
+  fragmentDirectionSpread: 1.1
 --- !u!82 &8456111066456089678
 AudioSource:
   m_ObjectHideFlags: 0

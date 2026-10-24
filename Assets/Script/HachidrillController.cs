@@ -40,24 +40,38 @@ public sealed class HachidrillController : MonoBehaviour
     private bool hasFlightTarget;
     private Vector2 flightTarget;
     private float flightSpeed, flightAcceleration;
+    private bool hasFlightVelocity;
+    private Vector2 flightVelocity;
+    private Quaternion visualRotation;
 
     public bool PatrolPaused { get; set; }
     public bool AttackPresentation { get; set; }
     public bool SuppressContactDamage { get; set; }
     public event System.Action BeforeFlightStep;
+    public event System.Action<RaycastHit2D> FlightBlocked;
     public Vector2 PatrolCenter => patrolCenter;
     public float PatrolHalfRange => Mathf.Max(0f, patrolHalfRange);
     public int Facing => direction;
     public SpriteRenderer VisualRenderer => visualRenderer;
     public Animator VisualAnimator => visualAnimator;
+    public Vector3 AttackVisualOffset { get; set; }
+    public float AttackVisualAngle { get; set; }
 
     public void SetFlightTarget(Vector2 target, float speed, float acceleration)
     {
+        hasFlightVelocity = false;
         hasFlightTarget = true; flightTarget = target;
         flightSpeed = Mathf.Max(0f, speed); flightAcceleration = Mathf.Max(0.01f, acceleration);
     }
 
-    public void ClearFlightTarget() => hasFlightTarget = false;
+    public void SetFlightVelocity(Vector2 velocity)
+    {
+        hasFlightTarget = false;
+        hasFlightVelocity = true;
+        flightVelocity = velocity;
+    }
+
+    public void ClearFlightTarget() => hasFlightTarget = hasFlightVelocity = false;
     public void BlockContactAfterAttack() => nextContact = Mathf.Max(nextContact, Time.time + Mathf.Max(0.02f, contactCooldown));
     public void Face(int facing) => direction = facing >= 0 ? 1 : -1;
 
@@ -68,6 +82,7 @@ public sealed class HachidrillController : MonoBehaviour
         health = GetComponent<EnemyHealth>();
         patrolCenter = body.position;
         visualRest = visualRoot != null ? visualRoot.localPosition : Vector3.zero;
+        visualRotation = visualRoot != null ? visualRoot.localRotation : Quaternion.identity;
         health.HitConfirmed += OnHit;
         health.HealthReset += ResetPatrol;
     }
@@ -78,14 +93,20 @@ public sealed class HachidrillController : MonoBehaviour
     {
         direction = startDirection == InitialDirection.Right ? 1 : -1;
         hoverTime = nextContact = 0f;
-        PatrolPaused = AttackPresentation = SuppressContactDamage = hasFlightTarget = false;
+        PatrolPaused = AttackPresentation = SuppressContactDamage = hasFlightTarget = hasFlightVelocity = false;
+        AttackVisualOffset = Vector3.zero;
+        AttackVisualAngle = 0f;
     }
 
     private void OnDisable()
     {
         if (body != null) body.linearVelocity = Vector2.zero;
         if (visualAnimator != null) visualAnimator.speed = 0f;
-        if (visualRoot != null) visualRoot.localPosition = visualRest;
+        if (visualRoot != null)
+        {
+            visualRoot.localPosition = visualRest;
+            visualRoot.localRotation = visualRotation;
+        }
     }
 
     private void OnDestroy()
@@ -107,6 +128,14 @@ public sealed class HachidrillController : MonoBehaviour
         if (health.CurrentHp <= 0 || health.IsDeathHandled) return;
         // 被弾硬直中はEnemyHealthだけがノックバック速度を扱う。
         if (health.IsHitStunned) return;
+        if (hasFlightVelocity && !PatrolPaused)
+        {
+            SetAltitudeLock(false);
+            Vector2 safe = SweepFlight(flightVelocity * Time.fixedDeltaTime, out RaycastHit2D hit);
+            body.linearVelocity = safe / Time.fixedDeltaTime;
+            if (hit.collider != null) FlightBlocked?.Invoke(hit);
+            return;
+        }
         if (hasFlightTarget && !PatrolPaused)
         {
             SetAltitudeLock(false);
@@ -175,7 +204,15 @@ public sealed class HachidrillController : MonoBehaviour
 
     private Vector2 Sweep(Vector2 displacement, out Vector2 blockingNormal)
     {
-        blockingNormal = Vector2.zero;
+        Vector2 safe = SweepFlight(displacement, out RaycastHit2D hit);
+        blockingNormal = hit.collider != null ? hit.normal : Vector2.zero;
+        return safe;
+    }
+
+    // AIと移動本体で同じ地形掃引を使う。速度の書き込みは本体だけが行う。
+    public Vector2 SweepFlight(Vector2 displacement, out RaycastHit2D blockingHit)
+    {
+        blockingHit = default;
         float distance = displacement.magnitude;
         if (distance < 0.00001f) return Vector2.zero;
         Vector2 forward = displacement / distance;
@@ -188,7 +225,7 @@ public sealed class HachidrillController : MonoBehaviour
             if (hit.collider == null || hit.collider.attachedRigidbody == body || hit.collider.transform.IsChildOf(transform)
                 || Vector2.Dot(hit.normal, forward) >= -0.001f) continue;
             float available = Mathf.Max(0f, hit.distance - Skin);
-            if (available <= free) { free = available; blockingNormal = hit.normal; }
+            if (available <= free) { free = available; blockingHit = hit; }
         }
         return forward * free;
     }
@@ -215,14 +252,15 @@ public sealed class HachidrillController : MonoBehaviour
         if (visualAnimator != null && !AttackPresentation) visualAnimator.speed = animationFPS / 6f;
         hoverTime += Time.deltaTime;
         if (visualRoot == null) return;
-        float offset = Mathf.Sin(hoverTime * hoverFrequency * Mathf.PI * 2f) * hoverAmplitude;
+        float offset = AttackPresentation ? 0f : Mathf.Sin(hoverTime * hoverFrequency * Mathf.PI * 2f) * hoverAmplitude;
         if (visualRenderer != null && visualRenderer.sprite != null)
         {
             // 原画ピクセルの整数倍に揃える。AnimatorはSpriteだけを差し替える。
             float pixel = Mathf.Abs(visualRenderer.transform.localScale.y) / visualRenderer.sprite.pixelsPerUnit;
             if (pixel > 0f) offset = Mathf.Round(offset / pixel) * pixel;
         }
-        visualRoot.localPosition = visualRest + Vector3.up * offset;
+        visualRoot.localPosition = visualRest + Vector3.up * offset + AttackVisualOffset;
+        visualRoot.localRotation = visualRotation * Quaternion.Euler(0f, 0f, AttackVisualAngle);
     }
 
     private void OnCollisionEnter2D(Collision2D collision) => TryContactDamage(collision.collider);

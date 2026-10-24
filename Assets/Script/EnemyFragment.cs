@@ -33,6 +33,12 @@ public sealed class EnemyFragment : MonoBehaviour
         ConfigurePhysics();
     }
 
+    private void OnEnable()
+    {
+        foreach (var ball in FindObjectsByType<RollingIronBall>(FindObjectsSortMode.None))
+            ball.IgnoreFragmentCollision(GetComponent<Collider2D>());
+    }
+
     /// <summary>Prefab設定時と実行時で同じ設定を使う。壁破片の設定や衝突表は変更しない。</summary>
     [ContextMenu("Configure Fragment Physics")]
     public void ConfigurePhysics()

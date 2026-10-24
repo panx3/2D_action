@@ -26,12 +26,15 @@ public sealed class GoalMenuController : MonoBehaviour
     private float resultDisplayDuration = 3.5f;
     [SerializeField, Min(0.1f), InspectorName("ノイズ切り替え時間（秒）")]
     private float demoTransitionDuration = 0.4f;
+    [SerializeField, Min(0.1f), Tooltip("体験版終了画面から自動でタイトルへ戻るまでの秒数。")]
+    private float demoAutoReturnSeconds = 10f;
     [SerializeField] private GameObject demoEndingContent;
     [SerializeField] private GameObject[] resultOnlyContent;
     private bool goalReached;
     private bool transitioning;
     private bool demoSequenceRunning;
     private bool demoEndingVisible;
+    private float demoReturnAt = float.PositiveInfinity;
     private Player goalPlayer;
     private Player stagePlayer;
     private PlayerStartIntro startIntro;
@@ -71,6 +74,11 @@ public sealed class GoalMenuController : MonoBehaviour
     {
         // Also handles stages without an intro and an intro with Play On Start disabled.
         if (!timerStarted && !clearTimeFinalized) TryStartTimer();
+        if (demoEndingVisible && !demoSequenceRunning && !transitioning && Time.unscaledTime >= demoReturnAt)
+            ReturnToTitle();
+        if (demoEndingVisible && !demoSequenceRunning && !transitioning && overlay.IsReady
+            && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+            EventSystem.current.SetSelectedGameObject(titleButton.gameObject);
     }
     private void TryStartTimer()
     {
@@ -128,6 +136,7 @@ public sealed class GoalMenuController : MonoBehaviour
         }
         goalPlayer = FindAnyObjectByType<Player>(FindObjectsInactive.Include);
         if (goalPlayer != null) goalPlayer.SetGoalInputBlocked(true);
+        CRTMenuNavigation.EnsureInput();
         Time.timeScale = 0f;
         demoSequenceRunning = showDemoEnding && demoEndingContent != null;
         if (demoSequenceRunning)
@@ -174,10 +183,13 @@ public sealed class GoalMenuController : MonoBehaviour
         overlay.SetSignalInterference(0f);
         demoSequenceRunning = false;
         overlay.SetInputBlocked(false);
+        titleButton.gameObject.SetActive(true);
+        titleButton.interactable = true;
         CRTMenuNavigation.Configure(titleButton);
         // Do not carry a submit pressed during the transition into the new screen.
         yield return null;
         EventSystem.current?.SetSelectedGameObject(titleButton.gameObject);
+        demoReturnAt = Time.unscaledTime + Mathf.Max(0.1f, demoAutoReturnSeconds);
     }
     private void RevealDemoEnding()
     {

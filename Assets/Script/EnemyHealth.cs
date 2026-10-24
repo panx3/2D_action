@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// 敵の HP とモーニングスター被弾処理。
+/// 敵のHP、モーニングスター被弾、物理ギミックによる圧殺を管理する。
 /// </summary>
 [DisallowMultipleComponent]
 public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
@@ -20,8 +20,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private bool debugLog;
 
     [Header("Hit Feedback (Optional)")]
-    [SerializeField, Min(0f), Tooltip("0なら既存どおり。鉄球側の命中間隔に加える受信側の連続被弾防止。")]
-    private float hitInvincibleDuration;
+    [SerializeField, Min(0f), Tooltip("受信側の連続被弾防止。最大HPが2以上の敵は、未設定の0でも0.5秒を使用します。")]
+    private float hitInvincibleDuration = 0.5f;
     [SerializeField, Min(0f)] private float hitFlashDuration;
     [SerializeField, Min(0.01f)] private float hitFlashInterval = 0.06f;
     [SerializeField] private SpriteRenderer hitFlashRenderer;
@@ -55,9 +55,13 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     private float _lastDamageTime = float.NegativeInfinity;
     private Coroutine _hitFlashRoutine;
     private bool _rendererWasEnabled;
+    private IEnemyDeathGuard _deathGuard;
+    private MorningStarHitContext _pendingDeathHit;
+    public bool IsDeathPending { get; private set; }
 
     public int CurrentHp => _currentHp;
     public int MaxHp => maxHp;
+    public float HitInvincibleDuration => hitInvincibleDuration > 0f ? hitInvincibleDuration : maxHp >= 2 ? 0.5f : 0f;
     public bool IsHitStunned => _hitStunTimer > 0f;
     public bool IsDeathHandled => _deathHandled;
     public int HitSoundPlayCount { get; private set; }
@@ -69,6 +73,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     {
         _currentHp = maxHp;
         _rigidbody2D = GetComponent<Rigidbody2D>();
+        _deathGuard = GetComponent<IEnemyDeathGuard>();
         if (hitFlashRenderer == null && hitFlashDuration > 0f)
             hitFlashRenderer = GetComponentInChildren<SpriteRenderer>();
         if (hitAudioSource == null)
@@ -94,13 +99,32 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     public void OnMorningStarHit(MorningStarHitContext context)
     {
-        if (_currentHp <= 0 || context.Damage <= 0
-            || Time.time - _lastDamageTime < hitInvincibleDuration)
+        ApplyHit(context, false);
+    }
+
+    /// <summary>圧殺は通常攻撃のダメージ上限・被弾無敵と別に、既存の撃破経路へ流す。</summary>
+    public bool TryCrush(Vector2 impactPoint, Vector2 impactVelocity)
+    {
+        if (!isActiveAndEnabled || _currentHp <= 0 || _deathHandled)
+            return false;
+        ApplyHit(new MorningStarHitContext(_currentHp, Vector2.zero, 0f, impactPoint,
+            impactVelocity.normalized, impactVelocity.magnitude, 1f), true);
+        return _deathHandled;
+    }
+
+    private void ApplyHit(MorningStarHitContext context, bool crushing)
+    {
+        bool guardDeath = _deathGuard != null && _deathGuard.DeferDeath;
+        if (_currentHp <= 0 || IsDeathPending || context.Damage <= 0
+            || ((!crushing || guardDeath) && Time.time - _lastDamageTime < HitInvincibleDuration))
             return;
 
         _lastDamageTime = Time.time;
-        int damage = maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
+        int damage = crushing ? _currentHp
+            : maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
         _currentHp = Mathf.Max(0, _currentHp - damage);
+        IsDeathPending = _currentHp == 0 && guardDeath;
+        if (IsDeathPending) _pendingDeathHit = context;
         // 無敵・撃破済みの接触では止めず、実際にダメージを受けた時だけ通知する。
         if (context.Source != null)
             context.Source.PlayEnemyHitStop(context.HitStopSeconds, _currentHp <= 0);
@@ -116,7 +140,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _lastImpactDirection = context.KnockbackImpulse.normalized;
 
         // 移動AIが自分の駆動速度を解除してから、既存の被弾Impulseを適用する。
-        HitConfirmed?.Invoke(context, _currentHp <= 0);
+        HitConfirmed?.Invoke(context, _currentHp <= 0 && !IsDeathPending);
         if (_rigidbody2D != null)
         {
             if (freezeRotationOnHit)
@@ -136,7 +160,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
         _hitStunTimer = hitStunDuration;
 
-        if (_currentHp <= 0)
+        if (_currentHp <= 0 && !IsDeathPending)
             HandleDeath();
         else if (hitFlashDuration > 0f && hitFlashRenderer != null)
         {
@@ -158,6 +182,14 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         }
         hitFlashRenderer.enabled = _rendererWasEnabled;
         _hitFlashRoutine = null;
+    }
+
+    public void CompleteDeferredDeath()
+    {
+        if (!IsDeathPending || _deathHandled) return;
+        IsDeathPending = false;
+        HitConfirmed?.Invoke(_pendingDeathHit, true);
+        HandleDeath();
     }
 
     private void StopHitFlash()
@@ -254,6 +286,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         _currentHp = maxHp;
         _hitStunTimer = 0f;
         _deathHandled = false;
+        IsDeathPending = false;
         _lastImpactDirection = Vector2.right;
         _lastDamageTime = float.NegativeInfinity;
 
@@ -294,4 +327,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
                 behaviour.enabled = value;
         }
     }
+}
+
+public interface IEnemyDeathGuard
+{
+    bool DeferDeath { get; }
 }

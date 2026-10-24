@@ -1,0 +1,2574 @@
+fileFormatVersion: 2
+guid: 05f3adb6375a79c4e945a39789797005
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8032653557156919070
+    second: MossCrystalSpikeFloor_0
+  - first:
+      213: -6232708568106745798
+    second: MossCrystalSpikeFloor_1
+  - first:
+      213: -8807343844439582515
+    second: MossCrystalSpikeFloor_2
+  - first:
+      213: 5675436553452138387
+    second: MossCrystalSpikeFloor_3
+  - first:
+      213: 8756781053815657890
+    second: MossCrystalSpikeFloor_4
+  - first:
+      213: 7485039348085071755
+    second: MossCrystalSpikeFloor_5
+  - first:
+      213: 6358632576874939425
+    second: MossCrystalSpikeFloor_6
+  - first:
+      213: 4371702782592517738
+    second: MossCrystalSpikeFloor_7
+  - first:
+      213: -7632783747982814653
+    second: MossCrystalSpikeFloor_8
+  - first:
+      213: 1053740972697775107
+    second: MossCrystalSpikeFloor_9
+  - first:
+      213: 7304937778980385758
+    second: MossCrystalSpikeFloor_10
+  - first:
+      213: 921023605384337234
+    second: MossCrystalSpikeFloor_11
+  - first:
+      213: -8027262322214937358
+    second: MossCrystalSpikeFloor_12
+  - first:
+      213: -1233459826019703404
+    second: MossCrystalSpikeFloor_13
+  - first:
+      213: -7529556761053222351
+    second: MossCrystalSpikeFloor_14
+  - first:
+      213: 2345480937915056981
+    second: MossCrystalSpikeFloor_15
+  - first:
+      213: -7190308922841790783
+    second: MossCrystalSpikeFloor_16
+  - first:
+      213: -6720826457557860731
+    second: MossCrystalSpikeFloor_17
+  - first:
+      213: -5564453618136757333
+    second: MossCrystalSpikeFloor_18
+  - first:
+      213: 1010753804526717531
+    second: MossCrystalSpikeFloor_19
+  - first:
+      213: 5070565628632334481
+    second: MossCrystalSpikeFloor_20
+  - first:
+      213: 7306209891659865725
+    second: MossCrystalSpikeFloor_21
+  - first:
+      213: 797283824052817603
+    second: MossCrystalSpikeFloor_22
+  - first:
+      213: -868520986227198072
+    second: MossCrystalSpikeFloor_23
+  - first:
+      213: 6725943271594435371
+    second: MossCrystalSpikeFloor_24
+  - first:
+      213: -6667852699337595926
+    second: MossCrystalSpikeFloor_25
+  - first:
+      213: 4562506893525693959
+    second: MossCrystalSpikeFloor_26
+  - first:
+      213: 8654037509067066754
+    second: MossCrystalSpikeFloor_27
+  - first:
+      213: 8710237396282881705
+    second: MossCrystalSpikeFloor_28
+  - first:
+      213: 1280348937651706704
+    second: MossCrystalSpikeFloor_29
+  - first:
+      213: 8497675537660623064
+    second: MossCrystalSpikeFloor_30
+  - first:
+      213: 4926200854825407214
+    second: MossCrystalSpikeFloor_31
+  - first:
+      213: 2237416521678605261
+    second: MossCrystalSpikeFloor_32
+  - first:
+      213: 3581847585600102468
+    second: MossCrystalSpikeFloor_33
+  - first:
+      213: 4354157473036213155
+    second: MossCrystalSpikeFloor_34
+  - first:
+      213: -4805277872888442827
+    second: MossCrystalSpikeFloor_35
+  - first:
+      213: 1597346958616077508
+    second: MossCrystalSpikeFloor_36
+  - first:
+      213: -2767839542596206991
+    second: MossCrystalSpikeFloor_37
+  - first:
+      213: -7718522303605066916
+    second: MossCrystalSpikeFloor_38
+  - first:
+      213: 4452736563032236530
+    second: MossCrystalSpikeFloor_39
+  - first:
+      213: 2935328426783635517
+    second: MossCrystalSpikeFloor_40
+  - first:
+      213: -3681238437182610955
+    second: MossCrystalSpikeFloor_41
+  - first:
+      213: -7372790177602844787
+    second: MossCrystalSpikeFloor_42
+  - first:
+      213: -7014322397841363005
+    second: MossCrystalSpikeFloor_43
+  - first:
+      213: 8861450333263475472
+    second: MossCrystalSpikeFloor_44
+  - first:
+      213: 6314586957469140662
+    second: MossCrystalSpikeFloor_45
+  - first:
+      213: 3704446919064909606
+    second: MossCrystalSpikeFloor_46
+  - first:
+      213: -3913015737977148719
+    second: MossCrystalSpikeFloor_47
+  - first:
+      213: -8875754923395335318
+    second: MossCrystalSpikeFloor_48
+  - first:
+      213: -5495772149763810405
+    second: MossCrystalSpikeFloor_49
+  - first:
+      213: -49807397256346000
+    second: MossCrystalSpikeFloor_50
+  - first:
+      213: 5848693471622823098
+    second: MossCrystalSpikeFloor_51
+  - first:
+      213: -7700154800052093325
+    second: MossCrystalSpikeFloor_52
+  - first:
+      213: -2832979441451295904
+    second: MossCrystalSpikeFloor_53
+  - first:
+      213: -6030487207692383952
+    second: MossCrystalSpikeFloor_54
+  - first:
+      213: -2709406464801513400
+    second: MossCrystalSpikeFloor_55
+  - first:
+      213: -3114710965720324424
+    second: MossCrystalSpikeFloor_56
+  - first:
+      213: 4051335797038168080
+    second: MossCrystalSpikeFloor_57
+  - first:
+      213: 3200332973528140564
+    second: MossCrystalSpikeFloor_58
+  - first:
+      213: -3440873530265940984
+    second: MossCrystalSpikeFloor_59
+  - first:
+      213: -2835130657741093206
+    second: MossCrystalSpikeFloor_60
+  - first:
+      213: -8456931469343182651
+    second: MossCrystalSpikeFloor_61
+  - first:
+      213: 1109446350594203146
+    second: MossCrystalSpikeFloor_62
+  - first:
+      213: 3344985532270146826
+    second: MossCrystalSpikeFloor_63
+  - first:
+      213: 8246322726351750667
+    second: MossCrystalSpikeFloor_64
+  - first:
+      213: -6124741805054130855
+    second: MossCrystalSpikeFloor_65
+  - first:
+      213: -2863877821364216046
+    second: MossCrystalSpikeFloor_66
+  - first:
+      213: -8281645272905796386
+    second: MossCrystalSpikeFloor_67
+  - first:
+      213: -4796541586331263907
+    second: MossCrystalSpikeFloor_68
+  - first:
+      213: -21242368206939446
+    second: MossCrystalSpikeFloor_69
+  - first:
+      213: -8822028211558142982
+    second: MossCrystalSpikeFloor_70
+  - first:
+      213: 2910752449063607362
+    second: MossCrystalSpikeFloor_71
+  - first:
+      213: -3929172913460550697
+    second: MossCrystalSpikeFloor_72
+  - first:
+      213: -8255203485734835848
+    second: MossCrystalSpikeFloor_73
+  - first:
+      213: -5839571789075974984
+    second: MossCrystalSpikeFloor_74
+  - first:
+      213: 7750521795078327702
+    second: MossCrystalSpikeFloor_75
+  - first:
+      213: 4835230049470926437
+    second: MossCrystalSpikeFloor_76
+  - first:
+      213: 2316090735312815500
+    second: MossCrystalSpikeFloor_77
+  - first:
+      213: -1957945770422259804
+    second: MossCrystalSpikeFloor_78
+  - first:
+      213: 1678468772468901007
+    second: MossCrystalSpikeFloor_79
+  - first:
+      213: 3151131129495381415
+    second: MossCrystalSpikeFloor_80
+  - first:
+      213: -8757611706069862660
+    second: MossCrystalSpikeFloor_81
+  - first:
+      213: 1659728179667156210
+    second: MossCrystalSpikeFloor_82
+  - first:
+      213: -1660688802639816235
+    second: MossCrystalSpikeFloor_83
+  - first:
+      213: -2862449027310330828
+    second: MossCrystalSpikeFloor_84
+  - first:
+      213: 3368062501210806439
+    second: MossCrystalSpikeFloor_85
+  - first:
+      213: 76449625908704005
+    second: MossCrystalSpikeFloor_86
+  - first:
+      213: -7517770794585617023
+    second: MossCrystalSpikeFloor_87
+  - first:
+      213: 754390898772019456
+    second: MossCrystalSpikeFloor_88
+  - first:
+      213: -8708866933777948494
+    second: MossCrystalSpikeFloor_89
+  - first:
+      213: -4845382786578319169
+    second: MossCrystalSpikeFloor_90
+  - first:
+      213: 1186114557188939218
+    second: MossCrystalSpikeFloor_91
+  - first:
+      213: -3795612045783765656
+    second: MossCrystalSpikeFloor_92
+  - first:
+      213: 7018231647902219956
+    second: MossCrystalSpikeFloor_93
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0.46593}
+  spritePixelsToUnits: 200
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_0
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 769
+        width: 225
+        height: 291
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e17bd16f9d7b97f60800000000000000
+      internalID: 8032653557156919070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_1
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 809
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a30c6716498f089a0800000000000000
+      internalID: -6232708568106745798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_2
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 996
+        width: 91
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc89471df6706c580800000000000000
+      internalID: -8807343844439582515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_3
+      rect:
+        serializedVersion: 2
+        x: 444
+        y: 736
+        width: 973
+        height: 331
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39f28c1c97333ce40800000000000000
+      internalID: 5675436553452138387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_4
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 901
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a59d8819f5568970800000000000000
+      internalID: 8756781053815657890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_5
+      rect:
+        serializedVersion: 2
+        x: 820
+        y: 900
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8f9e6031a330e760800000000000000
+      internalID: 7485039348085071755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_6
+      rect:
+        serializedVersion: 2
+        x: 1359
+        y: 753
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1248bd1a3a66e3850800000000000000
+      internalID: 6358632576874939425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1435
+        height: 740
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a66830cb4886bac30800000000000000
+      internalID: 4371702782592517738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_8
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 193
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3421c161f97e21690800000000000000
+      internalID: -7632783747982814653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_9
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 163
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30ceceae4d3af9e00800000000000000
+      internalID: 1053740972697775107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_10
+      rect:
+        serializedVersion: 2
+        x: 54
+        y: 163
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed3f47ee43a506560800000000000000
+      internalID: 7304937778980385758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_11
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 172
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 257deacd61228cc00800000000000000
+      internalID: 921023605384337234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_12
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 39
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fc508db27f699090800000000000000
+      internalID: -8027262322214937358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_13
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 39
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4956169c2ded1eee0800000000000000
+      internalID: -1233459826019703404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_14
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 210
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13a2845e404a18790800000000000000
+      internalID: -7529556761053222351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_15
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 236
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55380e37c72dc8020800000000000000
+      internalID: 2345480937915056981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_16
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 195
+        width: 21
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c681bc6124e63c90800000000000000
+      internalID: -7190308922841790783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_17
+      rect:
+        serializedVersion: 2
+        x: 243
+        y: 159
+        width: 21
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58e773002f3dab2a0800000000000000
+      internalID: -6720826457557860731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_18
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 157
+        width: 24
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bab42d18ae617c2b0800000000000000
+      internalID: -5564453618136757333
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_19
+      rect:
+        serializedVersion: 2
+        x: 271
+        y: 202
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5a8032ea3be60e00800000000000000
+      internalID: 1010753804526717531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_20
+      rect:
+        serializedVersion: 2
+        x: 271
+        y: 39
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1908fe003944e5640800000000000000
+      internalID: 5070565628632334481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_21
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 120
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7ed4debf2fd46560800000000000000
+      internalID: 7306209891659865725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_22
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 204
+        width: 7
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ce45dde965801b00800000000000000
+      internalID: 797283824052817603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_23
+      rect:
+        serializedVersion: 2
+        x: 312
+        y: 212
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 887b4ffb3c462f3f0800000000000000
+      internalID: -868520986227198072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_24
+      rect:
+        serializedVersion: 2
+        x: 322
+        y: 258
+        width: 15
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b23a0da15c9575d50800000000000000
+      internalID: 6725943271594435371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_25
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 175
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae36a593c470773a0800000000000000
+      internalID: -6667852699337595926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_26
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 18
+        width: 9
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 706bed1b8d7415f30800000000000000
+      internalID: 4562506893525693959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_27
+      rect:
+        serializedVersion: 2
+        x: 416
+        y: 167
+        width: 9
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28d49d07341591870800000000000000
+      internalID: 8654037509067066754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_28
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 163
+        width: 7
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a6b3ca53caf0e870800000000000000
+      internalID: 8710237396282881705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_29
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 183
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05b57414396b4c110800000000000000
+      internalID: 1280348937651706704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_30
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 226
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d8b9cef0eecde570800000000000000
+      internalID: 8497675537660623064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_31
+      rect:
+        serializedVersion: 2
+        x: 455
+        y: 223
+        width: 27
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee2181cc3916d5440800000000000000
+      internalID: 4926200854825407214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_32
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 194
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcb4e3dd876ec0f10800000000000000
+      internalID: 2237416521678605261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_33
+      rect:
+        serializedVersion: 2
+        x: 465
+        y: 193
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 440e843d66745b130800000000000000
+      internalID: 3581847585600102468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_34
+      rect:
+        serializedVersion: 2
+        x: 483
+        y: 177
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ab9f6407231d6c30800000000000000
+      internalID: 4354157473036213155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_35
+      rect:
+        serializedVersion: 2
+        x: 491
+        y: 145
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 530907beb39305db0800000000000000
+      internalID: -4805277872888442827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_36
+      rect:
+        serializedVersion: 2
+        x: 497
+        y: 210
+        width: 39
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c4ac53889aea2610800000000000000
+      internalID: 1597346958616077508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_37
+      rect:
+        serializedVersion: 2
+        x: 505
+        y: 193
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17ef544c998a699d0800000000000000
+      internalID: -2767839542596206991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_38
+      rect:
+        serializedVersion: 2
+        x: 523
+        y: 194
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c53b0befbdc42e490800000000000000
+      internalID: -7718522303605066916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_39
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 193
+        width: 17
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f12eedff4c4bcd30800000000000000
+      internalID: 4452736563032236530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_40
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 260
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d387b81f6a16cb820800000000000000
+      internalID: 2935328426783635517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_41
+      rect:
+        serializedVersion: 2
+        x: 539
+        y: 201
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f1673a352d99ecc0800000000000000
+      internalID: -3681238437182610955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_42
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 129
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d874e7c65669ea990800000000000000
+      internalID: -7372790177602844787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_43
+      rect:
+        serializedVersion: 2
+        x: 569
+        y: 210
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cf699051fe18ae90800000000000000
+      internalID: -7014322397841363005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_44
+      rect:
+        serializedVersion: 2
+        x: 575
+        y: 167
+        width: 48
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 013bfecc0223afa70800000000000000
+      internalID: 8861450333263475472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_45
+      rect:
+        serializedVersion: 2
+        x: 611
+        y: 179
+        width: 56
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b64347b16be1a750800000000000000
+      internalID: 6314586957469140662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_46
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 90
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 627772c88d6d86330800000000000000
+      internalID: 3704446919064909606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_47
+      rect:
+        serializedVersion: 2
+        x: 643
+        y: 171
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1daeb591bec22b9c0800000000000000
+      internalID: -3913015737977148719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_48
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 183
+        width: 9
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6bb8954cebf2d480800000000000000
+      internalID: -8875754923395335318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_49
+      rect:
+        serializedVersion: 2
+        x: 676
+        y: 176
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9bd7def8581bb3b0800000000000000
+      internalID: -5495772149763810405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_50
+      rect:
+        serializedVersion: 2
+        x: 682
+        y: 210
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0764953af6c0f4ff0800000000000000
+      internalID: -49807397256346000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_51
+      rect:
+        serializedVersion: 2
+        x: 690
+        y: 193
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abc793889bbba2150800000000000000
+      internalID: 5848693471622823098
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_52
+      rect:
+        serializedVersion: 2
+        x: 698
+        y: 175
+        width: 57
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37e306ba10e832590800000000000000
+      internalID: -7700154800052093325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_53
+      rect:
+        serializedVersion: 2
+        x: 737
+        y: 200
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06b9f40353c3fa8d0800000000000000
+      internalID: -2832979441451295904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_54
+      rect:
+        serializedVersion: 2
+        x: 762
+        y: 163
+        width: 11
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03945f2e5d76f4ca0800000000000000
+      internalID: -6030487207692383952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_55
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 229
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 840eb51ec21466ad0800000000000000
+      internalID: -2709406464801513400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_56
+      rect:
+        serializedVersion: 2
+        x: 786
+        y: 177
+        width: 24
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b6e93e01e256c4d0800000000000000
+      internalID: -3114710965720324424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_57
+      rect:
+        serializedVersion: 2
+        x: 790
+        y: 210
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 018b848417c393830800000000000000
+      internalID: 4051335797038168080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_58
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 210
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41b4d1222edd96c20800000000000000
+      internalID: 3200332973528140564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_59
+      rect:
+        serializedVersion: 2
+        x: 823
+        y: 172
+        width: 47
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80c447731cf8f30d0800000000000000
+      internalID: -3440873530265940984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_60
+      rect:
+        serializedVersion: 2
+        x: 826
+        y: 240
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa6c58d10b797a8d0800000000000000
+      internalID: -2835130657741093206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_61
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 239
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c03af7a2a1f2aa80800000000000000
+      internalID: -8456931469343182651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_62
+      rect:
+        serializedVersion: 2
+        x: 861
+        y: 181
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0e5588e39b856f00800000000000000
+      internalID: 1109446350594203146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_63
+      rect:
+        serializedVersion: 2
+        x: 877
+        y: 191
+        width: 39
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0578cd7e96cb6e20800000000000000
+      internalID: 3344985532270146826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_64
+      rect:
+        serializedVersion: 2
+        x: 929
+        y: 141
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b064d6724d2d07270800000000000000
+      internalID: 8246322726351750667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_65
+      rect:
+        serializedVersion: 2
+        x: 931
+        y: 183
+        width: 19
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95583c057cb800ba0800000000000000
+      internalID: -6124741805054130855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_66
+      rect:
+        serializedVersion: 2
+        x: 955
+        y: 177
+        width: 66
+        height: 44
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21f57718b467148d0800000000000000
+      internalID: -2863877821364216046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_67
+      rect:
+        serializedVersion: 2
+        x: 979
+        y: 248
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed438a8908fa11d80800000000000000
+      internalID: -8281645272905796386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_68
+      rect:
+        serializedVersion: 2
+        x: 987
+        y: 248
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5c165427d24f6db0800000000000000
+      internalID: -4796541586331263907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_69
+      rect:
+        serializedVersion: 2
+        x: 1003
+        y: 153
+        width: 10
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aca56dcbd2884bff0800000000000000
+      internalID: -21242368206939446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_70
+      rect:
+        serializedVersion: 2
+        x: 1020
+        y: 177
+        width: 15
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afb2a9b251cd19580800000000000000
+      internalID: -8822028211558142982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_71
+      rect:
+        serializedVersion: 2
+        x: 1022
+        y: 147
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24cd88b3ee1156820800000000000000
+      internalID: 2910752449063607362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_72
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 228
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d3e8188d06c879c0800000000000000
+      internalID: -3929172913460550697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_73
+      rect:
+        serializedVersion: 2
+        x: 1060
+        y: 191
+        width: 19
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 879653cea20af6d80800000000000000
+      internalID: -8255203485734835848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_74
+      rect:
+        serializedVersion: 2
+        x: 1070
+        y: 124
+        width: 7
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b4fbbfa56ca5fea0800000000000000
+      internalID: -5839571789075974984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_75
+      rect:
+        serializedVersion: 2
+        x: 1076
+        y: 153
+        width: 29
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69d019332826f8b60800000000000000
+      internalID: 7750521795078327702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_76
+      rect:
+        serializedVersion: 2
+        x: 1088
+        y: 189
+        width: 21
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56e4202ac103a1340800000000000000
+      internalID: 4835230049470926437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_77
+      rect:
+        serializedVersion: 2
+        x: 1088
+        y: 118
+        width: 19
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c85c4e9a048642020800000000000000
+      internalID: 2316090735312815500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_78
+      rect:
+        serializedVersion: 2
+        x: 1124
+        y: 177
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4afa08802baf3d4e0800000000000000
+      internalID: -1957945770422259804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_79
+      rect:
+        serializedVersion: 2
+        x: 1142
+        y: 145
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f844895a47e1b4710800000000000000
+      internalID: 1678468772468901007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_80
+      rect:
+        serializedVersion: 2
+        x: 1158
+        y: 178
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a56f3e11111bbb20800000000000000
+      internalID: 3151131129495381415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_81
+      rect:
+        serializedVersion: 2
+        x: 1158
+        y: 145
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf637ea9d86b67680800000000000000
+      internalID: -8757611706069862660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_82
+      rect:
+        serializedVersion: 2
+        x: 1172
+        y: 147
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fc34cc5cf9880710800000000000000
+      internalID: 1659728179667156210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_83
+      rect:
+        serializedVersion: 2
+        x: 1182
+        y: 145
+        width: 18
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d95f2c255c04f8e0800000000000000
+      internalID: -1660688802639816235
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_84
+      rect:
+        serializedVersion: 2
+        x: 1197
+        y: 160
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43c518b86c98648d0800000000000000
+      internalID: -2862449027310330828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_85
+      rect:
+        serializedVersion: 2
+        x: 1205
+        y: 147
+        width: 19
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a8dbf50003cdbe20800000000000000
+      internalID: 3368062501210806439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_86
+      rect:
+        serializedVersion: 2
+        x: 1223
+        y: 144
+        width: 7
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 503ff7b978a9f0100800000000000000
+      internalID: 76449625908704005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_87
+      rect:
+        serializedVersion: 2
+        x: 1229
+        y: 144
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18d0bed0b438ba790800000000000000
+      internalID: -7517770794585617023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_88
+      rect:
+        serializedVersion: 2
+        x: 1255
+        y: 174
+        width: 49
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00908178682287a00800000000000000
+      internalID: 754390898772019456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_89
+      rect:
+        serializedVersion: 2
+        x: 1319
+        y: 168
+        width: 17
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b025005aa3e32780800000000000000
+      internalID: -8708866933777948494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_90
+      rect:
+        serializedVersion: 2
+        x: 1333
+        y: 175
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb8f43d070eb1ccb0800000000000000
+      internalID: -4845382786578319169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_91
+      rect:
+        serializedVersion: 2
+        x: 1363
+        y: 163
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2dd9a2cc7ece57010800000000000000
+      internalID: 1186114557188939218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_92
+      rect:
+        serializedVersion: 2
+        x: 1390
+        y: 240
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86d6dd154f6435bc0800000000000000
+      internalID: -3795612045783765656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MossCrystalSpikeFloor_93
+      rect:
+        serializedVersion: 2
+        x: 1416
+        y: 258
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4bebd94ef74c56160800000000000000
+      internalID: 7018231647902219956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MossCrystalSpikeFloor_0: 8032653557156919070
+      MossCrystalSpikeFloor_1: -6232708568106745798
+      MossCrystalSpikeFloor_10: 7304937778980385758
+      MossCrystalSpikeFloor_11: 921023605384337234
+      MossCrystalSpikeFloor_12: -8027262322214937358
+      MossCrystalSpikeFloor_13: -1233459826019703404
+      MossCrystalSpikeFloor_14: -7529556761053222351
+      MossCrystalSpikeFloor_15: 2345480937915056981
+      MossCrystalSpikeFloor_16: -7190308922841790783
+      MossCrystalSpikeFloor_17: -6720826457557860731
+      MossCrystalSpikeFloor_18: -5564453618136757333
+      MossCrystalSpikeFloor_19: 1010753804526717531
+      MossCrystalSpikeFloor_2: -8807343844439582515
+      MossCrystalSpikeFloor_20: 5070565628632334481
+      MossCrystalSpikeFloor_21: 7306209891659865725
+      MossCrystalSpikeFloor_22: 797283824052817603
+      MossCrystalSpikeFloor_23: -868520986227198072
+      MossCrystalSpikeFloor_24: 6725943271594435371
+      MossCrystalSpikeFloor_25: -6667852699337595926
+      MossCrystalSpikeFloor_26: 4562506893525693959
+      MossCrystalSpikeFloor_27: 8654037509067066754
+      MossCrystalSpikeFloor_28: 8710237396282881705
+      MossCrystalSpikeFloor_29: 1280348937651706704
+      MossCrystalSpikeFloor_3: 5675436553452138387
+      MossCrystalSpikeFloor_30: 8497675537660623064
+      MossCrystalSpikeFloor_31: 4926200854825407214
+      MossCrystalSpikeFloor_32: 2237416521678605261
+      MossCrystalSpikeFloor_33: 3581847585600102468
+      MossCrystalSpikeFloor_34: 4354157473036213155
+      MossCrystalSpikeFloor_35: -4805277872888442827
+      MossCrystalSpikeFloor_36: 1597346958616077508
+      MossCrystalSpikeFloor_37: -2767839542596206991
+      MossCrystalSpikeFloor_38: -7718522303605066916
+      MossCrystalSpikeFloor_39: 4452736563032236530
+      MossCrystalSpikeFloor_4: 8756781053815657890
+      MossCrystalSpikeFloor_40: 2935328426783635517
+      MossCrystalSpikeFloor_41: -3681238437182610955
+      MossCrystalSpikeFloor_42: -7372790177602844787
+      MossCrystalSpikeFloor_43: -7014322397841363005
+      MossCrystalSpikeFloor_44: 8861450333263475472
+      MossCrystalSpikeFloor_45: 6314586957469140662
+      MossCrystalSpikeFloor_46: 3704446919064909606
+      MossCrystalSpikeFloor_47: -3913015737977148719
+      MossCrystalSpikeFloor_48: -8875754923395335318
+      MossCrystalSpikeFloor_49: -5495772149763810405
+      MossCrystalSpikeFloor_5: 7485039348085071755
+      MossCrystalSpikeFloor_50: -49807397256346000
+      MossCrystalSpikeFloor_51: 5848693471622823098
+      MossCrystalSpikeFloor_52: -7700154800052093325
+      MossCrystalSpikeFloor_53: -2832979441451295904
+      MossCrystalSpikeFloor_54: -6030487207692383952
+      MossCrystalSpikeFloor_55: -2709406464801513400
+      MossCrystalSpikeFloor_56: -3114710965720324424
+      MossCrystalSpikeFloor_57: 4051335797038168080
+      MossCrystalSpikeFloor_58: 3200332973528140564
+      MossCrystalSpikeFloor_59: -3440873530265940984
+      MossCrystalSpikeFloor_6: 6358632576874939425
+      MossCrystalSpikeFloor_60: -2835130657741093206
+      MossCrystalSpikeFloor_61: -8456931469343182651
+      MossCrystalSpikeFloor_62: 1109446350594203146
+      MossCrystalSpikeFloor_63: 3344985532270146826
+      MossCrystalSpikeFloor_64: 8246322726351750667
+      MossCrystalSpikeFloor_65: -6124741805054130855
+      MossCrystalSpikeFloor_66: -2863877821364216046
+      MossCrystalSpikeFloor_67: -8281645272905796386
+      MossCrystalSpikeFloor_68: -4796541586331263907
+      MossCrystalSpikeFloor_69: -21242368206939446
+      MossCrystalSpikeFloor_7: 4371702782592517738
+      MossCrystalSpikeFloor_70: -8822028211558142982
+      MossCrystalSpikeFloor_71: 2910752449063607362
+      MossCrystalSpikeFloor_72: -3929172913460550697
+      MossCrystalSpikeFloor_73: -8255203485734835848
+      MossCrystalSpikeFloor_74: -5839571789075974984
+      MossCrystalSpikeFloor_75: 7750521795078327702
+      MossCrystalSpikeFloor_76: 4835230049470926437
+      MossCrystalSpikeFloor_77: 2316090735312815500
+      MossCrystalSpikeFloor_78: -1957945770422259804
+      MossCrystalSpikeFloor_79: 1678468772468901007
+      MossCrystalSpikeFloor_8: -7632783747982814653
+      MossCrystalSpikeFloor_80: 3151131129495381415
+      MossCrystalSpikeFloor_81: -8757611706069862660
+      MossCrystalSpikeFloor_82: 1659728179667156210
+      MossCrystalSpikeFloor_83: -1660688802639816235
+      MossCrystalSpikeFloor_84: -2862449027310330828
+      MossCrystalSpikeFloor_85: 3368062501210806439
+      MossCrystalSpikeFloor_86: 76449625908704005
+      MossCrystalSpikeFloor_87: -7517770794585617023
+      MossCrystalSpikeFloor_88: 754390898772019456
+      MossCrystalSpikeFloor_89: -8708866933777948494
+      MossCrystalSpikeFloor_9: 1053740972697775107
+      MossCrystalSpikeFloor_90: -4845382786578319169
+      MossCrystalSpikeFloor_91: 1186114557188939218
+      MossCrystalSpikeFloor_92: -3795612045783765656
+      MossCrystalSpikeFloor_93: 7018231647902219956
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

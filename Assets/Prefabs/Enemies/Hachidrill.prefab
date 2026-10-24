@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 7482388545095415831}
   - component: {fileID: 6256857833586882140}
   - component: {fileID: 4806094777628985317}
+  - component: {fileID: 533661418573302002}
   m_Layer: 9
   m_Name: Hachidrill
   m_TagString: Untagged
@@ -222,9 +223,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7edf207356dcb3448960ce75f7633019, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HachidrillAttackController
-  detectionWidth: 14
-  detectionHeightUp: 3
-  detectionHeightDown: 5
+  detectionWidth: 18
+  detectionHeightUp: 2.5
+  detectionHeightDown: 10
   detectionReentryMargin: 0.15
   obstacleLayers:
     serializedVersion: 2
@@ -232,10 +233,19 @@ MonoBehaviour:
   playerLayers:
     serializedVersion: 2
     m_Bits: 8
-  glideSpeed: 2.4
-  glideAcceleration: 7
-  attackRange: 0.12
-  returnSpeed: 1.8
+  attackWindup: 0.6
+  diveSpeed: 26
+  maximumDiveAngle: 40
+  maximumDiveTime: 1.5
+  attackDamage: 1
+  attackKnockback: 5
+  embeddedDuration: 1.4
+  embedVisualDepth: 0.18
+  extractionDuration: 0.22
+  extractionSpeed: 7
+  returnSpeed: 4
+  returnAcceleration: 24
+  attackCooldown: 0.9
   attackHitbox: {fileID: 3228976545575982251}
   attackClip: {fileID: 7400000, guid: 552d5053deace4c41a4d5a4e0285fd20, type: 2}
   attackFrames:
@@ -252,16 +262,43 @@ MonoBehaviour:
   - {x: 0.18, y: -0.15}
   - {x: 0.02, y: -0.24}
   - {x: 0.14999998, y: 0.06}
-  firstStrikeFrame: 2
-  secondStrikeFrame: 4
-  attackDamage: 1
-  attackKnockback: 5
-  attackAnimationSpeed: 1
-  attackWindup: 0.18
-  attackCooldown: 0.9
   attackAudioSource: {fileID: 0}
   attackSE: {fileID: 0}
   attackSEVolume: 0.6
+--- !u!114 &533661418573302002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285938631970961242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d13b92689d5684a89e491e4d630824, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HachidrillDiveFeedback
+  diveFrames:
+  - {fileID: -1578728974, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 1338263511, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: -995765170, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 922061723, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  impactFrames:
+  - {fileID: -815227655, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 662113950, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 1817341957, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: -534044853, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  drillingFrames:
+  - {fileID: 1626339072, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: -750276167, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 585474656, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 1185999445, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  extractionFrames:
+  - {fileID: 1426105095, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: -905653258, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: -1514924315, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  - {fileID: 1396226753, guid: e0b1c4e8de42ad847a7f8a549b8044c2, type: 3}
+  framesPerSecond: 14
+  effectWidth: 2.4
 --- !u!1 &3179557716487473453
 GameObject:
   m_ObjectHideFlags: 0

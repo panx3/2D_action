@@ -137,7 +137,7 @@ TextureImporter:
       physicsShape:
       - - {x: -30, y: -30}
         - {x: 30, y: -30}
-        - {x: 30, y: 5}
+        - {x: 30, y: 6}
         - {x: -30, y: 6}
       tessellationDetail: 0
       bones: []
@@ -163,7 +163,7 @@ TextureImporter:
       physicsShape:
       - - {x: -30, y: -30}
         - {x: 30, y: -30}
-        - {x: 30, y: 4}
+        - {x: 30, y: 5}
         - {x: -30, y: 5}
       tessellationDetail: 0
       bones: []
