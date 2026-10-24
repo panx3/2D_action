@@ -94,12 +94,13 @@ public static class RisingPlatformValidation
                 ValidateDetection();
                 ValidateCarryAndJump();
                 ValidateDistances();
+                ValidateDirectionsAndRideStart();
             }
             bool includeOneWay = SessionState.GetBool(Key + "IncludeOneWay", false);
             if (includeOneWay)
                 OneWayPlatformValidation.Validate();
             SessionState.SetString(Key + "Result", "PASS: "
-                + (onlyOneWay ? "" : "Rising distance 2/3/5 in both modes, prefab, automatic waits/repeat/independence, detection, reboarding, carry, movement, jump and upward impulse. ")
+                + (onlyOneWay ? "" : "Rising distance 2/3/5 in both modes, prefab, automatic waits/repeat/independence, detection, reboarding, carry, movement, jump and upward impulse; four directions, ride-start latch, endpoint waits and carriage. ")
                 + (includeOneWay ? "OneWay: Player/ball passage and landing; chain underside length, top support, shared render route, edge release, reset and ordinary terrain." : ""));
         }
         catch (Exception exception)
@@ -269,6 +270,66 @@ public static class RisingPlatformValidation
             Invoke(lift, "OnValidate");
             Require((float)typeof(RisingPlatform).GetField("moveDistance", Private).GetValue(lift) > 0f,
                 "Negative distance was accepted");
+            Cleanup();
+        }
+    }
+
+    private static void ValidateDirectionsAndRideStart()
+    {
+        Vector2[] directions = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+        for (int direction = 0; direction < directions.Length; direction++)
+        {
+            Setup(true, new Vector2(7f, -4f));
+            var directionField = typeof(RisingPlatform).GetField("moveDirection", Private);
+            directionField.SetValue(lift, Enum.ToObject(directionField.FieldType, direction));
+            Set(lift, "startOnPlayerRide", true);
+            Vector2 origin = lift.GetComponent<Rigidbody2D>().position;
+            Vector2 endpoint = origin + directions[direction] * 0.8f;
+            Tick(30);
+            Require(lift.GetComponent<Rigidbody2D>().position == origin, "Ride-start skipped initial wait");
+
+            AddPlayer(new Vector2(lift.GetComponent<BoxCollider2D>().bounds.max.x + 0.4f, origin.y));
+            playerBody.gravityScale = 0f;
+            Tick(20);
+            Require(lift.GetComponent<Rigidbody2D>().position == origin, "Side contact started lift");
+            Board();
+            Tick(5);
+            Leave();
+            Tick(20);
+            Require(lift.GetComponent<Rigidbody2D>().position == origin, "Brief contact bypassed activation delay");
+
+            Board();
+            Tick(20);
+            Require(Vector2.Distance(lift.GetComponent<Rigidbody2D>().position, origin) > 0.05f,
+                "Boarding did not start direction " + direction);
+            // Stay aboard through two cycles, including direction changes and waits.
+            for (int i = 0; i < 210; i++)
+            {
+                Tick(1);
+                Bounds platformBounds = lift.GetComponent<BoxCollider2D>().bounds;
+                Require(Mathf.Abs(playerCollider.bounds.min.y - platformBounds.max.y) < 0.04f,
+                    "Carriage gap in direction " + direction + " step=" + i);
+                Require(Mathf.Abs(playerBody.position.x - lift.GetComponent<Rigidbody2D>().position.x) < 0.15f,
+                    "Horizontal carriage drift in direction " + direction + " step=" + i);
+                Require(player.IsGrounded, "Grounding lost in direction " + direction + " step=" + i);
+            }
+
+            Leave();
+            UntilState("Top");
+            Require(Vector2.Distance(lift.GetComponent<Rigidbody2D>().position, endpoint) < 0.001f,
+                "Incorrect endpoint in direction " + direction);
+            Tick(8);
+            Require(Vector2.Distance(lift.GetComponent<Rigidbody2D>().position, endpoint) < 0.001f,
+                "Far endpoint wait skipped");
+            UntilState("Bottom");
+            Require(Vector2.Distance(lift.GetComponent<Rigidbody2D>().position, origin) < 0.001f,
+                "Did not return to origin in direction " + direction);
+            Tick(8);
+            Require(Vector2.Distance(lift.GetComponent<Rigidbody2D>().position, origin) < 0.001f,
+                "Starting endpoint wait skipped");
+            Tick(15);
+            Require(Vector2.Distance(lift.GetComponent<Rigidbody2D>().position, origin) > 0.05f,
+                "Lift stopped after rider left in direction " + direction);
             Cleanup();
         }
     }

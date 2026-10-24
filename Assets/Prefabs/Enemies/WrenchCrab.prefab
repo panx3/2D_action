@@ -270,6 +270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHp: 2
+  maxDamagePerHit: 0
   knockbackResistance: 1
   destroyOnDeath: 1
   hitStunDuration: 0.18
@@ -277,7 +278,7 @@ MonoBehaviour:
   freezeRotationOnHit: 1
   stopAngularVelocityOnHit: 1
   debugLog: 0
-  hitInvincibleDuration: 0.2
+  hitInvincibleDuration: 0.75
   hitFlashDuration: 0.24
   hitFlashInterval: 0.06
   hitFlashRenderer: {fileID: 6003042680990097627}
@@ -293,6 +294,8 @@ MonoBehaviour:
   minFragmentForce: 1.5
   maxFragmentForce: 3
   fragmentLifeTime: 2
+  fragmentScatterScale: 1.15
+  fragmentDirectionSpread: 1.1
 --- !u!114 &5648010355067718809
 MonoBehaviour:
   m_ObjectHideFlags: 0

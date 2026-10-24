@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 /// <summary>巡回と方向固定のビーム攻撃。HP・被弾Impulse・撃破はEnemyHealthが所有する。</summary>
 [DisallowMultipleComponent, SelectionBase]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
-public sealed class BeamScorpionController : MonoBehaviour
+public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
 {
     public enum ActionState { Patrol, Windup, Firing, Recovery }
     [Header("Patrol")]
@@ -66,6 +66,8 @@ public sealed class BeamScorpionController : MonoBehaviour
     private bool moving;
     private Vector3 originRest;
     private float patrolCenterX;
+    private bool firstBeamCompleted;
+    public bool DeferDeath => isActiveAndEnabled && !firstBeamCompleted;
     public ActionState State { get; private set; }
     public float StateElapsed { get; private set; }
     public int Facing => direction;
@@ -87,10 +89,12 @@ public sealed class BeamScorpionController : MonoBehaviour
         beamFilter.SetLayerMask(playerLayer.value | obstacleLayer.value | morningStarLayer.value);
         originRest = beamOrigin != null ? beamOrigin.localPosition : Vector3.zero;
         health.HitConfirmed += OnHit;
+        health.HealthReset += ResetFirstBeam;
     }
 
     private void OnEnable()
     {
+        firstBeamCompleted = false;
         direction = startFacingRight ? 1 : -1;
         nextAttack = Time.time + Mathf.Max(0.1f, attackInterval);
         turnUntil = nextDamage = nextImpact = nextPlayerSearch = 0f;
@@ -107,11 +111,18 @@ public sealed class BeamScorpionController : MonoBehaviour
         if (body != null) body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
     }
 
-    private void OnDestroy() { if (health != null) health.HitConfirmed -= OnHit; }
+    private void OnDestroy()
+    {
+        if (health == null) return;
+        health.HitConfirmed -= OnHit;
+        health.HealthReset -= ResetFirstBeam;
+    }
+
+    private void ResetFirstBeam() { firstBeamCompleted = false; SetState(ActionState.Patrol); }
 
     private void FixedUpdate()
     {
-        if (health.CurrentHp <= 0) return;
+        if (health.CurrentHp <= 0 && !health.IsDeathPending) return;
         if (health.IsHitStunned) { moving = false; return; }
         StateElapsed += Time.fixedDeltaTime;
         UpdateOrigin();
@@ -132,11 +143,12 @@ public sealed class BeamScorpionController : MonoBehaviour
                 }
                 break;
             case ActionState.Windup:
-                if (!grounded) SetState(ActionState.Recovery);
+                // 初回の一射は被弾で浮いても中断しない。
+                if (!grounded && firstBeamCompleted) SetState(ActionState.Recovery);
                 else if (StateElapsed >= Mathf.Max(0.1f, windupTime)) SetState(ActionState.Firing);
                 break;
             case ActionState.Firing:
-                if (!grounded || StateElapsed >= Mathf.Max(0.02f, beamDuration)) SetState(ActionState.Recovery);
+                if ((!grounded && firstBeamCompleted) || StateElapsed >= Mathf.Max(0.02f, beamDuration)) SetState(ActionState.Recovery);
                 else TraceBeam();
                 break;
             case ActionState.Recovery:
@@ -150,7 +162,7 @@ public sealed class BeamScorpionController : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (health.CurrentHp <= 0) return;
+        if (health.CurrentHp <= 0 && !health.IsDeathPending) return;
         UpdateOrigin();
         if (charge != null && beamOrigin != null) charge.transform.position = beamOrigin.position;
         if (beam != null) beam.SetBeam(Origin, beamEnd, beamThickness, beamColor);
@@ -185,6 +197,12 @@ public sealed class BeamScorpionController : MonoBehaviour
     private void SetState(ActionState state)
     {
         if (State == ActionState.Firing || State == ActionState.Windup) StopEffects(state == ActionState.Recovery);
+        if (State == ActionState.Firing && state == ActionState.Recovery)
+        {
+            firstBeamCompleted = true;
+            health.CompleteDeferredDeath();
+            if (health.IsDeathHandled) return;
+        }
         State = state;
         StateElapsed = 0f;
         moving = false;
@@ -211,10 +229,22 @@ public sealed class BeamScorpionController : MonoBehaviour
 
     private void OnHit(MorningStarHitContext context, bool lethal)
     {
-        StopEffects(false);
         moving = false;
         body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
-        if (!lethal) SetState(ActionState.Recovery);
+        if (lethal) { StopEffects(false); return; }
+        if (!firstBeamCompleted)
+        {
+            // ひるみでは構えを巻き戻さず、最初の一射を完了させる。
+            if (State != ActionState.Windup && State != ActionState.Firing)
+            {
+                PlayerInRange(out int facing);
+                direction = facing;
+                SetState(ActionState.Windup);
+            }
+            return;
+        }
+        StopEffects(false);
+        SetState(ActionState.Recovery);
     }
 
     private bool PlayerInRange(out int facing)
@@ -291,7 +321,7 @@ public sealed class BeamScorpionController : MonoBehaviour
 
     private void DamagePlayer(Collider2D target, int amount)
     {
-        if (!isActiveAndEnabled || health.CurrentHp <= 0 || health.IsHitStunned || amount <= 0
+        if (!isActiveAndEnabled || (health.CurrentHp <= 0 && !health.IsDeathPending) || health.IsHitStunned || amount <= 0
             || Time.time < nextDamage || !PlayerColliderUtility.IsPlayerBody(target)) return;
         PlayerHealth hp = target.GetComponentInParent<PlayerHealth>();
         if (hp == null || hp.IsDead || hp.IsRespawning || hp.IsInvincible) return;

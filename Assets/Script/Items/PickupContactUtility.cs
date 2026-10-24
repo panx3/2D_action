@@ -25,6 +25,10 @@ public static class PickupContactUtility
     {
         if (item == null || !item.enabled || item.sprite == null || player == null) return false;
         SpriteRenderer body = player.BodySprite;
+        var launcher = player.GetComponent<MorningStarLauncher>();
+        if (launcher != null && launcher.ChainClimbRenderer != null
+            && launcher.ChainClimbRenderer.sprite != null)
+            body = launcher.ChainClimbRenderer;
         if (body == null || body.sprite == null) return false;
         Bounds a = GetVisibleWorldBounds(item), b = GetVisibleWorldBounds(body);
         return a.min.x <= b.max.x + ContactMargin && a.max.x >= b.min.x - ContactMargin

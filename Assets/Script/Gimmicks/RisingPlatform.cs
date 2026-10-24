@@ -1,38 +1,47 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>A vertical lift whose placed position is its lower endpoint.</summary>
+/// <summary>A directional lift whose placed position is its starting endpoint.</summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(100)]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
 public sealed class RisingPlatform : MonoBehaviour
 {
+    private enum MoveDirection { Up, Down, Left, Right }
+
     [Header("Move Settings")]
-    [SerializeField, Tooltip("ON: repeat automatically. OFF: wait for a player standing on top.")]
+    [SerializeField, InspectorName("移動方向"), Tooltip("配置位置から最初に進む方向。指定距離を移動した後は配置位置まで往復します。")]
+    private MoveDirection moveDirection = MoveDirection.Up;
+    [SerializeField, InspectorName("乗ったら動き出す"), Tooltip("最初にプレイヤーが乗るまで待機し、一度動き出したら降りても自動で往復し続けます。Auto Move より優先されます。")]
+    private bool startOnPlayerRide = false;
+    [SerializeField, Tooltip("ON: repeat automatically. OFF: wait for a player standing on top. Ignored when Start On Player Ride is enabled.")]
     private bool autoMove = true;
-    [SerializeField, Min(0.01f), Tooltip("World-space rise from the placed lower endpoint, in Unity units.")]
+    [SerializeField, Min(0.01f), Tooltip("World-space travel distance from the placed starting endpoint, in Unity units.")]
     private float moveDistance = 3f;
     [SerializeField, Min(0.01f)] private float moveSpeed = 2f;
-    [SerializeField, Min(0f), Tooltip("Automatic mode only.")]
+    [SerializeField, Min(0f), Tooltip("Automatic movement: wait at the far endpoint.")]
     private float topWaitTime = 1f;
-    [SerializeField, Min(0f), Tooltip("Automatic mode only (also used at game start).")]
+    [SerializeField, Min(0f), Tooltip("Automatic movement: wait at the placed starting endpoint (also used at game start).")]
     private float bottomWaitTime = 1f;
 
     [Header("Player Detection Settings")]
-    [SerializeField, Min(0f), Tooltip("Player must remain on top for this long before ascent.")]
+    [SerializeField, Min(0f), Tooltip("Player must remain on top for this long before movement starts.")]
     private float activationDelay = 0.5f;
-    [SerializeField, Min(0f), Tooltip("Time without a rider at the top before descent. Reboarding cancels the wait.")]
+    [SerializeField, Min(0f), Tooltip("Legacy rider mode: time without a rider at the far endpoint before returning. Reboarding cancels the wait.")]
     private float returnDelay = 1f;
 
     private enum LiftState { Bottom, Rising, Top, Descending }
 
     private Rigidbody2D body;
     private BoxCollider2D platformCollider;
+    private PhysicsMaterial2D originalMaterial;
+    private PhysicsMaterial2D horizontalCarryMaterial;
     private Vector2 bottomPosition;
     private LiftState state;
     private float waitTimer;
     private float previousVerticalSpeed;
     private bool previousAutoMove;
+    private bool hasStartedMoving;
     private readonly List<ContactPoint2D> contacts = new List<ContactPoint2D>(16);
     private readonly List<Player> riders = new List<Player>(2);
 
@@ -40,6 +49,7 @@ public sealed class RisingPlatform : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         platformCollider = GetComponent<BoxCollider2D>();
+        originalMaterial = platformCollider.sharedMaterial;
         moveDistance = Mathf.Max(0.01f, moveDistance);
         body.bodyType = RigidbodyType2D.Kinematic;
         body.gravityScale = 0f;
@@ -56,6 +66,7 @@ public sealed class RisingPlatform : MonoBehaviour
     private void FixedUpdate()
     {
         RefreshRiders();
+        UpdateCarryMaterial();
         if (previousAutoMove != autoMove)
         {
             waitTimer = 0f;
@@ -63,17 +74,21 @@ public sealed class RisingPlatform : MonoBehaviour
         }
 
         float dt = Time.fixedDeltaTime;
-        Vector2 topPosition = bottomPosition + Vector2.up * moveDistance;
+        bool automatic = startOnPlayerRide ? hasStartedMoving : autoMove;
+        Vector2 topPosition = bottomPosition + GetMoveDirection() * moveDistance;
         switch (state)
         {
             case LiftState.Bottom:
-                if (WaitUntil(autoMove || riders.Count > 0,
-                    autoMove ? bottomWaitTime : activationDelay, dt))
+                if (WaitUntil(automatic || riders.Count > 0,
+                    automatic ? bottomWaitTime : activationDelay, dt))
+                {
+                    hasStartedMoving = true;
                     EnterState(LiftState.Rising);
+                }
                 break;
             case LiftState.Top:
-                if (WaitUntil(autoMove || riders.Count == 0,
-                    autoMove ? topWaitTime : returnDelay, dt))
+                if (WaitUntil(automatic || riders.Count == 0,
+                    automatic ? topWaitTime : returnDelay, dt))
                     EnterState(LiftState.Descending);
                 break;
         }
@@ -89,9 +104,21 @@ public sealed class RisingPlatform : MonoBehaviour
         }
 
         float verticalSpeed = (nextPosition.y - body.position.y) / dt;
+        CarryHorizontalMotion(nextPosition.x - body.position.x);
         CarrySupportDeceleration(verticalSpeed);
         body.MovePosition(nextPosition);
         previousVerticalSpeed = verticalSpeed;
+    }
+
+    private Vector2 GetMoveDirection()
+    {
+        switch (moveDirection)
+        {
+            case MoveDirection.Down: return Vector2.down;
+            case MoveDirection.Left: return Vector2.left;
+            case MoveDirection.Right: return Vector2.right;
+            default: return Vector2.up;
+        }
     }
 
     private bool WaitUntil(bool condition, float duration, float dt)
@@ -141,6 +168,41 @@ public sealed class RisingPlatform : MonoBehaviour
         }
     }
 
+    private void UpdateCarryMaterial()
+    {
+        bool horizontal = moveDirection == MoveDirection.Left || moveDirection == MoveDirection.Right;
+        if (!horizontal)
+        {
+            if (horizontalCarryMaterial != null && platformCollider.sharedMaterial == horizontalCarryMaterial)
+                platformCollider.sharedMaterial = originalMaterial;
+            return;
+        }
+
+        if (horizontalCarryMaterial == null)
+        {
+            horizontalCarryMaterial = originalMaterial != null
+                ? Instantiate(originalMaterial) : new PhysicsMaterial2D("RisingPlatform Horizontal Carry");
+            // Horizontal transport is explicit below. Friction would carry a second
+            // time and introduce drift; keep the source material asset unchanged.
+            horizontalCarryMaterial.friction = 0f;
+        }
+        if (platformCollider.sharedMaterial != horizontalCarryMaterial)
+            platformCollider.sharedMaterial = horizontalCarryMaterial;
+    }
+
+    private void CarryHorizontalMotion(float deltaX)
+    {
+        if (Mathf.Abs(deltaX) < 0.000001f)
+            return;
+
+        // Apply only support displacement; Player still owns walking, jumps and forces.
+        foreach (Player rider in riders)
+        {
+            Rigidbody2D riderBody = rider.GetComponent<Rigidbody2D>();
+            riderBody.position += Vector2.right * deltaX;
+        }
+    }
+
     private void CarrySupportDeceleration(float verticalSpeed)
     {
         float speedChange = verticalSpeed - previousVerticalSpeed;
@@ -166,8 +228,17 @@ public sealed class RisingPlatform : MonoBehaviour
     {
         if (body != null)
             body.linearVelocity = Vector2.zero;
+        if (platformCollider != null && horizontalCarryMaterial != null
+            && platformCollider.sharedMaterial == horizontalCarryMaterial)
+            platformCollider.sharedMaterial = originalMaterial;
         previousVerticalSpeed = 0f;
         riders.Clear();
+    }
+
+    private void OnDestroy()
+    {
+        if (horizontalCarryMaterial != null)
+            Destroy(horizontalCarryMaterial);
     }
 
     private void OnValidate()
@@ -185,7 +256,7 @@ public sealed class RisingPlatform : MonoBehaviour
         Vector3 bottom = Application.isPlaying && body != null
             ? new Vector3(bottomPosition.x, bottomPosition.y, transform.position.z)
             : transform.position;
-        Vector3 top = bottom + Vector3.up * moveDistance;
+        Vector3 top = bottom + (Vector3)GetMoveDirection() * moveDistance;
         Gizmos.color = Color.cyan;
         Gizmos.DrawLine(bottom, top);
         Gizmos.DrawWireSphere(bottom, 0.15f);

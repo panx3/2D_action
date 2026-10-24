@@ -8,7 +8,7 @@ public sealed class SpringFrog : MonoBehaviour
 {
     public enum InitialDirection { Left = -1, Right = 1 }
 
-    [Header("Jump Patrol")]
+    [Header("Jump Chase")]
     [SerializeField, Min(0.1f), Tooltip("上方向のImpulse。初速はJump Force / Rigidbody2D.mass。")]
     private float _jumpForce = 3.2f;
     [SerializeField, Min(0f)] private float _moveSpeed = 1.5f;
@@ -41,13 +41,17 @@ public sealed class SpringFrog : MonoBehaviour
     [Header("Jump SFX")]
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private AudioClip _jumpSE;
-    [SerializeField, Range(0f, 1f)] private float _jumpSEVolume = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float _jumpSEVolume = 0.3f;
+    [SerializeField, Min(0.1f), Tooltip("Playerとの2D距離。この距離で無音になり、近づくほど大きく聞こえます。")]
+    private float _jumpSEMaxDistance = 6f;
 
     private const float Skin = 0.025f;
     private readonly RaycastHit2D[] _hits = new RaycastHit2D[16];
     private Rigidbody2D _body;
     private BoxCollider2D _collider;
     private EnemyHealth _health;
+    private Transform _player;
+    private PlayerHealth _playerHealth;
     private int _direction;
     private bool _grounded;
     private bool _jumping;
@@ -103,20 +107,17 @@ public sealed class SpringFrog : MonoBehaviour
             _body.linearVelocity = new Vector2(0f, _body.linearVelocity.y);
             if (Time.time >= _nextJumpTime)
             {
-                bool canAdvance = CanHop(_direction, filter);
-                if (!canAdvance && CanHop(-_direction, filter))
-                {
-                    _direction = -_direction;
-                    canAdvance = true;
-                }
-                _airSpeed = canAdvance ? _direction * _moveSpeed : 0f;
+                int hopDirection = GetHopDirection();
+                if (hopDirection != 0)
+                    _direction = hopDirection;
+                // 踏切時にPlayerの方向を決める。壁や崖で進めなくても逆走しない。
+                _airSpeed = hopDirection != 0 && CanHop(hopDirection, filter) ? hopDirection * _moveSpeed : 0f;
                 _body.linearVelocity = new Vector2(_airSpeed, 0f);
                 _body.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
                 _jumping = true;
                 _grounded = false;
                 _jumpTime = Time.time;
-                if (_audioSource != null && _jumpSE != null)
-                    _audioSource.PlayOneShot(_jumpSE, _jumpSEVolume);
+                PlayJumpSound();
             }
         }
         else if (_jumping)
@@ -131,6 +132,32 @@ public sealed class SpringFrog : MonoBehaviour
     {
         if (!_health.IsDeathHandled)
             UpdateVisual();
+    }
+
+    private int GetHopDirection()
+    {
+        if (_player == null || !_player.gameObject.activeInHierarchy)
+        {
+            GameObject target = GameObject.FindGameObjectWithTag("Player");
+            _player = target != null ? target.transform : null;
+            _playerHealth = target != null ? target.GetComponent<PlayerHealth>() : null;
+        }
+        if (_player == null || (_playerHealth != null && (_playerHealth.IsDead || _playerHealth.IsRespawning)))
+            return 0;
+
+        float deltaX = _player.position.x - _collider.bounds.center.x;
+        return Mathf.Abs(deltaX) > Skin ? (deltaX > 0f ? 1 : -1) : 0;
+    }
+
+    private void PlayJumpSound()
+    {
+        if (_audioSource == null || _jumpSE == null || _player == null || _jumpSEVolume <= 0f)
+            return;
+
+        float distance = Vector2.Distance(_body.position, _player.position);
+        float attenuation = Mathf.Clamp01(1f - distance / Mathf.Max(0.1f, _jumpSEMaxDistance));
+        if (attenuation > 0f)
+            _audioSource.PlayOneShot(_jumpSE, _jumpSEVolume * attenuation * attenuation);
     }
 
     private bool IsGrounded(ContactFilter2D filter)

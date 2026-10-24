@@ -58,6 +58,7 @@ public sealed class CRTOverlayController : MonoBehaviour
     {
         if (IsVisible)
             return !IsClosing;
+        CRTMenuNavigation.EnsureInput();
         if (filter == null)
             filter = FindAnyObjectByType<CRTFilterController>();
         if (filter == null || !filter.TryBeginOverlay(this, backgroundBlur, backgroundBrightness, ReceiveBackdrop))
@@ -158,7 +159,30 @@ public sealed class CRTOverlayController : MonoBehaviour
             return;
         }
         if (IsReady && !inputBlocked)
+        {
+            EnsureMenuSelection();
             HandleCurvedPointer();
+        }
+    }
+
+    private void EnsureMenuSelection()
+    {
+        var events = EventSystem.current;
+        if (events == null) return;
+        var selected = events.currentSelectedGameObject;
+        foreach (CRTMenuItem item in menuItems)
+        {
+            var button = item.Button;
+            if (button.gameObject == selected && button.isActiveAndEnabled && button.IsInteractable())
+                return;
+        }
+        foreach (CRTMenuItem item in menuItems)
+        {
+            var button = item.Button;
+            if (!button.isActiveAndEnabled || !button.IsInteractable()) continue;
+            events.SetSelectedGameObject(button.gameObject);
+            return;
+        }
     }
 
     private void Animate()

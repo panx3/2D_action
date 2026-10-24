@@ -518,6 +518,7 @@ public class MorningStarLauncher : MonoBehaviour
     public float LaunchPoseMaxHoldTime => launchPoseMaxHoldTime;
     public float GroundLaunchPoseHoldDuration => groundLaunchPoseHoldDuration;
     public bool IsChainClimbing => _isChainClimbing;
+    public SpriteRenderer ChainClimbRenderer => _isChainClimbing ? _chainClimbSpriteRenderer : null;
     public bool IsWaitingForUpperHangRetension => _waitingForUpperHangRetension;
     public float CurrentChainClimbDistance => _chainClimbDistance;
     public bool IsUpperHanging => IsUpperHangingSupport();

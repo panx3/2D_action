@@ -1,0 +1,651 @@
+fileFormatVersion: 2
+guid: e0b1c4e8de42ad847a7f8a549b8044c2
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2538643973069881898
+    second: HachidrillDiveVfx_0
+  - first:
+      213: 3461630934655567935
+    second: HachidrillDiveVfx_1
+  - first:
+      213: -4050687206208843693
+    second: HachidrillDiveVfx_2
+  - first:
+      213: 1716834781171979697
+    second: HachidrillDiveVfx_3
+  - first:
+      213: -1935231196010454711
+    second: HachidrillDiveVfx_4
+  - first:
+      213: -257936123013377644
+    second: HachidrillDiveVfx_5
+  - first:
+      213: 6715628460183173306
+    second: HachidrillDiveVfx_6
+  - first:
+      213: -4232193825051266956
+    second: HachidrillDiveVfx_7
+  - first:
+      213: -3694461590714872972
+    second: HachidrillDiveVfx_8
+  - first:
+      213: -5470453469974052641
+    second: HachidrillDiveVfx_9
+  - first:
+      213: -8211738571020489553
+    second: HachidrillDiveVfx_10
+  - first:
+      213: -1546375869051408228
+    second: HachidrillDiveVfx_11
+  - first:
+      213: -514706018291194533
+    second: HachidrillDiveVfx_12
+  - first:
+      213: -89714611428942797
+    second: HachidrillDiveVfx_13
+  - first:
+      213: -55412581957626506
+    second: HachidrillDiveVfx_14
+  - first:
+      213: 3992531684680856762
+    second: HachidrillDiveVfx_15
+  - first:
+      213: 1888219619814607707
+    second: HachidrillDiveVfx_16
+  - first:
+      213: -800657211295074808
+    second: HachidrillDiveVfx_17
+  - first:
+      213: 708699450045765757
+    second: HachidrillDiveVfx_18
+  - first:
+      213: -5573809524628666105
+    second: HachidrillDiveVfx_19
+  - first:
+      213: 3374452634029644611
+    second: HachidrillDiveVfx_20
+  - first:
+      213: -4449970243231245635
+    second: HachidrillDiveVfx_21
+  - first:
+      213: -4926149581276936897
+    second: HachidrillDiveVfx_22
+  - first:
+      213: -3099886964463026110
+    second: HachidrillDiveVfx_23
+  - first:
+      213: 6349109586714184370
+    second: HachidrillDiveVfx_24
+  - first:
+      213: -2181480570662953754
+    second: HachidrillDiveVfx_25
+  - first:
+      213: -3365460496271824705
+    second: HachidrillDiveVfx_26
+  - first:
+      213: -3069557543611583524
+    second: HachidrillDiveVfx_27
+  - first:
+      213: -5595491293340555389
+    second: HachidrillDiveVfx_28
+  - first:
+      213: -3235509092623782769
+    second: HachidrillDiveVfx_29
+  - first:
+      213: 3991905396191589681
+    second: HachidrillDiveVfx_30
+  - first:
+      213: 8019277020389571710
+    second: HachidrillDiveVfx_31
+  - first:
+      213: 6943424159308312651
+    second: HachidrillDiveVfx_32
+  - first:
+      213: 3327794724758878731
+    second: HachidrillDiveVfx_33
+  - first:
+      213: 8814732514889284490
+    second: HachidrillDiveVfx_34
+  - first:
+      213: 3949475627936752294
+    second: HachidrillDiveVfx_35
+  - first:
+      213: -6868983683299209369
+    second: HachidrillDiveVfx_36
+  - first:
+      213: -114498553664298626
+    second: HachidrillDiveVfx_37
+  - first:
+      213: -113652290754510942
+    second: HachidrillDiveVfx_38
+  - first:
+      213: 2054770645050538580
+    second: HachidrillDiveVfx_39
+  - first:
+      213: -4331269501495544982
+    second: HachidrillDiveVfx_40
+  - first:
+      213: 2851940180649242022
+    second: HachidrillDiveVfx_41
+  - first:
+      213: 7175346765254603923
+    second: HachidrillDiveVfx_42
+  - first:
+      213: -4947267239703092490
+    second: HachidrillDiveVfx_43
+  - first:
+      213: 57821162910787926
+    second: HachidrillDiveVfx_44
+  - first:
+      213: -385905360266079587
+    second: HachidrillDiveVfx_45
+  - first:
+      213: 8697330106730558961
+    second: HachidrillDiveVfx_46
+  - first:
+      213: -907658728652689121
+    second: HachidrillDiveVfx_47
+  - first:
+      213: -6184577430237695938
+    second: HachidrillDiveVfx_48
+  - first:
+      213: 4824643509886221909
+    second: HachidrillDiveVfx_49
+  - first:
+      213: -2301607193181838487
+    second: HachidrillDiveVfx_50
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Dive_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7391011eb92bec94daf7f331b6e8c03d
+      internalID: -1578728974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Dive_1
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 192
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f11c7dcd46d814947acb93b3befc4f46
+      internalID: 1338263511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Dive_2
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67885c8ee0ca8f045a451efcf5d52d3b
+      internalID: -995765170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Dive_3
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 192
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2a6be133e143c524ca8b746a3893482a
+      internalID: 922061723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Impact_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.09375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96050b257151d1d4aa830bcf94c55805
+      internalID: -815227655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Impact_1
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 128
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.09375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e19429bbb1362454cb56c831f11c9e54
+      internalID: 662113950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Impact_2
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.09375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f41384029dc607944a3617acbb833233
+      internalID: 1817341957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Impact_3
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 128
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.09375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e77a76913618b134da9c0ab4731e700a
+      internalID: -534044853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Drilling_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 64
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.109375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eddc5000f14106b48b675c389191c151
+      internalID: 1626339072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Drilling_1
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 64
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.109375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 29e4812bd86eabb499ed5bb1384964b8
+      internalID: -750276167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Drilling_2
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 64
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.109375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5db4f40ccbec79e41a43c72886670fa1
+      internalID: 585474656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Drilling_3
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 64
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.109375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6542a8eeaa9f08c4481570ce530c807b
+      internalID: 1185999445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Extraction_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.171875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b8f1f8981575764e9fbac4095bb005f
+      internalID: 1426105095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Extraction_1
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.171875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd44a4e74dca87c48a30e9afdc59e734
+      internalID: -905653258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Extraction_2
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.171875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0a7003a4b1d4a084e920c55b805f48d2
+      internalID: -1514924315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Extraction_3
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 64
+        height: 64
+      alignment: 9
+      pivot: {x: 0.5, y: 0.171875}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 27ebd179b11704f48a636e1d0773c23d
+      internalID: 1396226753
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 62883afd8c6bf4a4abcf94eab9cc7b6e
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Dive_0: -1578728974
+      Dive_1: 1338263511
+      Dive_2: -995765170
+      Dive_3: 922061723
+      Drilling_0: 1626339072
+      Drilling_1: -750276167
+      Drilling_2: 585474656
+      Drilling_3: 1185999445
+      Extraction_0: 1426105095
+      Extraction_1: -905653258
+      Extraction_2: -1514924315
+      Extraction_3: 1396226753
+      Impact_0: -815227655
+      Impact_1: 662113950
+      Impact_2: 1817341957
+      Impact_3: -534044853
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

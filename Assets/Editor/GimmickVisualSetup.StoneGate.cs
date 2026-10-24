@@ -103,7 +103,8 @@ public static partial class GimmickVisualSetup
         DisableRootRenderer(root);
         SpriteRenderer back = EnsureRenderer(root.transform, "Door_Back", -2);
         SpriteRenderer barrier = EnsureRenderer(root.transform, "Door_Barrier", 1);
-        SpriteRenderer front = EnsureRenderer(root.transform, "Door_Front", 8);
+        // Cover the chain (8), Morning Star (9) and its feedback (up to 11), below foreground foliage (30).
+        SpriteRenderer front = EnsureRenderer(root.transform, "Door_Front", 20);
         back.sprite = StoneSprite("Gate_Back");
         barrier.sprite = StoneSprite("Gate_Membrane");
         front.sprite = StoneSprite("Gate_Front");
