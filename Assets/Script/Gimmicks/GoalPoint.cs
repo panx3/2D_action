@@ -125,6 +125,10 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
         if (_isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
             return;
 
+        var launcher = morningStarBody.GetComponent<MorningStarCollisionReporter>().Launcher;
+        if (launcher != null && launcher.State == MorningStarLauncher.MorningStarState.SpinCharging)
+            return;
+
         // 衝突解決後に速度が落ちていても、命中直前の勢いを使う。
         // Enterだけで数え、接触し続けている間は追加Hitにしない。
         float impactSpeed = Mathf.Max(collision.relativeVelocity.magnitude, morningStarBody.linearVelocity.magnitude);

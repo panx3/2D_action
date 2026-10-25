@@ -28,6 +28,9 @@ public class Player : MonoBehaviour
 
     private float _groundLinearDragX = 8f;
 
+    [SerializeField, Range(0.1f, 1f), Tooltip("鉄球のチャージ中だけ横移動へ掛ける倍率。0.9で通常より10%遅くなります")]
+    private float _chargeMoveSpeedMultiplier = 0.9f;
+
 
 
     [Header("歩行（空中）")]
@@ -171,6 +174,8 @@ public class Player : MonoBehaviour
     private bool _groundStateInitialized;
 
     private readonly Collider2D[] _groundCheckResults = new Collider2D[8];
+
+    private readonly ContactPoint2D[] _enemySupportContacts = new ContactPoint2D[16];
 
     private bool _isGrounded;
 
@@ -606,6 +611,10 @@ public class Player : MonoBehaviour
 
         float moveF = grounded ? _groundMoveForce : _groundMoveForce * _airMoveFactor;
 
+        if (_morningStarLauncher != null && _morningStarLauncher.isActiveAndEnabled
+            && _morningStarLauncher.State == MorningStarLauncher.MorningStarState.SpinCharging)
+            moveF *= Mathf.Clamp01(_chargeMoveSpeedMultiplier);
+
         float baseDrag = grounded ? _groundLinearDragX : _airLinearDragX;
 
         if (Mathf.Abs(h) > 0.01f)
@@ -840,7 +849,7 @@ public class Player : MonoBehaviour
 
             && _rigid.linearVelocity.y > 0.05f;
 
-        _rawGrounded = !risingFromJump && CheckGroundOverlap();
+        _rawGrounded = !risingFromJump && (CheckGroundOverlap() || CheckEnemySupport());
 
 
 
@@ -940,6 +949,30 @@ public class Player : MonoBehaviour
     }
 
 
+
+    private bool CheckEnemySupport()
+    {
+        if (_groundCheckCollider == null || !_groundCheckCollider.enabled)
+            return false;
+
+        int contactCount = _groundCheckCollider.GetContacts(_enemySupportContacts);
+        for (int contactIndex = 0; contactIndex < contactCount; contactIndex++)
+        {
+            ContactPoint2D contact = _enemySupportContacts[contactIndex];
+            if (contact.normal.y <= 0.5f)
+                continue;
+
+            Collider2D other = contact.collider == _groundCheckCollider ? contact.otherCollider : contact.collider;
+            if (other == null || other.isTrigger || other.transform.IsChildOf(transform))
+                continue;
+
+            EnemyHealth enemyHealth = other.GetComponentInParent<EnemyHealth>();
+            if (enemyHealth != null && !enemyHealth.IsDeathHandled)
+                return true;
+        }
+
+        return false;
+    }
 
     private void GetGroundCheckBox(Bounds colliderBounds, out Vector2 center, out Vector2 size)
 
