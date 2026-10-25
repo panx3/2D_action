@@ -6337,6 +6337,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Player
   _groundMoveForce: 70
   _groundLinearDragX: 8
+  _chargeMoveSpeedMultiplier: 0.65
   _airMoveFactor: 0.1
   _airLinearDragX: 1.5
   _jumpSpeed: 8
