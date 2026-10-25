@@ -71,6 +71,10 @@ public class MorningStarLauncher : MonoBehaviour
     private float maxContinuousHitStop = 0.12f;
     [SerializeField] private float hitCooldownPerTarget = 0.2f;
     [SerializeField, Range(0f, 1f)] private float postHitSpeedRetention = 0.7f;
+    [SerializeField, Min(0f), Tooltip("敵・破壊物の面へこの速度以上で命中した時だけ、鉄球を軽く跳ね返す")]
+    private float combatReboundMinSpeed = 6f;
+    [SerializeField, Range(0f, 1f), Tooltip("敵・破壊物への鉄球の反発率。フルチャージで破壊した岩とゴールはそれぞれの処理を使用")]
+    private float combatBallRestitution = 0.4f;
 
     [Header("Chain / Tension")]
     [SerializeField, Min(0.1f), Tooltip("鎖の通常時最大長。値を上げるほどBallが遠くまで遅れて追従します")]
@@ -367,6 +371,8 @@ public class MorningStarLauncher : MonoBehaviour
         CancelHitStop();
     }
     private readonly Dictionary<EntityId, float> _lastCombatHitTimeByColliderId = new Dictionary<EntityId, float>();
+    private Vector2 _throwVelocityBeforePhysics;
+    private double _throwVelocitySampleTime = double.NegativeInfinity;
     private readonly List<(Collider2D Ball, Collider2D Goal)> _recallGoalCollisionPairs =
         new List<(Collider2D Ball, Collider2D Goal)>();
     private Color _defaultLineColor = Color.white;
@@ -938,6 +944,16 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         LimitBallFallSpeed();
+        RecordThrowVelocityBeforePhysics();
+    }
+
+    private void RecordThrowVelocityBeforePhysics()
+    {
+        if (_state != MorningStarState.Thrown || morningStarRb == null)
+            return;
+
+        _throwVelocityBeforePhysics = morningStarRb.linearVelocity;
+        _throwVelocitySampleTime = Time.fixedTimeAsDouble;
     }
 
     private void LateUpdate()
@@ -980,6 +996,7 @@ public class MorningStarLauncher : MonoBehaviour
             StopAirLaunchAssist();
 
         _state = nextState;
+        _throwVelocitySampleTime = double.NegativeInfinity;
 
         bool useLaunchLength = nextState == MorningStarState.Thrown
             || ShouldKeepLaunchRopeLengthAfterFlight(nextState);
@@ -2035,10 +2052,25 @@ public class MorningStarLauncher : MonoBehaviour
 
     private bool TryProcessCombatHit(Collision2D collision)
     {
-        if (!CanStateDealCombatDamage())
+        return TryProcessCombatHit(collision, collision.collider, true);
+    }
+
+    // 岩側と鉄球側のどちらのCallbackが先でも、同じ命中を一度だけ処理する。
+    public bool TryProcessBreakableWallCollision(BreakableWall wall, Collision2D collision)
+    {
+        if (wall == null || morningStarRb == null || !CanStateDealCombatDamage()
+            || collision.collider == null || collision.collider.attachedRigidbody != morningStarRb)
             return false;
 
-        Collider2D other = collision.collider;
+        TryProcessCombatHit(collision, wall.GetComponent<Collider2D>(), false);
+        return true;
+    }
+
+    private bool TryProcessCombatHit(Collision2D collision, Collider2D other, bool collisionOnBall)
+    {
+        if (!CanStateDealCombatDamage() || other == null)
+            return false;
+
         if (other.CompareTag("Player"))
             return false;
 
@@ -2046,12 +2078,29 @@ public class MorningStarLauncher : MonoBehaviour
         if (receiver == null)
             return false;
 
-        if (!AllowsCombatHitOnLayer(other.gameObject.layer))
+        BreakableWall wall = receiver as BreakableWall;
+        if (wall != null && wall.IsBroken)
+            return true;
+
+        // 岩は従来の物理破壊と同様に、Combat Layerの設定外でも命中を受け付ける。
+        if (wall == null && !AllowsCombatHitOnLayer(other.gameObject.layer))
             return false;
 
         // 衝突解決後に速度が落ちていても、命中直前の勢いでダメージを評価する。
         float impactSpeed = Mathf.Max(morningStarRb.linearVelocity.magnitude, collision.relativeVelocity.magnitude);
-        if (impactSpeed < minCombatHitSpeed)
+        // 近距離の接触ではrelativeVelocityも解決後の値になる場合がある。
+        // 投擲中の岩だけ、同じ物理ステップに記録した衝突前速度を補う。
+        Vector2 sampledRelativeVelocity = Vector2.zero;
+        if (wall != null && _state == MorningStarState.Thrown
+            && _throwVelocitySampleTime == Time.fixedTimeAsDouble)
+        {
+            sampledRelativeVelocity = _throwVelocityBeforePhysics;
+            if (other.attachedRigidbody != null)
+                sampledRelativeVelocity -= other.attachedRigidbody.linearVelocity;
+            impactSpeed = Mathf.Max(impactSpeed, sampledRelativeVelocity.magnitude);
+        }
+        float requiredSpeed = wall != null ? wall.BreakSpeedThreshold : minCombatHitSpeed;
+        if (impactSpeed < requiredSpeed)
             return false;
 
         EntityId colliderId = other.GetEntityId();
@@ -2059,11 +2108,27 @@ public class MorningStarLauncher : MonoBehaviour
             && Time.time - lastHitTime < hitCooldownPerTarget)
             return false;
 
+        // relativeVelocityの向きはCallback側で反転する。Receiverが岩の速度を消す前に復元する。
+        Vector2 incomingRelativeVelocity = collision.relativeVelocity * (collisionOnBall ? -1f : 1f);
+        if (sampledRelativeVelocity.sqrMagnitude > incomingRelativeVelocity.sqrMagnitude)
+            incomingRelativeVelocity = sampledRelativeVelocity;
+        Vector2 incomingVelocity = incomingRelativeVelocity;
+        if (other.attachedRigidbody != null)
+            incomingVelocity += other.attachedRigidbody.linearVelocity;
+
         MorningStarHitContext context = BuildHitContext(collision, impactSpeed);
         receiver.OnMorningStarHit(context);
 
         _lastCombatHitTimeByColliderId[colliderId] = Time.time;
-        ApplyPostHitBallResponse(context);
+        if (wall != null && wall.IsBroken && IsPowerThrow)
+        {
+            // 壊した岩はColliderを無効化済み。解決前の速度を保ち、次の岩へ進む。
+            morningStarRb.linearVelocity = incomingVelocity;
+        }
+        else
+        {
+            ApplyPostHitBallResponse(collision, incomingRelativeVelocity);
+        }
         // 各Receiverが実際の被弾・破壊を確定した時だけヒットストップを依頼する。
 
         return true;
@@ -2088,7 +2153,7 @@ public class MorningStarLauncher : MonoBehaviour
 
         if (collision.contactCount > 0)
         {
-            Vector2 normal = collision.GetContact(0).normal;
+            Vector2 normal = GetBallContactNormal(collision.GetContact(0));
             if (normal.sqrMagnitude > 1e-6f)
                 impactDir = -normal.normalized;
         }
@@ -2123,12 +2188,31 @@ public class MorningStarLauncher : MonoBehaviour
             this);
     }
 
-    private void ApplyPostHitBallResponse(MorningStarHitContext context)
+    private Vector2 GetBallContactNormal(ContactPoint2D contact)
     {
-        if (postHitSpeedRetention >= 1f || morningStarRb == null)
-            return;
+        Vector2 normal = contact.normal;
+        return Vector2.Dot(normal, morningStarRb.position - contact.point) < 0f ? -normal : normal;
+    }
 
-        morningStarRb.linearVelocity *= postHitSpeedRetention;
+    private void ApplyPostHitBallResponse(Collision2D collision, Vector2 incomingRelativeVelocity)
+    {
+        Vector2 velocity = morningStarRb.linearVelocity;
+        bool rebound = false;
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            Vector2 normal = GetBallContactNormal(collision.GetContact(i));
+            float approachSpeed = -Vector2.Dot(incomingRelativeVelocity, normal);
+            if (approachSpeed < combatReboundMinSpeed || combatBallRestitution <= 0f)
+                continue;
+
+            float outwardSpeed = Vector2.Dot(velocity, normal);
+            float reboundSpeed = approachSpeed * combatBallRestitution;
+            if (outwardSpeed < reboundSpeed)
+                velocity += normal * (reboundSpeed - outwardSpeed);
+            rebound = true;
+        }
+
+        morningStarRb.linearVelocity = rebound ? velocity : velocity * postHitSpeedRetention;
     }
 
     public void PlayEnemyHitStop(float duration, bool defeated)
@@ -2719,6 +2803,7 @@ public class MorningStarLauncher : MonoBehaviour
             launchVelocity = launchVelocity.normalized * speedLimit;
 
         morningStarRb.linearVelocity = launchVelocity;
+        RecordThrowVelocityBeforePhysics();
         morningStarRb.WakeUp();
         BeginAirLaunchAssist(launchedInAir);
         PlayMorningStarLaunchSound();

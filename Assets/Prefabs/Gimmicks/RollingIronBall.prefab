@@ -202,3 +202,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RollingIronBall
   minimumCrushSpeed: 0.7
+  rollingClip: {fileID: 8300000, guid: 038a03d81ee29084885f06c5b76d4194, type: 3}
+  rollingVolume: 0.6
+  minimumRollingSpeed: 0.15
+  fullRollingSpeed: 3.5
+  rollingMaxDistance: 18
+  morningStarHitClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
+  morningStarHitVolume: 0.9
+  minimumHitSpeed: 3.5
+  hitSoundCooldown: 0.09

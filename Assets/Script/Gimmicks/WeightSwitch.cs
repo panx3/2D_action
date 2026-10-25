@@ -81,7 +81,9 @@ public partial class WeightSwitch : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (isActiveAndEnabled && !isPressed && other.CompareTag(targetTag))
+        bool canPress = other.CompareTag(targetTag)
+            || (!other.isTrigger && other.GetComponentInParent<Player>() != null);
+        if (isActiveAndEnabled && !isPressed && canPress)
             PressOnce();
     }
 
