@@ -1991,7 +1991,6 @@ public class MorningStarLauncher : MonoBehaviour
     private bool CanStateDealCombatDamage()
     {
         return _state == MorningStarState.Dragging
-            || _state == MorningStarState.SpinCharging
             || _state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
             || _state == MorningStarState.Hooked
@@ -2058,8 +2057,14 @@ public class MorningStarLauncher : MonoBehaviour
     // 岩側と鉄球側のどちらのCallbackが先でも、同じ命中を一度だけ処理する。
     public bool TryProcessBreakableWallCollision(BreakableWall wall, Collision2D collision)
     {
-        if (wall == null || morningStarRb == null || !CanStateDealCombatDamage()
+        if (wall == null || morningStarRb == null
             || collision.collider == null || collision.collider.attachedRigidbody != morningStarRb)
+            return false;
+
+        // チャージ中は岩側の物理破壊へのフォールバックも抑止する。
+        if (_state == MorningStarState.SpinCharging)
+            return true;
+        if (!CanStateDealCombatDamage())
             return false;
 
         TryProcessCombatHit(collision, wall.GetComponent<Collider2D>(), false);
