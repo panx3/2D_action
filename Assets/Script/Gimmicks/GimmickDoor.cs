@@ -6,6 +6,12 @@ public class GimmickDoor : MonoBehaviour
     [Header("Door State")]
     [SerializeField] private bool startsOpen = false;
 
+    [Header("Linked Switch Hint")]
+    [SerializeField, Tooltip("閉じたドアに初めて近づいたとき、接続されたスイッチをカメラで案内します。")]
+    private bool showSwitchHint = true;
+    [SerializeField, Min(0f), Tooltip("プレイヤーとドアのCollider間の距離（world units）。")]
+    private float switchHintDistance = 1.5f;
+
     [Header("Visual Settings")]
     [SerializeField] private SpriteRenderer backRenderer;
     [SerializeField] private SpriteRenderer barrierRenderer;
@@ -33,6 +39,10 @@ public class GimmickDoor : MonoBehaviour
     private bool isOpen;
     private bool initialized;
     private Coroutine transitionRoutine;
+    private WeightSwitch linkedSwitch;
+    private Player hintPlayer;
+    private Collider2D hintPlayerCollider;
+    private bool switchHintShown;
 
     public bool IsOpen => isOpen;
     public bool TransitionHadIntermediateFrame { get; private set; }
@@ -47,6 +57,34 @@ public class GimmickDoor : MonoBehaviour
         isOpen = startsOpen;
         ApplyStateImmediate();
         initialized = true;
+    }
+
+    internal void RegisterSwitch(WeightSwitch weightSwitch)
+    {
+        if (linkedSwitch == null || !linkedSwitch.isActiveAndEnabled)
+            linkedSwitch = weightSwitch;
+    }
+
+    private void Update()
+    {
+        if (!showSwitchHint || switchHintShown || isOpen || Time.timeScale <= 0f
+            || linkedSwitch == null || !linkedSwitch.isActiveAndEnabled || linkedSwitch.IsPressed
+            || doorCollider == null || !doorCollider.enabled)
+            return;
+
+        if (hintPlayer == null && Camera.main != null)
+        {
+            hintPlayer = Camera.main.GetComponent<CameraFollow>()?.FollowPlayer;
+            if (hintPlayer != null)
+                hintPlayerCollider = hintPlayer.GetComponent<Collider2D>();
+        }
+        if (hintPlayer == null || !hintPlayer.isActiveAndEnabled || hintPlayer.gameObject.scene != gameObject.scene
+            || hintPlayerCollider == null || !hintPlayerCollider.enabled)
+            return;
+
+        ColliderDistance2D distance = doorCollider.Distance(hintPlayerCollider);
+        if (distance.isValid && distance.distance <= switchHintDistance && linkedSwitch.TryBeginSwitchReveal(this))
+            switchHintShown = true;
     }
 
     public void Open()

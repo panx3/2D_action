@@ -88,6 +88,10 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
         if (isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
             return;
 
+        var reporter = morningStarBody.GetComponent<MorningStarCollisionReporter>();
+        if (reporter.Launcher != null && reporter.Launcher.TryProcessBreakableWallCollision(this, collision))
+            return;
+
         // OnCollisionEnter2D の時点では物理解決後の速度が落ちている場合があるため、
         // 衝突相対速度も比較して、衝突直前の勢いを取りこぼさないようにする。
         float impactSpeed = Mathf.Max(
@@ -99,8 +103,19 @@ public class BreakableWall : MonoBehaviour, IMorningStarHitReceiver
 
         Vector2 hitDirection = GetCollisionDirection(collision, morningStarBody);
         // Layerや攻撃Stateに依存しない既存の物理破壊でも、同じLauncherへ演出を依頼する。
-        var reporter = morningStarBody.GetComponent<MorningStarCollisionReporter>();
         ApplyDamage(1, hitDirection, reporter.Launcher);
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (isBroken || !TryGetMorningStarBody(collision.collider, out Rigidbody2D morningStarBody))
+            return;
+
+        var launcher = morningStarBody.GetComponent<MorningStarCollisionReporter>().Launcher;
+        // 発射前から接触していると Enter は再通知されない。投擲中だけ継続接触も評価する。
+        // 速度しきい値と同じ相手へのCooldownはLauncherの既存判定を使う。
+        if (launcher != null && launcher.State == MorningStarLauncher.MorningStarState.Thrown)
+            launcher.TryProcessBreakableWallCollision(this, collision);
     }
 
     private static bool TryGetMorningStarBody(Collider2D other, out Rigidbody2D morningStarBody)

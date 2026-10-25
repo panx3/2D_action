@@ -16,7 +16,7 @@ public partial class WeightSwitch
     [SerializeField, Min(0.01f)] private float returnToPlayerDuration = 0.40f;
 
     private Coroutine doorRevealRoutine;
-    private bool revealActive, finishingReveal, activationDispatched;
+    private bool revealActive, finishingReveal, activationDispatched, revealingSwitch;
     private bool previousPauseBlocked, previousPlayerBlocked, previousTimerPaused;
     private float revealPreviousTimeScale;
     private Vector3 revealReturnPosition;
@@ -27,9 +27,13 @@ public partial class WeightSwitch
 
     public bool IsDoorRevealPlaying => revealActive;
 
-    private bool TryBeginDoorReveal()
+    private void Start()
     {
-        if (!showDoorReveal) return false;
+        ResolveLinkedDoor()?.RegisterSwitch(this);
+    }
+
+    private GimmickDoor ResolveLinkedDoor()
+    {
         if (doorToShow == null && onPressed != null)
         {
             for (int i = 0; i < onPressed.GetPersistentEventCount(); i++)
@@ -43,6 +47,24 @@ public partial class WeightSwitch
                 }
             }
         }
+        return doorToShow;
+    }
+
+    internal bool TryBeginSwitchReveal(GimmickDoor door)
+    {
+        if (isPressed || ResolveLinkedDoor() != door) return false;
+        return TryBeginReveal(true);
+    }
+
+    private bool TryBeginDoorReveal()
+    {
+        return showDoorReveal && TryBeginReveal(false);
+    }
+
+    private bool TryBeginReveal(bool showSwitch)
+    {
+        if (revealActive || !isActiveAndEnabled) return false;
+        ResolveLinkedDoor();
         if (doorToShow == null || !doorToShow.isActiveAndEnabled || doorToShow.IsOpen) return false;
         if (doorRevealCamera == null && Camera.main != null)
             doorRevealCamera = Camera.main.GetComponent<CameraFollow>();
@@ -71,6 +93,7 @@ public partial class WeightSwitch
         revealPreviousTimeScale = Time.timeScale;
         if (revealPause != null) revealPause.SetExternalPauseBlocked(true);
         if (revealTimer != null) revealTimer.SetGimmickPresentationPaused(true);
+        revealingSwitch = showSwitch;
         revealActive = true;
         Time.timeScale = 0f;
         doorRevealRoutine = StartCoroutine(DoorRevealRoutine());
@@ -83,13 +106,16 @@ public partial class WeightSwitch
         {
             yield return WaitForReveal(pressBeatDuration);
             if (!CanContinueReveal()) yield break;
-            Vector3 focus = doorRevealCamera.ClampToBounds(doorToShow.RevealFocusPosition);
+            Vector3 target = revealingSwitch
+                ? (detectionCollider != null ? detectionCollider.bounds.center : transform.position)
+                : doorToShow.RevealFocusPosition;
+            Vector3 focus = doorRevealCamera.ClampToBounds(target);
             focus.z = revealReturnPosition.z;
             yield return MoveRevealCamera(revealReturnPosition, focus, panToDoorDuration);
             if (!CanContinueReveal()) yield break;
             yield return WaitForReveal(beforeDoorOpenDelay);
             if (!CanContinueReveal()) yield break;
-            DispatchPressedConnection();
+            if (!revealingSwitch) DispatchPressedConnection();
             yield return WaitForReveal(doorOpenHoldDuration);
             if (!CanContinueReveal()) yield break;
             yield return MoveRevealCamera(doorRevealCamera.transform.position, revealReturnPosition, returnToPlayerDuration);
@@ -124,6 +150,7 @@ public partial class WeightSwitch
     private bool CanContinueReveal()
     {
         return revealActive && isActiveAndEnabled && doorToShow != null && doorToShow.isActiveAndEnabled
+            && (!revealingSwitch || (!isPressed && !doorToShow.IsOpen))
             && Mathf.Approximately(Time.timeScale, 0f)
             && doorRevealCamera != null && doorRevealCamera.isActiveAndEnabled && doorRevealCamera.IsEventControlledBy(this)
             && revealPlayer != null && revealPlayer.isActiveAndEnabled && !revealPlayer.IsGoalInputBlocked
@@ -156,7 +183,7 @@ public partial class WeightSwitch
         try
         {
             // An interrupted reveal still commits its one-shot switch connection.
-            if (Application.isPlaying && gameObject.scene.isLoaded)
+            if (!revealingSwitch && Application.isPlaying && gameObject.scene.isLoaded)
                 DispatchPressedConnection();
         }
         finally
@@ -175,6 +202,7 @@ public partial class WeightSwitch
             if (revealPause != null && !keepStopped) revealPause.SetExternalPauseBlocked(previousPauseBlocked);
             if (!keepStopped && Mathf.Approximately(Time.timeScale, 0f)) Time.timeScale = revealPreviousTimeScale;
             revealActive = false;
+            revealingSwitch = false;
             doorRevealRoutine = null;
             finishingReveal = false;
         }

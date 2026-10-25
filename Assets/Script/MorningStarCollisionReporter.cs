@@ -26,6 +26,10 @@ public class MorningStarCollisionReporter : MonoBehaviour
             return;
         if (_impactSparks != null)
             _impactSparks.TryPlay(collision, _launcher);
+        var rollingBall = collision.collider != null
+            ? collision.collider.GetComponentInParent<RollingIronBall>() : null;
+        if (rollingBall != null)
+            rollingBall.TryPlayMorningStarImpact(collision, _launcher);
         _launcher.OnMorningStarCollision(collision);
     }
 }
