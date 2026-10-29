@@ -1,0 +1,520 @@
+fileFormatVersion: 2
+guid: 0679710939fce1443bb85eb7ad4ad455
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5959249830874678775
+    second: MachineCityProps_Source_0
+  - first:
+      213: -538804804331889870
+    second: MachineCityProps_Source_1
+  - first:
+      213: 5029332800866108899
+    second: MachineCityProps_Source_2
+  - first:
+      213: 621425320212868439
+    second: MachineCityProps_Source_3
+  - first:
+      213: 5419646408004899944
+    second: MachineCityProps_Source_4
+  - first:
+      213: -1030496421081432478
+    second: MachineCityProps_Source_5
+  - first:
+      213: 2279648156323735677
+    second: MachineCityProps_Source_6
+  - first:
+      213: 1094550470817520548
+    second: MachineCityProps_Source_7
+  - first:
+      213: -5256742344380920211
+    second: MachineCityProps_Source_8
+  - first:
+      213: -7194512418714596313
+    second: MachineCityProps_Source_9
+  - first:
+      213: -4081091994075585071
+    second: MachineCityProps_Source_10
+  - first:
+      213: 2759699691066384880
+    second: MachineCityProps_Source_11
+  - first:
+      213: 29467785791580213
+    second: MachineCityProps_Source_12
+  - first:
+      213: 4769396118579893790
+    second: MachineCityProps_Source_13
+  - first:
+      213: 5703836907806834079
+    second: MachineCityProps_Source_14
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCityProps_Source_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 33
+        width: 547
+        height: 973
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90a78ee2add7c4da0800000000000000
+      internalID: -5959249830874678775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_1
+      rect:
+        serializedVersion: 2
+        x: 566
+        y: 499
+        width: 505
+        height: 507
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23b168a92e7c588f0800000000000000
+      internalID: -538804804331889870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_2
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 489
+        width: 440
+        height: 513
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e548dc2987cbc540800000000000000
+      internalID: 5029332800866108899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_3
+      rect:
+        serializedVersion: 2
+        x: 1402
+        y: 969
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75da8b9490fbf9800800000000000000
+      internalID: 621425320212868439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_4
+      rect:
+        serializedVersion: 2
+        x: 1406
+        y: 961
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8649a5d81b3763b40800000000000000
+      internalID: 5419646408004899944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_5
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 545
+        width: 8
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26e312ff6f0f2b1f0800000000000000
+      internalID: -1030496421081432478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_6
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 45
+        width: 239
+        height: 470
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d78ec8a8befe2af10800000000000000
+      internalID: 2279648156323735677
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_7
+      rect:
+        serializedVersion: 2
+        x: 574
+        y: 61
+        width: 461
+        height: 421
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ab90d1aadf903f00800000000000000
+      internalID: 1094550470817520548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_8
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 49
+        width: 455
+        height: 417
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6ecb6f60bc4c07b0800000000000000
+      internalID: -5256742344380920211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_9
+      rect:
+        serializedVersion: 2
+        x: 1390
+        y: 446
+        width: 19
+        height: 39
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72c4166c215f72c90800000000000000
+      internalID: -7194512418714596313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_10
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 225
+        width: 21
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d52f65347c0d57c0800000000000000
+      internalID: -4081091994075585071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_11
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 181
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f164cc5f3c6c4620800000000000000
+      internalID: 2759699691066384880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_12
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 142
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 538ac688bc0b86000800000000000000
+      internalID: 29467785791580213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_13
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 17
+        width: 21
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e16d411208c403240800000000000000
+      internalID: 4769396118579893790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityProps_Source_14
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 13
+        width: 23
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9db69a8279182f40800000000000000
+      internalID: 5703836907806834079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCityProps_Source_0: -5959249830874678775
+      MachineCityProps_Source_1: -538804804331889870
+      MachineCityProps_Source_10: -4081091994075585071
+      MachineCityProps_Source_11: 2759699691066384880
+      MachineCityProps_Source_12: 29467785791580213
+      MachineCityProps_Source_13: 4769396118579893790
+      MachineCityProps_Source_14: 5703836907806834079
+      MachineCityProps_Source_2: 5029332800866108899
+      MachineCityProps_Source_3: 621425320212868439
+      MachineCityProps_Source_4: 5419646408004899944
+      MachineCityProps_Source_5: -1030496421081432478
+      MachineCityProps_Source_6: 2279648156323735677
+      MachineCityProps_Source_7: 1094550470817520548
+      MachineCityProps_Source_8: -5256742344380920211
+      MachineCityProps_Source_9: -7194512418714596313
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

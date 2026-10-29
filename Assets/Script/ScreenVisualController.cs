@@ -228,6 +228,11 @@ public sealed class ScreenVisualController : MonoBehaviour
         Shader.SetGlobalFloat("_SV_LightingEnabled", use ? 1 : 0);
         Color ambient = p.lighting.ambientColor * Mathf.Clamp(p.lighting.ambientIntensity, 0.5f, 1.5f);
         Shader.SetGlobalVector("_SV_Ambient", new Vector4(ambient.r, ambient.g, ambient.b, 1));
+        Color tone = p.lighting.worldToneColor;
+        float toneLuminance = Mathf.Max(0.001f, tone.r * 0.2126f + tone.g * 0.7152f + tone.b * 0.0722f);
+        Shader.SetGlobalVector("_SV_WorldTone", new Vector4(tone.r / toneLuminance,
+            tone.g / toneLuminance, tone.b / toneLuminance, Mathf.Clamp01(p.lighting.worldToneStrength)));
+        Shader.SetGlobalFloat("_SV_WorldSaturation", Mathf.Clamp01(p.lighting.worldSaturation));
         int max = p.quality == ScreenVisualProfile.Quality.Low ? 2 : p.quality == ScreenVisualProfile.Quality.Medium ? 4 : 8;
         int count = 0;
         Vector2 cameraPosition = targetCamera != null ? (Vector2)targetCamera.transform.position : Vector2.zero;
