@@ -59,6 +59,11 @@ public sealed class ScreenVisualProfile : ScriptableObject
         public bool localLightsEnabled = true;
         public Color ambientColor = new Color(0.96f, 0.98f, 1, 1);
         [Range(0.5f, 1.5f)] public float ambientIntensity = 1;
+        [Tooltip("ワールドのSpriteに重ねる色調。UI・背景画像には適用しません。強さ0なら従来の色を維持します。")]
+        public Color worldToneColor = Color.white;
+        [Range(0f, 1f)] public float worldToneStrength;
+        [Range(0f, 1f), Tooltip("ワールドのSpriteの彩度。1なら元の彩度を維持します。")]
+        public float worldSaturation = 1f;
     }
     [Serializable] public sealed class PetalSettings
     {
