@@ -45,12 +45,17 @@ public sealed class CRTOverlayController : MonoBehaviour
     private bool pointerKnown;
     private bool inputBlocked;
     private float signalInterference;
+    private RectTransform safeArea;
+    private Vector3 safeAreaScale;
     public bool IsVisible { get; private set; }
     public bool IsClosing { get; private set; }
     public bool IsReady => IsVisible && !IsClosing && frozenFrame != null && Time.unscaledTime - shownAt >= acquisitionDuration;
 
     private void Awake()
     {
+        safeArea = content != null ? content.transform.Find("SafeArea") as RectTransform : null;
+        if (safeArea != null)
+            safeAreaScale = safeArea.localScale;
         presentationRoot.SetActive(false);
     }
 
@@ -202,10 +207,14 @@ public sealed class CRTOverlayController : MonoBehaviour
             pulse = (1f - jitterProgress) * (0.25f + 0.75f * burst);
         }
         currentScale = Mathf.Lerp(1f, screenScale, blend);
+        // The first and last frame must match normal gameplay. Row shifts at either
+        // endpoint otherwise make the frozen backdrop appear to jump sideways.
+        pulse *= 4f * blend * (1f - blend);
         pulse = Mathf.Max(pulse, signalInterference * 0.45f);
         filter.SetOverlayFrame(this, curvature, scanlines, noise + signalInterference * 0.14f, rgbOffsetPixels,
             vignette, glassReflection, pulse, screenScale, transitionNoiseStrength, blend);
         softenedBackdrop.color = new Color(1f, 1f, 1f, blend);
+        FitContentToViewport();
         content.alpha = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.05f, 0.8f, t));
         content.interactable = IsReady && !inputBlocked;
         for (int i = 0; i < sparkles.Length; i++)
@@ -213,6 +222,20 @@ public sealed class CRTOverlayController : MonoBehaviour
             float wave = 0.65f + 0.35f * Mathf.Sin(age * 2.1f + i * 2.4f);
             sparkles[i].localScale = Vector3.one * wave;
         }
+    }
+
+    private void FitContentToViewport()
+    {
+        if (safeArea == null || !(content.transform is RectTransform viewport))
+            return;
+        Vector2 size = Vector2.Scale(safeArea.rect.size, (Vector2)safeAreaScale);
+        if (size.x <= 0f || size.y <= 0f)
+            return;
+        // Keep the existing layout at normal resolutions, with room for the CRT
+        // border when a narrow Game View or pixel-perfect viewport crops the sides.
+        float fit = Mathf.Min(1f, viewport.rect.width * 0.9f / size.x,
+            viewport.rect.height * 0.9f / size.y);
+        safeArea.localScale = new Vector3(safeAreaScale.x * fit, safeAreaScale.y * fit, safeAreaScale.z);
     }
 
     private void HandleCurvedPointer()
@@ -229,13 +252,17 @@ public sealed class CRTOverlayController : MonoBehaviour
 
         // Same destination -> source mapping as CRTFilter.shader. The UI raycaster sees
         // undistorted geometry, so CRT buttons use this mapping for mouse input only.
-        Vector2 p = new Vector2(point.x / Screen.width, point.y / Screen.height) * 2f - Vector2.one;
+        Canvas canvas = backdrop.canvas;
+        Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+        Rect viewport = camera != null ? camera.pixelRect : new Rect(0f, 0f, Screen.width, Screen.height);
+        if (!viewport.Contains(point))
+            return;
+        Vector2 p = new Vector2((point.x - viewport.x) / viewport.width,
+            (point.y - viewport.y) / viewport.height) * 2f - Vector2.one;
         p /= currentScale;
         p *= 1f + curvature * p.sqrMagnitude;
         Vector2 sourcePoint = (p * 0.5f + Vector2.one * 0.5f);
-        sourcePoint = Vector2.Scale(sourcePoint, new Vector2(Screen.width, Screen.height));
-        Canvas canvas = backdrop.canvas;
-        Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+        sourcePoint = viewport.position + Vector2.Scale(sourcePoint, viewport.size);
         foreach (CRTMenuItem item in menuItems)
         {
             UnityEngine.UI.Button button = item.Button;

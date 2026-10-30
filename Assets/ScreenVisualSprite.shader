@@ -30,6 +30,8 @@ Shader "IronBallGirl/Screen Visual Sprite"
             #include "ScreenVisualLighting.cginc"
             #include "GroundTileSeam.cginc"
             float _SV_Layer;
+            float4 _SV_WorldTone;
+            float _SV_WorldSaturation;
             struct SVOutput { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float2 world:TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
             SVOutput vert(appdata_t v)
             {
@@ -43,7 +45,16 @@ Shader "IronBallGirl/Screen Visual Sprite"
             fixed4 frag(SVOutput i):SV_Target
             {
                 fixed4 c=ApplyGroundSeam(SampleSpriteTexture(i.uv), i.world)*i.color;
-                c.rgb*=ScreenVisualLight(i.world, _SV_Layer, 1)*c.a;
+                float3 lighting=ScreenVisualLight(i.world, _SV_Layer, 1);
+                if (_SV_LightingEnabled > 0.5 && (_SV_WorldTone.a > 0.001 || _SV_WorldSaturation < 0.999))
+                {
+                    c.rgb*=lighting;
+                    half luminance=dot(c.rgb,half3(0.2126,0.7152,0.0722));
+                    c.rgb=lerp(luminance.xxx,c.rgb,_SV_WorldSaturation);
+                    c.rgb=lerp(c.rgb,luminance*_SV_WorldTone.rgb,_SV_WorldTone.a);
+                    c.rgb*=c.a;
+                }
+                else c.rgb*=lighting*c.a;
                 return c;
             }
             ENDCG

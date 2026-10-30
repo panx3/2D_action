@@ -1,0 +1,494 @@
+fileFormatVersion: 2
+guid: 5ae4a39669043dc4181100f744739f93
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4049441819009639987
+    second: MachineCityBrickExpansion_Source_0
+  - first:
+      213: 3733317578056965056
+    second: MachineCityBrickExpansion_Source_1
+  - first:
+      213: -5392779252726033563
+    second: MachineCityBrickExpansion_Source_2
+  - first:
+      213: -1280922221622298622
+    second: MachineCityBrickExpansion_Source_3
+  - first:
+      213: 7666287199727158661
+    second: MachineCityBrickExpansion_Source_4
+  - first:
+      213: -2132719520083112860
+    second: MachineCityBrickExpansion_Source_5
+  - first:
+      213: -3236717986311937667
+    second: MachineCityBrickExpansion_Source_6
+  - first:
+      213: -766243370217872303
+    second: MachineCityBrickExpansion_Source_7
+  - first:
+      213: 7598718317380241143
+    second: MachineCityBrickExpansion_Source_8
+  - first:
+      213: 259903721211064420
+    second: MachineCityBrickExpansion_Source_9
+  - first:
+      213: 7419939707825837924
+    second: MachineCityBrickExpansion_Source_10
+  - first:
+      213: -9182789750741239738
+    second: MachineCityBrickExpansion_Source_11
+  - first:
+      213: -1128449158922191536
+    second: MachineCityBrickExpansion_Source_12
+  - first:
+      213: -2022267998152196329
+    second: MachineCityBrickExpansion_Source_13
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 15
+        width: 1755
+        height: 866
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3366ea821e1823830800000000000000
+      internalID: 4049441819009639987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_1
+      rect:
+        serializedVersion: 2
+        x: 482
+        y: 821
+        width: 17
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cb9ec9ae886fc330800000000000000
+      internalID: 3733317578056965056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_2
+      rect:
+        serializedVersion: 2
+        x: 1084
+        y: 811
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5631b2187dff825b0800000000000000
+      internalID: -5392779252726033563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_3
+      rect:
+        serializedVersion: 2
+        x: 1322
+        y: 813
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2087c4ba600493ee0800000000000000
+      internalID: -1280922221622298622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_4
+      rect:
+        serializedVersion: 2
+        x: 548
+        y: 763
+        width: 20
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5858cd5279f146a60800000000000000
+      internalID: 7666287199727158661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_5
+      rect:
+        serializedVersion: 2
+        x: 492
+        y: 747
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46c87e765ee0762e0800000000000000
+      internalID: -2132719520083112860
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_6
+      rect:
+        serializedVersion: 2
+        x: 507
+        y: 741
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7162cbe32ed413d0800000000000000
+      internalID: -3236717986311937667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_7
+      rect:
+        serializedVersion: 2
+        x: 685
+        y: 749
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1546aaae6b1cd55f0800000000000000
+      internalID: -766243370217872303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_8
+      rect:
+        serializedVersion: 2
+        x: 1500
+        y: 732
+        width: 15
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f604b7cc02147960800000000000000
+      internalID: 7598718317380241143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 662
+        width: 5
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4607692be0d5b9300800000000000000
+      internalID: 259903721211064420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_10
+      rect:
+        serializedVersion: 2
+        x: 66
+        y: 47
+        width: 14
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46756cb0adbe8f660800000000000000
+      internalID: 7419939707825837924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_11
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 33
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64878fbcf5d209080800000000000000
+      internalID: -9182789750741239738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_12
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 37
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05dba5ff771f650f0800000000000000
+      internalID: -1128449158922191536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrickExpansion_Source_13
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 39
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71f7f7958f57fe3e0800000000000000
+      internalID: -2022267998152196329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCityBrickExpansion_Source_0: 4049441819009639987
+      MachineCityBrickExpansion_Source_1: 3733317578056965056
+      MachineCityBrickExpansion_Source_10: 7419939707825837924
+      MachineCityBrickExpansion_Source_11: -9182789750741239738
+      MachineCityBrickExpansion_Source_12: -1128449158922191536
+      MachineCityBrickExpansion_Source_13: -2022267998152196329
+      MachineCityBrickExpansion_Source_2: -5392779252726033563
+      MachineCityBrickExpansion_Source_3: -1280922221622298622
+      MachineCityBrickExpansion_Source_4: 7666287199727158661
+      MachineCityBrickExpansion_Source_5: -2132719520083112860
+      MachineCityBrickExpansion_Source_6: -3236717986311937667
+      MachineCityBrickExpansion_Source_7: -766243370217872303
+      MachineCityBrickExpansion_Source_8: 7598718317380241143
+      MachineCityBrickExpansion_Source_9: 259903721211064420
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
