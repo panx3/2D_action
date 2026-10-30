@@ -1,5 +1,9 @@
 # ステージセレクト
 
+手動デバッグはUnityメニュー **鉄球少女 → Stage Select → 解放デバッグ**。本番状態は表示のみで、ボタンは `IronBallGirl.StageSelect.ManualDebug.` の専用データを変更します。①未解放＋「Stage1からテスト」で実際のゴールから、②クリア直後＋「セレクト画面からテスト」で結晶出現演出から、③解放済み＋「セレクト画面からテスト」でStage2挿入から確認できます。ウィンドウ内の起動ボタンを使ってください。通常のPlayボタンは通常の保存データを使います。Play終了時に通常の保存先と以前の起動Sceneへ戻り、Sceneファイルは変更しません。
+
+本番の解放条件は `Assets/Data/StageSelect/MachineCity.asset` の **Unlock After Scene = Stage1**。**Playable** は起動許可であり、解放済みフラグではありません。本番の保存キーは `IronBallGirl.StageSelect.Clear.Stage1`（クリア／解放）と `IronBallGirl.StageSelect.Reveal.Stage2`（出現演出完了）。前者1・後者0なら初回演出待ちです。
+
 導線は `TitleScene → StageSelectScene → Stage1 / Stage2`。Stage2はStage1クリアで解放。タイトルの既存トランジションとステージの既存開始演出・BGM・ステージ名表示を使います。
 
 ## Scene とデータ
