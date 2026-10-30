@@ -176,7 +176,10 @@ public static class FallingPressPlayModeChecks
     private static FallingPressController Fixture(float x)
     {
         var go = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FallingPressSetup.PressPath), new Vector3(x, 0f, 0f), Quaternion.identity);
+        var stand = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FallingPressSetup.StandPath), new Vector3(x, 0f, 0f), Quaternion.identity);
         var p = go.GetComponent<FallingPressController>(); Set(p, "topWait", 0.3f); Set(p, "warningTime", 0.25f);
+        var so = new SerializedObject(p); so.FindProperty("ballStand").objectReferenceValue = stand.GetComponent<PressBallStandController>();
+        so.ApplyModifiedPropertiesWithoutUndo();
         Set(p, "bottomWait", 0.8f); Set(p, "ascentSpeed", 10f); return p;
     }
     private static void PlaceBall()

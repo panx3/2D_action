@@ -34,7 +34,6 @@ Transform:
   - {fileID: 4655916971303466822}
   - {fileID: 8209993871918451950}
   - {fileID: 7089537317110817025}
-  - {fileID: 774054204186865082}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!82 &1669196368613306691
@@ -146,7 +145,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f32fb9169d4d7544d8bafcb9fee22cc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallingPressController
-  ballStand: {fileID: 1538469330559837156}
+  ballStand: {fileID: 0}
   head: {fileID: 5734021973192299539}
   pressCollider: {fileID: 3532522614470312552}
   damageDetector: {fileID: 6242291958594099293}
@@ -5625,76 +5624,3 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!1001 &2212476516593464408
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 7882989609102005494}
-    m_Modifications:
-    - target: {fileID: 512989060982888996, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_Name
-      value: PressBallStand
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
---- !u!4 &774054204186865082 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-  m_PrefabInstance: {fileID: 2212476516593464408}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1538469330559837156 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 859613717248628668, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
-  m_PrefabInstance: {fileID: 2212476516593464408}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7e2eea98d8a9c84395a10d673343d98, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PressBallStandController

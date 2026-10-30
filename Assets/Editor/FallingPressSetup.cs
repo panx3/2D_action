@@ -38,6 +38,12 @@ public static class FallingPressSetup
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PressPath), scene);
         instance.transform.SetParent(group.transform);
         instance.transform.position = new Vector3(88f, 1.23808f, 0f);
+        var standInstance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(StandPath), scene);
+        standInstance.transform.SetParent(group.transform);
+        standInstance.transform.position = instance.transform.position;
+        var instanceController = instance.GetComponent<FallingPressController>();
+        Set(instanceController, "ballStand", standInstance.GetComponent<PressBallStandController>());
+        PrefabUtility.RecordPrefabInstancePropertyModifications(instanceController);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
@@ -133,14 +139,12 @@ public static class FallingPressSetup
         var material = new Material(Shader.Find("Sprites/Default"));
         material.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(Art + "LightPixel.png");
         AssetDatabase.CreateAsset(material, Art + "ImpactSparks.mat"); renderer.sharedMaterial = material;
-        var stand = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(StandPath));
-        stand.transform.SetParent(root.transform, false);
         var controller = root.AddComponent<FallingPressController>();
         Set(controller, "head", rb); Set(controller, "pressCollider", collider); Set(controller, "damageDetector", trigger);
         Set(controller, "body", body); Set(controller, "warningLight", light); Set(controller, "audioSource", audio);
         Set(controller, "floorImpact", AssetDatabase.LoadAssetAtPath<AudioClip>(Art + "PressImpact.wav"));
         Set(controller, "ballImpact", AssetDatabase.LoadAssetAtPath<AudioClip>(Art + "BallClang.wav"));
-        Set(controller, "sparks", particles); Set(controller, "ballStand", stand.GetComponent<PressBallStandController>());
+        Set(controller, "sparks", particles);
         var so = new SerializedObject(controller); var array = so.FindProperty("pistons"); array.arraySize = rods.Length;
         for (int i = 0; i < rods.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = rods[i];
         so.ApplyModifiedPropertiesWithoutUndo(); controller.ApplyGeometry();
@@ -154,10 +158,24 @@ public static class FallingPressSetup
         var stand = AssetDatabase.LoadAssetAtPath<GameObject>(StandPath);
         if (press == null || stand == null) throw new Exception("Missing prefabs.");
         var controller = press.GetComponent<FallingPressController>();
-        if (controller == null || controller.BallStand == null) throw new Exception("Missing pair reference.");
+        if (controller == null || controller.BallStand != null || press.GetComponentInChildren<PressBallStandController>(true) != null)
+            throw new Exception("Press prefab must be independent; assign the stand on the scene instance.");
+        if (stand.GetComponent<PressBallStandController>() == null) throw new Exception("Missing stand controller.");
         foreach (var c in press.GetComponentsInChildren<Collider2D>())
-            if (c.transform.IsChildOf(controller.BallStand.transform) ? (c.excludeLayers.value & (1 << 3)) == 0 : (c.excludeLayers.value & (1 << 7)) == 0)
+            if ((c.excludeLayers.value & (1 << 7)) == 0)
                 throw new Exception("Incorrect actor collision filtering: " + c.name);
+        foreach (var c in stand.GetComponentsInChildren<Collider2D>())
+            if ((c.excludeLayers.value & (1 << 3)) == 0)
+                throw new Exception("Incorrect stand collision filtering: " + c.name);
+        var assigned = new System.Collections.Generic.HashSet<PressBallStandController>();
+        foreach (var instance in UnityEngine.Object.FindObjectsByType<FallingPressController>(FindObjectsSortMode.None))
+        {
+            if (instance.gameObject.scene.path != "Assets/Scenes/Stage2.unity") continue;
+            if (instance.BallStand == null || instance.BallStand.transform.IsChildOf(instance.transform) ||
+                !assigned.Add(instance.BallStand) ||
+                PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(instance.BallStand.gameObject) != StandPath)
+                throw new Exception("Stage2 press must reference its own separate stand prefab instance.");
+        }
         foreach (string name in new[] { "PressBody", "BallStand", "Piston", "LightPixel" })
         {
             var ti = (TextureImporter)AssetImporter.GetAtPath(Art + name + ".png");

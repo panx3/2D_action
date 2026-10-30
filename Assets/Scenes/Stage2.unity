@@ -487,6 +487,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1439369114}
+  - {fileID: 1939645742}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &175494256
@@ -10873,6 +10874,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: FallingPress
       objectReference: {fileID: 0}
+    - target: {fileID: 4512677439426857598, guid: abb53a0f2338f544d9d795d1b76b595b, type: 3}
+      propertyPath: ballStand
+      value: 
+      objectReference: {fileID: 1939645743}
     - target: {fileID: 7882989609102005494, guid: abb53a0f2338f544d9d795d1b76b595b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 88
@@ -11544,6 +11549,79 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5126447631803924446, guid: a60952d5bea54ae42b62936c2a26c038, type: 3}
   m_PrefabInstance: {fileID: 1926812825}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1939645741
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 164783388}
+    m_Modifications:
+    - target: {fileID: 512989060982888996, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_Name
+      value: PressBallStand
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 88
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.23808
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+--- !u!4 &1939645742 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1443884828444776930, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+  m_PrefabInstance: {fileID: 1939645741}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1939645743 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 859613717248628668, guid: 406751a2ad41e214e9e8ad0dd285cd6b, type: 3}
+  m_PrefabInstance: {fileID: 1939645741}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7e2eea98d8a9c84395a10d673343d98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PressBallStandController
 --- !u!1001 &1969948642
 PrefabInstance:
   m_ObjectHideFlags: 0

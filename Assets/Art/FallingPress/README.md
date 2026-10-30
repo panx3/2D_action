@@ -1,6 +1,6 @@
 # Stage2 落下プレス機
 
-`Assets/Prefabs/Environment/Stage2/FallingPress/FallingPress.prefab` を1つ置けば動作する。鉄球マーク入りの `PressBallStand.prefab` が中央にネストされている。Stage2 の `Stage2FallingPress/FallingPress`（床位置 x=88, y=1.23808）に1組配置済み。
+`Assets/Prefabs/Environment/Stage2/FallingPress/` の `FallingPress.prefab`（プレス機のみ）と `PressBallStand.prefab`（鉄球マーク付き専用台座）は独立したPrefab。両方をSceneへ配置し、プレス機の `FallingPressController > Ball Stand` に台座を割り当てる。Stage2では `Stage2FallingPress` の直下に2つを並べ、床位置 x=88, y=1.23808に接続済みの1組を配置している。
 
 ## 設計・使い方
 
@@ -10,7 +10,7 @@
 - プレスは鉄球の上端+0.04で停止し、床から3.5以上のクリアランスを確認する。台座高1.9+実鉄球直径1.7で、標準停止高は約3.64。実PlayerのCollider高3.3を確保する。
 - 支点が外れると下降再開。支点が残っていれば下待機後に上昇し、次サイクルでも停止する。鉄球の質量・速度・重力・Stateへの書き込みはない。台座以外の鉄球は停止させないため、プレスの表示と重なる場合がある。
 - 既存 `PlayerHealth.TakeDamage(1, knockback)` を使用。移動区間全体のOverlapBoxで高速下降も検知し、無敵・死亡・復帰は既存HP処理に任せる。
-- 各プレスは1つの台座を所有する。Prefabを複製すれば内部参照も独立。別置きの `PressBallStand` を使う場合は、元の子台座を無効化してControllerの `Ball Stand` に別台座を割り当てる。
+- 各プレスは1つの台座を所有する。プレスと台座を別々に配置・移動できる。台座は対応するプレスの真下に置き、Inspectorの `Ball Stand` で1対1に接続する。複数組を作る場合も各プレスに専用の台座を割り当てる。台座未指定でもプレスの上下動は動くが、鉄球による停止はしない。
 - 鉄球停止時はシアンの表示、火花、金属SE。通常着地は衝撃SE、火花、既存CameraShake2Dによる小さな振動。警告は赤/黄の点滅。
 
 ## Inspector初期値
@@ -54,6 +54,8 @@ imagegen組み込みツールで新規生成した画像を切り出し、最近
 Unityメニュー `Tools/Falling Press/Validate Saved Assets` と `Run Play Mode Checks`。後者はStage2の保存データに触れず、遠方の仮設床で実Player/鉄球と仮想Gamepadを使用し、終了後は編集モードに戻る。結果は `FallingPressPlayModeChecks.Result()` で取得できる。最終的な操作感、音量、コース全体の難易度は実機Gamepadで評価する。
 
 2026-10-30の確認結果:
+
+- Prefab構造を分離。プレス機Prefab内の台座を除き、Stage2では独立した台座PrefabインスタンスへのScene参照に変更。既存PrefabのGUID・数値設定・配置位置は維持。分離後はコンパイル、Prefab構造、Scene再読込後の接続参照を確認。物理ロジックは変更していないため、以下のPlay Mode検証は分離前の結果であり、分離後の再実行はしていない。
 
 - コンパイル成功。Prefab内部参照、欠損Script、Colliderの除外Layer、PNGのImport設定を検査済み。
 - Play Mode: 警告、無支点の全下降と上昇、2組の独立動作、専用台座の鉄球で停止、3.5以上のクリアランス、鉄球が潰れないこと、Rest物理設定の維持、台座の共有拒否を確認。
