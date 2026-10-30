@@ -43,6 +43,7 @@ Material:
     - _DisplayWindow: {r: 0.08, g: 0.12, b: 0.92, a: 0.92}
     - _HousingSize: {r: 840, g: 548, b: 720, a: 440}
     - _PixelGrid: {r: 840, g: 572, b: 0, a: 0}
+    - _SpriteUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _Tone: {r: 1, g: 1, b: 1, a: 1}
     - _Window: {r: 0.16, g: 0.2, b: 0.84, a: 0.84}
   m_BuildTextureStacks: []

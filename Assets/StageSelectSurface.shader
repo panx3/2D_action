@@ -7,6 +7,7 @@ Shader "UI/IronBallGirl/StageSelectSurface"
         _PixelGrid ("Pixel Grid", Vector) = (400,240,0,0)
         _Tone ("Surface Tone", Color) = (1,1,1,1)
         _SurfaceClipY ("Hardware front lip clip", Float) = 1
+        _SpriteUVRect ("Sprite UV rectangle", Vector) = (0,0,1,1)
         _Window ("CRT source window", Vector) = (.16,.20,.84,.84)
         _DisplayWindow ("CRT display window", Vector) = (.08,.12,.92,.92)
         _HousingSize ("Housing / glass dimensions", Vector) = (840,572,720,460)
@@ -39,7 +40,7 @@ Shader "UI/IronBallGirl/StageSelectSurface"
             struct appdata { float4 vertex:POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; };
             struct v2f { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float4 world:TEXCOORD1; };
             sampler2D _MainTex;
-            float4 _PixelGrid, _Tone, _ClipRect, _Window, _DisplayWindow, _HousingSize;
+            float4 _PixelGrid, _Tone, _ClipRect, _Window, _DisplayWindow, _HousingSize, _SpriteUVRect;
             float _Mode, _SurfaceClipY;
             float Hash(float2 p) { return frac(sin(dot(p,float2(127.1,311.7)))*43758.5453); }
             float RoundBox(float2 p,float2 b,float r) { float2 q=abs(p)-b+r; return length(max(q,0))+min(max(q.x,q.y),0)-r; }
@@ -57,7 +58,8 @@ Shader "UI/IronBallGirl/StageSelectSurface"
                 if (_Mode < .5)
                 {
                     c=tex2D(_MainTex,uv)*_Tone;
-                    c.a *= step(.26,c.a)*step(i.uv.y,_SurfaceClipY);
+                    float localY=(i.uv.y-_SpriteUVRect.y)/max(_SpriteUVRect.w,.0001);
+                    c.a *= step(.26,c.a)*step(localY,_SurfaceClipY);
                 }
                 else if (_Mode < 1.5)
                 {

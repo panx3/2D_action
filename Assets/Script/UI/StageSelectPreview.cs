@@ -13,7 +13,9 @@ public sealed class StageSelectPreview : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float vignette = .22f;
     [SerializeField, Range(0f, .1f)] private float noise = .015f;
     [SerializeField, Range(.3f, 1.5f)] private float brightness = 1.06f;
-    [SerializeField, Range(0f, .15f)] private float curvature = .075f;
+    [SerializeField, Range(0f, .5f)] private float curvature = .18f;
+    [SerializeField, Range(80f,400f)] private float scanlineCount = 240f;
+    [SerializeField, Range(0f,3f)] private float rgbSeparation = .9f;
     [SerializeField, Range(0f, .3f)] private float glassReflection = .12f;
 
     private Material composition, crt;
@@ -85,6 +87,7 @@ public sealed class StageSelectPreview : MonoBehaviour
         crt.SetFloat("_PreviewTime", clock); crt.SetFloat("_Curvature", curvature);
         crt.SetFloat("_Softness", softness); crt.SetFloat("_Brightness", brightness);
         crt.SetFloat("_Scanlines", scanlines); crt.SetFloat("_Noise", noise);
+        crt.SetFloat("_ScanlineCount",scanlineCount); crt.SetFloat("_RGB",rgbSeparation);
         crt.SetFloat("_Vignette", vignette); crt.SetFloat("_Glass", glassReflection);
         crt.SetFloat("_SignalLost", SignalLost ? 1 : 0); crt.SetFloat("_Disturbance", disturbance);
         crt.SetFloat("_Clear", clearBlend);

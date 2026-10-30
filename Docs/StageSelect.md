@@ -21,9 +21,9 @@ Preview は既存 Sprite を 640×360 の RenderTexture に合成し、ゆっく
 
 ## Inspector の主な調整値
 
-Controller：解放時だけGather 1.25秒 / Crack .48秒 / Burst .45秒、切り替え .24秒、整列 .16秒、挿入 .42秒、起動 .38秒、ズーム 1秒、ゲームへの接続 .34秒。Float Height 6、周期 3.4秒、挿入先 `(0, -119)`、挿入縮小 .78（差込口の幅に対応）、Impact Shake 5。選択入力は既存 `UI/Navigate` / `Submit` / `Cancel` の複製を所有し、共有アクションを無効化しません。長押しは .34秒後から .18秒間隔、切り替え予約は最後の1件だけです。決定後の連打・戻る入力は受け付けません。
+Controller：解放時だけGather 1.65秒 / Crack .48秒 / Burst .45秒、切り替え .24秒、整列 .16秒、挿入 .42秒、起動 .38秒、ズーム 1秒、ゲームへの接続 .34秒。Float Height 6、周期 3.4秒、挿入先 `(0, -119)`、挿入縮小 .78（差込口の幅に対応）、Impact Shake 5。選択入力は既存 `UI/Navigate` / `Submit` / `Cancel` の複製を所有し、共有アクションを無効化しません。長押しは .34秒後から .18秒間隔、切り替え予約は最後の1件だけです。決定後の連打・戻る入力は受け付けません。
 
-Preview：960×600、Softness 1.2、Scanlines .1、Vignette .26、Noise .012、Brightness .9、Curvature .055、Glass Reflection .24。背景各層に Sprite、Tint、Drift を設定できます。
+Preview：960×600、Softness 1.2、Scanlines .32、Scanline Count 240、RGB Separation .9px、Vignette .26、Noise .012、Brightness .9、Curvature .18、Glass Reflection .24。背景各層に Sprite、Tint、Drift を設定できます。
 
 SE：既存の CheckpointActivate、ひびがはいる音、砕ける音を使用。切り替え・挿入・CRT起動・開始不可はオリジナルの短い合成音で、Controller の各 Clip に本素材を設定すれば差し替わります。ゲーム機・テレビ・カセットは、この画面用のオリジナル仮アートです。
 
@@ -69,8 +69,20 @@ FlowProbeは実際のStage1ゴール確定コールバックを呼び、収集�
 
 挿入時にカセットのalphaを0にする旧処理は削除しました。幅を合わせ、真下へ滑らせ、上部とラベルが筐体から出た状態でガシャンと止まります。Console前面の遮蔽はカセット下部のみを隠し、CRTズーム中もカセットはその位置に残ります。
 
-結晶殻は `Unlock/JaggedCartridgeCrystal.png` を新作。正面向き・横長・ザクザクした外周で、既存カセットを包める塊です。小さな殻から徐々に成長し、破片が横長の面全体へ吸収され、満ちた後に亀裂と破砕が起こり、下にある既存のカセットとステージ名Spriteが現れます。Growthは1.25秒、Crackは.48秒、Burstは.45秒。192×112のドット格子を素材全体へ統一し、プラスチックや金属飾りは描き込みません。生成記録は `JaggedCrystalPrompt.md`。
+結晶殻は `Unlock/JaggedCartridgeCrystal.png` を新作。正面向き・横長・ザクザクした外周で、既存カセットを包める塊です。小さな殻から徐々に成長し、破片が横長の面全体へ吸収され、満ちた後に亀裂と破砕が起こり、下にある既存のカセットとステージ名Spriteが現れます。Growthは1.65秒、Crackは.48秒、Burstは.45秒。192×112のドット格子を素材全体へ統一し、プラスチックや金属飾りは描き込みません。生成記録は `JaggedCrystalPrompt.md`。
 
 各アニメーションでは1フレームの進行を最大.05秒に制限し、初回ロードやShader準備で止まった直後も成長・挿入の途中を飛ばしません。通常の描画速度では設定秒数で再生し、低い描画速度では見えるフレームを優先します。FlowProbeは未解放時のノイズと前景非表示、実際の着座位置とカセットの不透明度、成長途中の結晶も検査・撮影します。
 
 亀裂は新しい `JaggedFractures.png`（192×112の連続した枝分かれ線）を重ねます。以前の途切れた短い縦線は使いません。専用SpriteとMaterialは同じUnlockフォルダーに置き、ゲームプレイ用の結晶Prefabには変更を加えていません。
+
+## 挿入の重なり・魚眼・手前からの融合（最新調整）
+
+挿入バグの原因は、既存のConsoleBackDeckをカセットの旧Sibling Indexへ移動したときに、その奥側の画像がカセットより前へ残ることでした。順序は **ConsoleBackDeck → Cartridge → Console（手前の差込口）** に明示的に固定しています。差込口のクリップもSpriteの実際のUV範囲で正規化してから判定し、画像の透明余白やトリミングに影響されないようにしました。FlowProbeは選択から挿入中・着座・ズームまで順序を検査します。
+
+CRTはポーズ画面と同じ半径方向のバレル歪みを参考にCurvature `.18` へ強化。角のテクスチャ引き伸ばしを防ぐオーバースキャンを入れ、走査線にも歪んだUVを使います。旧300本/高さ600pxの組合せはサンプリングが同じ位相になり濃淡が消えるため、240本・強度`.32`へ変更。微小なRGBずれ`.9px`も追加しました。前景には適用しません。ProbeはGPU上で校正用の縦線を描き、中心/端で曲がる位置差と、走査線の実際の明暗差を検査します。
+
+解放時は24枚の大きな破片が、**画面下側の手前から中央へ飛び上がり**、**Foreground Shard Scale `2.8` → 遠方サイズ → 融合** と変化します。出発位置は下端の左右へ扇状に分散し、上や横からは飛来しません。1.65秒かけて遅延をずらしながら中央の6列×4行の領域へ入り、吸収された量に応じて正面向きの結晶殻が成長します。各破片の基準サイズは42～72×66～102。白い `CrystalFusionLight` を重ね、融合する瞬間と破砕をつなぎます。**Fusion White Strength `.7`** が光量の調整項目です。常時の飾りではなく解放演出中だけ表示します。ゴール破片を使う設定・Stage1クリアのみの条件・中断再開と一度だけの解放記録は維持しています。
+
+この調整の変更対象は `StageSelectController.cs`、`StageSelectPreview.cs`、`StageSelectGlass.shader`、`StageSelectSurface.shader`、Editorの `StageSelectExperienceUpgrade.cs` / `StageSelectFlowProbe.cs`、保存済み `StageSelectScene.unity`、`SlotFrontLip.mat` / `SmoothCurvedHousing.mat`、新しい `CrystalFusionLight.mat` とその `.meta`、本書です。既存の背景Parallax、カセット、結晶殻、破片、亀裂、SEを再利用し、新規の仮画像はありません。Prefab、ゲームプレイのCRT設定、収集物、入力設定、実際のクリア記録は変更していません。
+
+最終FlowProbeはPASS。下側の大きな破片・白い融合光・結晶成長、挿入中からズームまでの描画順、カセット着座、ロック時の砂嵐、Stage1開始、クリア後の解放・中断再開・再入場を確認しました。GPU描画の校正結果は歪み11.8px、走査線の明暗差0.082。修正後コンパイル成功、検証区間のConsole Error/Exception/Warningは0件。元のTitleSceneと未保存状態を維持しました。物理コントローラーの実機操作、ステージ全編の手動クリア、最終的な演出の好みはユーザー確認です。

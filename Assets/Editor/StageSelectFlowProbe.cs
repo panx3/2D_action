@@ -21,13 +21,14 @@ public static class StageSelectFlowProbe
     private static string output;
     private static double openingVisibleAt;
     private static bool capturedBirth;
-    private static bool capturedInsert, capturedGrowth;
+    private static bool capturedInsert, capturedGrowth, capturedForeground, sawFusionLight;
     static StageSelectFlowProbe() { if (SessionState.GetBool(Key + "Running", false)) Subscribe(); }
 
     public static string Run(string outputDirectory)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorUtility.scriptCompilationFailed)
             throw new InvalidOperationException("Run in Edit Mode with a clean compilation.");
+        SessionState.SetString(Key+"Glass",VerifyGlassRendering());
         SessionState.SetString(Key + "PreviousStart", AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene));
         SessionState.SetString(Key + "PreviousScene", SceneManager.GetActiveScene().path);
         SessionState.SetBool(Key + "PreviousDirty", SceneManager.GetActiveScene().isDirty);
@@ -50,6 +51,7 @@ public static class StageSelectFlowProbe
             sawOpening = sawZoom = sawLoading = sawReveal = sawIntro = capturing = false;
             openingVisibleAt = -1; capturedBirth = false;
             capturedInsert = capturedGrowth = false;
+            capturedForeground=sawFusionLight=false;
             StageSelectProgress.TestNamespace = "FlowProbe.";
             StageSelectProgress.ClearTestData("Stage1"); StageSelectProgress.ClearTestData("Stage2");
             gamepad = InputSystem.AddDevice<Gamepad>(); keyboard = InputSystem.AddDevice<Keyboard>();
@@ -94,6 +96,13 @@ public static class StageSelectFlowProbe
             var select = UnityEngine.Object.FindAnyObjectByType<StageSelectController>();
             if (select != null)
             {
+                var view=new SerializedObject(select);
+                var light=view.FindProperty("fusionLight").objectReferenceValue as UnityEngine.UI.Image;
+                sawFusionLight |= light!=null && light.color.a>.05f;
+                var cardRect=(RectTransform)view.FindProperty("cartridge").objectReferenceValue;
+                var front=(RectTransform)view.FindProperty("console").objectReferenceValue;
+                var deck=front.parent.Find("ConsoleBackDeck");
+                Require(deck.GetSiblingIndex()<cardRect.GetSiblingIndex() && cardRect.GetSiblingIndex()<front.GetSiblingIndex(),"back deck / cartridge / front lip draw order");
                 sawOpening |= select.Phase == StageSelectController.SelectPhase.Opening;
                 sawZoom |= select.Phase == StageSelectController.SelectPhase.Zooming;
                 sawLoading |= select.Phase == StageSelectController.SelectPhase.Loading;
@@ -198,6 +207,16 @@ public static class StageSelectFlowProbe
                     UnityEngine.Object.FindAnyObjectByType<GoalMenuController>()?.LoadNextScene(); break;
                 case 18:
                     Require(select.SelectedIndex == 1 && select.SelectedStage.IsUnlocked, "clear selects newly unlocked Stage2");
+                    if(!capturedForeground && select.UnlockAssemblyProgress>.12f && select.UnlockAssemblyProgress<.4f)
+                    {
+                        int large=0, below=0;
+                        float centerY=((RectTransform)new SerializedObject(select).FindProperty("cartridge").objectReferenceValue).anchoredPosition.y;
+                        foreach(var r in select.GetComponentsInChildren<RectTransform>())
+                            if(r.name.StartsWith("Shard_") && r.localScale.x>1.5f)
+                            { large++; if(r.anchoredPosition.y<centerY) below++; }
+                        Require(large>=3 && below==large,"large crystal fragments rise from the lower foreground");
+                        capturedForeground=true;Capture(select,"05b-foreground-fragments");return;
+                    }
                     var growing = (RectTransform)new SerializedObject(select).FindProperty("crystal").objectReferenceValue;
                     if (!capturedGrowth && growing.localScale.x > .25f && growing.localScale.x < .7f)
                     { capturedGrowth = true; Capture(select, "05a-crystal-growing"); return; }
@@ -206,6 +225,7 @@ public static class StageSelectFlowProbe
                     {
                         Require(select.SelectedStage.NeedsReveal, "reveal not acknowledged early");
                         Require(capturedGrowth, "progressive crystal growth observed");
+                        Require(capturedForeground && sawFusionLight,"foreground fusion and white light observed");
                         Capture(select, "05-stage2-crystal-unlock"); Next();
                     }
                     break;
@@ -226,7 +246,7 @@ public static class StageSelectFlowProbe
                 case 23:
                     if (select == null || !select.InputReady) return;
                     Require(select.SelectedStage.IsUnlocked && !select.SelectedStage.NeedsReveal, "unlock persists / completed animation never replays");
-                    SessionState.SetString(Key + "Result", "PASS: initial Stage1/no reveal; inputs/locked guard/back/slide/CRT entry/Stage1 intro/BGM; goal crystal clear with zero pickups; Stage2 unlock/interrupted reveal/re-entry/persistence; errors=" + errors + "; warnings=" + warnings);
+                    SessionState.SetString(Key + "Result", "PASS: draw order throughout insertion; seated cartridge; locked static; foreground shards/white fusion/rectangular growth; unlock persistence; inputs/CRT entry/Stage1 intro/BGM; "+SessionState.GetString(Key+"Glass","")+"; errors="+errors+"; warnings="+warnings);
                     EditorApplication.isPlaying = false; break;
             }
         }
@@ -246,4 +266,43 @@ public static class StageSelectFlowProbe
         UnityEngine.Object.Destroy(texture); capturing = false;
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+
+    private static string VerifyGlassRendering()
+    {
+        var material=new Material(Shader.Find("Hidden/IronBallGirl/StageSelectGlass"));
+        var source=new Texture2D(320,200,TextureFormat.RGBA32,false);
+        var pixels=new Color[320*200];
+        for(int y=0;y<200;y++) for(int x=0;x<320;x++) pixels[y*320+x]=x>=228&&x<=231?Color.white:Color.black;
+        source.SetPixels(pixels);source.Apply();source.filterMode=FilterMode.Bilinear;
+        var target=new RenderTexture(600,400,0,RenderTextureFormat.ARGB32);target.Create();
+        var readback=new Texture2D(600,400,TextureFormat.RGBA32,false);
+        var old=RenderTexture.active;
+        try
+        {
+            material.SetFloat("_Curvature",.18f);material.SetFloat("_Brightness",1);
+            material.SetVector("_GlassSize",new Vector4(720,440,58,0));
+            Graphics.Blit(source,target,material);RenderTexture.active=target;
+            readback.ReadPixels(new Rect(0,0,600,400),0,0);readback.Apply();
+            float Center(int row)
+            {
+                float sum=0,weight=0;
+                for(int x=300;x<565;x++){float w=readback.GetPixel(x,row).r;sum+=x*w;weight+=w;}
+                Require(weight>.2f,"CRT calibration stripe is rendered");return sum/weight;
+            }
+            float displacement=Mathf.Abs(Center(200)-Center(340));
+            Require(displacement>4,"GPU radial barrel distortion is visible");
+            material.SetFloat("_Scanlines",.32f);material.SetFloat("_ScanlineCount",240);
+            Graphics.Blit(Texture2D.grayTexture,target,material);
+            readback.ReadPixels(new Rect(0,0,600,400),0,0);readback.Apply();
+            float low=1,high=0;
+            for(int y=40;y<360;y++){float v=readback.GetPixel(300,y).r;low=Mathf.Min(low,v);high=Mathf.Max(high,v);}
+            Require(high-low>.035f,"GPU scanline contrast is visible");
+            return "GPU glass: warp="+displacement.ToString("F1")+"px, scanline contrast="+(high-low).ToString("F3");
+        }
+        finally
+        {
+            RenderTexture.active=old;target.Release();UnityEngine.Object.DestroyImmediate(target);
+            UnityEngine.Object.DestroyImmediate(source);UnityEngine.Object.DestroyImmediate(readback);UnityEngine.Object.DestroyImmediate(material);
+        }
+    }
 }

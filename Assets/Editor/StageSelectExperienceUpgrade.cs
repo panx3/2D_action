@@ -71,9 +71,15 @@ public static class StageSelectExperienceUpgrade
         back.anchorMin = back.anchorMax = back.pivot = new Vector2(.5f, .5f); back.sizeDelta = console.sizeDelta; back.anchoredPosition = console.anchoredPosition;
         var front = console.GetComponent<UnityEngine.UI.Image>(); var backImage = back.GetComponent<UnityEngine.UI.Image>();
         backImage.sprite = front.sprite; backImage.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/StageSelect/DarkRetro/ConsoleSurface.mat"); backImage.raycastTarget = false;
-        back.SetSiblingIndex(card.GetSiblingIndex());
+        // Move the cartridge relative to the existing back deck. Moving the deck to a stale
+        // cartridge index can leave the deck in front once Unity removes its old array slot.
+        card.SetSiblingIndex(back.GetSiblingIndex() + 1);
+        console.SetSiblingIndex(card.GetSiblingIndex() + 1);
         var lip = Material("SlotFrontLip", 0, new Vector2(400, 156), new Color(.84f, .86f, .94f));
         lip.SetFloat("_SurfaceClipY", .72f); EditorUtility.SetDirty(lip); AssetDatabase.SaveAssetIfDirty(lip); front.material = lip;
+        Vector4 uv = UnityEngine.Sprites.DataUtility.GetOuterUV(front.sprite);
+        lip.SetVector("_SpriteUVRect", new Vector4(uv.x,uv.y,uv.z-uv.x,uv.w-uv.y));
+        EditorUtility.SetDirty(lip); AssetDatabase.SaveAssetIfDirty(lip);
         Edit(root.GetComponent<StageSelectLighting>(), so => { so.FindProperty("consoleBack").objectReferenceValue = back; so.FindProperty("consoleFront").objectReferenceValue = console; });
         Edit(root.GetComponent<StageSelectPreview>(), so => { so.FindProperty("curvature").floatValue = .085f; so.FindProperty("glassReflection").floatValue = .14f; });
         Edit(root.GetComponent<StageSelectController>(), so =>
@@ -103,23 +109,42 @@ public static class StageSelectExperienceUpgrade
         mass.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + "JaggedCartridgeCrystal.png");
         mass.rectTransform.sizeDelta = new Vector2(510,285);
         mass.material = Material("JaggedCrystalFacets", 0, new Vector2(192,112), Color.white);
+        // A separate additive white core hides the joins as large foreground splinters fuse.
+        var world = Find("Theatre");
+        var fusion = world.Find("CrystalFusionLight") as RectTransform;
+        if (fusion == null) { fusion = new GameObject("CrystalFusionLight",typeof(RectTransform),typeof(UnityEngine.UI.Image)).GetComponent<RectTransform>(); fusion.SetParent(world,false); }
+        fusion.anchorMin = fusion.anchorMax = fusion.pivot = new Vector2(.5f,.5f);
+        fusion.anchoredPosition = Find("CrystalBirth").anchoredPosition; fusion.sizeDelta = new Vector2(670,380);
+        var whiteLight = Material("CrystalFusionLight",1,new Vector2(320,180),Color.white);
+        whiteLight.SetFloat("_DstBlend",(float)UnityEngine.Rendering.BlendMode.One);
+        EditorUtility.SetDirty(whiteLight); AssetDatabase.SaveAssetIfDirty(whiteLight);
+        var fusionImage = fusion.GetComponent<UnityEngine.UI.Image>(); fusionImage.material = whiteLight;
+        fusionImage.raycastTarget = false; fusionImage.color = new Color(1,1,1,0);
+        fusion.SetSiblingIndex(Find("CrystalFragments").GetSiblingIndex()+1);
         Find("Cracks").sizeDelta = new Vector2(445,230);
         Find("Cracks").GetComponent<UnityEngine.UI.Image>().sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + "JaggedFractures.png");
         Edit(root.GetComponent<StageSelectPreview>(), so =>
         {
             so.FindProperty("crtShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>("Assets/StageSelectGlass.shader");
             so.FindProperty("resolution").vector2IntValue = new Vector2Int(960,600);
-            so.FindProperty("curvature").floatValue = .055f; so.FindProperty("glassReflection").floatValue = .24f;
-            so.FindProperty("softness").floatValue = 1.2f; so.FindProperty("scanlines").floatValue = .1f;
+            so.FindProperty("curvature").floatValue = .18f; so.FindProperty("glassReflection").floatValue = .24f;
+            so.FindProperty("softness").floatValue = 1.2f; so.FindProperty("scanlines").floatValue = .32f;
+            so.FindProperty("scanlineCount").floatValue = 240; so.FindProperty("rgbSeparation").floatValue = .9f;
             so.FindProperty("vignette").floatValue = .26f;
         });
         Edit(root.GetComponent<StageSelectController>(), so =>
         {
             so.FindProperty("insertPosition").vector2Value = new Vector2(0,-119);
             so.FindProperty("insertScale").floatValue = .78f;
-            so.FindProperty("gatherDuration").floatValue = 1.25f; so.FindProperty("crackDuration").floatValue = .48f;
+            so.FindProperty("gatherDuration").floatValue = 1.65f; so.FindProperty("crackDuration").floatValue = .48f;
             so.FindProperty("burstDuration").floatValue = .45f; so.FindProperty("bootDuration").floatValue = .38f;
+            so.FindProperty("fusionLight").objectReferenceValue = fusionImage;
         });
+        foreach (var image in root.GetComponentsInChildren<UnityEngine.UI.Image>(true).Where(i => i.name.StartsWith("Shard_")))
+        {
+            int index=int.Parse(image.name.Substring("Shard_".Length));
+            image.rectTransform.sizeDelta = new Vector2(42+index%4*10,66+index%4*12);
+        }
     }
     private static void CreateRichCracks()
     {

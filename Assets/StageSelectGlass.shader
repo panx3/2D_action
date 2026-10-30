@@ -14,13 +14,16 @@ Shader "Hidden/IronBallGirl/StageSelectGlass"
             sampler2D _MainTex;
             float4 _MainTex_TexelSize, _GlassSize;
             float _PreviewTime, _Curvature, _Softness, _Brightness, _Scanlines, _Vignette, _Noise, _Glass, _SignalLost, _Disturbance, _Clear;
+            float _ScanlineCount, _RGB;
             float Hash(float2 p) { float3 q=frac(float3(p.xyx)*.1031); q+=dot(q,q.yzx+33.33); return frac((q.x+q.y)*q.z); }
             float RoundBox(float2 p,float2 b,float r) { float2 q=abs(p)-b+r; return length(max(q,0))+min(max(q.x,q.y),0)-r; }
             fixed4 frag(v2f_img i):SV_Target
             {
                 float2 p=i.uv*2-1;
-                float2 uv=.5+p*(1+_Curvature*(1-_Clear)*dot(p,p))*.5;
-                uv=(uv-.5)*.94+.5;
+                float curve=_Curvature*(1-_Clear);
+                // Match the pause screen's radial barrel mapping, with bounded overscan so
+                // edge pixels stay inside the source instead of smearing the last texture column.
+                float2 uv=.5+p*(1+curve*dot(p,p))/(1+curve*1.85)*.5;
                 float row=floor(i.uv.y*300), frame=floor(_PreviewTime*30);
                 uv.x+=(Hash(float2(floor(row/8),frame))-.5)*_Disturbance*.012;
                 float2 d=abs(_MainTex_TexelSize.xy)*_Softness*(1-_Clear);
@@ -29,6 +32,10 @@ Shader "Hidden/IronBallGirl/StageSelectGlass"
                 c+=tex2D(_MainTex,uv-float2(d.x,0)).rgb*.125;
                 c+=tex2D(_MainTex,uv+float2(0,d.y)).rgb*.125;
                 c+=tex2D(_MainTex,uv-float2(0,d.y)).rgb*.125;
+                float edge=saturate(dot(p,p)*.5);
+                float2 rgb=float2(abs(_MainTex_TexelSize.x)*_RGB*(.25+edge)*(1-_Clear),0);
+                c.r=lerp(c.r,tex2D(_MainTex,uv+rgb).r,.45);
+                c.b=lerp(c.b,tex2D(_MainTex,uv-rgb).b,.45);
                 float snow=Hash(floor(i.uv*float2(620,390))+frame*float2(13,71));
                 float band=Hash(float2(floor(i.uv.y*48),frame));
                 float level=.09+snow*.42+band*.055;
@@ -37,7 +44,9 @@ Shader "Hidden/IronBallGirl/StageSelectGlass"
                     snowColor=GammaToLinearSpace(snowColor);
                 #endif
                 c=lerp(c*_Brightness,snowColor,_SignalLost);
-                float scan=.5+.5*cos(i.uv.y*300*UNITY_PI*2);
+                // 300 lines on a 600px target sampled every line at cos(pi*n+pi/2)=0.
+                // Use a non-Nyquist frequency and warped UVs so visible scanlines follow the glass.
+                float scan=.5+.5*cos(uv.y*_ScanlineCount*UNITY_PI*2+.35);
                 c*=1-scan*_Scanlines*(1-_Clear);
                 c*=1-_Vignette*(1-_Clear)*smoothstep(.25,1.8,dot(p,p));
                 c+=(snow-.5)*_Noise*(1-_Clear)*.08;

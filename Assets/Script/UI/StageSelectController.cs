@@ -36,6 +36,7 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField] private CanvasGroup controlsGroup;
     [SerializeField] private UnityEngine.UI.Image powerLamp;
     [SerializeField] private UnityEngine.UI.Image flash;
+    [SerializeField] private UnityEngine.UI.Image fusionLight;
     [SerializeField] private RectTransform console;
     [SerializeField] private RectTransform crystal;
     [SerializeField] private CanvasGroup crystalGroup;
@@ -59,6 +60,9 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField, Min(.5f)] private float floatPeriod = 3.4f;
     [SerializeField, Min(0f)] private float switchTravel = 460f;
     [SerializeField, Range(0f, 16f)] private float impactShake = 5f;
+    [Header("Unlock assembly")]
+    [SerializeField, Range(1f,5f)] private float foregroundShardScale = 2.8f;
+    [SerializeField, Range(0f,1f)] private float fusionWhiteStrength = .7f;
 
     [Header("Sound (replaceable; original chip cues are used when empty)")]
     [SerializeField] private AudioSource audioSource;
@@ -78,6 +82,8 @@ public sealed class StageSelectController : MonoBehaviour
     private AudioClip[] generatedCues;
     private string normalStatus;
     private bool showingGamepad;
+    private UnityEngine.UI.Image[] shardImages;
+    public float UnlockAssemblyProgress { get; private set; }
     public SelectPhase Phase { get; private set; } = SelectPhase.Opening;
     public StageSelectStage SelectedStage => stages != null && selected < stages.Length ? stages[selected] : null;
     public int SelectedIndex => selected;
@@ -113,6 +119,8 @@ public sealed class StageSelectController : MonoBehaviour
         loadingLabel.alpha = 0;
         flash.color = new Color(1, .8f, .94f, 0);
         foreach (var shard in shards) shard.gameObject.SetActive(false);
+        shardImages=Array.ConvertAll(shards, shard => shard.GetComponent<UnityEngine.UI.Image>());
+        SetFusionLight(0,0);
         ApplySelection();
         if (!SelectedStage.NeedsReveal) PresentRest();
     }
@@ -222,38 +230,50 @@ public sealed class StageSelectController : MonoBehaviour
     {
         controlsGroup.alpha = cartridgeGroup.alpha = 0;
         Play(gatherClip, 0, .65f);
-        for (int i = 0; i < shards.Length; i++) shards[i].gameObject.SetActive(true);
         yield return Animate(gatherDuration, t =>
         {
+            UnlockAssemblyProgress=t;
+            float absorbed=0, pulse=0;
             for (int i = 0; i < shards.Length; i++)
             {
                 float angle = i * 2.39996f;
-                Vector2 from = home + new Vector2(Mathf.Cos(angle) * (670 + i % 3 * 60), Mathf.Sin(angle) * (420 + i % 4 * 30));
-                // Absorption points fill a wide cartridge-sized body rather than a small round gem.
-                Vector2 to = home + new Vector2((i % 6 - 2.5f) * 65, (i / 6 - 1.5f) * 42);
-                float arrival = Mathf.SmoothStep(0, 1, Mathf.Clamp01((t - i % 6 * .035f) / .825f));
+                // All fragments rise from below the frame, shrinking as they leave the foreground.
+                float spread = ((i*11)%shards.Length)/(float)Mathf.Max(1,shards.Length-1)*2-1;
+                Vector2 from = home + new Vector2(spread*(440+i%3*40),-425-i%5*30);
+                Vector2 to = home + new Vector2((i%6-2.5f)*72,(i/6-1.5f)*48);
+                float delay = ((i*7)%shards.Length)/(float)Mathf.Max(1,shards.Length-1)*.28f;
+                float flight=Mathf.Clamp01((t-delay)/.68f);
+                float arrival=flight*flight*(3-2*flight);
+                float fuse=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.72f,.98f,flight));
+                absorbed+=fuse;
+                pulse+=Mathf.Exp(-Mathf.Pow((flight-.82f)/.075f,2));
+                shards[i].gameObject.SetActive(flight>0 && flight<.99f);
                 shards[i].anchoredPosition = Vector2.Lerp(from, to, arrival)
-                    + new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle)) * Mathf.Sin(arrival * Mathf.PI) * 65;
-                // Each splinter is absorbed into the solid mass before the crack phase.
-                shards[i].localScale = Vector3.one * Mathf.Lerp(.8f, 0, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.72f, 1, arrival)));
-                shards[i].localEulerAngles = new Vector3(0, 0, i * 47 + 130 * t);
+                    + Vector2.right*Mathf.Sin(angle)*Mathf.Sin(arrival*Mathf.PI)*42;
+                shards[i].localScale=Vector3.one*Mathf.Lerp(foregroundShardScale,.65f,arrival)*(1-fuse);
+                shards[i].localEulerAngles=new Vector3(0,0,i*47+70*arrival);
+                if(shardImages[i]!=null) shardImages[i].color=new Color(1,1,1,Mathf.SmoothStep(0,1,flight/.1f));
             }
-            float growth = Mathf.SmoothStep(0, 1, t);
-            crystalGroup.alpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.12f, .6f, t));
-            crystal.localScale = new Vector3(Mathf.Lerp(.08f, 1f, growth), Mathf.Lerp(.14f, 1f, growth), 1);
+            float growth=Mathf.Clamp01(absorbed/Mathf.Max(1,shards.Length));
+            crystalGroup.alpha=Mathf.SmoothStep(0,1,growth*5);
+            crystal.localScale=new Vector3(Mathf.Lerp(.06f,1,Mathf.Pow(growth,.65f)),Mathf.Lerp(.12f,1,Mathf.Sqrt(growth)),1);
+            SetFusionLight(fusionWhiteStrength*Mathf.Clamp01(pulse*.25f)*Mathf.SmoothStep(0,1,t*4),growth);
         });
+        foreach(var shard in shards) shard.gameObject.SetActive(false);
         Play(crackClip, 1, .7f);
         yield return Animate(crackDuration, t =>
         {
             cracks.alpha = t;
             crystal.anchoredPosition = home + new Vector2(Mathf.Round(Mathf.Sin(t * 80) * t * 3), 0);
             crystal.localScale = Vector3.one * (1 + t * .025f);
+            SetFusionLight(fusionWhiteStrength*(.12f+t*.18f),1);
         });
         Play(burstClip, 2, .8f);
         crystalGroup.alpha = 0; cracks.alpha = 0;
         cartridgeGroup.alpha = 1;
         preview.SignalLost = false;
         preview.Disturbance = .35f;
+        for(int i=0;i<shards.Length;i++) { shards[i].gameObject.SetActive(true); if(shardImages[i]!=null) shardImages[i].color=Color.white; }
         yield return Animate(burstDuration, t =>
         {
             float eased = EaseOut(t);
@@ -267,7 +287,8 @@ public sealed class StageSelectController : MonoBehaviour
             }
             cartridge.localScale = Vector3.one * (1 + Mathf.Sin(t * Mathf.PI) * .08f);
             controlsGroup.alpha = Mathf.SmoothStep(0, 1, t);
-            Flash(Mathf.Pow(1 - t, 4) * .7f);
+            Flash(Mathf.Pow(1 - t, 4) * .6f,true);
+            SetFusionLight(fusionWhiteStrength*Mathf.Pow(1-t,3),1+t*.5f);
             world.anchoredPosition = Vector2.right * Mathf.Round(Mathf.Sin(t * 70) * (1 - t) * impactShake);
         });
         foreach (var shard in shards) shard.gameObject.SetActive(false);
@@ -275,6 +296,7 @@ public sealed class StageSelectController : MonoBehaviour
         cartridge.localScale = Vector3.one;
         crystal.anchoredPosition = home; crystal.localRotation = Quaternion.identity;
         crystal.localScale = Vector3.one;
+        SetFusionLight(0,1);
         StageSelectProgress.CompleteReveal(SelectedStage.sceneName);
         Phase = SelectPhase.Ready;
     }
@@ -428,7 +450,14 @@ public sealed class StageSelectController : MonoBehaviour
         }
     }
     private static float EaseOut(float t) => 1 - Mathf.Pow(1 - t, 3);
-    private void Flash(float alpha) => flash.color = new Color(1, .85f, .96f, alpha);
+    private void Flash(float alpha,bool white=false) => flash.color = white ? new Color(1,1,1,alpha) : new Color(1,.85f,.96f,alpha);
+    private void SetFusionLight(float strength,float growth)
+    {
+        if(fusionLight==null) return;
+        fusionLight.color=new Color(1,.98f,1,strength);
+        fusionLight.rectTransform.anchoredPosition=home;
+        fusionLight.rectTransform.localScale=Vector3.one*Mathf.Lerp(.25f,1,Mathf.Clamp01(growth));
+    }
     private void Play(AudioClip clip, int fallback, float gain)
     {
         if (audioSource != null) audioSource.PlayOneShot(clip != null ? clip : generatedCues[fallback], effectVolume * gain);
