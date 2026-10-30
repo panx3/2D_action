@@ -25,7 +25,7 @@ public sealed class CheckpointFeedback : MonoBehaviour
     private SpriteRenderer _echo;
     private Checkpoint _checkpoint;
     private Vector3 _crystalCenter;
-    private float _unit, _pixel, _floorY, _clock;
+    private float _unit, _pixel, _clock;
     private int _quadCount;
     private bool _played;
 
@@ -73,7 +73,6 @@ public sealed class CheckpointFeedback : MonoBehaviour
             ? source.sprite.bounds : new Bounds(Vector3.zero, Vector3.one);
         _unit = Mathf.Max(0.1f, bounds.size.y);
         _pixel = _unit / 64f;
-        _floorY = bounds.min.y + _unit * 0.06f;
         Transform crystal = transform.Find("GlowTopCrystal");
         var crystalRenderer = crystal != null ? crystal.GetComponent<SpriteRenderer>() : null;
         _crystalCenter = crystalRenderer != null
@@ -161,15 +160,7 @@ public sealed class CheckpointFeedback : MonoBehaviour
                 new Vector2(_pixel * 3f * (1f - t), _unit * 0.95f), beamColor);
         }
 
-        // 記録後は床の光輪と小さな上昇粒だけを残す。
-        float pulse = 0.5f + 0.5f * Mathf.Sin(_clock * 2.2f);
-        Color floorColor = pink; floorColor.a = Mathf.Lerp(0.24f, 0.42f, pulse);
-        for (int i = 0; i < 32; i++)
-        {
-            float angle = i * (Mathf.PI * 2f / 32f);
-            AddQuad(new Vector3(Mathf.Cos(angle) * _unit * 0.4f, _floorY + Mathf.Sin(angle) * _unit * 0.075f, 0f),
-                new Vector2(_pixel * 2f, _pixel), floorColor);
-        }
+        // 記録後は小さな上昇粒だけを残す。
         for (int i = 0; i < 6; i++)
         {
             float age = Mathf.Repeat(_clock * 0.38f + i / 6f, 1f);

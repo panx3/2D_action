@@ -1,0 +1,599 @@
+fileFormatVersion: 2
+guid: 7176edf1bbab05645bce0152a1dad2ce
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -560668771835146047
+    second: MachineCitySteelExpansion_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 42
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCitySteel_Slope45Up_0_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: -5.000001, y: 21}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3ebafd04a1d8ba04fb4f779c06ba36a2
+      internalID: -1838031378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Slope45Up_0_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: -5.000001, y: -21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f6fab65608ca904e91305ef4977b012
+      internalID: -684429618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Slope45Down_0_0
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: 5, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10bcc9b93f1ea4749a41b19ca93a1549
+      internalID: -1848596839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Slope45Down_0_1
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 5, y: -21}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e959cea41d60a647a09127584dc48ab
+      internalID: 350342698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleUp_0_0
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: 11, y: 21}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4eb63cde6b9d9574dad501760b2a6d5c
+      internalID: 1275798811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleUp_0_1
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: 21, y: -21}
+        - {x: 21, y: -16}
+        - {x: 11, y: -21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 32f008cc9f78ea9478844fbbde4be649
+      internalID: 1240667072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleUp_1_0
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee6959d5ef8c3884180e7388d3be7bb2
+      internalID: 1739849736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleUp_1_1
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: -21, y: -16}
+      tessellationDetail: 0
+      bones: []
+      spriteID: c548714d3e814b1418b25497dfc500bf
+      internalID: -276487449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleDown_0_0
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: a7a6d3437ba14fd4b8fc1a5d23ec4456
+      internalID: 2073540464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleDown_0_1
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: -16}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 139360c87732a614a9df479f59193b61
+      internalID: -832779731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleDown_1_0
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: -11, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d2a879656008f64c8625ba26056d0d6
+      internalID: -2087871218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_SlopeGentleDown_1_1
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: -11, y: -21}
+        - {x: -21, y: -16}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 512e1f271c2398e48b468d9ba7e26d81
+      internalID: -1212757262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_InnerTopLeft
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: -17, y: 21}
+        - {x: -17, y: 5}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30cdc4ef9976dcd4d853f1ec88de41f0
+      internalID: -1263238489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_InnerTopRight
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: 17, y: 5}
+        - {x: 17, y: 21}
+        - {x: -21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23a587baa119f4c4b95261c273c44057
+      internalID: 1425549048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_InnerBottomLeft
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -17, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: -21, y: 21}
+        - {x: -21, y: -13}
+        - {x: -17, y: -13}
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb844c43e77e7104ea1e56a09eb70848
+      internalID: -949223310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_InnerBottomRight
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 17, y: -21}
+        - {x: 17, y: -13}
+        - {x: 21, y: -13}
+        - {x: 21, y: 21}
+        - {x: -21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3c509f1544a4c3e4298ed4e5911b6ccc
+      internalID: 77204552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 31b696e038480f841bf39eceec8a6cec
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCitySteel_InnerBottomLeft: -949223310
+      MachineCitySteel_InnerBottomRight: 77204552
+      MachineCitySteel_InnerTopLeft: -1263238489
+      MachineCitySteel_InnerTopRight: 1425549048
+      MachineCitySteel_Slope45Down_0_0: -1848596839
+      MachineCitySteel_Slope45Down_0_1: 350342698
+      MachineCitySteel_Slope45Up_0_0: -1838031378
+      MachineCitySteel_Slope45Up_0_1: -684429618
+      MachineCitySteel_SlopeGentleDown_0_0: 2073540464
+      MachineCitySteel_SlopeGentleDown_0_1: -832779731
+      MachineCitySteel_SlopeGentleDown_1_0: -2087871218
+      MachineCitySteel_SlopeGentleDown_1_1: -1212757262
+      MachineCitySteel_SlopeGentleUp_0_0: 1275798811
+      MachineCitySteel_SlopeGentleUp_0_1: 1240667072
+      MachineCitySteel_SlopeGentleUp_1_0: 1739849736
+      MachineCitySteel_SlopeGentleUp_1_1: -276487449
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

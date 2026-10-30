@@ -1,0 +1,676 @@
+fileFormatVersion: 2
+guid: c777da2220c56fa42a40e0de8af5773f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 344846761839484995
+    second: MachineCityGrate_Source_0
+  - first:
+      213: 61170663203056048
+    second: MachineCityGrate_Source_1
+  - first:
+      213: 4519067846485578431
+    second: MachineCityGrate_Source_2
+  - first:
+      213: -7517481645749631719
+    second: MachineCityGrate_Source_3
+  - first:
+      213: -5573312925723640938
+    second: MachineCityGrate_Source_4
+  - first:
+      213: -3384221131299386282
+    second: MachineCityGrate_Source_5
+  - first:
+      213: 2806702398445580620
+    second: MachineCityGrate_Source_6
+  - first:
+      213: -6149566681861524704
+    second: MachineCityGrate_Source_7
+  - first:
+      213: 3646977076166841779
+    second: MachineCityGrate_Source_8
+  - first:
+      213: 3180614905679233185
+    second: MachineCityGrate_Source_9
+  - first:
+      213: 7079794752325019784
+    second: MachineCityGrate_Source_10
+  - first:
+      213: 6248445500785783268
+    second: MachineCityGrate_Source_11
+  - first:
+      213: -3740884138769083842
+    second: MachineCityGrate_Source_12
+  - first:
+      213: 1504101913188152228
+    second: MachineCityGrate_Source_13
+  - first:
+      213: -5634280539867544508
+    second: MachineCityGrate_Source_14
+  - first:
+      213: -7217049498581725099
+    second: MachineCityGrate_Source_15
+  - first:
+      213: -581123312616041588
+    second: MachineCityGrate_Source_16
+  - first:
+      213: -6307725216759132409
+    second: MachineCityGrate_Source_17
+  - first:
+      213: -7326407688473215704
+    second: MachineCityGrate_Source_18
+  - first:
+      213: 7878050983995010248
+    second: MachineCityGrate_Source_19
+  - first:
+      213: -1863056142987855868
+    second: MachineCityGrate_Source_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_0
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 23
+        width: 1573
+        height: 723
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 340e2658d4429c400800000000000000
+      internalID: 344846761839484995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_1
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 671
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b9a4e2e46259d000800000000000000
+      internalID: 61170663203056048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_2
+      rect:
+        serializedVersion: 2
+        x: 1640
+        y: 656
+        width: 55
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb299a96344f6be30800000000000000
+      internalID: 4519067846485578431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_3
+      rect:
+        serializedVersion: 2
+        x: 1776
+        y: 615
+        width: 171
+        height: 109
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9150393c54a8ca790800000000000000
+      internalID: -7517481645749631719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_4
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 271
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69b36283c6d97a2b0800000000000000
+      internalID: -5573312925723640938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_5
+      rect:
+        serializedVersion: 2
+        x: 478
+        y: 110
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65c878bbfc4d801d0800000000000000
+      internalID: -3384221131299386282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_6
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 127
+        width: 11
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c41f599f5f863f620800000000000000
+      internalID: 2806702398445580620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_7
+      rect:
+        serializedVersion: 2
+        x: 608
+        y: 219
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 023f0154fa958aaa0800000000000000
+      internalID: -6149566681861524704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_8
+      rect:
+        serializedVersion: 2
+        x: 710
+        y: 239
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b5dae8045aac9230800000000000000
+      internalID: 3646977076166841779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_9
+      rect:
+        serializedVersion: 2
+        x: 822
+        y: 255
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a0c254b760d32c20800000000000000
+      internalID: 3180614905679233185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_10
+      rect:
+        serializedVersion: 2
+        x: 904
+        y: 111
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 888e10f11db704260800000000000000
+      internalID: 7079794752325019784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_11
+      rect:
+        serializedVersion: 2
+        x: 912
+        y: 112
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e179b8c310f6b650800000000000000
+      internalID: 6248445500785783268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_12
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 113
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3296c222b5b51cc0800000000000000
+      internalID: -3740884138769083842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_13
+      rect:
+        serializedVersion: 2
+        x: 962
+        y: 111
+        width: 11
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a3b09198b4afd410800000000000000
+      internalID: 1504101913188152228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_14
+      rect:
+        serializedVersion: 2
+        x: 970
+        y: 123
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4448c4063b30fc1b0800000000000000
+      internalID: -5634280539867544508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_15
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 224
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55010a6f7b3e7db90800000000000000
+      internalID: -7217049498581725099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_16
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 65
+        width: 493
+        height: 462
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8392d41d6f6fe7f0800000000000000
+      internalID: -581123312616041588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_17
+      rect:
+        serializedVersion: 2
+        x: 1640
+        y: 265
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70f4c4ac5557678a0800000000000000
+      internalID: -6307725216759132409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_18
+      rect:
+        serializedVersion: 2
+        x: 1646
+        y: 269
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82dfcd8360f535a90800000000000000
+      internalID: -7326407688473215704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_19
+      rect:
+        serializedVersion: 2
+        x: 1860
+        y: 79
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8cc607751a5745d60800000000000000
+      internalID: 7878050983995010248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityGrate_Source_20
+      rect:
+        serializedVersion: 2
+        x: 1912
+        y: 247
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40879901f481526e0800000000000000
+      internalID: -1863056142987855868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCityGrate_Source_0: 344846761839484995
+      MachineCityGrate_Source_1: 61170663203056048
+      MachineCityGrate_Source_10: 7079794752325019784
+      MachineCityGrate_Source_11: 6248445500785783268
+      MachineCityGrate_Source_12: -3740884138769083842
+      MachineCityGrate_Source_13: 1504101913188152228
+      MachineCityGrate_Source_14: -5634280539867544508
+      MachineCityGrate_Source_15: -7217049498581725099
+      MachineCityGrate_Source_16: -581123312616041588
+      MachineCityGrate_Source_17: -6307725216759132409
+      MachineCityGrate_Source_18: -7326407688473215704
+      MachineCityGrate_Source_19: 7878050983995010248
+      MachineCityGrate_Source_2: 4519067846485578431
+      MachineCityGrate_Source_20: -1863056142987855868
+      MachineCityGrate_Source_3: -7517481645749631719
+      MachineCityGrate_Source_4: -5573312925723640938
+      MachineCityGrate_Source_5: -3384221131299386282
+      MachineCityGrate_Source_6: 2806702398445580620
+      MachineCityGrate_Source_7: -6149566681861524704
+      MachineCityGrate_Source_8: 3646977076166841779
+      MachineCityGrate_Source_9: 3180614905679233185
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
