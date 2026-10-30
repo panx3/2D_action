@@ -11,7 +11,7 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     [SerializeField, Min(0f)] private float activationDelay = 0.8f;
     [SerializeField, Min(0f)] private float contactGrace = 0.12f;
     [SerializeField, Min(0f)] private float effectIntensity = 1f;
-    [SerializeField] private bool latchAfterActivation = true;
+    [SerializeField] private bool latchAfterActivation;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip activationSound;
     [SerializeField] private AudioClip deactivationSound;
@@ -20,7 +20,11 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     [SerializeField] private UnityEvent onPowerEnded = new UnityEvent();
     private float lostTime, heldTime;
     private bool conducting, powered, ballContact;
-    private ElectricArcEffect tipArc, ballArc, playerArc, chainArc;
+    [SerializeField, Min(0.1f)] private float actorEffectRadius = 0.65f;
+    private float flashRemaining;
+    private ElectricArcEffect tipArc, ballArc, playerArc, chainArc, contactArc;
+    public event System.Action PowerStarted;
+    public event System.Action PowerEnded;
     public bool IsConducting => conducting;
     public bool IsPowered => powered;
 
@@ -30,6 +34,7 @@ public sealed class ElectricReceiverCable : MonoBehaviour
         ballArc = gameObject.AddComponent<ElectricArcEffect>();
         playerArc = gameObject.AddComponent<ElectricArcEffect>();
         chainArc = gameObject.AddComponent<ElectricArcEffect>();
+        contactArc = gameObject.AddComponent<ElectricArcEffect>();
         if (launcher == null) launcher = FindAnyObjectByType<MorningStarLauncher>();
     }
     private bool PlayerInRange()
@@ -53,7 +58,7 @@ public sealed class ElectricReceiverCable : MonoBehaviour
             launcher.State != MorningStarLauncher.MorningStarState.StartIntro &&
             launcher.State != MorningStarLauncher.MorningStarState.Respawning;
         ballContact = connected && source != null && source.Contains(launcher.BallBody);
-        if (source != null) source.SetBallInRange(ballContact);
+        if (source != null) source.SetBallInRange(ballContact, ballContact ? launcher.BallBody.transform : null);
         bool raw = ballContact && PlayerInRange();
         if (!connected) lostTime = contactGrace + 1f;
         else if (raw) lostTime = 0f;
@@ -64,9 +69,10 @@ public sealed class ElectricReceiverCable : MonoBehaviour
             heldTime += Time.deltaTime;
             if (!powered && heldTime >= activationDelay)
             {
-                powered = true;
+                powered = true; flashRemaining = 0.25f;
                 if (audioSource != null && activationSound != null) audioSource.PlayOneShot(activationSound);
                 onPowerStarted.Invoke();
+                PowerStarted?.Invoke();
             }
         }
         else
@@ -80,27 +86,37 @@ public sealed class ElectricReceiverCable : MonoBehaviour
         powered = false;
         if (audioSource != null && deactivationSound != null) audioSource.PlayOneShot(deactivationSound);
         onPowerEnded.Invoke();
+        PowerEnded?.Invoke();
     }
     private void OnDisable()
     {
         if (source != null) source.SetBallInRange(false);
-        conducting = false; heldTime = 0f;
+        conducting = false; heldTime = 0f; flashRemaining = 0f;
+        if (body != null) body.color = Color.white;
         if (tipArc != null) tipArc.Hide();
         if (ballArc != null) ballArc.Hide();
         if (playerArc != null) playerArc.Hide();
         if (chainArc != null) chainArc.Hide();
+        if (contactArc != null) contactArc.Hide();
         if (powered && !latchAfterActivation) EndPower();
     }
     private void LateUpdate()
     {
-        if (body != null) body.color = conducting ? new Color(1f, 0.84f, 0.48f) : Color.white;
-        tipArc.DrawBurst(transform.TransformPoint(tip), radius * 0.65f, effectIntensity * (conducting ? 1.8f : 0.8f));
+        flashRemaining = Mathf.Max(0f, flashRemaining - Time.deltaTime);
+        if (body != null) body.color = flashRemaining > 0f ? new Color(1f, 1f, 0.7f) : conducting ? new Color(1f, 0.84f, 0.48f) : Color.white;
+        tipArc.DrawBurst(transform.TransformPoint(tip), radius, effectIntensity * (conducting ? 1.8f : 0.8f));
         bool charged = ballContact && launcher != null;
-        ballArc.DrawBurst(charged ? launcher.BallBody.position : Vector2.zero, 0.5f, charged ? effectIntensity : 0f);
-        playerArc.DrawBurst(charged ? (Vector2)launcher.transform.position : Vector2.zero, 0.45f, charged ? effectIntensity * 0.6f : 0f);
-        chainArc.DrawChain(charged ? launcher : null, charged ? effectIntensity : 0f);
+        Collider2D ballCollider = charged ? launcher.BallBody.GetComponentInChildren<Collider2D>() : null;
+        float ballRadius = ballCollider != null ? Mathf.Max(ballCollider.bounds.extents.x, ballCollider.bounds.extents.y) + 0.12f : actorEffectRadius;
+        ballArc.DrawBurst(charged ? launcher.BallBody.position : Vector2.zero, ballRadius, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
+        Collider2D playerCollider = charged ? launcher.GetComponent<Collider2D>() : null;
+        Vector2 playerCenter = playerCollider != null ? (Vector2)playerCollider.bounds.center : charged ? (Vector2)launcher.transform.position : Vector2.zero;
+        playerArc.DrawBurst(playerCenter, actorEffectRadius, charged ? effectIntensity * (conducting ? 0.9f : 0.6f) : 0f);
+        contactArc.DrawBolt(playerCenter, transform.TransformPoint(tip), conducting ? effectIntensity : 0f);
+        chainArc.DrawChain(charged ? launcher : null, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
     }
     private void OnDrawGizmosSelected() { Gizmos.color = Color.yellow; Gizmos.matrix = transform.localToWorldMatrix; Gizmos.DrawWireSphere(tip, radius); }
 }
+
 
 

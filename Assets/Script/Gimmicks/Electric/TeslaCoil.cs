@@ -7,7 +7,9 @@ public sealed class TeslaCoil : MonoBehaviour
     [SerializeField, Min(0.05f)] private float radius = 1f;
     [SerializeField, Min(0f)] private float effectIntensity = 1f;
     [SerializeField] private SpriteRenderer body;
-    private ElectricArcEffect arc;
+    private ElectricArcEffect arc, contactArc;
+    private Transform contactedBall;
+    public Vector2 CenterWorld => transform.TransformPoint(center);
     public bool BallInRange { get; private set; }
 
     public bool Contains(Rigidbody2D ball)
@@ -20,14 +22,15 @@ public sealed class TeslaCoil : MonoBehaviour
                 (c.ClosestPoint(point) - point).sqrMagnitude <= worldRadius * worldRadius) return true;
         return false;
     }
-    public void SetBallInRange(bool value) { BallInRange = value; }
-    private void Awake() { arc = gameObject.AddComponent<ElectricArcEffect>(); }
+    public void SetBallInRange(bool value, Transform ball = null) { BallInRange = value; contactedBall = value ? ball : null; }
+    private void Awake() { arc = gameObject.AddComponent<ElectricArcEffect>(); contactArc = gameObject.AddComponent<ElectricArcEffect>(); }
     private void LateUpdate()
     {
         if (body != null) body.color = BallInRange ? new Color(1f, 0.95f, 0.73f) : Color.white;
-        arc.DrawBurst(transform.TransformPoint(center), radius * 0.75f, effectIntensity * (BallInRange ? 1.5f : 1f));
+        arc.DrawBurst(transform.TransformPoint(center), radius, effectIntensity * (BallInRange ? 1.5f : 1f));
+        contactArc.DrawBolt(CenterWorld, contactedBall != null ? (Vector2)contactedBall.position : CenterWorld, BallInRange && contactedBall != null ? effectIntensity : 0f);
     }
-    private void OnDisable() { if (arc != null) arc.Hide(); BallInRange = false; }
+    private void OnDisable() { if (arc != null) arc.Hide(); if (contactArc != null) contactArc.Hide(); if (body != null) body.color = Color.white; BallInRange = false; contactedBall = null; }
     private void OnDrawGizmosSelected() { Gizmos.color = Color.yellow; Gizmos.matrix = transform.localToWorldMatrix; Gizmos.DrawWireSphere(center, radius); }
 }
 

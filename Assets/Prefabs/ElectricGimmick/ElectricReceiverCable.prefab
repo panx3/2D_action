@@ -53,7 +53,7 @@ MonoBehaviour:
   activationDelay: 0.8
   contactGrace: 0.12
   effectIntensity: 1
-  latchAfterActivation: 1
+  latchAfterActivation: 0
   audioSource: {fileID: 5814461678833482745}
   activationSound: {fileID: 8300000, guid: f5fddacbe25adfc419b22b57d26efc76, type: 3}
   deactivationSound: {fileID: 0}
@@ -64,6 +64,7 @@ MonoBehaviour:
   onPowerEnded:
     m_PersistentCalls:
       m_Calls: []
+  actorEffectRadius: 0.65
 --- !u!82 &5814461678833482745
 AudioSource:
   m_ObjectHideFlags: 0
