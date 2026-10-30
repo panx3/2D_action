@@ -1,0 +1,599 @@
+fileFormatVersion: 2
+guid: 6cbd4e02f2aa71345bb4425416579421
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2398551049479271470
+    second: MachineCityBrickExpansion_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 42
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCityBrick_Slope45Up_0_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: -5.000001, y: 21}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8b5855b49a4951d45b7f3a0cc9e5e2c9
+      internalID: -551218444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_Slope45Up_0_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: -5.000001, y: -21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 54290b2550dd43a48be9405c61996e88
+      internalID: -1258450934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_Slope45Down_0_0
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: 5, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: f553e9310b9494d4cbf24bc2a6c28235
+      internalID: -1110629483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_Slope45Down_0_1
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 5, y: -21}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 689a733832b17e64ea658727c539f285
+      internalID: -2062617817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleUp_0_0
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: 11, y: 21}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: e3b7c35ddab37174ba1d3b6bff0ccfd6
+      internalID: -673928917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleUp_0_1
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: 21, y: -21}
+        - {x: 21, y: -16}
+        - {x: 11, y: -21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 059b9553fc9d2ec4fabdaa73fd1d2c84
+      internalID: -810421357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleUp_1_0
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a2a7130ab0bf5a4c97ff7e27009cf64
+      internalID: 436020084
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleUp_1_1
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: -21, y: -16}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b5c5279e929ed040832ceecbf4701a8
+      internalID: -2054219045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleDown_0_0
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26b9b6d2a0b73d84098d60f1f4e1bd46
+      internalID: -985438353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleDown_0_1
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: -16}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: c2d84c67bc5ffbb49a7a37e1da324347
+      internalID: 2061363351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleDown_1_0
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 42
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: 21}
+        - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: -11, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: c049b890113a7e4488bca422e66f57bc
+      internalID: 190580035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_SlopeGentleDown_1_1
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 84
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: -11, y: -21}
+        - {x: -21, y: -16}
+      tessellationDetail: 0
+      bones: []
+      spriteID: c1e494c807f4c1c4c9d91f337dcbf978
+      internalID: 302947559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_InnerTopLeft
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: -17, y: 21}
+        - {x: -17, y: 5}
+        - {x: -21, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c932736cf513454e99acc8f931a6278
+      internalID: -878502659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_InnerTopRight
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 5}
+        - {x: 17, y: 5}
+        - {x: 17, y: 21}
+        - {x: -21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 55e60caba5182c04e855bfafaf342ce9
+      internalID: -1530507145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_InnerBottomLeft
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -17, y: -21}
+        - {x: 21, y: -21}
+        - {x: 21, y: 21}
+        - {x: -21, y: 21}
+        - {x: -21, y: -13}
+        - {x: -17, y: -13}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 01d32c2a3d2338741a26e18eb558ae1a
+      internalID: -891307243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityBrick_InnerBottomRight
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 0
+        width: 42
+        height: 42
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -21, y: -21}
+        - {x: 17, y: -21}
+        - {x: 17, y: -13}
+        - {x: 21, y: -13}
+        - {x: 21, y: 21}
+        - {x: -21, y: 21}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9ced49c9a6bd5344799b780370f5582a
+      internalID: -1800826765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: cdd49c4dc6358cf4da2f8d4a317b81f1
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCityBrick_InnerBottomLeft: -891307243
+      MachineCityBrick_InnerBottomRight: -1800826765
+      MachineCityBrick_InnerTopLeft: -878502659
+      MachineCityBrick_InnerTopRight: -1530507145
+      MachineCityBrick_Slope45Down_0_0: -1110629483
+      MachineCityBrick_Slope45Down_0_1: -2062617817
+      MachineCityBrick_Slope45Up_0_0: -551218444
+      MachineCityBrick_Slope45Up_0_1: -1258450934
+      MachineCityBrick_SlopeGentleDown_0_0: -985438353
+      MachineCityBrick_SlopeGentleDown_0_1: 2061363351
+      MachineCityBrick_SlopeGentleDown_1_0: 190580035
+      MachineCityBrick_SlopeGentleDown_1_1: 302947559
+      MachineCityBrick_SlopeGentleUp_0_0: -673928917
+      MachineCityBrick_SlopeGentleUp_0_1: -810421357
+      MachineCityBrick_SlopeGentleUp_1_0: 436020084
+      MachineCityBrick_SlopeGentleUp_1_1: -2054219045
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

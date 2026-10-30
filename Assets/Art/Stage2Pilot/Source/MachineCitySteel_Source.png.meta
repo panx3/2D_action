@@ -1,0 +1,1872 @@
+fileFormatVersion: 2
+guid: 3e9318d32c0f57641b60571bc27a4bca
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4919512361892247216
+    second: MachineCitySteel_Source_0
+  - first:
+      213: -1467207733326897568
+    second: MachineCitySteel_Source_1
+  - first:
+      213: -3997588000908772354
+    second: MachineCitySteel_Source_2
+  - first:
+      213: -2278593171589736954
+    second: MachineCitySteel_Source_3
+  - first:
+      213: 9136435141302788635
+    second: MachineCitySteel_Source_4
+  - first:
+      213: 4992538207777628460
+    second: MachineCitySteel_Source_5
+  - first:
+      213: -3112184628951904088
+    second: MachineCitySteel_Source_6
+  - first:
+      213: 1154792652943268471
+    second: MachineCitySteel_Source_7
+  - first:
+      213: -4423802125928066771
+    second: MachineCitySteel_Source_8
+  - first:
+      213: 1152948052867152382
+    second: MachineCitySteel_Source_9
+  - first:
+      213: -7249984307129493816
+    second: MachineCitySteel_Source_10
+  - first:
+      213: 951515735525566699
+    second: MachineCitySteel_Source_11
+  - first:
+      213: -496439791537765890
+    second: MachineCitySteel_Source_12
+  - first:
+      213: 2345008207794404219
+    second: MachineCitySteel_Source_13
+  - first:
+      213: -1810921171977063108
+    second: MachineCitySteel_Source_14
+  - first:
+      213: 8177832482444309780
+    second: MachineCitySteel_Source_15
+  - first:
+      213: -5398013725021320974
+    second: MachineCitySteel_Source_16
+  - first:
+      213: 7182185392721218892
+    second: MachineCitySteel_Source_17
+  - first:
+      213: -8327504704580476193
+    second: MachineCitySteel_Source_18
+  - first:
+      213: 2153283080074148564
+    second: MachineCitySteel_Source_19
+  - first:
+      213: -7652593017066245030
+    second: MachineCitySteel_Source_20
+  - first:
+      213: -4933273662127541066
+    second: MachineCitySteel_Source_21
+  - first:
+      213: 7594877002437190452
+    second: MachineCitySteel_Source_22
+  - first:
+      213: -2982601512825882945
+    second: MachineCitySteel_Source_23
+  - first:
+      213: 3112519836244935665
+    second: MachineCitySteel_Source_24
+  - first:
+      213: 6115364501558082739
+    second: MachineCitySteel_Source_25
+  - first:
+      213: -4711279176550621768
+    second: MachineCitySteel_Source_26
+  - first:
+      213: -8686865271917058130
+    second: MachineCitySteel_Source_27
+  - first:
+      213: -2030924516869325754
+    second: MachineCitySteel_Source_28
+  - first:
+      213: -8106490510007606060
+    second: MachineCitySteel_Source_29
+  - first:
+      213: 463866332736969525
+    second: MachineCitySteel_Source_30
+  - first:
+      213: 406374361526143118
+    second: MachineCitySteel_Source_31
+  - first:
+      213: -1776670211191886067
+    second: MachineCitySteel_Source_32
+  - first:
+      213: -4653976278663381745
+    second: MachineCitySteel_Source_33
+  - first:
+      213: -4681846742786453711
+    second: MachineCitySteel_Source_34
+  - first:
+      213: 6522247063280391928
+    second: MachineCitySteel_Source_35
+  - first:
+      213: 7995013089142670327
+    second: MachineCitySteel_Source_36
+  - first:
+      213: -7112968463560866619
+    second: MachineCitySteel_Source_37
+  - first:
+      213: 7606385088802600564
+    second: MachineCitySteel_Source_38
+  - first:
+      213: -7474979732273159370
+    second: MachineCitySteel_Source_39
+  - first:
+      213: -2278347552119497911
+    second: MachineCitySteel_Source_40
+  - first:
+      213: -1450504630626731811
+    second: MachineCitySteel_Source_41
+  - first:
+      213: 8683734299297304889
+    second: MachineCitySteel_Source_42
+  - first:
+      213: -6175693699713931548
+    second: MachineCitySteel_Source_43
+  - first:
+      213: 303358385592209920
+    second: MachineCitySteel_Source_44
+  - first:
+      213: 4489875694329573811
+    second: MachineCitySteel_Source_45
+  - first:
+      213: -1083467911592022108
+    second: MachineCitySteel_Source_46
+  - first:
+      213: -954682019109566850
+    second: MachineCitySteel_Source_47
+  - first:
+      213: 8117101689529033663
+    second: MachineCitySteel_Source_48
+  - first:
+      213: 7300100991002802580
+    second: MachineCitySteel_Source_49
+  - first:
+      213: 5100658535341894610
+    second: MachineCitySteel_Source_50
+  - first:
+      213: -134686440079526925
+    second: MachineCitySteel_Source_51
+  - first:
+      213: -8221647876887796750
+    second: MachineCitySteel_Source_52
+  - first:
+      213: 3732839524100108840
+    second: MachineCitySteel_Source_53
+  - first:
+      213: 2426381880722346070
+    second: MachineCitySteel_Source_54
+  - first:
+      213: 2395837953700449708
+    second: MachineCitySteel_Source_55
+  - first:
+      213: -1466387212871353036
+    second: MachineCitySteel_Source_56
+  - first:
+      213: -6016186693223380025
+    second: MachineCitySteel_Source_57
+  - first:
+      213: -2334549288516871144
+    second: MachineCitySteel_Source_58
+  - first:
+      213: 4081526580673593956
+    second: MachineCitySteel_Source_59
+  - first:
+      213: 7037815936402471215
+    second: MachineCitySteel_Source_60
+  - first:
+      213: 4284056144888497258
+    second: MachineCitySteel_Source_61
+  - first:
+      213: -3553663398664557606
+    second: MachineCitySteel_Source_62
+  - first:
+      213: 412584425509602672
+    second: MachineCitySteel_Source_63
+  - first:
+      213: 3111856163038254812
+    second: MachineCitySteel_Source_64
+  - first:
+      213: 4297857404871160087
+    second: MachineCitySteel_Source_65
+  - first:
+      213: 2536095416236994023
+    second: MachineCitySteel_Source_66
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_0
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 1243
+        width: 14
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b6fabead6e954440800000000000000
+      internalID: 4919512361892247216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_1
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 1213
+        width: 14
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06e1853175e63abe0800000000000000
+      internalID: -1467207733326897568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_2
+      rect:
+        serializedVersion: 2
+        x: 862
+        y: 1244
+        width: 15
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efbf77fa4e6b588c0800000000000000
+      internalID: -3997588000908772354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_3
+      rect:
+        serializedVersion: 2
+        x: 882
+        y: 1223
+        width: 58
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60653cb359fc060e0800000000000000
+      internalID: -2278593171589736954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_4
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 1211
+        width: 33
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b12afb6aa532bce70800000000000000
+      internalID: 9136435141302788635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1237
+        height: 1228
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c21a6226c0f094540800000000000000
+      internalID: 4992538207777628460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_6
+      rect:
+        serializedVersion: 2
+        x: 727
+        y: 1207
+        width: 44
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a014eba19c4fc4d0800000000000000
+      internalID: -3112184628951904088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_7
+      rect:
+        serializedVersion: 2
+        x: 776
+        y: 1175
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77a1aebacc5a60010800000000000000
+      internalID: 1154792652943268471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_8
+      rect:
+        serializedVersion: 2
+        x: 785
+        y: 1171
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d21907f976f7b92c0800000000000000
+      internalID: -4423802125928066771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 986
+        width: 5
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef9ff9f3528100010800000000000000
+      internalID: 1152948052867152382
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 955
+        width: 5
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c6d36a4fa1e26b90800000000000000
+      internalID: -7249984307129493816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_11
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 83
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be822362586743d00800000000000000
+      internalID: 951515735525566699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_12
+      rect:
+        serializedVersion: 2
+        x: 92
+        y: 85
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef1c50dc3aa4c19f0800000000000000
+      internalID: -496439791537765890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_13
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 85
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7bf5f46a842b8020800000000000000
+      internalID: 2345008207794404219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_14
+      rect:
+        serializedVersion: 2
+        x: 502
+        y: 43
+        width: 34
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c35b21ce9c05ed6e0800000000000000
+      internalID: -1810921171977063108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_15
+      rect:
+        serializedVersion: 2
+        x: 535
+        y: 83
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4157eb4905f7d7170800000000000000
+      internalID: 8177832482444309780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_16
+      rect:
+        serializedVersion: 2
+        x: 535
+        y: 44
+        width: 75
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f8cb63fd176615b0800000000000000
+      internalID: -5398013725021320974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_17
+      rect:
+        serializedVersion: 2
+        x: 965
+        y: 63
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4dc524df8f3ca360800000000000000
+      internalID: 7182185392721218892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_18
+      rect:
+        serializedVersion: 2
+        x: 1026
+        y: 45
+        width: 38
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd2261a9792ce6c80800000000000000
+      internalID: -8327504704580476193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_19
+      rect:
+        serializedVersion: 2
+        x: 1135
+        y: 69
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4dabda08d8ff1ed10800000000000000
+      internalID: 2153283080074148564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_20
+      rect:
+        serializedVersion: 2
+        x: 1147
+        y: 77
+        width: 10
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a54b12732378cc590800000000000000
+      internalID: -7652593017066245030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_21
+      rect:
+        serializedVersion: 2
+        x: 1154
+        y: 85
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b4f81dedbd798bb0800000000000000
+      internalID: -4933273662127541066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_22
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 54
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4336d03f46c666960800000000000000
+      internalID: 7594877002437190452
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_23
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 55
+        width: 21
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb678710abbab96d0800000000000000
+      internalID: -2982601512825882945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_24
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 48
+        width: 45
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f38cbbdc44e13b20800000000000000
+      internalID: 3112519836244935665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_25
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 31
+        width: 34
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bc37631d932ed450800000000000000
+      internalID: 6115364501558082739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_26
+      rect:
+        serializedVersion: 2
+        x: 764
+        y: 63
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8bd5104ec8c2e9eb0800000000000000
+      internalID: -4711279176550621768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_27
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 55
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea7e4b76f0e027780800000000000000
+      internalID: -8686865271917058130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_28
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 26
+        width: 75
+        height: 48
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64c3f5689e4b0d3e0800000000000000
+      internalID: -2030924516869325754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_29
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 63
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d4ebe7c4d5ff7f80800000000000000
+      internalID: -8106490510007606060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_30
+      rect:
+        serializedVersion: 2
+        x: 1139
+        y: 49
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53bdc02d8fbff6600800000000000000
+      internalID: 463866332736969525
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_31
+      rect:
+        serializedVersion: 2
+        x: 1147
+        y: 57
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e888798245bb3a500800000000000000
+      internalID: 406374361526143118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_32
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 47
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0fa3ea2bdff757e0800000000000000
+      internalID: -1776670211191886067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_33
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 33
+        width: 33
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0dbc2d7b31c96fb0800000000000000
+      internalID: -4653976278663381745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_34
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 33
+        width: 21
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13fc463613db60fb0800000000000000
+      internalID: -4681846742786453711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_35
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 45
+        width: 21
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f69920d52da38a50800000000000000
+      internalID: 6522247063280391928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_36
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 52
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f382f09b0ef3fe60800000000000000
+      internalID: 7995013089142670327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_37
+      rect:
+        serializedVersion: 2
+        x: 633
+        y: 37
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c406e65ed8a94d90800000000000000
+      internalID: -7112968463560866619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_38
+      rect:
+        serializedVersion: 2
+        x: 641
+        y: 45
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47638ea10fe4f8960800000000000000
+      internalID: 7606385088802600564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_39
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 33
+        width: 24
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6332d92a989834890800000000000000
+      internalID: -7474979732273159370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_40
+      rect:
+        serializedVersion: 2
+        x: 976
+        y: 49
+        width: 17
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94b5909f8fea160e0800000000000000
+      internalID: -2278347552119497911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_41
+      rect:
+        serializedVersion: 2
+        x: 1061
+        y: 47
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd83f6a39b5cedbe0800000000000000
+      internalID: -1450504630626731811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_42
+      rect:
+        serializedVersion: 2
+        x: 1206
+        y: 47
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 931dd793652d28870800000000000000
+      internalID: 8683734299297304889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_43
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 31
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e6eee2ec478b4aa0800000000000000
+      internalID: -6175693699713931548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_44
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 21
+        width: 28
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0021cdc28deb53400800000000000000
+      internalID: 303358385592209920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_45
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 39
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b1bc26d72e3f4e30800000000000000
+      internalID: 4489875694329573811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_46
+      rect:
+        serializedVersion: 2
+        x: 205
+        y: 37
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4afe504ccafb6f0f0800000000000000
+      internalID: -1083467911592022108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_47
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 31
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e76858103c940c2f0800000000000000
+      internalID: -954682019109566850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_48
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 33
+        width: 41
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb3e91afafcb5a070800000000000000
+      internalID: 8117101689529033663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_49
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 41
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 499f2397c2b2f4560800000000000000
+      internalID: 7300100991002802580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_50
+      rect:
+        serializedVersion: 2
+        x: 611
+        y: 33
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2db2e97d9ed29c640800000000000000
+      internalID: 5100658535341894610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_51
+      rect:
+        serializedVersion: 2
+        x: 661
+        y: 33
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f37ff6756f712ef0800000000000000
+      internalID: -134686440079526925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_52
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 39
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f322cde0d6d6ed80800000000000000
+      internalID: -8221647876887796750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_53
+      rect:
+        serializedVersion: 2
+        x: 738
+        y: 30
+        width: 28
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 822768d05c5bdc330800000000000000
+      internalID: 3732839524100108840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_54
+      rect:
+        serializedVersion: 2
+        x: 772
+        y: 41
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65056e9077d3ca120800000000000000
+      internalID: 2426381880722346070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_55
+      rect:
+        serializedVersion: 2
+        x: 942
+        y: 36
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cadc6b9dce9bf3120800000000000000
+      internalID: 2395837953700449708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_56
+      rect:
+        serializedVersion: 2
+        x: 958
+        y: 33
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43db0a1699856abe0800000000000000
+      internalID: -1466387212871353036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_57
+      rect:
+        serializedVersion: 2
+        x: 963
+        y: 31
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cb0dffd316328ca0800000000000000
+      internalID: -6016186693223380025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_58
+      rect:
+        serializedVersion: 2
+        x: 1040
+        y: 31
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81c9f438ac30a9fd0800000000000000
+      internalID: -2334549288516871144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_59
+      rect:
+        serializedVersion: 2
+        x: 1153
+        y: 33
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4624d5edcce74a830800000000000000
+      internalID: 4081526580673593956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_60
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 29
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f293ad36e485ba160800000000000000
+      internalID: 7037815936402471215
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_61
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 23
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6488e9ad56047b30800000000000000
+      internalID: 4284056144888497258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_62
+      rect:
+        serializedVersion: 2
+        x: 765
+        y: 33
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: adbaa4f87f9deaec0800000000000000
+      internalID: -3553663398664557606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_63
+      rect:
+        serializedVersion: 2
+        x: 1067
+        y: 31
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 075cb5a595bc9b500800000000000000
+      internalID: 412584425509602672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_64
+      rect:
+        serializedVersion: 2
+        x: 1077
+        y: 19
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd6510661b88f2b20800000000000000
+      internalID: 3111856163038254812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_65
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 15
+        width: 18
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 711b0a8e98e05ab30800000000000000
+      internalID: 4297857404871160087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCitySteel_Source_66
+      rect:
+        serializedVersion: 2
+        x: 1107
+        y: 15
+        width: 19
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ed6d412855023320800000000000000
+      internalID: 2536095416236994023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCitySteel_Source_0: 4919512361892247216
+      MachineCitySteel_Source_1: -1467207733326897568
+      MachineCitySteel_Source_10: -7249984307129493816
+      MachineCitySteel_Source_11: 951515735525566699
+      MachineCitySteel_Source_12: -496439791537765890
+      MachineCitySteel_Source_13: 2345008207794404219
+      MachineCitySteel_Source_14: -1810921171977063108
+      MachineCitySteel_Source_15: 8177832482444309780
+      MachineCitySteel_Source_16: -5398013725021320974
+      MachineCitySteel_Source_17: 7182185392721218892
+      MachineCitySteel_Source_18: -8327504704580476193
+      MachineCitySteel_Source_19: 2153283080074148564
+      MachineCitySteel_Source_2: -3997588000908772354
+      MachineCitySteel_Source_20: -7652593017066245030
+      MachineCitySteel_Source_21: -4933273662127541066
+      MachineCitySteel_Source_22: 7594877002437190452
+      MachineCitySteel_Source_23: -2982601512825882945
+      MachineCitySteel_Source_24: 3112519836244935665
+      MachineCitySteel_Source_25: 6115364501558082739
+      MachineCitySteel_Source_26: -4711279176550621768
+      MachineCitySteel_Source_27: -8686865271917058130
+      MachineCitySteel_Source_28: -2030924516869325754
+      MachineCitySteel_Source_29: -8106490510007606060
+      MachineCitySteel_Source_3: -2278593171589736954
+      MachineCitySteel_Source_30: 463866332736969525
+      MachineCitySteel_Source_31: 406374361526143118
+      MachineCitySteel_Source_32: -1776670211191886067
+      MachineCitySteel_Source_33: -4653976278663381745
+      MachineCitySteel_Source_34: -4681846742786453711
+      MachineCitySteel_Source_35: 6522247063280391928
+      MachineCitySteel_Source_36: 7995013089142670327
+      MachineCitySteel_Source_37: -7112968463560866619
+      MachineCitySteel_Source_38: 7606385088802600564
+      MachineCitySteel_Source_39: -7474979732273159370
+      MachineCitySteel_Source_4: 9136435141302788635
+      MachineCitySteel_Source_40: -2278347552119497911
+      MachineCitySteel_Source_41: -1450504630626731811
+      MachineCitySteel_Source_42: 8683734299297304889
+      MachineCitySteel_Source_43: -6175693699713931548
+      MachineCitySteel_Source_44: 303358385592209920
+      MachineCitySteel_Source_45: 4489875694329573811
+      MachineCitySteel_Source_46: -1083467911592022108
+      MachineCitySteel_Source_47: -954682019109566850
+      MachineCitySteel_Source_48: 8117101689529033663
+      MachineCitySteel_Source_49: 7300100991002802580
+      MachineCitySteel_Source_5: 4992538207777628460
+      MachineCitySteel_Source_50: 5100658535341894610
+      MachineCitySteel_Source_51: -134686440079526925
+      MachineCitySteel_Source_52: -8221647876887796750
+      MachineCitySteel_Source_53: 3732839524100108840
+      MachineCitySteel_Source_54: 2426381880722346070
+      MachineCitySteel_Source_55: 2395837953700449708
+      MachineCitySteel_Source_56: -1466387212871353036
+      MachineCitySteel_Source_57: -6016186693223380025
+      MachineCitySteel_Source_58: -2334549288516871144
+      MachineCitySteel_Source_59: 4081526580673593956
+      MachineCitySteel_Source_6: -3112184628951904088
+      MachineCitySteel_Source_60: 7037815936402471215
+      MachineCitySteel_Source_61: 4284056144888497258
+      MachineCitySteel_Source_62: -3553663398664557606
+      MachineCitySteel_Source_63: 412584425509602672
+      MachineCitySteel_Source_64: 3111856163038254812
+      MachineCitySteel_Source_65: 4297857404871160087
+      MachineCitySteel_Source_66: 2536095416236994023
+      MachineCitySteel_Source_7: 1154792652943268471
+      MachineCitySteel_Source_8: -4423802125928066771
+      MachineCitySteel_Source_9: 1152948052867152382
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
