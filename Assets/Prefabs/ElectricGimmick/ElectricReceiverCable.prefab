@@ -48,7 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElectricReceiverCable
   source: {fileID: 0}
   launcher: {fileID: 0}
-  tip: {x: -1.35, y: 0.3}
+  tip: {x: -1.35, y: 0.53}
   radius: 0.8
   activationDelay: 0.8
   contactGrace: 0.12
