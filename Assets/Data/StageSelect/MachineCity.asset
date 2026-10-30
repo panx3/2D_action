@@ -19,6 +19,8 @@ MonoBehaviour:
   accent: {r: 1, g: 0.7294118, b: 0.5803922, a: 1}
   sceneName: Stage2
   playable: 0
+  unlockAfterScene: Stage1
+  lockedMessage: "Stage1\u30AF\u30EA\u30A2\u3067\u89E3\u653E"
   unavailableMessage: "\u305F\u3060\u3044\u307E\u5236\u4F5C\u4E2D"
   screenColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
   far:

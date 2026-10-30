@@ -48,6 +48,8 @@ public static class StageSelectFlowProbe
             started = changedAt = EditorApplication.timeSinceStartup; step = errors = warnings = 0;
             sawOpening = sawZoom = sawLoading = sawReveal = sawIntro = capturing = false;
             openingVisibleAt = -1; capturedBirth = false;
+            StageSelectProgress.TestNamespace = "FlowProbe.";
+            StageSelectProgress.ClearTestData("Stage1"); StageSelectProgress.ClearTestData("Stage2");
             gamepad = InputSystem.AddDevice<Gamepad>(); keyboard = InputSystem.AddDevice<Keyboard>();
             Application.logMessageReceived += Log; EditorApplication.update += Tick;
         }
@@ -56,6 +58,8 @@ public static class StageSelectFlowProbe
             EditorApplication.update -= Tick; Application.logMessageReceived -= Log;
             if (gamepad != null && gamepad.added) InputSystem.RemoveDevice(gamepad);
             if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
+            StageSelectProgress.ClearTestData("Stage1"); StageSelectProgress.ClearTestData("Stage2");
+            StageSelectProgress.TestNamespace = null;
         }
         else if (state == PlayModeStateChange.EnteredEditMode)
         {
@@ -107,7 +111,7 @@ public static class StageSelectFlowProbe
                     title.OnStartPressed(); title.OnStartPressed(); Next(); break;
                 case 1:
                     if (select == null || !select.InputReady) return;
-                    Require(sawOpening && select.SelectedStage.sceneName == "Stage1" && select.SelectedStage.CanLaunch, "opening/Stage1 cartridge");
+                    Require(select.SelectedStage.sceneName == "Stage1" && select.SelectedStage.CanLaunch && !select.SelectedStage.NeedsReveal, "Stage1 initially available without reveal");
                     Require(UnityEngine.Object.FindObjectsByType<CRTFilterController>(FindObjectsSortMode.None).Length == 0, "selection must not have fullscreen CRT");
                     Capture(select, "01-select-ready"); Next(); break;
                 case 2:
@@ -151,7 +155,7 @@ public static class StageSelectFlowProbe
                     Next(); break;
                 case 13:
                     if (select.Phase != StageSelectController.SelectPhase.Zooming) return;
-                    if (Elapsed < 1.35) return;
+                    if (select.GetComponentInChildren<Canvas>().transform.Find("Theatre").localScale.x < 1.25f) return;
                     Capture(select, "03-crt-zoom"); Next(); break;
                 case 14:
                     if (SceneManager.GetActiveScene().name != "Stage1" || TitleStageTransition.IsTransitioning) return;
@@ -167,7 +171,42 @@ public static class StageSelectFlowProbe
                     Require(UnityEngine.Object.FindObjectsByType<CRTFilterController>(FindObjectsSortMode.None).Length == 1, "one original gameplay CRT");
                     capturing = true; intro.StartCoroutine(Snapshot("04-stage1-start")); Next(); break;
                 case 16:
-                    SessionState.SetString(Key + "Result", "PASS: title/intro/stick/dpad/keyboard/wrap/rapid input/unavailable/back/insert/CRT entry/Stage1 intro/BGM/cleanup; errors=" + errors + "; warnings=" + warnings + "; entrance=" + sawIntro);
+                    Require(PinkJewelCollection.Current == null || PinkJewelCollection.Current.CollectedMask == 0, "clear test must not require collection pickups");
+                    var goalPoint = UnityEngine.Object.FindAnyObjectByType<GoalPoint>();
+                    Require(goalPoint != null, "stage goal crystal");
+                    typeof(GoalPoint).GetMethod("ReachGoal", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(goalPoint, null);
+                    Require(StageSelectProgress.IsCleared("Stage1"), "actual goal callback persists clear milestone");
+                    Next(); break;
+                case 17:
+                    if (select != null) { capturedBirth = false; Next(); break; }
+                    UnityEngine.Object.FindAnyObjectByType<GoalMenuController>()?.LoadNextScene(); break;
+                case 18:
+                    Require(select.SelectedIndex == 1 && select.SelectedStage.IsUnlocked, "clear selects newly unlocked Stage2");
+                    var fracture = new SerializedObject(select).FindProperty("cracks").objectReferenceValue as CanvasGroup;
+                    if (select.Phase == StageSelectController.SelectPhase.Opening && fracture.alpha > .2f)
+                    {
+                        Require(select.SelectedStage.NeedsReveal, "reveal not acknowledged early");
+                        Capture(select, "05-stage2-crystal-unlock"); Next();
+                    }
+                    break;
+                case 19:
+                    Require(select.SelectedStage.NeedsReveal, "interrupted reveal must remain pending");
+                    select.Back(); Next(); break;
+                case 20:
+                    if (title == null || !title.InputReady) return;
+                    title.OnStartPressed(); Next(); break;
+                case 21:
+                    if (select == null || !select.InputReady) return;
+                    Require(select.SelectedIndex == 1 && !select.SelectedStage.NeedsReveal, "interrupted unlock replays and completes");
+                    Capture(select, "06-stage2-unlocked"); Next(); break;
+                case 22:
+                    if (select != null) { select.Back(); return; }
+                    if (title == null || !title.InputReady) return;
+                    title.OnStartPressed(); Next(); break;
+                case 23:
+                    if (select == null || !select.InputReady) return;
+                    Require(select.SelectedStage.IsUnlocked && !select.SelectedStage.NeedsReveal, "unlock persists / completed animation never replays");
+                    SessionState.SetString(Key + "Result", "PASS: initial Stage1/no reveal; inputs/locked guard/back/slide/CRT entry/Stage1 intro/BGM; goal crystal clear with zero pickups; Stage2 unlock/interrupted reveal/re-entry/persistence; errors=" + errors + "; warnings=" + warnings);
                     EditorApplication.isPlaying = false; break;
             }
         }

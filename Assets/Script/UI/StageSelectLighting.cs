@@ -11,6 +11,8 @@ public sealed class StageSelectLighting : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Image crystalGlow;
     [SerializeField] private UnityEngine.UI.Image powerGlow;
     [SerializeField] private UnityEngine.UI.Image[] motes;
+    [SerializeField] private RectTransform consoleBack;
+    [SerializeField] private RectTransform consoleFront;
     [SerializeField] private Color crtColor = new Color(.24f, .5f, 1f);
     [SerializeField] private Color crystalColor = new Color(1f, .22f, .6f);
     [SerializeField, Range(0f, .5f)] private float crtSpill = .13f;
@@ -28,6 +30,7 @@ public sealed class StageSelectLighting : MonoBehaviour
     private void LateUpdate()
     {
         if (controller == null) return;
+        if (consoleBack != null && consoleFront != null) consoleBack.anchoredPosition = consoleFront.anchoredPosition;
         float t = Time.unscaledTime;
         float breath = .9f + .1f * Mathf.Sin(t * Mathf.PI * 2 / Mathf.Max(.5f, breathPeriod));
         bool powered = controller.Phase == StageSelectController.SelectPhase.Zooming

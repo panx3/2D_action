@@ -45,6 +45,7 @@ public static class StageSelectSceneBuilder
             SceneManager.SetActiveScene(scene);
             CreateView(new[] { first, second });
             StageSelectVisualUpgrade.ApplyToScene(scene);
+            StageSelectExperienceUpgrade.ApplyToScene(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
             ConnectTitle();
             var scenes = EditorBuildSettings.globalScenes.ToList();

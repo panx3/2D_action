@@ -25,6 +25,7 @@ public static class StageSelectVisualUpgrade
         {
             if (scene.isDirty) throw new InvalidOperationException("StageSelectScene has unsaved edits. It was not modified.");
             ApplyToScene(scene);
+            StageSelectExperienceUpgrade.ApplyToScene(scene);
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
             return "Applied dark retro hardware, separate CRT/lighting, and cartridge/slot alignment to the existing StageSelectScene.";
         }

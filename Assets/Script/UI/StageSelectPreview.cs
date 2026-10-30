@@ -13,6 +13,8 @@ public sealed class StageSelectPreview : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float vignette = .22f;
     [SerializeField, Range(0f, .1f)] private float noise = .015f;
     [SerializeField, Range(.3f, 1.5f)] private float brightness = 1.06f;
+    [SerializeField, Range(0f, .15f)] private float curvature = .075f;
+    [SerializeField, Range(0f, .3f)] private float glassReflection = .12f;
 
     private Material composition, crt;
     private RenderTexture source, softened, output;
@@ -62,7 +64,7 @@ public sealed class StageSelectPreview : MonoBehaviour
         Vector4 uv = sprite != null ? UnityEngine.Sprites.DataUtility.GetOuterUV(sprite) : new Vector4(0, 0, 1, 1);
         composition.SetVector(prefix + "Rect", new Vector4(uv.x, uv.y, uv.z - uv.x, uv.w - uv.y));
         float aspect = sprite != null ? sprite.rect.width / sprite.rect.height : 16f / 9f;
-        float targetAspect = output.width / (float)output.height;
+        float targetAspect = screen.rectTransform.rect.width / Mathf.Max(1, screen.rectTransform.rect.height);
         composition.SetVector(prefix + "Crop", new Vector4(Mathf.Min(1f, targetAspect / aspect),
             Mathf.Min(1f, aspect / targetAspect), layer != null ? layer.drift : 0f, 0));
     }
@@ -86,9 +88,9 @@ public sealed class StageSelectPreview : MonoBehaviour
         crt.SetFloat("_MasterStrength", .4f * (1 - clearBlend));
         crt.SetFloat("_OverlayActive", 1);
         crt.SetFloat("_OverlayBlend", 1 - clearBlend);
-        crt.SetVector("_OverlayShape", new Vector4(.015f, vignette, disturbance, 1.015f));
+        crt.SetVector("_OverlayShape", new Vector4(curvature, vignette, disturbance, 1.075f));
         crt.SetVector("_OverlaySignal", new Vector4(scanlines, noise + disturbance * .16f, .35f, 12f));
-        crt.SetFloat("_OverlayGlass", .025f);
+        crt.SetFloat("_OverlayGlass", glassReflection);
         Graphics.Blit(softened, output, crt, 0);
     }
 

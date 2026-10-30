@@ -48,6 +48,7 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField, Min(.1f)] private float burstDuration = .38f;
     [SerializeField, Min(.1f)] private float switchDuration = .24f;
     [SerializeField, Min(.1f)] private float insertDuration = .52f;
+    [SerializeField, Min(.01f)] private float alignDuration = .16f;
     [SerializeField, Min(.1f)] private float bootDuration = .26f;
     [SerializeField, Min(.1f)] private float zoomDuration = 1.0f;
     [SerializeField, Min(.1f)] private float revealDuration = .34f;
@@ -103,6 +104,8 @@ public sealed class StageSelectController : MonoBehaviour
         home = cartridge.anchoredPosition;
         consoleHome = console.anchoredPosition;
         selected = Mathf.Max(0, Array.FindIndex(stages, value => value.name == lastCartridge));
+        int pending = Array.FindIndex(stages, value => value.NeedsReveal);
+        if (pending >= 0) selected = pending;
         generatedCues = new AudioClip[7];
         for (int i = 0; i < generatedCues.Length; i++) generatedCues[i] = ChipCue(i);
         cartridgeGroup.alpha = controlsGroup.alpha = crystalGroup.alpha = cracks.alpha = 0;
@@ -110,13 +113,15 @@ public sealed class StageSelectController : MonoBehaviour
         flash.color = new Color(1, .8f, .94f, 0);
         foreach (var shard in shards) shard.gameObject.SetActive(false);
         ApplySelection();
+        if (!SelectedStage.NeedsReveal) PresentRest();
     }
 
     private IEnumerator Start()
     {
         // Do not spend the crystal animation underneath the title's existing loading veil.
         while (TitleStageTransition.IsTransitioning) yield return null;
-        yield return Opening();
+        if (SelectedStage.NeedsReveal) yield return Opening();
+        else { PresentRest(); Phase = SelectPhase.Ready; }
     }
 
     private void Update()
@@ -144,8 +149,9 @@ public sealed class StageSelectController : MonoBehaviour
         if (Phase == SelectPhase.Ready)
         {
             idleClock += Time.unscaledDeltaTime;
-            cartridge.anchoredPosition = home + Vector2.up * Mathf.Round(Mathf.Sin(idleClock * Mathf.PI * 2 / Mathf.Max(.5f, floatPeriod)) * floatHeight);
-            cartridge.localEulerAngles = new Vector3(0, 0, Mathf.Sin(idleClock * 1.2f) * .65f);
+            RectTransform floating = SelectedStage.IsUnlocked ? cartridge : crystal;
+            floating.anchoredPosition = home + Vector2.up * Mathf.Round(Mathf.Sin(idleClock * Mathf.PI * 2 / Mathf.Max(.5f, floatPeriod)) * floatHeight);
+            floating.localEulerAngles = new Vector3(0, 0, Mathf.Sin(idleClock * 1.2f) * .65f);
             if (deniedUntil > 0 && Time.unscaledTime >= deniedUntil)
             { deniedUntil = 0; status.text = normalStatus; status.color = SelectedStage.accent; }
         }
@@ -175,7 +181,7 @@ public sealed class StageSelectController : MonoBehaviour
         if (!SelectedStage.CanLaunch)
         {
             Play(deniedClip, 6, .5f);
-            status.text = SelectedStage.playable ? "このカセットはまだ起動できません" : SelectedStage.unavailableMessage;
+            status.text = !SelectedStage.IsUnlocked ? SelectedStage.lockedMessage : SelectedStage.playable ? "このカセットはまだ起動できません" : SelectedStage.unavailableMessage;
             status.color = new Color(1, .6f, .71f); deniedUntil = Time.unscaledTime + 1.6f;
             preview.Disturbance = .22f;
             return;
@@ -213,6 +219,7 @@ public sealed class StageSelectController : MonoBehaviour
 
     private IEnumerator Opening()
     {
+        controlsGroup.alpha = cartridgeGroup.alpha = 0;
         Play(gatherClip, 0, .65f);
         for (int i = 0; i < shards.Length; i++) shards[i].gameObject.SetActive(true);
         yield return Animate(gatherDuration, t =>
@@ -222,8 +229,11 @@ public sealed class StageSelectController : MonoBehaviour
                 float angle = i * 2.39996f;
                 Vector2 from = home + new Vector2(Mathf.Cos(angle) * (670 + i % 3 * 60), Mathf.Sin(angle) * (420 + i % 4 * 30));
                 Vector2 to = home + new Vector2(Mathf.Cos(angle) * (32 + i % 3 * 16), Mathf.Sin(angle) * (42 + i % 2 * 13));
-                shards[i].anchoredPosition = Vector2.Lerp(from, to, t * t * t);
-                shards[i].localScale = Vector3.one * Mathf.Lerp(.45f, 1, t);
+                float arrival = Mathf.SmoothStep(0, 1, Mathf.Clamp01((t - i % 4 * .045f) / .865f));
+                shards[i].anchoredPosition = Vector2.Lerp(from, to, arrival)
+                    + new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle)) * Mathf.Sin(arrival * Mathf.PI) * 65;
+                // Each splinter is absorbed into the solid mass before the crack phase.
+                shards[i].localScale = Vector3.one * Mathf.Lerp(.8f, 0, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.72f, 1, arrival)));
                 shards[i].localEulerAngles = new Vector3(0, 0, i * 47 + 130 * t);
             }
             crystalGroup.alpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.45f, 1, t));
@@ -259,6 +269,9 @@ public sealed class StageSelectController : MonoBehaviour
         foreach (var shard in shards) shard.gameObject.SetActive(false);
         world.anchoredPosition = Vector2.zero;
         cartridge.localScale = Vector3.one;
+        crystal.anchoredPosition = home; crystal.localRotation = Quaternion.identity;
+        crystal.localScale = Vector3.one;
+        StageSelectProgress.CompleteReveal(SelectedStage.sceneName);
         Phase = SelectPhase.Ready;
     }
 
@@ -273,14 +286,17 @@ public sealed class StageSelectController : MonoBehaviour
         {
             cartridge.anchoredPosition = Vector2.Lerp(from, home - Vector2.right * direction * switchTravel, t * t);
             cartridgeGroup.alpha = 1 - t;
+            if (!SelectedStage.IsUnlocked) { cartridgeGroup.alpha = 0; crystalGroup.alpha = 1 - t; }
         });
         selected = (selected + direction + stages.Length) % stages.Length;
         ApplySelection();
+        crystal.anchoredPosition = home;
         preview.Disturbance = .85f;
         yield return Animate(half, t =>
         {
             cartridge.anchoredPosition = Vector2.Lerp(home + Vector2.right * direction * switchTravel, home, EaseOut(t));
-            cartridgeGroup.alpha = t;
+            cartridgeGroup.alpha = SelectedStage.IsUnlocked ? t : 0;
+            crystalGroup.alpha = SelectedStage.IsUnlocked ? 0 : t;
         });
         Phase = SelectPhase.Ready;
         if (queuedDirection != 0)
@@ -295,11 +311,17 @@ public sealed class StageSelectController : MonoBehaviour
         controlsGroup.alpha = 0;
         cartridge.localRotation = Quaternion.identity;
         Vector2 from = cartridge.anchoredPosition;
+        // Align width above the slot, then keep that width while sliding physically down behind its front lip.
+        Vector2 aligned = new Vector2(insertPosition.x, home.y - 6);
+        yield return Animate(alignDuration, t =>
+        {
+            float eased = Mathf.SmoothStep(0, 1, t);
+            cartridge.anchoredPosition = Vector2.Lerp(from, aligned, eased);
+            cartridge.localScale = Vector3.one * Mathf.Lerp(1, insertScale, eased);
+        });
         yield return Animate(insertDuration, t =>
         {
-            float motion = t < .3f ? -.05f * Mathf.Sin(t / .3f * Mathf.PI) : Mathf.Pow((t - .3f) / .7f, 2.2f);
-            cartridge.anchoredPosition = Vector2.LerpUnclamped(from, insertPosition, motion);
-            cartridge.localScale = Vector3.one * Mathf.Lerp(1, insertScale, Mathf.Clamp01(motion));
+            cartridge.anchoredPosition = Vector2.Lerp(aligned, insertPosition, t * t);
         });
         cartridgeGroup.alpha = 0;
         Play(insertClip, 4, .9f);
@@ -371,10 +393,19 @@ public sealed class StageSelectController : MonoBehaviour
         stageTitle.enabled = stage.titleSprite != null;
         fallbackTitle.text = stage.stageName;
         fallbackTitle.gameObject.SetActive(stage.titleSprite == null);
-        normalStatus = stage.CanLaunch ? "このカセットで あそぶ" : stage.unavailableMessage;
+        normalStatus = !stage.IsUnlocked ? stage.lockedMessage : stage.CanLaunch ? "このカセットで あそぶ" : stage.unavailableMessage;
         status.text = normalStatus; status.color = stage.accent;
         deniedUntil = 0;
         preview.Show(stage);
+    }
+
+    private void PresentRest()
+    {
+        cartridgeGroup.alpha = SelectedStage.IsUnlocked ? 1 : 0;
+        crystalGroup.alpha = SelectedStage.IsUnlocked ? 0 : .85f;
+        controlsGroup.alpha = 1; cracks.alpha = 0;
+        cartridge.localScale = crystal.localScale = Vector3.one;
+        crystal.anchoredPosition = home; crystal.localRotation = Quaternion.identity;
     }
 
     private static IEnumerator Animate(float duration, Action<float> draw)

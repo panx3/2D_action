@@ -1824,6 +1824,14 @@ PrefabInstance:
       propertyPath: pauseMenu
       value: 
       objectReference: {fileID: 323132962}
+    - target: {fileID: 7097362106042386384, guid: de12d061094795e479bbed4167a076ce, type: 3}
+      propertyPath: nextSceneName
+      value: StageSelectScene
+      objectReference: {fileID: 0}
+    - target: {fileID: 7097362106042386384, guid: de12d061094795e479bbed4167a076ce, type: 3}
+      propertyPath: showDemoEnding
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7148905432942213728, guid: de12d061094795e479bbed4167a076ce, type: 3}
       propertyPath: m_Name
       value: GoalMenu
