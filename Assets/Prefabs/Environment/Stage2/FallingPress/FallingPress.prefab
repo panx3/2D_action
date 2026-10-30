@@ -163,7 +163,6 @@ MonoBehaviour:
   bottomWait: 1.8
   warningTime: 0.7
   startPhase: 0
-  ballStopEnabled: 1
   requiredPlayerClearance: 3.5
   contactSkin: 0.04
   damage: 1
@@ -5177,7 +5176,7 @@ Rigidbody2D:
   m_GameObject: {fileID: 3039461462684260475}
   m_BodyType: 1
   m_Simulated: 1
-  m_UseFullKinematicContacts: 0
+  m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0
@@ -5207,10 +5206,10 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 140
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4294967287
+    m_Bits: 4294967155
   m_LayerOverridePriority: 30
   m_ForceSendLayers:
     serializedVersion: 2

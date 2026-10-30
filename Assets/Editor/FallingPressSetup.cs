@@ -93,11 +93,76 @@ public static class FallingPressSetup
         var detection = Child("DetectionRoot_BallOnly", root.transform); detection.layer = 2;
         var surface = detection.AddComponent<BoxCollider2D>();
         surface.size = new Vector2(3.7f, 1.9f); surface.offset = new Vector2(0f, 0.95f);
-        // 奥側の台座。Playerは手前を通り、鉄球だけが支持面に接触する。
-        surface.includeLayers = 1 << 7; surface.excludeLayers = ~(1 << 7); surface.layerOverridePriority = 20;
+        // 奥側の台座。Playerは手前を通り、鉄球とプレスに接触する。
+        int standLayers = (1 << 7) | (1 << 2);
+        surface.includeLayers = standLayers; surface.excludeLayers = ~standLayers; surface.layerOverridePriority = 20;
         var controller = root.AddComponent<PressBallStandController>();
         Set(controller, "supportSurface", surface); Set(controller, "indicator", light);
+        ConfigureStandFeedback(root);
         return root;
+    }
+
+    private static void ConfigureStandFeedback(GameObject root)
+    {
+        var controller = root.GetComponent<PressBallStandController>();
+        Transform visuals = root.transform.Find("VisualRoot");
+        var light = visuals.Find("PlacementIndicator").GetComponent<SpriteRenderer>();
+        light.transform.localScale = new Vector3(1.6f, 0.14f, 1f);
+        light.color = new Color(0.6f, 0.3f, 0.08f, 0.7f);
+        var material = AssetDatabase.LoadAssetAtPath<Material>(Art + "PlacementFeedback.mat");
+        if (material == null)
+        {
+            material = new Material(Shader.Find("Sprites/Default"));
+            AssetDatabase.CreateAsset(material, Art + "PlacementFeedback.mat");
+        }
+        var outline = FeedbackLine("PlacementOutline", visuals, material, 0.07f,
+            new[] { new Vector3(-0.72f, 0.2f), new Vector3(-0.72f, 1.42f), new Vector3(0.72f, 1.42f), new Vector3(0.72f, 0.2f), new Vector3(-0.72f, 0.2f) });
+        outline.startColor = outline.endColor = light.color;
+        var check = FeedbackLine("ReadyCheck", visuals, material, 0.12f,
+            new[] { new Vector3(-0.46f, 0.78f), new Vector3(-0.12f, 0.46f), new Vector3(0.55f, 1.2f) });
+        check.startColor = check.endColor = new Color(0.2f, 1f, 0.7f);
+        check.gameObject.SetActive(false);
+        var audio = root.GetComponent<AudioSource>(); if (audio == null) audio = root.AddComponent<AudioSource>();
+        audio.playOnAwake = false; audio.spatialBlend = 0.8f; audio.volume = 0.65f;
+        audio.rolloffMode = AudioRolloffMode.Linear; audio.minDistance = 3f; audio.maxDistance = 22f;
+        Set(controller, "placementOutline", outline); Set(controller, "readyMark", check.gameObject);
+        Set(controller, "audioSource", audio); Set(controller, "placedSound", AssetDatabase.LoadAssetAtPath<AudioClip>(Art + "BallClang.wav"));
+    }
+
+    private static LineRenderer FeedbackLine(string name, Transform parent, Material material, float width, Vector3[] points)
+    {
+        Transform existing = parent.Find(name);
+        var go = existing != null ? existing.gameObject : Child(name, parent);
+        var line = go.GetComponent<LineRenderer>(); if (line == null) line = go.AddComponent<LineRenderer>();
+        line.useWorldSpace = false; line.sharedMaterial = material; line.sortingOrder = 2;
+        line.startWidth = line.endWidth = width; line.numCapVertices = 0; line.numCornerVertices = 0;
+        line.positionCount = points.Length; line.SetPositions(points); return line;
+    }
+
+    public static void UpdateExistingPrefabs()
+    {
+        var press = PrefabUtility.LoadPrefabContents(PressPath);
+        try
+        {
+            var head = press.transform.Find("MovingHead");
+            head.GetComponent<Rigidbody2D>().useFullKinematicContacts = true;
+            var solid = head.GetComponent<BoxCollider2D>();
+            int layers = (1 << 2) | (1 << 3) | (1 << 7);
+            solid.includeLayers = layers; solid.excludeLayers = ~layers;
+            PrefabUtility.SaveAsPrefabAsset(press, PressPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(press); }
+        var stand = PrefabUtility.LoadPrefabContents(StandPath);
+        try
+        {
+            var surface = stand.GetComponent<PressBallStandController>().SupportSurface;
+            int layers = (1 << 2) | (1 << 7);
+            surface.includeLayers = layers; surface.excludeLayers = ~layers;
+            ConfigureStandFeedback(stand);
+            PrefabUtility.SaveAsPrefabAsset(stand, StandPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(stand); }
+        AssetDatabase.SaveAssets();
     }
 
     private static GameObject BuildPress()
@@ -114,6 +179,7 @@ public static class FallingPressSetup
         var moving = Child("MovingHead", root.transform); moving.layer = 2;
         moving.transform.localPosition = new Vector3(0f, 6.04f, 0f);
         var rb = moving.AddComponent<Rigidbody2D>(); rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.useFullKinematicContacts = true;
         rb.gravityScale = 0f; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous; rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         var visual = Child("VisualRoot", moving.transform);
@@ -121,7 +187,8 @@ public static class FallingPressSetup
         var light = Sprite("WarningLight", "LightPixel", visual.transform, 4);
         light.transform.localPosition = new Vector3(0f, 1.35f, 0f);
         var collider = moving.AddComponent<BoxCollider2D>();
-        collider.includeLayers = 1 << 3; collider.excludeLayers = ~(1 << 3); collider.layerOverridePriority = 30;
+        int pressLayers = (1 << 2) | (1 << 3) | (1 << 7);
+        collider.includeLayers = pressLayers; collider.excludeLayers = ~pressLayers; collider.layerOverridePriority = 30;
         var detector = Child("DamageDetector", moving.transform); detector.layer = 2;
         var trigger = detector.AddComponent<BoxCollider2D>(); trigger.isTrigger = true;
         trigger.includeLayers = 1 << 3; trigger.excludeLayers = ~(1 << 3); trigger.layerOverridePriority = 30;
@@ -162,19 +229,21 @@ public static class FallingPressSetup
             throw new Exception("Press prefab must be independent; assign the stand on the scene instance.");
         if (stand.GetComponent<PressBallStandController>() == null) throw new Exception("Missing stand controller.");
         foreach (var c in press.GetComponentsInChildren<Collider2D>())
-            if ((c.excludeLayers.value & (1 << 7)) == 0)
+            if (c.isTrigger ? (c.excludeLayers.value & (1 << 7)) == 0 :
+                (c.excludeLayers.value & ((1 << 7) | (1 << 2))) != 0)
                 throw new Exception("Incorrect actor collision filtering: " + c.name);
+        if (!press.GetComponentInChildren<Rigidbody2D>().useFullKinematicContacts) throw new Exception("Missing full kinematic contacts.");
         foreach (var c in stand.GetComponentsInChildren<Collider2D>())
-            if ((c.excludeLayers.value & (1 << 3)) == 0)
+            if ((c.excludeLayers.value & (1 << 3)) == 0 || (c.excludeLayers.value & (1 << 2)) != 0)
                 throw new Exception("Incorrect stand collision filtering: " + c.name);
-        var assigned = new System.Collections.Generic.HashSet<PressBallStandController>();
+        var standSettings = new SerializedObject(stand.GetComponent<PressBallStandController>());
+        if (standSettings.FindProperty("readyMark").objectReferenceValue == null || standSettings.FindProperty("placementOutline").objectReferenceValue == null)
+            throw new Exception("Missing placement feedback.");
         foreach (var instance in UnityEngine.Object.FindObjectsByType<FallingPressController>(FindObjectsSortMode.None))
         {
             if (instance.gameObject.scene.path != "Assets/Scenes/Stage2.unity") continue;
-            if (instance.BallStand == null || instance.BallStand.transform.IsChildOf(instance.transform) ||
-                !assigned.Add(instance.BallStand) ||
-                PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(instance.BallStand.gameObject) != StandPath)
-                throw new Exception("Stage2 press must reference its own separate stand prefab instance.");
+            if (instance.GetComponentInChildren<PressBallStandController>(true) != null)
+                throw new Exception("Keep the stand separate from the press prefab.");
         }
         foreach (string name in new[] { "PressBody", "BallStand", "Piston", "LightPixel" })
         {

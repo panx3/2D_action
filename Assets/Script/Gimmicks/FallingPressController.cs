@@ -5,9 +5,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FallingPressController : MonoBehaviour
 {
-    public enum CycleState { TopWait, Warning, Descending, BottomWait, Rising, BallBlocked }
+    public enum CycleState { TopWait, Warning, Descending, BottomWait, Rising, BallBlocked, StandBlocked }
     [Header("Pair / geometry (root = floor, head pivot = underside)")]
-    [SerializeField] private PressBallStandController ballStand;
+    [SerializeField, Tooltip("配置確認用の任意参照。停止判定はこの参照に依存せず、接触した台座・鉄球を使います。")]
+    private PressBallStandController ballStand;
     [SerializeField] private Rigidbody2D head;
     [SerializeField] private BoxCollider2D pressCollider;
     [SerializeField] private BoxCollider2D damageDetector;
@@ -25,8 +26,7 @@ public sealed class FallingPressController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float warningTime = 0.7f;
     [SerializeField, Range(0f, 1f), Tooltip("通常サイクルの開始位置。複数台の時差用")]
     private float startPhase;
-    [Header("Ball support")]
-    [SerializeField] private bool ballStopEnabled = true;
+    [Header("Physical support")]
     [SerializeField, Min(0.1f), Tooltip("床からプレス下面までに必要な高さ。Player実寸3.3 + 余裕")]
     private float requiredPlayerClearance = 3.5f;
     [SerializeField, Min(0f)] private float contactSkin = 0.04f;
@@ -38,30 +38,31 @@ public sealed class FallingPressController : MonoBehaviour
     [SerializeField] private AudioClip ballImpact;
     [SerializeField] private ParticleSystem sparks;
     private readonly List<Collider2D> damageHits = new List<Collider2D>(16);
+    private readonly List<RaycastHit2D> supportHits = new List<RaycastHit2D>(16);
     private ContactFilter2D damageFilter;
+    private MorningStarLauncher launcher;
     private float elapsed;
-    private bool claimed;
     private CameraShake2D cameraShake;
     public CycleState State { get; private set; }
     public bool IsBallBlocked => State == CycleState.BallBlocked;
+    public bool IsStandBlocked => State == CycleState.StandBlocked;
+    public bool IsBlocked => IsBallBlocked || IsStandBlocked;
     public float UndersideY => head != null ? head.position.y : transform.position.y;
     public float CurrentClearance => UndersideY - transform.position.y;
-    public bool HasSafeClearance => IsBallBlocked && CurrentClearance >= requiredPlayerClearance;
+    public bool HasSafeClearance => IsBlocked && CurrentClearance >= requiredPlayerClearance;
     public PressBallStandController BallStand => ballStand;
 
     private void Awake()
     {
         ApplyGeometry();
         damageFilter = new ContactFilter2D { useTriggers = false };
+        launcher = FindAnyObjectByType<MorningStarLauncher>();
         cameraShake = Camera.main != null ? Camera.main.GetComponent<CameraShake2D>() : null;
         InitializePhase();
     }
 
-    private void OnEnable() { if (ballStand != null) claimed = ballStand.TryClaim(this); }
     private void OnDisable()
     {
-        if (ballStand != null) ballStand.Release(this);
-        claimed = false;
         if (head != null) head.linearVelocity = Vector2.zero;
     }
 
@@ -85,45 +86,61 @@ public sealed class FallingPressController : MonoBehaviour
         else if ((time -= warningTime) < down) { State = CycleState.Descending; y -= time * descentSpeed; }
         else if ((time -= down) < bottomWait) { State = CycleState.BottomWait; elapsed = time; y = 0f; }
         else { time -= bottomWait; State = CycleState.Rising; y = time * ascentSpeed; }
-        head.position = new Vector2(transform.position.x, transform.position.y + contactSkin + y);
+        // 開始位相が下降途中でも、実Colliderを突き抜けた位置から始めない。
+        float top = transform.position.y + contactSkin + travelDistance;
+        head.position = new Vector2(transform.position.x, top);
+        float target = transform.position.y + contactSkin + y;
+        if (LimitDescent(top - target, out float allowed, out bool onBall, out _))
+        { target = top - allowed; Enter(onBall ? CycleState.BallBlocked : CycleState.StandBlocked); }
+        head.position = new Vector2(transform.position.x, target);
     }
 
-    private bool SupportHeight(out float y, out Bounds ball)
+    private bool LimitDescent(float distance, out float allowed, out bool onBall, out Vector2 point)
     {
-        y = 0f; ball = default;
-        if (!ballStopEnabled || !claimed || ballStand == null || !ballStand.TryGetSupport(out ball)) return false;
-        // 支点はこのプレスの真下に完全に収まること。別組の台座とは共有しない。
-        if (ball.min.x < transform.position.x - width * 0.5f || ball.max.x > transform.position.x + width * 0.5f) return false;
-        y = ball.max.y + contactSkin;
-        return y - transform.position.y >= requiredPlayerClearance &&
-            y <= transform.position.y + contactSkin + travelDistance;
+        allowed = distance; onBall = false; point = default;
+        if (pressCollider == null) return false;
+        // 実形状をスイープする。中心範囲・台座へのセット・通過高さで衝突を無効化しない。
+        pressCollider.Cast(Vector2.down, damageFilter, supportHits, distance + contactSkin, true);
+        bool found = false;
+        float nearest = float.PositiveInfinity;
+        foreach (var hit in supportHits)
+        {
+            if (hit.collider == null || hit.normal.y <= 0.001f) continue;
+            bool ball = launcher != null && hit.collider.attachedRigidbody == launcher.BallBody;
+            bool stand = hit.collider.GetComponentInParent<PressBallStandController>() != null;
+            if ((!ball && !stand) || hit.distance >= nearest) continue;
+            found = true; nearest = hit.distance; onBall = ball; point = hit.point;
+        }
+        if (found) allowed = Mathf.Clamp(nearest - contactSkin, 0f, distance);
+        return found;
     }
 
     private void FixedUpdate()
     {
         if (head == null) return;
-        if (!claimed && ballStand != null) claimed = ballStand.TryClaim(this);
         float dt = Time.fixedDeltaTime;
         float bottom = transform.position.y + contactSkin, top = bottom + travelDistance;
         float y = head.position.y, next = y;
-        bool supported = SupportHeight(out float stopY, out Bounds ball);
         elapsed += dt;
         switch (State)
         {
             case CycleState.TopWait: if (elapsed >= topWait) Enter(CycleState.Warning); break;
             case CycleState.Warning: if (elapsed >= warningTime) Enter(CycleState.Descending); break;
             case CycleState.Descending:
-                next = Mathf.MoveTowards(y, bottom, descentSpeed * dt);
-                if (supported && y >= stopY - surfaceContactTolerance && next <= stopY)
-                { next = stopY; Enter(CycleState.BallBlocked); Impact(true, new Vector2(ball.center.x, stopY)); }
-                else if (next <= bottom) { Enter(CycleState.BottomWait); Impact(false, new Vector2(head.position.x, bottom)); }
-                break;
             case CycleState.BallBlocked:
-                if (!supported) Enter(CycleState.Descending);
+            case CycleState.StandBlocked:
+                next = Mathf.MoveTowards(y, bottom, descentSpeed * dt);
+                if (LimitDescent(y - next, out float allowed, out bool onBall, out Vector2 point))
+                {
+                    next = y - allowed;
+                    CycleState blocked = onBall ? CycleState.BallBlocked : CycleState.StandBlocked;
+                    if (State != blocked) { Enter(blocked); Impact(onBall, point); }
+                    if (elapsed >= bottomWait) Enter(CycleState.Rising);
+                }
                 else
                 {
-                    next = stopY;
-                    if (elapsed >= bottomWait) Enter(CycleState.Rising);
+                    if (IsBlocked) Enter(CycleState.Descending);
+                    if (next <= bottom) { Enter(CycleState.BottomWait); Impact(false, new Vector2(head.position.x, bottom)); }
                 }
                 break;
             case CycleState.BottomWait: if (elapsed >= bottomWait) Enter(CycleState.Rising); break;
@@ -136,7 +153,6 @@ public sealed class FallingPressController : MonoBehaviour
         head.MovePosition(new Vector2(transform.position.x, next));
     }
 
-    private const float surfaceContactTolerance = 0.12f;
     private void Enter(CycleState state) { State = state; elapsed = 0f; }
 
     private void DamageSweep(float from, float to)
@@ -156,7 +172,8 @@ public sealed class FallingPressController : MonoBehaviour
 
     private void Impact(bool onBall, Vector2 point)
     {
-        if (audioSource != null) audioSource.PlayOneShot(onBall ? ballImpact : floorImpact);
+        AudioClip clip = onBall ? ballImpact : floorImpact;
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
         if (sparks != null) { sparks.transform.position = point; sparks.Emit(onBall ? 16 : 24); }
         if (cameraShake != null && Camera.main != null &&
             Mathf.Abs(Camera.main.transform.position.x - point.x) < 18f)
@@ -168,7 +185,7 @@ public sealed class FallingPressController : MonoBehaviour
         if (warningLight != null)
             warningLight.color = State == CycleState.Warning
                 ? Color.Lerp(new Color(1f, 0.15f, 0.08f), Color.yellow, Mathf.PingPong(elapsed * 10f, 1f))
-                : IsBallBlocked ? new Color(0.7f, 1f, 1f) : Color.cyan;
+                : IsBlocked ? (HasSafeClearance ? new Color(0.3f, 1f, 0.75f) : new Color(1f, 0.55f, 0.08f)) : Color.cyan;
         if (pistons == null || head == null) return;
         foreach (Transform piston in pistons)
         {
