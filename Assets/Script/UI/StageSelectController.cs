@@ -47,6 +47,9 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField] private CanvasGroup cracks;
     [SerializeField] private RectTransform[] shards;
     [SerializeField, HideInInspector] private Vector2[] assemblyPositions;
+    [SerializeField, HideInInspector] private float[] assemblyAngles;
+    [SerializeField] private CanvasGroup crystalPileGroup;
+    [SerializeField] private RectTransform[] piledShards;
 
     [Header("Timing (unscaled seconds)")]
     [SerializeField, Min(.1f)] private float gatherDuration = .55f;
@@ -93,6 +96,7 @@ public sealed class StageSelectController : MonoBehaviour
     private bool showingGamepad;
     private UnityEngine.UI.Image[] shardImages;
     private StageSelectCrystalFragment[] shardFragments;
+    private UnityEngine.UI.Image[] piledShardImages;
     private Material sheenMaterial;
     public float UnlockAssemblyProgress { get; private set; }
     public float UnlockLight { get; private set; }
@@ -136,6 +140,12 @@ public sealed class StageSelectController : MonoBehaviour
         foreach (var shard in shards) shard.gameObject.SetActive(false);
         shardImages=Array.ConvertAll(shards, shard => shard.GetComponent<UnityEngine.UI.Image>());
         shardFragments=Array.ConvertAll(shards, shard => shard.GetComponent<StageSelectCrystalFragment>());
+        if(HasCrystalPile)
+        {
+            piledShardImages=Array.ConvertAll(piledShards, shard=>shard.GetComponent<UnityEngine.UI.Image>());
+            crystalPileGroup.gameObject.SetActive(false);
+            foreach(var shard in piledShards) shard.gameObject.SetActive(false);
+        }
         SetFusionLight(0,0);
         if (unlockAnnouncement != null) unlockAnnouncement.alpha = 0;
         if (labelSheen != null)
@@ -253,6 +263,7 @@ public sealed class StageSelectController : MonoBehaviour
     {
         controlsGroup.alpha = cartridgeGroup.alpha = 0;
         UnlockRelease = 0;
+        if(HasCrystalPile) { crystalPileGroup.gameObject.SetActive(true); crystalPileGroup.alpha=1; }
         if (unlockLabel != null) unlockLabel.text = "STAGE " + (selected + 1).ToString("00") + "  /  NEW CARTRIDGE";
         Play(gatherClip, 0, .65f);
         yield return Animate(gatherDuration, t =>
@@ -261,7 +272,8 @@ public sealed class StageSelectController : MonoBehaviour
             UnlockFocus = Mathf.SmoothStep(0, 1, t * 2.5f);
             UnlockLight = 0;
             preview.FocusDepth = UnlockFocus;
-            for (int i = 0; i < shards.Length; i++)
+            if(HasCrystalPile) DrawCrystalPile(t);
+            else for (int i = 0; i < shards.Length; i++)
             {
                 float angle = i * 2.39996f;
                 // All fragments rise from below the frame, shrinking as they leave the foreground.
@@ -298,7 +310,8 @@ public sealed class StageSelectController : MonoBehaviour
             crystalGroup.alpha=replaced ? 1 : 0;
             crystal.localScale=Vector3.one;
             crystal.anchoredPosition=home;
-            foreach(var shard in shards) shard.gameObject.SetActive(!replaced);
+            foreach(var shard in shards) shard.gameObject.SetActive(!HasCrystalPile&&!replaced);
+            if(HasCrystalPile) crystalPileGroup.gameObject.SetActive(!replaced);
             UnlockLight=peak*.95f;
             SetFusionLight(fusionWhiteStrength*peak*peak*1.36f,1);
             if(fusionLight!=null) fusionLight.rectTransform.localScale*=1+peak*.45f;
@@ -337,7 +350,7 @@ public sealed class StageSelectController : MonoBehaviour
                 float depth = .65f + i % 6 * .13f;
                 shards[i].localScale = new Vector3(1, HasFittedAssembly || i%2==0 ? 1 : -1, 1)
                     * Mathf.Lerp(HasFittedAssembly ? assembledShardScale : .8f, depth, eased);
-                shards[i].localEulerAngles = new Vector3(0, 0, (HasFittedAssembly ? 0 : i * 47)
+                shards[i].localEulerAngles = new Vector3(0, 0, (HasCrystalPile ? assemblyAngles[i] : HasFittedAssembly ? 0 : i * 47)
                     + t * (i%2==0?1:-1) * (85+i%7*29));
                 if (shardImages[i] != null) shardImages[i].color = new Color(1, 1, 1, 1-Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.22f, 1, t)));
             }
@@ -377,8 +390,37 @@ public sealed class StageSelectController : MonoBehaviour
 
     private float AssemblyFlight(float progress, int index)
     {
+        if(HasCrystalPile) return Mathf.Clamp01((progress-index/(float)Mathf.Max(1,shards.Length-1)*.72f)/.25f);
         float delay=((index*7)%shards.Length)/(float)Mathf.Max(1,shards.Length-1)*.4f;
         return Mathf.Clamp01((progress-delay)/.56f);
+    }
+    private bool HasCrystalPile => crystalPileGroup!=null && piledShards!=null
+        && piledShards.Length==shards.Length && assemblyAngles!=null && assemblyAngles.Length==shards.Length;
+
+    private void DrawCrystalPile(float progress)
+    {
+        ((RectTransform)crystalPileGroup.transform).anchoredPosition=home;
+        for(int i=0;i<shards.Length;i++)
+        {
+            float flight=AssemblyFlight(progress,i);
+            float arrival=flight*flight*(3-2*flight);
+            float seated=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.88f,1,flight));
+            float spread=Mathf.Repeat(i*.618034f,1)*2-1;
+            Vector2 from=home+new Vector2(spread*(440+i%3*40),-425-i%5*30);
+            Vector2 target=AssemblyCell(i);
+            shards[i].gameObject.SetActive(flight>0&&seated<1);
+            shards[i].anchoredPosition=Vector2.Lerp(from,home+target,arrival)
+                +Vector2.right*Mathf.Sin(i*2.39996f)*Mathf.Sin(arrival*Mathf.PI)*32;
+            shards[i].localScale=Vector3.one*Mathf.Lerp(foregroundShardScale,assembledShardScale,arrival);
+            shards[i].localEulerAngles=new Vector3(0,0,Mathf.LerpAngle(i*61,assemblyAngles[i],arrival));
+            shardImages[i].color=new Color(1,1,1,Mathf.SmoothStep(0,1,flight/.12f)*(1-seated));
+            // Once embedded, fragments stay put. The expanding pile is made of shaded sprites, not slices of a flat image.
+            piledShards[i].gameObject.SetActive(seated>0);
+            piledShards[i].anchoredPosition=target;
+            piledShards[i].localScale=Vector3.one*assembledShardScale;
+            piledShards[i].localEulerAngles=new Vector3(0,0,assemblyAngles[i]);
+            piledShardImages[i].color=new Color(1,1,1,seated);
+        }
     }
     private bool HasFittedAssembly => assemblyPositions != null && assemblyPositions.Length == shards.Length;
 
@@ -549,6 +591,11 @@ public sealed class StageSelectController : MonoBehaviour
         preview.SignalRecovery=1;
         Flash(0); SetFusionLight(0,0);
         foreach(var shard in shards) shard.gameObject.SetActive(false);
+        if(HasCrystalPile)
+        {
+            crystalPileGroup.gameObject.SetActive(false);
+            foreach(var shard in piledShards) shard.gameObject.SetActive(false);
+        }
         if(unlockAnnouncement!=null) unlockAnnouncement.alpha=0;
         if(labelSheen!=null) labelSheen.color=Color.clear;
         ApplySelection();

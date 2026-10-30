@@ -131,11 +131,13 @@ public static class StageSelectFlowProbe
                     Require(artwork.texture != null && !artwork.raycastTarget, "printed stage artwork is connected without intercepting input");
                     var reflection = select.GetComponentInChildren<Canvas>().transform.Find("Theatre/CRTGlassReflection").GetComponent<UnityEngine.UI.RawImage>();
                     Require(reflection.texture == select.GetComponent<StageSelectPreview>().Output && !reflection.raycastTarget, "CRT reflection follows the live render target");
-                    int fittedPieces=0;
+                    int pilePieces=0;
+                    var shardVariants=new System.Collections.Generic.HashSet<Sprite>();
                     foreach(var image in select.GetComponentsInChildren<UnityEngine.UI.Image>(true))
                         if(image.name.StartsWith("Shard_") && image.sprite!=null
-                            && image.GetComponent<StageSelectCrystalFragment>()!=null) fittedPieces++;
-                    Require(fittedPieces == 80, "eighty fitted crystal pieces share the final cassette silhouette");
+                            && image.GetComponent<StageSelectCrystalFragment>()==null)
+                        { pilePieces++; shardVariants.Add(image.sprite); }
+                    Require(pilePieces>=96 && shardVariants.Count==8,"dimensional pixel-art shards accumulate into a cassette-shaped pile");
                     Require(select.SelectedStage.sceneName == "Stage1" && select.SelectedStage.CanLaunch && !select.SelectedStage.NeedsReveal, "Stage1 initially available without reveal");
                     Require(UnityEngine.Object.FindObjectsByType<CRTFilterController>(FindObjectsSortMode.None).Length == 0, "selection must not have fullscreen CRT");
                     Capture(select, "01-select-ready"); Next(); break;

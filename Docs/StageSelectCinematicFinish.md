@@ -11,8 +11,8 @@
 - `Assets/StageSelectGlass.shader`、`Assets/StageSelectSurface.shader`、`Assets/StageSelectAtmosphere.shader`：CRTの光にじみ、ガラス、筐体の縁の光、反射の粗さ、ビネット、印刷面と光の走査。
 - `Assets/Art/StageSelect/Cinematic/`：室内背景、8種類の透明な結晶破片、専用Materialと各`.meta`。生成方法と最終プロンプトは同フォルダーの`ArtDirection.md`。
 - `Assets/Editor/StageSelectCinematicFinish.cs`：既存Hierarchyに仕上げを適用する補助処理。対象Sceneが未保存なら適用を中断する。
-- `Assets/Script/UI/StageSelectCrystalFragment.cs`：完成画像を80個の接合できる多角形に切り分けるUIメッシュ。
-- `Assets/Editor/StageSelectFlowProbe.cs`：反射・ラベル接続、接合破片80個、散開と余韻の観測を既存の通し検証に追加。
+- `Assets/Script/UI/StageSelectCrystalFragment.cs`：以前の画像分割方式。現在のStageSelectSceneでは使用しない。
+- `Assets/Editor/StageSelectFlowProbe.cs`：反射・ラベル接続、厚みのある破片8種類、散開と余韻の観測を既存の通し検証に追加。
 
 ## 背景・接地感の追加修正
 
@@ -32,17 +32,19 @@
 
 ブラウン管筐体の質感調整：`StageSelectSurface.shader`の筐体描画だけを変更し、陰影・縁の反射を3pxの画素単位へ統一。細かなランダムノイズを少数の色むらと規則的なディザへ置き換え、側面の通気スリットと角のネジを追加した。ガラスとの境界形状・表示映像・Inspector値は維持。Scene/Prefab/Materialの変更・保存は不要。この小規模調整ではシェーダーコンパイルと関連Consoleのみ確認し、Play Modeでの最終外観確認は未実施。
 
-破片集結の調整：破片は80個。最終的なカセット型結晶の画像を、内部の頂点を少しずらした8列×5行の格子から80個の三角形に切り分ける。到着位置と向きを固定し、同じ模様・画素グリッドのまま隙間なく接合する。ランダムな輪郭を大きく重ねる方式による、外周の突き出し・深いくぼみを解消。0.55秒の発光演出のピークで破片を隠し、従来のカセット型結晶の1枚絵を表示する。その後に亀裂・破砕を再生。四角い塊の仮画像は使用しない。背景・BGM・その他の演出値は保持する。
+現在の破片集結：側面・濃い陰影・反射面を描いた既存の8種類のドット絵`CrystalShards.png`を使用する。完成画像を切り分けた三角形や追加アウトラインは表示しない。中央に近い破片から順に到着し、到着した破片はその場に埋まって残る。後から来る破片が外側へ重なり、塊が大きくなってカセット型へ育つ。0.55秒の発光のピークで既存のカセット型結晶の1枚絵に置き換え、その後に亀裂・破砕を再生する。
 
-`foregroundShardScale`=1.2、`assembledShardScale`=1.0。破片は完成画像の実際の領域に対応する大きさで、従来の大幅な拡大を不要にした。`assemblyPositions`は生成処理が保存する80個の到着位置（Inspector非表示）。`FittedCrystalPieces.mat`は完成画像と同じ192×112の画素グリッド。元の結晶PNGやImporterは変更しない。
+破片数154（基本配置96＋透明な形状による穴を埋める58）、基準サイズ84～96、`foregroundShardScale`=1.2、`assembledShardScale`=1.0。集結時間は3.6秒（4.2秒から0.6秒短縮し、少しテンポを上げた）。各破片の飛行は集結時間の25%、到着開始を中央から外周へ72%の範囲でずらす。ほかの演出時間・背景・BGM・既存調整値は保持する。元PNG・Importer・Materialは変更しない。
 
-移動中の破片には、同じ192×112グリッドの1画素幅で暗い紫の階段状アウトラインを付ける。上・左側はやや明るい紫にして縁の陰影を出し、滑らかな切り抜きに見えない画素単位の輪郭にする。各破片の移動進捗92～100%で輪郭を消し、接合時は元の正確な三角形に戻すため、完成後に暗い接合線や隙間が残らない。その後は既存の発光・1枚絵への切替・亀裂・破砕を使う。
+`CrystalPile`は完成形の外周だけを整える非表示のUI Mask。塊として描く中身はすべて実際の破片Spriteであり、完成画像や四角い仮画像を下敷きにしない。外周を192×112でサンプルし、すべての点が破片画像の不透明部分で覆われるようEditorで配置を補う。細い破片・幅広い破片の透明部分による穴と、不規則な大きな突き出しを防ぐ。
 
-輪郭用の画素は同じ色の横列をまとめたメッシュとして初回にキャッシュし、追加MaterialやGameObjectは作らない。変更は`StageSelectCrystalFragment.cs`と`StageSelectController.cs`。Inspector項目追加、Scene/Prefab/Materialの変更・保存なし。80個の配置・倍率・演出時間・既存調整値を維持する。
+新しいScene参照は`crystalPileGroup`（塊のレイヤー）と`piledShards`（埋まった破片154個）。非表示の`assemblyPositions`・`assemblyAngles`が固定の到着位置と向きを保持する。飛行中のSpriteと、接触位置に固定したSpriteを飛行進捗88～100%で入れ替える。発光で完成画像へ切り替えると塊レイヤーを無効化し、デバッグチェック変更時も途中の塊を片付ける。
 
-アウトライン追加後の確認：C#コンパイル成功。開放演出を1回再生し、移動中の80個の破片で輪郭を確認、接合後は全80個で輪郭・画素段差がなく元の三角形へ戻ること、1枚絵への切替・亀裂・開放完了を確認。1破片の最大頂点数は観測時316。関連Console Error/Exceptionは0件。本番進行データ不変、検証用進行状態・検証前のフォントAssetを復元。元のTitleSceneはdirty=falseのまま、Scene/Prefabは保存していない。ステージ遷移全体の再検証・Build・実機での最終外観評価は今回未実施。既知の不具合なし。
+変更対象：`StageSelectController.cs`、`StageSelectCinematicFinish.cs`、`StageSelectFlowProbe.cs`、`StageSelectScene.unity`、本記録。StageSelectSceneのみ保存。ゲームプレイScene・Prefab・Packages・Project Settingsの変更なし。
 
-集結中は`UnlockLight`とfusion lightの強さを0に固定し、中央の発光・光輪を表示しない。全破片の到着後、画像切替の発光を0から立ち上げる。集結・発光・破砕の演出時間は維持する。ぼかし用Materialを割り当てる前景破片を連続したグループにまとめ、Material交互切替による描画バッチ増加を抑える。
+積み上げ方式の確認：C#コンパイル成功。開放演出を再生し、積み上がった破片数30→77→124→154の増加、全破片到着、集結中の発光0、1枚絵への置換・亀裂・開放完了を確認した。途中まで再度集結させ、デバッグのチェック解除で部分的な塊が消えて未解放状態へ即反映されることも確認。関連Console Error/Exceptionは0件。本番進行データ不変、検証用進行状態・検証前のフォントAssetを復元。元のTitleSceneはdirty=falseのままEdit Modeへ復帰した。今回の変更ではステージ遷移全体の再検証・Build・実機での最終評価は未実施。残りは見た目・テンポのユーザー確認。
+
+集結中は`UnlockLight`とfusion lightの強さを0に固定し、中央の発光・光輪を表示しない。全破片の到着後、画像切替の発光を0から立ち上げる。ぼかし用Materialを割り当てる前景破片を連続したグループにまとめ、Material交互切替による描画バッチ増加を抑える。
 
 横長化・集結中の光の削除は`StageSelectController.cs`と本記録のみの変更で、Scene/Prefabの追加保存なし。開放部分を検証用データで再生し、集結途中の中央発光・光輪のalpha=0、完成シルエット、カセット型結晶への切替、開放完了を確認。元のTitleSceneをdirty=falseで維持し、デバッグ用の保存状態も復元した。ステージ遷移の通し再検証とBuildはこの調整では未実施。
 
@@ -58,7 +60,7 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 集結 / 発光・画像切替 / 亀裂 / 散開 / 余韻 | 2.50 / 0.55 / 0.68 / 0.78 / 1.55 秒 |
+| 集結 / 発光・画像切替 / 亀裂 / 散開 / 余韻 | 3.60 / 0.55 / 0.68 / 0.78 / 1.55 秒 |
 | 選択切り替え | 0.42 秒 |
 | 整列 / 挿入 / 起動 / CRT接近 / ステージ表示 | 0.25 / 0.50 / 0.48 / 1.45 / 0.65 秒 |
 | カセット浮遊 | 高さ3、周期4.8秒 |

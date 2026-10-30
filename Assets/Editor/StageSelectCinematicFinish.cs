@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEditor;
@@ -181,7 +182,7 @@ public static class StageSelectCinematicFinish
             ConfigureAssembly(root);
             if(correctGlassInset) ConfigureGlassInset(root);
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
-            return "Saved fixed shard destinations and final-image swap beneath light"+(correctGlassInset ? "; corrected CRT top inset" : "")+"; other settings preserved.";
+            return "Saved accumulating pixel-art crystal pile and light-covered final-image swap"+(correctGlassInset ? "; corrected CRT top inset" : "")+"; other settings preserved.";
         }
         finally
         {
@@ -195,59 +196,148 @@ public static class StageSelectCinematicFinish
         var finalImage=Find("ExistingCrystal").GetComponent<UnityEngine.UI.Image>();
         var source=finalImage.sprite;
         if(source==null) throw new InvalidOperationException("The final cassette crystal is required.");
-        var material=CopyMaterial(finalImage.material,"FittedCrystalPieces");
-        const int columns=8, rows=5;
-        var points=new Vector2[columns+1,rows+1];
-        for(int y=0;y<=rows;y++) for(int x=0;x<=columns;x++)
-        {
-            float u=x/(float)columns, v=y/(float)rows;
-            if(x>0&&x<columns) u+=Mathf.Sin(x*7.13f+y*3.71f)*.14f/columns;
-            if(y>0&&y<rows) v+=Mathf.Sin(x*4.37f-y*5.91f)*.14f/rows;
-            // Match the final material's coarse texture grid instead of introducing fine, smooth cuts.
-            points[x,y]=new Vector2(Mathf.Round(u*192)/192,Mathf.Round(v*112)/112);
-        }
+        var variants=AssetDatabase.LoadAllAssetsAtPath(Art+"CrystalShards.png").OfType<Sprite>().OrderBy(s=>s.name).ToArray();
+        if(variants.Length!=8) throw new InvalidOperationException("Eight dimensional pixel-art shards are required.");
+        var material=AssetDatabase.LoadAssetAtPath<Material>(Art+"CrystalShardFinish.mat");
+        if(material==null) throw new InvalidOperationException("The existing shard material is required.");
         Vector2 fullSize=finalImage.rectTransform.rect.size;
         float fit=Mathf.Min(fullSize.x/source.rect.width,fullSize.y/source.rect.height);
         fullSize=source.rect.size*fit;
-        var images=new UnityEngine.UI.Image[columns*rows*2];
+        var pieces=BuildCrystalPile(source,variants,fullSize);
+        var maskImage=Image("CrystalPile",Find("Theatre"),Find("Cartridge").anchoredPosition,finalImage.rectTransform.sizeDelta,finalImage.material);
+        maskImage.sprite=source; maskImage.preserveAspect=true;
+        var mask=maskImage.GetComponent<UnityEngine.UI.Mask>();
+        if(mask==null) mask=maskImage.gameObject.AddComponent<UnityEngine.UI.Mask>();
+        mask.showMaskGraphic=false;
+        var group=maskImage.GetComponent<CanvasGroup>();
+        if(group==null) group=maskImage.gameObject.AddComponent<CanvasGroup>();
+        int flightLayer=Find("CrystalFragments").GetSiblingIndex();
+        maskImage.transform.SetSiblingIndex(flightLayer-(maskImage.transform.GetSiblingIndex()<flightLayer ? 1 : 0));
+        var images=new UnityEngine.UI.Image[pieces.Count];
         var rects=new RectTransform[images.Length];
+        var landed=new RectTransform[images.Length];
         var positions=new Vector2[images.Length];
+        var angles=new float[images.Length];
         for(int i=0;i<images.Length;i++)
         {
-            int cell=i/2, x=cell%columns, y=cell/columns;
-            Vector2 a=points[x,y], b=points[x+1,y], c=points[x+1,y+1], d=points[x,y+1];
-            Vector2[] polygon=(x+y)%2==0
-                ? (i%2==0 ? new[]{a,b,c} : new[]{a,c,d})
-                : (i%2==0 ? new[]{a,b,d} : new[]{b,c,d});
-            Vector2 min=Vector2.Min(polygon[0],Vector2.Min(polygon[1],polygon[2]));
-            Vector2 max=Vector2.Max(polygon[0],Vector2.Max(polygon[1],polygon[2]));
-            positions[i]=Vector2.Scale((min+max)*.5f-Vector2.one*.5f,fullSize);
-            images[i]=Image("Shard_"+i,Find("CrystalFragments"),Vector2.zero,Vector2.Scale(max-min,fullSize),material);
-            images[i].sprite=source; images[i].preserveAspect=false;
+            var piece=pieces[i]; positions[i]=piece.position; angles[i]=piece.angle;
+            images[i]=Image("Shard_"+i,Find("CrystalFragments"),Vector2.zero,Vector2.one*piece.size,material);
             var fragment=images[i].GetComponent<StageSelectCrystalFragment>();
-            if(fragment==null) fragment=images[i].gameObject.AddComponent<StageSelectCrystalFragment>();
-            Edit(fragment,so=>
-            {
-                var vertices=so.FindProperty("sourceVertices"); vertices.arraySize=polygon.Length;
-                for(int p=0;p<polygon.Length;p++) vertices.GetArrayElementAtIndex(p).vector2Value=polygon[p];
-            });
+            if(fragment!=null) UnityEngine.Object.DestroyImmediate(fragment);
+            images[i].sprite=piece.sprite; images[i].preserveAspect=true;
             images[i].SetVerticesDirty();
             rects[i]=images[i].rectTransform;
+            var settled=Image("EmbeddedShard_"+i,maskImage.transform,piece.position,Vector2.one*piece.size,material);
+            settled.sprite=piece.sprite; settled.preserveAspect=true;
+            landed[i]=settled.rectTransform;
+            landed[i].localEulerAngles=new Vector3(0,0,piece.angle);
+            landed[i].gameObject.SetActive(false);
         }
         Edit(root.GetComponent<StageSelectController>(),so=>
         {
             Refs(so,"shards",rects);
+            Refs(so,"piledShards",landed); Ref(so,"crystalPileGroup",group);
             var targets=so.FindProperty("assemblyPositions"); targets.arraySize=positions.Length;
             for(int i=0;i<positions.Length;i++) targets.GetArrayElementAtIndex(i).vector2Value=positions[i];
-            so.FindProperty("gatherDuration").floatValue=2.5f;
+            var rotations=so.FindProperty("assemblyAngles"); rotations.arraySize=angles.Length;
+            for(int i=0;i<angles.Length;i++) rotations.GetArrayElementAtIndex(i).floatValue=angles[i];
+            so.FindProperty("gatherDuration").floatValue=3.6f;
             so.FindProperty("chargeHoldDuration").floatValue=.55f;
             so.FindProperty("foregroundShardScale").floatValue=1.2f;
             so.FindProperty("assembledShardScale").floatValue=1f;
         });
+        group.gameObject.SetActive(false);
         Edit(root.GetComponent<StageSelectLighting>(),so=>Refs(so,"shardImages",images));
         // The rejected rectangular placeholder has no remaining serialized/runtime references.
         var obsolete=Find("Theatre").Find("CrystalAssembly");
         if(obsolete!=null) UnityEngine.Object.DestroyImmediate(obsolete.gameObject);
+    }
+
+    private struct CrystalPiece
+    {
+        public Sprite sprite;
+        public Vector2 position;
+        public float size, angle;
+    }
+
+    private static List<CrystalPiece> BuildCrystalPile(Sprite source,Sprite[] variants,Vector2 fullSize)
+    {
+        // Plan against actual opaque pixels. Irregular sprites must overlap enough to leave no holes in the final silhouette.
+        var silhouette=new Texture2D(2,2,TextureFormat.RGBA32,false);
+        var atlas=new Texture2D(2,2,TextureFormat.RGBA32,false);
+        try
+        {
+            silhouette.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(source.texture)));
+            atlas.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(variants[0].texture)));
+            var outline= silhouette.GetPixels32(); var pixels=atlas.GetPixels32();
+            const int width=192,height=112;
+            var needed=new bool[width*height]; var covered=new bool[needed.Length];
+            var samples=new Vector2[needed.Length];
+            for(int y=0;y<height;y++) for(int x=0;x<width;x++)
+            {
+                int n=y*width+x;
+                Vector2 uv=new Vector2((x+.5f)/width,(y+.5f)/height);
+                samples[n]=Vector2.Scale(uv-Vector2.one*.5f,fullSize);
+                int tx=Mathf.Clamp(Mathf.FloorToInt(source.rect.x+uv.x*source.rect.width),0,silhouette.width-1);
+                int ty=Mathf.Clamp(Mathf.FloorToInt(source.rect.y+uv.y*source.rect.height),0,silhouette.height-1);
+                needed[n]=outline[ty*silhouette.width+tx].a>64;
+            }
+            byte Alpha(Sprite sprite,Vector2 uv)
+            {
+                if(uv.x<0||uv.x>=1||uv.y<0||uv.y>=1) return 0;
+                int x=Mathf.Clamp(Mathf.FloorToInt(sprite.rect.x+uv.x*sprite.rect.width),0,atlas.width-1);
+                int y=Mathf.Clamp(Mathf.FloorToInt(sprite.rect.y+uv.y*sprite.rect.height),0,atlas.height-1);
+                return pixels[y*atlas.width+x].a;
+            }
+            var anchors=new Vector2[variants.Length];
+            for(int v=0;v<variants.Length;v++)
+            {
+                float best=float.MaxValue;
+                for(int y=0;y<64;y++) for(int x=0;x<64;x++)
+                {
+                    Vector2 uv=new Vector2((x+.5f)/64,(y+.5f)/64);
+                    float score=(uv-Vector2.one*.5f).sqrMagnitude;
+                    if(score<best&&Alpha(variants[v],uv)>224) { best=score; anchors[v]=uv; }
+                }
+                if(best==float.MaxValue) throw new InvalidOperationException("Shard has no opaque core: "+variants[v].name);
+            }
+            var pieces=new List<CrystalPiece>();
+            void Add(Vector2 point,int variant,float size,float angle)
+            {
+                Quaternion rotation=Quaternion.Euler(0,0,angle);
+                Vector2 position=point-(Vector2)(rotation*((anchors[variant]-Vector2.one*.5f)*size));
+                var piece=new CrystalPiece { sprite=variants[variant],position=position,size=size,angle=angle };
+                pieces.Add(piece);
+                Quaternion inverse=Quaternion.Inverse(rotation);
+                for(int p=0;p<samples.Length;p++) if(needed[p]&&!covered[p])
+                {
+                    Vector2 uv=(Vector2)(inverse*(samples[p]-position))/size+Vector2.one*.5f;
+                    if(Alpha(piece.sprite,uv)>224) covered[p]=true;
+                }
+            }
+            int[] pattern={4,2,6,1,4,2,6,7,4,2,6,1,0,3,5,4};
+            for(int y=0;y<8;y++) for(int x=0;x<12;x++)
+            {
+                int i=y*12+x;
+                var position=Vector2.Scale(new Vector2((x/11f-.5f)*.94f,(y/7f-.5f)*.9f),fullSize);
+                Add(position,pattern[i%pattern.Length],84+i%4*4,((i*7)%9-4)*7.5f+(i%3==0?180:0));
+            }
+            // Close residual cavities with real shaded chunks, rather than a solid rectangle or a final-image backing.
+            int hole;
+            int[] solidVariants={4,2,6};
+            for(int pass=0;pass<160;pass++)
+            {
+                hole=-1;
+                for(int p=0;p<needed.Length;p++) if(needed[p]&&!covered[p]) { hole=p; break; }
+                if(hole<0) break;
+                Add(samples[hole],solidVariants[pass%solidVariants.Length],88,pass*137.5f);
+            }
+            if(Enumerable.Range(0,needed.Length).Any(p=>needed[p]&&!covered[p]))
+                throw new InvalidOperationException("Crystal pile could not cover the cassette silhouette.");
+            return pieces.OrderBy(p=>Mathf.Max(Mathf.Abs(p.position.x)/fullSize.x,Mathf.Abs(p.position.y)/fullSize.y))
+                .ThenBy(p=>Mathf.Atan2(p.position.y,p.position.x)).ToList();
+        }
+        finally { UnityEngine.Object.DestroyImmediate(silhouette); UnityEngine.Object.DestroyImmediate(atlas); }
     }
     private static void ConfigureGlassInset(GameObject root)
     {
