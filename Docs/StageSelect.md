@@ -21,11 +21,23 @@ Preview は既存 Sprite を 640×360 の RenderTexture に合成し、ゆっく
 
 ## Inspector の主な調整値
 
-Controller：Gather .55秒 / Crack .34秒 / Burst .38秒、切り替え .24秒、挿入 .52秒、起動 .26秒、ズーム 1秒、ゲームへの接続 .34秒。Float Height 6、周期 3.4秒、挿入先 `(2, -220)`、挿入縮小 .46（差込口の幅に対応）、Impact Shake 5。選択入力は既存 `UI/Navigate` / `Submit` / `Cancel` の複製を所有し、共有アクションを無効化しません。長押しは .34秒後から .18秒間隔、切り替え予約は最後の1件だけです。決定後の連打・戻る入力は受け付けません。
+Controller：Gather .55秒 / Crack .34秒 / Burst .38秒、切り替え .24秒、挿入 .52秒、起動 .26秒、ズーム 1秒、ゲームへの接続 .34秒。Float Height 6、周期 3.4秒、挿入先 `(0, -200)`、挿入縮小 .68（新しい差込口の幅に対応）、Impact Shake 5。選択入力は既存 `UI/Navigate` / `Submit` / `Cancel` の複製を所有し、共有アクションを無効化しません。長押しは .34秒後から .18秒間隔、切り替え予約は最後の1件だけです。決定後の連打・戻る入力は受け付けません。
 
-Preview：Softness .55、Scanlines .13、Vignette .22、Noise .015。背景各層に Sprite、Tint、Drift を設定できます。
+Preview：Softness .8、Scanlines .16、Vignette .26、Noise .012、Brightness .9。背景各層に Sprite、Tint、Drift を設定できます。
 
 SE：既存の CheckpointActivate、ひびがはいる音、砕ける音を使用。切り替え・挿入・CRT起動・開始不可はオリジナルの短い合成音で、Controller の各 Clip に本素材を設定すれば差し替わります。ゲーム機・テレビ・カセットは、この画面用のオリジナル仮アートです。
+
+## 暗いレトロ空間のビジュアル
+
+2026-10-30の参考画像に合わせ、部屋・棚・壁飾り・大きな見出しを取り除いた構成へ更新しました。`StageSelectVisualUpgrade` は既存Hierarchyの参照・ボタン・Controllerを保ったまま表示を変更します。新しいSceneをBuilderから作る場合も同じビジュアルを適用します。
+
+`DarkBackdrop` は暗い藍色のグラデーションと微細なドット模様。`BackgroundCRT` と `Television` は独立したままで、現在のステージ背景を表示します。CRTは中心 `(0, 94)`、サイズ `768×432`。カセットは `(0, 16)`、ゲーム機は `(0, -208)`。生成素材の透明な余白は原本のまま保持し、RectTransformと別のラベル位置で調整しています。ゲーム機とカセットはPointインポートと専用Surface Materialのピクセル格子で描き、ラベルは既存のステージ名Spriteを使用します。カセットへの番号の追加はありません。
+
+`Assets/Art/StageSelect/DarkRetro/` の Console/Cartridge は、参考画像をスタイルと照明の基準にしてbuilt-in ImageGenで生成した独立した透過素材です。参考画像全体の貼り付けや切り抜き背景は使っていません。原稿・生成プロンプトは同フォルダーの `GenerationPrompts.md`。テレビフレームと矢印は専用の小さなピクセル素材です。旧仮素材も残しており、Spriteを差し替えられます。
+
+Built-in Render Pipelineを維持しています。Overlay Canvas上で `StageSelectSurface.shader` と独立した発光Imageを重ね、実際の3Dライトや全画面Bloomを追加していません。青いCRT光、カセット・結晶のピンク光、床面に相当する控えめな反射、ゲーム機直下の接地影、10個の小さな結晶光を別々に管理します。`StageSelectLighting` の CRT Spill `.13`、Pink Spill `.12`、Floor Reflection `.07`、Mote Opacity `.65`、Breath Period `4.5秒` が調整箇所です。これらは描画のみを変更し、入力、Stage1の接続、ステージ開始演出、Gameplay Camera、ゲーム側CRTには書き込みません。
+
+新しい専用素材は差し替え可能な制作アートです。機巧都市カセットのTintだけは、新しい灰色筐体と色を揃えるため白へ更新しています。他のステージデータ、SE、演出時間は保持しています。
 
 ## 検証
 

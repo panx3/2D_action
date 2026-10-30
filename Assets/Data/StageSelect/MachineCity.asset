@@ -15,7 +15,7 @@ MonoBehaviour:
   stageName: "\u7D05\u84EE\u306E\u6A5F\u5DE7\u90FD\u5E02"
   titleSprite: {fileID: -4731860672376116988, guid: 4631ee6e4c1a24644bc12794876942af, type: 3}
   cartridgeSprite: {fileID: 0}
-  cartridgeTint: {r: 1, g: 0.89411765, b: 0.84705883, a: 1}
+  cartridgeTint: {r: 1, g: 1, b: 1, a: 1}
   accent: {r: 1, g: 0.7294118, b: 0.5803922, a: 1}
   sceneName: Stage2
   playable: 0

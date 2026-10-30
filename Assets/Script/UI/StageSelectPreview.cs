@@ -12,6 +12,7 @@ public sealed class StageSelectPreview : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float scanlines = .13f;
     [SerializeField, Range(0f, 1f)] private float vignette = .22f;
     [SerializeField, Range(0f, .1f)] private float noise = .015f;
+    [SerializeField, Range(.3f, 1.5f)] private float brightness = 1.06f;
 
     private Material composition, crt;
     private RenderTexture source, softened, output;
@@ -79,7 +80,7 @@ public sealed class StageSelectPreview : MonoBehaviour
         composition.SetFloat("_PreviewTime", clock);
         Graphics.Blit(Texture2D.blackTexture, source, composition);
         crt.SetFloat("_BackdropBlur", softness * (1 - clearBlend));
-        crt.SetFloat("_BackdropBrightness", 1.06f);
+        crt.SetFloat("_BackdropBrightness", brightness);
         Graphics.Blit(source, softened, crt, 1);
         crt.SetFloat("_CRTTime", clock);
         crt.SetFloat("_MasterStrength", .4f * (1 - clearBlend));
