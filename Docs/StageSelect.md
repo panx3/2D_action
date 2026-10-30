@@ -21,9 +21,9 @@ Preview は既存 Sprite を 640×360 の RenderTexture に合成し、ゆっく
 
 ## Inspector の主な調整値
 
-Controller：解放時だけGather .85秒 / Crack .42秒 / Burst .4秒、切り替え .24秒、整列 .16秒、挿入 .42秒、起動 .26秒、ズーム 1秒、ゲームへの接続 .34秒。Float Height 6、周期 3.4秒、挿入先 `(0, -210)`、挿入縮小 .8（差込口の幅に対応）、Impact Shake 5。選択入力は既存 `UI/Navigate` / `Submit` / `Cancel` の複製を所有し、共有アクションを無効化しません。長押しは .34秒後から .18秒間隔、切り替え予約は最後の1件だけです。決定後の連打・戻る入力は受け付けません。
+Controller：解放時だけGather 1.25秒 / Crack .48秒 / Burst .45秒、切り替え .24秒、整列 .16秒、挿入 .42秒、起動 .38秒、ズーム 1秒、ゲームへの接続 .34秒。Float Height 6、周期 3.4秒、挿入先 `(0, -119)`、挿入縮小 .78（差込口の幅に対応）、Impact Shake 5。選択入力は既存 `UI/Navigate` / `Submit` / `Cancel` の複製を所有し、共有アクションを無効化しません。長押しは .34秒後から .18秒間隔、切り替え予約は最後の1件だけです。決定後の連打・戻る入力は受け付けません。
 
-Preview：Softness .8、Scanlines .16、Vignette .26、Noise .012、Brightness .9、Curvature .085、Glass Reflection .14。背景各層に Sprite、Tint、Drift を設定できます。
+Preview：960×600、Softness 1.2、Scanlines .1、Vignette .26、Noise .012、Brightness .9、Curvature .055、Glass Reflection .24。背景各層に Sprite、Tint、Drift を設定できます。
 
 SE：既存の CheckpointActivate、ひびがはいる音、砕ける音を使用。切り替え・挿入・CRT起動・開始不可はオリジナルの短い合成音で、Controller の各 Clip に本素材を設定すれば差し替わります。ゲーム機・テレビ・カセットは、この画面用のオリジナル仮アートです。
 
@@ -60,3 +60,17 @@ Stage1のクリア画面は通常のクリアメニューを使い、NEXTからS
 解放演出はGather `.85秒`、Crack `.42秒`、Burst `.4秒`。CrystalMass/CrystalShardはImageGenで新規制作した金属飾りのない専用の透過素材で、旧PinkJewel素材はこの演出に使用しません。Fracturesは新作の亀裂マスク、CartridgeClack.wavは新作の短い合成機械音です。いずれもSprite/AudioClipを差し替えられます。生成記録は `Assets/Art/StageSelect/Unlock/GenerationPrompts.md`。
 
 FlowProbeは実際のStage1ゴール確定コールバックを呼び、収集アイテム0個での解放、中断・再開、再入場での非再生、選択とCRT遷移を検証します。PlayerPrefsは専用のFlowProbe名前空間でのみ読み書き・後片付けし、実際の進行データを変更しません。ステージを端から端まで操作してクリアする検証と最終操作感はユーザー確認です。
+
+## 最新の表示修正（上記の旧ビジュアル記録より優先）
+
+テレビ画像のUV変形・色抜き・粗い格子が縁のギザつきの原因だったため、最終表示では使用を止めました。`SmoothCurvedHousing.mat` とSurface Shaderの連続した丸角曲線で筐体を描き、`StageSelectGlass.shader` が同じ曲率のガラス面・柔らかい背景映像・走査線・反射を表示します。色による窓のくり抜きはありません。CRT表示は `(0,78)` / `720×440`、筐体は `(0,62)` / `840×548`。前景カセットは引き続き独立したドット絵です。
+
+未解放カセットでは **砂嵐のみ・カセットも結晶塊も非表示**。Stage1は最初から解放済み扱いで通常プレビューとカセットを表示します。Stage2はStage1ゴール破壊で解放され、初回演出の結晶殻が割れる瞬間にノイズから機巧都市プレビューへ切り替わります。既に解放済みで本編Sceneが未登録の場合も、プレビューは表示して開始は無効です。
+
+挿入時にカセットのalphaを0にする旧処理は削除しました。幅を合わせ、真下へ滑らせ、上部とラベルが筐体から出た状態でガシャンと止まります。Console前面の遮蔽はカセット下部のみを隠し、CRTズーム中もカセットはその位置に残ります。
+
+結晶殻は `Unlock/JaggedCartridgeCrystal.png` を新作。正面向き・横長・ザクザクした外周で、既存カセットを包める塊です。小さな殻から徐々に成長し、破片が横長の面全体へ吸収され、満ちた後に亀裂と破砕が起こり、下にある既存のカセットとステージ名Spriteが現れます。Growthは1.25秒、Crackは.48秒、Burstは.45秒。192×112のドット格子を素材全体へ統一し、プラスチックや金属飾りは描き込みません。生成記録は `JaggedCrystalPrompt.md`。
+
+各アニメーションでは1フレームの進行を最大.05秒に制限し、初回ロードやShader準備で止まった直後も成長・挿入の途中を飛ばしません。通常の描画速度では設定秒数で再生し、低い描画速度では見えるフレームを優先します。FlowProbeは未解放時のノイズと前景非表示、実際の着座位置とカセットの不透明度、成長途中の結晶も検査・撮影します。
+
+亀裂は新しい `JaggedFractures.png`（192×112の連続した枝分かれ線）を重ねます。以前の途切れた短い縦線は使いません。専用SpriteとMaterialは同じUnlockフォルダーに置き、ゲームプレイ用の結晶Prefabには変更を加えていません。

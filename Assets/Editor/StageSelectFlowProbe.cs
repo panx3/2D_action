@@ -21,6 +21,7 @@ public static class StageSelectFlowProbe
     private static string output;
     private static double openingVisibleAt;
     private static bool capturedBirth;
+    private static bool capturedInsert, capturedGrowth;
     static StageSelectFlowProbe() { if (SessionState.GetBool(Key + "Running", false)) Subscribe(); }
 
     public static string Run(string outputDirectory)
@@ -48,6 +49,7 @@ public static class StageSelectFlowProbe
             started = changedAt = EditorApplication.timeSinceStartup; step = errors = warnings = 0;
             sawOpening = sawZoom = sawLoading = sawReveal = sawIntro = capturing = false;
             openingVisibleAt = -1; capturedBirth = false;
+            capturedInsert = capturedGrowth = false;
             StageSelectProgress.TestNamespace = "FlowProbe.";
             StageSelectProgress.ClearTestData("Stage1"); StageSelectProgress.ClearTestData("Stage2");
             gamepad = InputSystem.AddDevice<Gamepad>(); keyboard = InputSystem.AddDevice<Keyboard>();
@@ -122,6 +124,10 @@ public static class StageSelectFlowProbe
                 case 4:
                     if (!select.InputReady) return;
                     Require(select.SelectedIndex == 1 && !select.SelectedStage.CanLaunch, "stick/unavailable cartridge");
+                    Require(select.GetComponent<StageSelectPreview>().SignalLost, "locked preview is only static");
+                    var lockedView = new SerializedObject(select);
+                    Require(((CanvasGroup)lockedView.FindProperty("cartridgeGroup").objectReferenceValue).alpha == 0
+                        && ((CanvasGroup)lockedView.FindProperty("crystalGroup").objectReferenceValue).alpha == 0, "locked stage has no cartridge or crystal mass");
                     select.Confirm(); select.Confirm(); Require(select.InputReady, "unavailable confirm guard");
                     Capture(select, "02-machine-city"); Next(); break;
                 case 5:
@@ -154,7 +160,17 @@ public static class StageSelectFlowProbe
                     Require(StageSelectController.IsEnteringStage && TitleStageTransition.IsTransitioning, "single entry/shared intro gate");
                     Next(); break;
                 case 13:
+                    if (!capturedInsert && select.Phase == StageSelectController.SelectPhase.Inserting && Elapsed > .65)
+                    {
+                        var seated = new SerializedObject(select);
+                        Require(((CanvasGroup)seated.FindProperty("cartridgeGroup").objectReferenceValue).alpha > .99f, "seated cartridge stays visible");
+                        var card = (RectTransform)seated.FindProperty("cartridge").objectReferenceValue;
+                        // Frame scheduling can stretch a coroutine past its nominal time; observe the actual seated pose.
+                        if (Mathf.Abs(card.anchoredPosition.y - seated.FindProperty("insertPosition").vector2Value.y) >= 3) return;
+                        capturedInsert = true; Capture(select, "03a-cartridge-seated"); return;
+                    }
                     if (select.Phase != StageSelectController.SelectPhase.Zooming) return;
+                    Require(capturedInsert, "seated cartridge observation");
                     if (select.GetComponentInChildren<Canvas>().transform.Find("Theatre").localScale.x < 1.25f) return;
                     Capture(select, "03-crt-zoom"); Next(); break;
                 case 14:
@@ -182,10 +198,14 @@ public static class StageSelectFlowProbe
                     UnityEngine.Object.FindAnyObjectByType<GoalMenuController>()?.LoadNextScene(); break;
                 case 18:
                     Require(select.SelectedIndex == 1 && select.SelectedStage.IsUnlocked, "clear selects newly unlocked Stage2");
+                    var growing = (RectTransform)new SerializedObject(select).FindProperty("crystal").objectReferenceValue;
+                    if (!capturedGrowth && growing.localScale.x > .25f && growing.localScale.x < .7f)
+                    { capturedGrowth = true; Capture(select, "05a-crystal-growing"); return; }
                     var fracture = new SerializedObject(select).FindProperty("cracks").objectReferenceValue as CanvasGroup;
                     if (select.Phase == StageSelectController.SelectPhase.Opening && fracture.alpha > .2f)
                     {
                         Require(select.SelectedStage.NeedsReveal, "reveal not acknowledged early");
+                        Require(capturedGrowth, "progressive crystal growth observed");
                         Capture(select, "05-stage2-crystal-unlock"); Next();
                     }
                     break;

@@ -9,6 +9,7 @@ Shader "UI/IronBallGirl/StageSelectSurface"
         _SurfaceClipY ("Hardware front lip clip", Float) = 1
         _Window ("CRT source window", Vector) = (.16,.20,.84,.84)
         _DisplayWindow ("CRT display window", Vector) = (.08,.12,.92,.92)
+        _HousingSize ("Housing / glass dimensions", Vector) = (840,572,720,460)
         _DstBlend ("Destination Blend", Float) = 10
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -30,6 +31,7 @@ Shader "UI/IronBallGirl/StageSelectSurface"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
             #include "UnityCG.cginc"
@@ -37,9 +39,10 @@ Shader "UI/IronBallGirl/StageSelectSurface"
             struct appdata { float4 vertex:POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; };
             struct v2f { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float4 world:TEXCOORD1; };
             sampler2D _MainTex;
-            float4 _PixelGrid, _Tone, _ClipRect, _Window, _DisplayWindow;
+            float4 _PixelGrid, _Tone, _ClipRect, _Window, _DisplayWindow, _HousingSize;
             float _Mode, _SurfaceClipY;
             float Hash(float2 p) { return frac(sin(dot(p,float2(127.1,311.7)))*43758.5453); }
+            float RoundBox(float2 p,float2 b,float r) { float2 q=abs(p)-b+r; return length(max(q,0))+min(max(q.x,q.y),0)-r; }
             float RemapWindow(float x, float a, float b, float u, float v)
             { return x<a ? x/a*u : x>b ? v+(x-b)/(1-b)*(1-v) : u+(x-a)/(b-a)*(v-u); }
             v2f vert(appdata v)
@@ -81,7 +84,7 @@ Shader "UI/IronBallGirl/StageSelectSurface"
                     #endif
                     c=float4(col,1);
                 }
-                else
+                else if (_Mode < 3.5)
                 {
                     float2 p=float2(RemapWindow(i.uv.x,_DisplayWindow.x,_DisplayWindow.z,_Window.x,_Window.z),
                         RemapWindow(i.uv.y,_DisplayWindow.y,_DisplayWindow.w,_Window.y,_Window.w));
@@ -89,6 +92,28 @@ Shader "UI/IronBallGirl/StageSelectSurface"
                     c=tex2D(_MainTex,p)*_Tone;
                     float inWindow=step(_Window.x,p.x)*step(p.x,_Window.z)*step(_Window.y,p.y)*step(p.y,_Window.w);
                     c.a*=1-inWindow*(1-smoothstep(.004,.022,max(c.r,max(c.g,c.b))));
+                }
+                else
+                {
+                    // Analytic matched curves: no color key, UV deformation, or hard alpha threshold on the bezel.
+                    float2 p=(i.uv-.5)*_HousingSize.xy;
+                    float outer=RoundBox(p,_HousingSize.xy*.5-3,27);
+                    float inner=RoundBox(p-float2(0,16),_HousingSize.zw*.5,58);
+                    float innerRim=exp(-abs(inner-6)*.15);
+                    float outerRim=exp(-abs(outer+10)*.16);
+                    float top=saturate(p.y/_HousingSize.y+.5);
+                    float3 col=lerp(float3(.035,.03,.052),float3(.105,.085,.12),top);
+                    col+=outerRim*float3(.068,.035,.063)*(top*.7+.3);
+                    col+=innerRim*float3(.027,.062,.1);
+                    col*=1-.55*exp(-abs(inner-1)*.28);
+                    col+=pow(saturate(1-abs(p.y-(_HousingSize.y*.5-15))/3),3)*float3(.05,.035,.055);
+                    col+=exp(-abs(p.x+_HousingSize.x*.5-13)*.2)*float3(.055,.015,.03);
+                    col+=(Hash(floor(i.uv*_HousingSize.xy))-.5)*.008;
+                    #ifndef UNITY_COLORSPACE_GAMMA
+                        col=GammaToLinearSpace(col);
+                    #endif
+                    float aa=max(fwidth(outer),.55);
+                    c=float4(col,(1-smoothstep(-aa,aa,outer))*smoothstep(-aa,aa,inner));
                 }
                 c *= i.color;
                 #ifdef UNITY_UI_CLIP_RECT

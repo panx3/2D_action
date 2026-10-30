@@ -38,8 +38,9 @@ public sealed class StageSelectLighting : MonoBehaviour
             || controller.Phase == StageSelectController.SelectPhase.Revealing;
         Color glow = crtColor;
         if (controller.SelectedStage != null) glow = Color.Lerp(crtColor, controller.SelectedStage.accent, .18f);
-        Tint(screenGlow, glow, crtSpill * breath * (powered ? 1.3f : 1));
-        Tint(floorGlow, glow, floorReflection * breath);
+        bool signal = controller.SelectedStage != null && controller.SelectedStage.IsUnlocked && !controller.IsUnlockPresentation;
+        Tint(screenGlow, signal ? glow : new Color(.35f,.4f,.5f), crtSpill * breath * (powered ? 1.3f : signal ? 1 : .35f));
+        Tint(floorGlow, glow, floorReflection * breath * (signal ? 1 : .25f));
         Tint(cartridgeGlow, crystalColor, pinkSpill * breath);
         Tint(crystalGlow, crystalColor, pinkSpill * 1.5f * breath);
         Tint(powerGlow, crystalColor, powered ? .26f : .1f);

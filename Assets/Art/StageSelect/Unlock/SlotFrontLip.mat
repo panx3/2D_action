@@ -41,6 +41,7 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _DisplayWindow: {r: 0.08, g: 0.12, b: 0.92, a: 0.92}
+    - _HousingSize: {r: 840, g: 572, b: 720, a: 460}
     - _PixelGrid: {r: 400, g: 156, b: 0, a: 0}
     - _Tone: {r: 0.84, g: 0.86, b: 0.94, a: 1}
     - _Window: {r: 0.16, g: 0.2, b: 0.84, a: 0.84}

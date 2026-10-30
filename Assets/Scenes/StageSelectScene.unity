@@ -719,7 +719,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 235, y: 235}
+  m_SizeDelta: {x: 445, y: 230}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &283803895
 CanvasGroup:
@@ -753,7 +753,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 450f1c4fc8a90054391ddb1bb8a676a4, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e70ab7c3f68f9884d8bfaab3cc013c97, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -880,8 +880,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 58}
-  m_SizeDelta: {x: 840, y: 600}
+  m_AnchoredPosition: {x: 0, y: 62}
+  m_SizeDelta: {x: 840, y: 548}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &300013686
 MonoBehaviour:
@@ -895,7 +895,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 2100000, guid: ca4a9b6f64444114fa7a44d26dfc2d1c, type: 2}
+  m_Material: {fileID: 2100000, guid: ab63ed6ca53ba524892b5d46f4184192, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -903,7 +903,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 02f9821e46d009f49984624e4777cd57, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1541,8 +1541,8 @@ RectTransform:
   - {fileID: 961632609}
   - {fileID: 1175488446}
   - {fileID: 1216393809}
-  - {fileID: 1632898661}
   - {fileID: 1080889009}
+  - {fileID: 1632898661}
   - {fileID: 25943474}
   - {fileID: 2133873693}
   - {fileID: 1588388092}
@@ -2817,8 +2817,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 70}
-  m_SizeDelta: {x: 706, y: 480}
+  m_AnchoredPosition: {x: 0, y: 78}
+  m_SizeDelta: {x: 720, y: 440}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &969821307
 GameObject:
@@ -2992,7 +2992,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 290, y: 290}
+  m_SizeDelta: {x: 510, y: 285}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1026377981
 MonoBehaviour:
@@ -3006,7 +3006,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 2100000, guid: 22f31a06770ceb44d967ee2d0cc1ce77, type: 2}
+  m_Material: {fileID: 2100000, guid: 5e0dfbd998f7f334fbae918bcc5b7cd8, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -3014,7 +3014,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 35f549de40d613842aaa45242cf0d524, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b4526cd6ab6e2314384e5c34e3bcc52a, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -3368,15 +3368,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageSelectPreview
   screen: {fileID: 966300337}
   compositionShader: {fileID: 4800000, guid: 66d20de185e1a8e4b9a76018f129f091, type: 3}
-  crtShader: {fileID: 4800000, guid: 83ac983f7efe4fd99406d1070ad10045, type: 3}
-  resolution: {x: 640, y: 360}
-  softness: 0.8
-  scanlines: 0.16
+  crtShader: {fileID: 4800000, guid: 2e339672d7051204280510b50ab4faeb, type: 3}
+  resolution: {x: 960, y: 600}
+  softness: 1.2
+  scanlines: 0.1
   vignette: 0.26
   noise: 0.012
   brightness: 0.9
-  curvature: 0.085
-  glassReflection: 0.14
+  curvature: 0.055
+  glassReflection: 0.24
 --- !u!114 &1082415668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3442,17 +3442,17 @@ MonoBehaviour:
   - {fileID: 1361314234}
   - {fileID: 448932623}
   - {fileID: 646568061}
-  gatherDuration: 0.85
-  crackDuration: 0.42
-  burstDuration: 0.4
+  gatherDuration: 1.25
+  crackDuration: 0.48
+  burstDuration: 0.45
   switchDuration: 0.24
   insertDuration: 0.42
   alignDuration: 0.16
-  bootDuration: 0.26
+  bootDuration: 0.38
   zoomDuration: 1
   revealDuration: 0.34
-  insertPosition: {x: 0, y: -210}
-  insertScale: 0.8
+  insertPosition: {x: 0, y: -119}
+  insertScale: 0.78
   floatHeight: 6
   floatPeriod: 3.4
   switchTravel: 460

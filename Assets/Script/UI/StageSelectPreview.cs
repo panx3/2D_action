@@ -17,10 +17,11 @@ public sealed class StageSelectPreview : MonoBehaviour
     [SerializeField, Range(0f, .3f)] private float glassReflection = .12f;
 
     private Material composition, crt;
-    private RenderTexture source, softened, output;
+    private RenderTexture source, output;
     private float disturbance, clearBlend, clock;
     private StageSelectStage stage;
     public RenderTexture Output => output;
+    public bool SignalLost { get; set; }
     public float Disturbance { get => disturbance; set => disturbance = Mathf.Clamp01(value); }
     public float ClearBlend { get => clearBlend; set => clearBlend = Mathf.Clamp01(value); }
 
@@ -37,7 +38,6 @@ public sealed class StageSelectPreview : MonoBehaviour
         crt = new Material(crtShader) { name = "Cartridge CRT only (runtime)" };
         int width = Mathf.Clamp(resolution.x, 160, 1280), height = Mathf.Clamp(resolution.y, 90, 720);
         source = Target("Stage preview layers", width, height);
-        softened = Target("Stage preview glass", width, height);
         output = Target("Stage preview CRT", width, height);
         screen.texture = output;
         // Controller/preview Awake order is intentionally not an initialization dependency.
@@ -47,6 +47,7 @@ public sealed class StageSelectPreview : MonoBehaviour
     public void Show(StageSelectStage value)
     {
         stage = value;
+        SignalLost = stage != null && (!stage.IsUnlocked || stage.NeedsReveal);
         clock = 0;
         if (composition == null || stage == null) return;
         Bind("_Far", stage.far);
@@ -81,17 +82,15 @@ public sealed class StageSelectPreview : MonoBehaviour
         if (composition == null || stage == null) return;
         composition.SetFloat("_PreviewTime", clock);
         Graphics.Blit(Texture2D.blackTexture, source, composition);
-        crt.SetFloat("_BackdropBlur", softness * (1 - clearBlend));
-        crt.SetFloat("_BackdropBrightness", brightness);
-        Graphics.Blit(source, softened, crt, 1);
-        crt.SetFloat("_CRTTime", clock);
-        crt.SetFloat("_MasterStrength", .4f * (1 - clearBlend));
-        crt.SetFloat("_OverlayActive", 1);
-        crt.SetFloat("_OverlayBlend", 1 - clearBlend);
-        crt.SetVector("_OverlayShape", new Vector4(curvature, vignette, disturbance, 1.075f));
-        crt.SetVector("_OverlaySignal", new Vector4(scanlines, noise + disturbance * .16f, .35f, 12f));
-        crt.SetFloat("_OverlayGlass", glassReflection);
-        Graphics.Blit(softened, output, crt, 0);
+        crt.SetFloat("_PreviewTime", clock); crt.SetFloat("_Curvature", curvature);
+        crt.SetFloat("_Softness", softness); crt.SetFloat("_Brightness", brightness);
+        crt.SetFloat("_Scanlines", scanlines); crt.SetFloat("_Noise", noise);
+        crt.SetFloat("_Vignette", vignette); crt.SetFloat("_Glass", glassReflection);
+        crt.SetFloat("_SignalLost", SignalLost ? 1 : 0); crt.SetFloat("_Disturbance", disturbance);
+        crt.SetFloat("_Clear", clearBlend);
+        Vector2 size = screen.rectTransform.rect.size;
+        crt.SetVector("_GlassSize", new Vector4(size.x, size.y, 58, 0));
+        Graphics.Blit(source, output, crt, 0);
     }
 
     private static RenderTexture Target(string label, int width, int height)
@@ -105,7 +104,7 @@ public sealed class StageSelectPreview : MonoBehaviour
     private void OnDestroy()
     {
         if (screen != null) screen.texture = null;
-        foreach (var rt in new[] { source, softened, output })
+        foreach (var rt in new[] { source, output })
             if (rt != null) { rt.Release(); Destroy(rt); }
         if (composition != null) Destroy(composition);
         if (crt != null) Destroy(crt);

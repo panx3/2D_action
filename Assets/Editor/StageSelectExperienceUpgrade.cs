@@ -61,7 +61,8 @@ public static class StageSelectExperienceUpgrade
         {
             image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + "CrystalShard.png");
             image.material = Material("ShardFacets", 0, new Vector2(32, 48), Color.white);
-            image.rectTransform.sizeDelta *= 1.35f;
+            int index = int.Parse(image.name.Substring("Shard_".Length));
+            image.rectTransform.sizeDelta = new Vector2(18 + index % 3 * 8, 28 + index % 3 * 10) * 1.35f;
         }
         foreach (var image in root.GetComponentsInChildren<UnityEngine.UI.Image>(true).Where(i => i.name.StartsWith("AmbientCrystal_"))) image.gameObject.SetActive(false);
         Find("CartridgePinkHalo").gameObject.SetActive(false);
@@ -84,6 +85,70 @@ public static class StageSelectExperienceUpgrade
         });
         var stage = AssetDatabase.LoadAssetAtPath<StageSelectStage>("Assets/Data/StageSelect/MachineCity.asset");
         Edit(stage, so => { so.FindProperty("unlockAfterScene").stringValue = "Stage1"; so.FindProperty("lockedMessage").stringValue = "Stage1クリアで解放"; }); AssetDatabase.SaveAssetIfDirty(stage);
+        ApplyRichFinish(root);
+    }
+
+    private static void ApplyRichFinish(GameObject root)
+    {
+        CreateRichCracks(); Import(Art + "JaggedFractures.png");
+        RectTransform Find(string n) => root.GetComponentsInChildren<RectTransform>(true).Single(r => r.name == n);
+        var screen = Find("BackgroundCRT"); screen.anchoredPosition = new Vector2(0, 78); screen.sizeDelta = new Vector2(720, 440);
+        var tv = Find("Television").GetComponent<UnityEngine.UI.Image>();
+        tv.sprite = null; tv.rectTransform.anchoredPosition = new Vector2(0, 62); tv.rectTransform.sizeDelta = new Vector2(840, 548);
+        tv.material = Material("SmoothCurvedHousing", 4, new Vector2(840,572), Color.white);
+        tv.material.SetVector("_HousingSize",new Vector4(840,548,720,440));
+        EditorUtility.SetDirty(tv.material); AssetDatabase.SaveAssetIfDirty(tv.material);
+        Import(Art + "JaggedCartridgeCrystal.png");
+        var mass = Find("ExistingCrystal").GetComponent<UnityEngine.UI.Image>();
+        mass.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + "JaggedCartridgeCrystal.png");
+        mass.rectTransform.sizeDelta = new Vector2(510,285);
+        mass.material = Material("JaggedCrystalFacets", 0, new Vector2(192,112), Color.white);
+        Find("Cracks").sizeDelta = new Vector2(445,230);
+        Find("Cracks").GetComponent<UnityEngine.UI.Image>().sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + "JaggedFractures.png");
+        Edit(root.GetComponent<StageSelectPreview>(), so =>
+        {
+            so.FindProperty("crtShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>("Assets/StageSelectGlass.shader");
+            so.FindProperty("resolution").vector2IntValue = new Vector2Int(960,600);
+            so.FindProperty("curvature").floatValue = .055f; so.FindProperty("glassReflection").floatValue = .24f;
+            so.FindProperty("softness").floatValue = 1.2f; so.FindProperty("scanlines").floatValue = .1f;
+            so.FindProperty("vignette").floatValue = .26f;
+        });
+        Edit(root.GetComponent<StageSelectController>(), so =>
+        {
+            so.FindProperty("insertPosition").vector2Value = new Vector2(0,-119);
+            so.FindProperty("insertScale").floatValue = .78f;
+            so.FindProperty("gatherDuration").floatValue = 1.25f; so.FindProperty("crackDuration").floatValue = .48f;
+            so.FindProperty("burstDuration").floatValue = .45f; so.FindProperty("bootDuration").floatValue = .38f;
+        });
+    }
+    private static void CreateRichCracks()
+    {
+        string path = Art + "JaggedFractures.png"; if (File.Exists(path)) return;
+        const int width = 192, height = 112; var pixels = new Color[width * height];
+        int[][] lines = {
+            new[] {96,5,94,22,102,36,95,52,101,64,96,80,105,96,102,106},
+            new[] {100,35,73,43,67,54,45,48,28,59},
+            new[] {99,67,121,64,133,75,149,69,170,78},
+            new[] {94,80,78,84,69,97}, new[] {94,22,115,19,124,9}
+        };
+        void Dot(int x, int y, int radius, Color color)
+        {
+            for (int oy = -radius; oy <= radius; oy++) for (int ox = -radius; ox <= radius; ox++)
+                if (x+ox >= 0 && x+ox < width && y+oy >= 0 && y+oy < height) pixels[(y+oy)*width+x+ox] = color;
+        }
+        foreach (int pass in new[] {0,1}) foreach (var line in lines)
+        for (int i = 0; i < line.Length-2; i += 2)
+        {
+            int steps = Mathf.Max(Mathf.Abs(line[i+2]-line[i]),Mathf.Abs(line[i+3]-line[i+1]));
+            for (int j=0;j<=steps;j++)
+            {
+                float t=j/(float)Mathf.Max(steps,1);
+                Dot(Mathf.RoundToInt(Mathf.Lerp(line[i],line[i+2],t)) + (pass==1 ? 1 : 0),Mathf.RoundToInt(Mathf.Lerp(line[i+1],line[i+3],t)),
+                    pass==0 ? 1 : 0,pass==0 ? new Color(.28f,.015f,.15f,.95f) : new Color(1,.91f,.98f));
+            }
+        }
+        var tex=new Texture2D(width,height,TextureFormat.RGBA32,false);tex.SetPixels(pixels);tex.Apply();
+        File.WriteAllBytes(path,tex.EncodeToPNG());UnityEngine.Object.DestroyImmediate(tex);
     }
     private static Material Material(string name, int mode, Vector2 grid, Color tone)
     {

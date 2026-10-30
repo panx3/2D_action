@@ -82,6 +82,7 @@ public sealed class StageSelectController : MonoBehaviour
     public StageSelectStage SelectedStage => stages != null && selected < stages.Length ? stages[selected] : null;
     public int SelectedIndex => selected;
     public bool InputReady => Phase == SelectPhase.Ready;
+    public bool IsUnlockPresentation => Phase == SelectPhase.Opening && SelectedStage != null && SelectedStage.NeedsReveal;
     public static bool IsEnteringStage => entryOwner != null;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -149,7 +150,7 @@ public sealed class StageSelectController : MonoBehaviour
         if (Phase == SelectPhase.Ready)
         {
             idleClock += Time.unscaledDeltaTime;
-            RectTransform floating = SelectedStage.IsUnlocked ? cartridge : crystal;
+            RectTransform floating = cartridge;
             floating.anchoredPosition = home + Vector2.up * Mathf.Round(Mathf.Sin(idleClock * Mathf.PI * 2 / Mathf.Max(.5f, floatPeriod)) * floatHeight);
             floating.localEulerAngles = new Vector3(0, 0, Mathf.Sin(idleClock * 1.2f) * .65f);
             if (deniedUntil > 0 && Time.unscaledTime >= deniedUntil)
@@ -228,27 +229,30 @@ public sealed class StageSelectController : MonoBehaviour
             {
                 float angle = i * 2.39996f;
                 Vector2 from = home + new Vector2(Mathf.Cos(angle) * (670 + i % 3 * 60), Mathf.Sin(angle) * (420 + i % 4 * 30));
-                Vector2 to = home + new Vector2(Mathf.Cos(angle) * (32 + i % 3 * 16), Mathf.Sin(angle) * (42 + i % 2 * 13));
-                float arrival = Mathf.SmoothStep(0, 1, Mathf.Clamp01((t - i % 4 * .045f) / .865f));
+                // Absorption points fill a wide cartridge-sized body rather than a small round gem.
+                Vector2 to = home + new Vector2((i % 6 - 2.5f) * 65, (i / 6 - 1.5f) * 42);
+                float arrival = Mathf.SmoothStep(0, 1, Mathf.Clamp01((t - i % 6 * .035f) / .825f));
                 shards[i].anchoredPosition = Vector2.Lerp(from, to, arrival)
                     + new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle)) * Mathf.Sin(arrival * Mathf.PI) * 65;
                 // Each splinter is absorbed into the solid mass before the crack phase.
                 shards[i].localScale = Vector3.one * Mathf.Lerp(.8f, 0, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.72f, 1, arrival)));
                 shards[i].localEulerAngles = new Vector3(0, 0, i * 47 + 130 * t);
             }
-            crystalGroup.alpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.45f, 1, t));
-            crystal.localScale = Vector3.one * Mathf.Lerp(.2f, 1f, EaseOut(t));
+            float growth = Mathf.SmoothStep(0, 1, t);
+            crystalGroup.alpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.12f, .6f, t));
+            crystal.localScale = new Vector3(Mathf.Lerp(.08f, 1f, growth), Mathf.Lerp(.14f, 1f, growth), 1);
         });
         Play(crackClip, 1, .7f);
         yield return Animate(crackDuration, t =>
         {
             cracks.alpha = t;
             crystal.anchoredPosition = home + new Vector2(Mathf.Round(Mathf.Sin(t * 80) * t * 3), 0);
-            crystal.localScale = Vector3.one * (1 + t * .12f);
+            crystal.localScale = Vector3.one * (1 + t * .025f);
         });
         Play(burstClip, 2, .8f);
         crystalGroup.alpha = 0; cracks.alpha = 0;
         cartridgeGroup.alpha = 1;
+        preview.SignalLost = false;
         preview.Disturbance = .35f;
         yield return Animate(burstDuration, t =>
         {
@@ -286,7 +290,7 @@ public sealed class StageSelectController : MonoBehaviour
         {
             cartridge.anchoredPosition = Vector2.Lerp(from, home - Vector2.right * direction * switchTravel, t * t);
             cartridgeGroup.alpha = 1 - t;
-            if (!SelectedStage.IsUnlocked) { cartridgeGroup.alpha = 0; crystalGroup.alpha = 1 - t; }
+            if (!SelectedStage.IsUnlocked) cartridgeGroup.alpha = 0;
         });
         selected = (selected + direction + stages.Length) % stages.Length;
         ApplySelection();
@@ -296,7 +300,7 @@ public sealed class StageSelectController : MonoBehaviour
         {
             cartridge.anchoredPosition = Vector2.Lerp(home + Vector2.right * direction * switchTravel, home, EaseOut(t));
             cartridgeGroup.alpha = SelectedStage.IsUnlocked ? t : 0;
-            crystalGroup.alpha = SelectedStage.IsUnlocked ? 0 : t;
+            crystalGroup.alpha = 0;
         });
         Phase = SelectPhase.Ready;
         if (queuedDirection != 0)
@@ -323,13 +327,14 @@ public sealed class StageSelectController : MonoBehaviour
         {
             cartridge.anchoredPosition = Vector2.Lerp(aligned, insertPosition, t * t);
         });
-        cartridgeGroup.alpha = 0;
+        // The cartridge remains seated and visible above the lip, like a top-loading console.
         Play(insertClip, 4, .9f);
         powerLamp.color = new Color(.65f, 1, .78f);
         preview.Disturbance = 1;
         yield return Animate(bootDuration, t =>
         {
             console.anchoredPosition = consoleHome + Vector2.down * Mathf.Round(Mathf.Sin(t * Mathf.PI * 3) * (1 - t) * impactShake);
+            cartridge.anchoredPosition = insertPosition + Vector2.down * Mathf.Sin(t * Mathf.PI * 2) * (1 - t) * 1.5f;
             Flash(Mathf.Sin(t * Mathf.PI) * .32f);
         });
         Play(bootClip, 5, .7f);
@@ -338,7 +343,7 @@ public sealed class StageSelectController : MonoBehaviour
         Vector2 screenCenter = screen.rectTransform.anchoredPosition;
         Vector2 canvasSize = ((RectTransform)canvas.transform).rect.size;
         Vector2 screenSize = screen.rectTransform.rect.size;
-        float targetScale = Mathf.Max(canvasSize.x / screenSize.x, canvasSize.y / screenSize.y) * 1.035f;
+        float targetScale = Mathf.Max(canvasSize.x / screenSize.x, canvasSize.y / screenSize.y) * 1.14f;
         yield return Animate(zoomDuration, t =>
         {
             float eased = t * t * (3 - 2 * t);
@@ -402,7 +407,7 @@ public sealed class StageSelectController : MonoBehaviour
     private void PresentRest()
     {
         cartridgeGroup.alpha = SelectedStage.IsUnlocked ? 1 : 0;
-        crystalGroup.alpha = SelectedStage.IsUnlocked ? 0 : .85f;
+        crystalGroup.alpha = 0;
         controlsGroup.alpha = 1; cracks.alpha = 0;
         cartridge.localScale = crystal.localScale = Vector3.one;
         crystal.anchoredPosition = home; crystal.localRotation = Quaternion.identity;
@@ -416,7 +421,9 @@ public sealed class StageSelectController : MonoBehaviour
         while (elapsed < duration)
         {
             yield return null;
-            elapsed = Mathf.Min(duration, elapsed + Time.unscaledDeltaTime);
+            // Scene activation / first shader use can stall one frame. Keep the visible assembly and
+            // insertion from jumping straight to their endpoint when that delayed frame arrives.
+            elapsed = Mathf.Min(duration, elapsed + Mathf.Min(Time.unscaledDeltaTime, .05f));
             draw(elapsed / duration);
         }
     }
