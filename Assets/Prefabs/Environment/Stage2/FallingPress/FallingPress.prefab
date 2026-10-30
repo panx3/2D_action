@@ -167,6 +167,10 @@ MonoBehaviour:
   contactSkin: 0.04
   damage: 1
   knockback: {x: 7, y: 0}
+  minimumSquashHeight: 0.15
+  maximumSquashWidth: 1.18
+  squashHoldTime: 0.12
+  squashRecoveryTime: 0.18
   audioSource: {fileID: 1669196368613306691}
   floorImpact: {fileID: 8300000, guid: e7405afb62b86594f802e23a00fd9487, type: 3}
   ballImpact: {fileID: 8300000, guid: c0354074d140bb44f938bd131e6e9ff8, type: 3}
@@ -5206,10 +5210,10 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 140
+    m_Bits: 132
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 4294967155
+    m_Bits: 4294967163
   m_LayerOverridePriority: 30
   m_ForceSendLayers:
     serializedVersion: 2

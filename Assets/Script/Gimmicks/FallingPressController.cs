@@ -33,6 +33,10 @@ public sealed class FallingPressController : MonoBehaviour
     [Header("Damage / feedback")]
     [SerializeField, Min(1)] private int damage = 1;
     [SerializeField] private Vector2 knockback = new Vector2(7f, 0f);
+    [SerializeField, Range(0.08f, 0.5f)] private float minimumSquashHeight = 0.15f;
+    [SerializeField, Range(1f, 1.4f)] private float maximumSquashWidth = 1.18f;
+    [SerializeField, Min(0f)] private float squashHoldTime = 0.12f;
+    [SerializeField, Min(0.01f)] private float squashRecoveryTime = 0.18f;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip floorImpact;
     [SerializeField] private AudioClip ballImpact;
@@ -165,6 +169,13 @@ public sealed class FallingPressController : MonoBehaviour
         {
             PlayerHealth hp = c.GetComponentInParent<PlayerHealth>();
             if (hp == null) continue;
+            if (!hp.IsDead && !hp.IsRespawning && hp.GetComponent<Player>() != null)
+            {
+                var squash = hp.GetComponent<PressPlayerSquash>();
+                if (squash == null) squash = hp.gameObject.AddComponent<PressPlayerSquash>();
+                squash.Contact(Mathf.Min(from, to), minimumSquashHeight, maximumSquashWidth,
+                    squashHoldTime, squashRecoveryTime, body != null ? body.sortingOrder : 3);
+            }
             float side = c.bounds.center.x < head.position.x ? -1f : 1f;
             hp.TakeDamage(damage, new Vector2(knockback.x * side, knockback.y));
         }

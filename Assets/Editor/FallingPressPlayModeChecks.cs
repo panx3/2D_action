@@ -84,26 +84,27 @@ public static class FallingPressPlayModeChecks
                     { Require(t < 8f, "press did not hit standalone stand and rise"); return; }
                     PlaceBall(true); Next(); break;
                 case 3:
-                    occupiedSeen |= press.BallStand.IsOccupied && press.BallStand.IsReadyMarkVisible;
+                    occupiedSeen |= press.BallStand.IsOccupied && press.BallStand.StoneColor.b > press.BallStand.StoneColor.r;
                     if (!press.IsBallBlocked) { Require(t < 8f, "ball on stand did not block; ball=" + ball.position); return; }
-                    Require(occupiedSeen && press.HasSafeClearance, "contact-based ready mark or safe clearance missing");
+                    Require(occupiedSeen && press.HasSafeClearance, "contact-based cyan stones or safe clearance missing");
                     Require(ball.GetComponent<Collider2D>().bounds.min.y >= 1.78f, "ball crushed below stand");
                     CheckRest();
-                    Pass("actual stand contact lights frame/check mark; ball stops press at safe clearance; Rest unchanged");
+                    Pass("actual stand contact lights cyan stones; ball stops press at safe clearance; Rest unchanged");
                     initialHp = hp.CurrentHp; Set(press, "bottomWait", 4f);
                     playerBody.position = new Vector2(996.05f, 2.06f); playerBody.linearVelocity = Vector2.zero;
                     InputSystem.QueueStateEvent(pad, new GamepadState { leftStick = Vector2.right }); Next(); break;
                 case 4:
                     Require(hp.CurrentHp == initialHp, "damage during safe passage at " + playerBody.position);
-                    if (playerBody.position.x < 1004f) { Require(t < 3f, "Player could not pass; x=" + playerBody.position.x); return; }
-                    Pass("actual Player safely runs across supported press/stand");
+                    if (t < 0.6f) return;
+                    Require(playerBody.position.x < press.BallStand.SupportSurface.bounds.min.x - 0.4f, "Player passed through solid stand");
+                    Pass("supported press clearance is safe; solid stand blocks Player from the side");
                     InputSystem.QueueStateEvent(pad, new GamepadState());
                     ball.position = new Vector2(1008f, 0.85f); ball.linearVelocity = Vector2.zero;
                     playerBody.position = new Vector2(1004f, 2.06f); playerBody.linearVelocity = Vector2.zero;
                     Next(); break;
                 case 5:
                     if (!press.IsStandBlocked) { Require(t < 2f, "removing ball did not resume descent onto stand"); return; }
-                    Require(!press.BallStand.IsOccupied && !press.BallStand.IsReadyMarkVisible, "ready feedback did not clear");
+                    Require(!press.BallStand.IsOccupied && press.BallStand.StoneColor.r > press.BallStand.StoneColor.b, "ready feedback did not clear");
                     Pass("ball removal clears feedback and press descends until actual stand contact");
                     playerBody.position = new Vector2(1000f, press.UndersideY + 1f); playerBody.linearVelocity = Vector2.zero;
                     Next(); break;

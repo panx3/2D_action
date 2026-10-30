@@ -87,9 +87,6 @@ public static class FallingPressSetup
         var visuals = Child("VisualRoot", root.transform);
         var body = Sprite("BaseWithBallMark", "BallStand", visuals.transform, 1);
         body.transform.localScale = new Vector3(1f, 1f, 1f);
-        var light = Sprite("PlacementIndicator", "LightPixel", visuals.transform, 1);
-        light.transform.localPosition = new Vector3(0f, 1.68f, 0f);
-        light.transform.localScale = new Vector3(0.55f, 0.06f, 1f);
         var detection = Child("DetectionRoot_BallOnly", root.transform); detection.layer = 2;
         var surface = detection.AddComponent<BoxCollider2D>();
         surface.size = new Vector2(3.7f, 1.9f); surface.offset = new Vector2(0f, 0.95f);
@@ -97,7 +94,7 @@ public static class FallingPressSetup
         int standLayers = (1 << 7) | (1 << 2);
         surface.includeLayers = standLayers; surface.excludeLayers = ~standLayers; surface.layerOverridePriority = 20;
         var controller = root.AddComponent<PressBallStandController>();
-        Set(controller, "supportSurface", surface); Set(controller, "indicator", light);
+        Set(controller, "supportSurface", surface);
         ConfigureStandFeedback(root);
         return root;
     }
@@ -106,37 +103,57 @@ public static class FallingPressSetup
     {
         var controller = root.GetComponent<PressBallStandController>();
         Transform visuals = root.transform.Find("VisualRoot");
-        var light = visuals.Find("PlacementIndicator").GetComponent<SpriteRenderer>();
-        light.transform.localScale = new Vector3(1.6f, 0.14f, 1f);
-        light.color = new Color(0.6f, 0.3f, 0.08f, 0.7f);
-        var material = AssetDatabase.LoadAssetAtPath<Material>(Art + "PlacementFeedback.mat");
+        foreach (string name in new[] { "PlacementIndicator", "PlacementOutline", "ReadyCheck" })
+        {
+            Transform old = visuals.Find(name);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+        }
+        ImportSprite("StandStones", 35.26f, new Vector2(0.5f, 0f));
+        ImportSprite("StandStoneGlow", 35.26f, new Vector2(0.5f, 0f));
+        var material = AssetDatabase.LoadAssetAtPath<Material>(Art + "StandStones.mat");
         if (material == null)
         {
-            material = new Material(Shader.Find("Sprites/Default"));
-            AssetDatabase.CreateAsset(material, Art + "PlacementFeedback.mat");
+            material = new Material(Shader.Find("IronBallGirl/Press Stand Stones"));
+            AssetDatabase.CreateAsset(material, Art + "StandStones.mat");
         }
-        var outline = FeedbackLine("PlacementOutline", visuals, material, 0.07f,
-            new[] { new Vector3(-0.72f, 0.2f), new Vector3(-0.72f, 1.42f), new Vector3(0.72f, 1.42f), new Vector3(0.72f, 0.2f), new Vector3(-0.72f, 0.2f) });
-        outline.startColor = outline.endColor = light.color;
-        var check = FeedbackLine("ReadyCheck", visuals, material, 0.12f,
-            new[] { new Vector3(-0.46f, 0.78f), new Vector3(-0.12f, 0.46f), new Vector3(0.55f, 1.2f) });
-        check.startColor = check.endColor = new Color(0.2f, 1f, 0.7f);
-        check.gameObject.SetActive(false);
+        var baseSprite = visuals.Find("BaseWithBallMark").GetComponent<SpriteRenderer>();
+        SpriteRenderer lights = StoneSprite("StoneLights", "StandStones", visuals, baseSprite, material, 3);
+        SpriteRenderer glow = StoneSprite("StoneGlow", "StandStoneGlow", visuals, baseSprite, material, 2);
+        Color empty = new Color(1f, 0.12f, 0.08f, 1f), occupied = new Color(0.45f, 1f, 1f, 1f);
+        lights.color = empty; glow.color = new Color(empty.r, empty.g, empty.b, 0.35f);
+        Set(controller, "stoneLights", lights); Set(controller, "stoneGlow", glow);
+        var settings = new SerializedObject(controller);
+        settings.FindProperty("emptyColor").colorValue = empty;
+        settings.FindProperty("occupiedColor").colorValue = occupied;
+        settings.ApplyModifiedPropertiesWithoutUndo();
         var audio = root.GetComponent<AudioSource>(); if (audio == null) audio = root.AddComponent<AudioSource>();
         audio.playOnAwake = false; audio.spatialBlend = 0.8f; audio.volume = 0.65f;
         audio.rolloffMode = AudioRolloffMode.Linear; audio.minDistance = 3f; audio.maxDistance = 22f;
-        Set(controller, "placementOutline", outline); Set(controller, "readyMark", check.gameObject);
         Set(controller, "audioSource", audio); Set(controller, "placedSound", AssetDatabase.LoadAssetAtPath<AudioClip>(Art + "BallClang.wav"));
+        Transform playerRoot = root.transform.Find("CollisionRoot_Player");
+        var playerObject = playerRoot != null ? playerRoot.gameObject : Child("CollisionRoot_Player", root.transform);
+        playerObject.layer = 0;
+        var surface = controller.SupportSurface;
+        playerObject.transform.localPosition = surface.transform.localPosition;
+        playerObject.transform.localRotation = surface.transform.localRotation;
+        playerObject.transform.localScale = surface.transform.localScale;
+        var playerCollider = playerObject.GetComponent<BoxCollider2D>();
+        if (playerCollider == null) playerCollider = playerObject.AddComponent<BoxCollider2D>();
+        playerCollider.size = surface.size; playerCollider.offset = surface.offset;
+        playerCollider.includeLayers = 1 << 3; playerCollider.excludeLayers = ~(1 << 3);
+        playerCollider.layerOverridePriority = 20;
     }
 
-    private static LineRenderer FeedbackLine(string name, Transform parent, Material material, float width, Vector3[] points)
+    private static SpriteRenderer StoneSprite(string name, string asset, Transform parent, SpriteRenderer source, Material material, int order)
     {
-        Transform existing = parent.Find(name);
-        var go = existing != null ? existing.gameObject : Child(name, parent);
-        var line = go.GetComponent<LineRenderer>(); if (line == null) line = go.AddComponent<LineRenderer>();
-        line.useWorldSpace = false; line.sharedMaterial = material; line.sortingOrder = 2;
-        line.startWidth = line.endWidth = width; line.numCapVertices = 0; line.numCornerVertices = 0;
-        line.positionCount = points.Length; line.SetPositions(points); return line;
+        var child = parent.Find(name);
+        var sr = child != null ? child.GetComponent<SpriteRenderer>() : Sprite(name, asset, parent, order);
+        sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + asset + ".png");
+        sr.transform.localPosition = source.transform.localPosition;
+        sr.transform.localRotation = source.transform.localRotation;
+        sr.transform.localScale = source.transform.localScale;
+        sr.sharedMaterial = material; sr.sortingLayerID = source.sortingLayerID; sr.sortingOrder = order;
+        return sr;
     }
 
     public static void UpdateExistingPrefabs()
@@ -147,7 +164,7 @@ public static class FallingPressSetup
             var head = press.transform.Find("MovingHead");
             head.GetComponent<Rigidbody2D>().useFullKinematicContacts = true;
             var solid = head.GetComponent<BoxCollider2D>();
-            int layers = (1 << 2) | (1 << 3) | (1 << 7);
+            int layers = (1 << 2) | (1 << 7);
             solid.includeLayers = layers; solid.excludeLayers = ~layers;
             PrefabUtility.SaveAsPrefabAsset(press, PressPath);
         }
@@ -187,7 +204,7 @@ public static class FallingPressSetup
         var light = Sprite("WarningLight", "LightPixel", visual.transform, 4);
         light.transform.localPosition = new Vector3(0f, 1.35f, 0f);
         var collider = moving.AddComponent<BoxCollider2D>();
-        int pressLayers = (1 << 2) | (1 << 3) | (1 << 7);
+        int pressLayers = (1 << 2) | (1 << 7);
         collider.includeLayers = pressLayers; collider.excludeLayers = ~pressLayers; collider.layerOverridePriority = 30;
         var detector = Child("DamageDetector", moving.transform); detector.layer = 2;
         var trigger = detector.AddComponent<BoxCollider2D>(); trigger.isTrigger = true;
@@ -234,10 +251,14 @@ public static class FallingPressSetup
                 throw new Exception("Incorrect actor collision filtering: " + c.name);
         if (!press.GetComponentInChildren<Rigidbody2D>().useFullKinematicContacts) throw new Exception("Missing full kinematic contacts.");
         foreach (var c in stand.GetComponentsInChildren<Collider2D>())
-            if ((c.excludeLayers.value & (1 << 3)) == 0 || (c.excludeLayers.value & (1 << 2)) != 0)
+            if (c.gameObject.layer == 0 ? (c.includeLayers.value & (1 << 3)) == 0 :
+                (c.excludeLayers.value & (1 << 3)) == 0 || (c.excludeLayers.value & (1 << 2)) != 0)
                 throw new Exception("Incorrect stand collision filtering: " + c.name);
+        if (stand.transform.Find("CollisionRoot_Player") == null) throw new Exception("Missing Player stand collider.");
+        var pressSolid = press.transform.Find("MovingHead").GetComponent<BoxCollider2D>();
+        if ((pressSolid.excludeLayers.value & (1 << 3)) == 0) throw new Exception("Press must not push Player into floor.");
         var standSettings = new SerializedObject(stand.GetComponent<PressBallStandController>());
-        if (standSettings.FindProperty("readyMark").objectReferenceValue == null || standSettings.FindProperty("placementOutline").objectReferenceValue == null)
+        if (standSettings.FindProperty("stoneLights").objectReferenceValue == null || standSettings.FindProperty("stoneGlow").objectReferenceValue == null)
             throw new Exception("Missing placement feedback.");
         foreach (var instance in UnityEngine.Object.FindObjectsByType<FallingPressController>(FindObjectsSortMode.None))
         {
@@ -245,7 +266,7 @@ public static class FallingPressSetup
             if (instance.GetComponentInChildren<PressBallStandController>(true) != null)
                 throw new Exception("Keep the stand separate from the press prefab.");
         }
-        foreach (string name in new[] { "PressBody", "BallStand", "Piston", "LightPixel" })
+        foreach (string name in new[] { "PressBody", "BallStand", "Piston", "LightPixel", "StandStones", "StandStoneGlow" })
         {
             var ti = (TextureImporter)AssetImporter.GetAtPath(Art + name + ".png");
             if (ti.filterMode != FilterMode.Point || ti.mipmapEnabled || ti.textureCompression != TextureImporterCompression.Uncompressed)

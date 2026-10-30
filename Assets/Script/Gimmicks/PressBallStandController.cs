@@ -5,21 +5,20 @@ using UnityEngine;
 public sealed class PressBallStandController : MonoBehaviour
 {
     [SerializeField] private BoxCollider2D supportSurface;
-    [SerializeField] private SpriteRenderer indicator;
+    [SerializeField] private SpriteRenderer stoneLights;
+    [SerializeField] private SpriteRenderer stoneGlow;
     [SerializeField] private MorningStarLauncher launcher;
     [SerializeField, Min(0.01f)] private float surfaceTolerance = 0.12f;
-    [SerializeField] private LineRenderer placementOutline;
-    [SerializeField] private GameObject readyMark;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip placedSound;
-    [SerializeField] private Color emptyColor = new Color(0.6f, 0.3f, 0.08f, 0.7f);
-    [SerializeField] private Color occupiedColor = new Color(0.2f, 1f, 0.7f, 1f);
+    [SerializeField] private Color emptyColor = new Color(1f, 0.12f, 0.08f, 1f);
+    [SerializeField] private Color occupiedColor = new Color(0.45f, 1f, 1f, 1f);
     private readonly ContactPoint2D[] contacts = new ContactPoint2D[16];
     private Collider2D ballCollider;
     public bool IsOccupied { get; private set; }
     public float FloorY => transform.position.y;
     public BoxCollider2D SupportSurface => supportSurface;
-    public bool IsReadyMarkVisible => readyMark != null && readyMark.activeSelf;
+    public Color StoneColor => stoneLights != null ? stoneLights.color : Color.clear;
 
     private void Awake()
     {
@@ -62,9 +61,8 @@ public sealed class PressBallStandController : MonoBehaviour
     private void ApplyFeedback()
     {
         Color color = IsOccupied ? occupiedColor : emptyColor;
-        if (indicator != null) indicator.color = color;
-        if (placementOutline != null) placementOutline.startColor = placementOutline.endColor = color;
-        if (readyMark != null) readyMark.SetActive(IsOccupied);
+        if (stoneLights != null) stoneLights.color = color;
+        if (stoneGlow != null) { color.a = IsOccupied ? 0.8f : 0.35f; stoneGlow.color = color; }
     }
     private void OnDisable() { IsOccupied = false; ApplyFeedback(); }
     private void OnDrawGizmosSelected()
