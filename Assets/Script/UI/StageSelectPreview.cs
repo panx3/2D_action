@@ -6,6 +6,8 @@ public sealed class StageSelectPreview : MonoBehaviour
 {
     [SerializeField] private UnityEngine.UI.RawImage screen;
     [SerializeField] private UnityEngine.UI.Image televisionHousing;
+    [SerializeField] private UnityEngine.UI.RawImage cartridgeArtwork;
+    [SerializeField] private UnityEngine.UI.RawImage floorReflection;
     [SerializeField] private Shader compositionShader;
     [SerializeField] private Shader crtShader;
     [SerializeField] private Vector2Int resolution = new Vector2Int(640, 360);
@@ -20,15 +22,20 @@ public sealed class StageSelectPreview : MonoBehaviour
     [SerializeField, Range(80f,400f)] private float scanlineCount = 240f;
     [SerializeField, Range(0f,3f)] private float rgbSeparation = .9f;
     [SerializeField, Range(0f, .3f)] private float glassReflection = .12f;
+    [SerializeField, Range(0f, 1f)] private float phosphorBloom = .22f;
 
     private Material composition, crt, housingSource, housingRuntime;
-    private RenderTexture source, output;
-    private float disturbance, clearBlend, clock;
+    private RenderTexture source, output, previous, printedArtwork;
+    private bool captureArtwork;
+    private float disturbance, clearBlend, clock, stageBlend = 1;
     private StageSelectStage stage;
     public RenderTexture Output => output;
     public bool SignalLost { get; set; }
     public float Disturbance { get => disturbance; set => disturbance = Mathf.Clamp01(value); }
     public float ClearBlend { get => clearBlend; set => clearBlend = Mathf.Clamp01(value); }
+    public float FocusDepth { get; set; }
+    public float SignalRecovery { get; set; } = 1;
+    public float EntryProgress { get; set; }
 
     private void Awake()
     {
@@ -50,21 +57,36 @@ public sealed class StageSelectPreview : MonoBehaviour
         int width = Mathf.Clamp(resolution.x, 160, 1280), height = Mathf.Clamp(resolution.y, 90, 720);
         source = Target("Stage preview layers", width, height);
         output = Target("Stage preview CRT", width, height);
+        previous = Target("Previous cartridge signal", width, height);
         screen.texture = output;
+        if (cartridgeArtwork != null)
+        {
+            printedArtwork = Target("Printed cartridge artwork", 512, 320);
+            printedArtwork.filterMode = FilterMode.Point;
+            cartridgeArtwork.texture = printedArtwork;
+        }
+        if (floorReflection != null) floorReflection.texture = output;
         // Controller/preview Awake order is intentionally not an initialization dependency.
         if (stage != null) Show(stage);
     }
 
     public void Show(StageSelectStage value)
     {
+        if (composition != null && stage != null && stage != value)
+        {
+            Graphics.Blit(source, previous);
+            stageBlend = 0;
+        }
         stage = value;
         SignalLost = stage != null && (!stage.IsUnlocked || stage.NeedsReveal);
+        SignalRecovery = 1;
         clock = 0;
         if (composition == null || stage == null) return;
         Bind("_Far", stage.far);
         Bind("_Middle", stage.middle);
         Bind("_Near", stage.near);
         composition.SetColor("_Background", stage.screenColor);
+        captureArtwork = true;
         RenderNow();
     }
 
@@ -85,6 +107,7 @@ public sealed class StageSelectPreview : MonoBehaviour
     {
         clock += Time.unscaledDeltaTime;
         disturbance = Mathf.MoveTowards(disturbance, 0, Time.unscaledDeltaTime * 3f);
+        stageBlend = Mathf.MoveTowards(stageBlend, 1, Time.unscaledDeltaTime / .38f);
         RenderNow();
     }
 
@@ -93,12 +116,22 @@ public sealed class StageSelectPreview : MonoBehaviour
         if (composition == null || stage == null) return;
         composition.SetFloat("_PreviewTime", clock);
         Graphics.Blit(Texture2D.blackTexture, source, composition);
+        if (captureArtwork && printedArtwork != null)
+        {
+            Graphics.Blit(source, printedArtwork);
+            captureArtwork = false;
+        }
         crt.SetFloat("_PreviewTime", clock); crt.SetFloat("_Curvature", curvature);
         crt.SetFloat("_Softness", softness); crt.SetFloat("_Brightness", brightness);
+        crt.SetFloat("_FocusDepth", Mathf.Clamp01(FocusDepth));
+        crt.SetFloat("_Bloom", phosphorBloom);
+        crt.SetFloat("_Entry", Mathf.Clamp01(EntryProgress));
+        crt.SetTexture("_PreviousTex", previous);
+        crt.SetFloat("_StageBlend", Mathf.SmoothStep(0, 1, stageBlend));
         crt.SetFloat("_Scanlines", scanlines); crt.SetFloat("_Noise", noise);
         crt.SetFloat("_ScanlineCount",scanlineCount); crt.SetFloat("_RGB",rgbSeparation);
         crt.SetFloat("_Vignette", vignette); crt.SetFloat("_Glass", glassReflection);
-        crt.SetFloat("_SignalLost", SignalLost ? 1 : 0); crt.SetFloat("_Disturbance", disturbance);
+        crt.SetFloat("_SignalLost", SignalLost ? 1 : 1 - Mathf.Clamp01(SignalRecovery)); crt.SetFloat("_Disturbance", disturbance);
         crt.SetFloat("_Clear", clearBlend);
         Vector4 shape = new Vector4(edgeBow, cornerRadius, 0, 0);
         crt.SetVector("_FaceShape", shape);
@@ -123,7 +156,9 @@ public sealed class StageSelectPreview : MonoBehaviour
     private void OnDestroy()
     {
         if (screen != null) screen.texture = null;
-        foreach (var rt in new[] { source, output })
+        if (cartridgeArtwork != null) cartridgeArtwork.texture = null;
+        if (floorReflection != null) floorReflection.texture = null;
+        foreach (var rt in new[] { source, output, previous, printedArtwork })
             if (rt != null) { rt.Release(); Destroy(rt); }
         if (composition != null) Destroy(composition);
         if (crt != null) Destroy(crt);

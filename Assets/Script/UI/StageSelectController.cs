@@ -33,6 +33,10 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField] private TMP_Text status;
     [SerializeField] private TMP_Text hints;
     [SerializeField] private TMP_Text loadingLabel;
+    [SerializeField] private TMP_Text stageNumber;
+    [SerializeField] private TMP_Text unlockLabel;
+    [SerializeField] private CanvasGroup unlockAnnouncement;
+    [SerializeField] private UnityEngine.UI.Image labelSheen;
     [SerializeField] private CanvasGroup controlsGroup;
     [SerializeField] private UnityEngine.UI.Image powerLamp;
     [SerializeField] private UnityEngine.UI.Image flash;
@@ -42,6 +46,7 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField] private CanvasGroup crystalGroup;
     [SerializeField] private CanvasGroup cracks;
     [SerializeField] private RectTransform[] shards;
+    [SerializeField, HideInInspector] private Vector2[] assemblyPositions;
 
     [Header("Timing (unscaled seconds)")]
     [SerializeField, Min(.1f)] private float gatherDuration = .55f;
@@ -53,6 +58,8 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField, Min(.1f)] private float bootDuration = .26f;
     [SerializeField, Min(.1f)] private float zoomDuration = 1.0f;
     [SerializeField, Min(.1f)] private float revealDuration = .34f;
+    [SerializeField, Min(0f)] private float chargeHoldDuration = .28f;
+    [SerializeField, Min(.1f)] private float unlockSettleDuration = 1.15f;
     [Header("Motion (1280 × 720 reference pixels)")]
     [SerializeField] private Vector2 insertPosition = new Vector2(2, -220);
     [SerializeField, Range(.3f, 1f)] private float insertScale = .46f;
@@ -62,6 +69,8 @@ public sealed class StageSelectController : MonoBehaviour
     [SerializeField, Range(0f, 16f)] private float impactShake = 5f;
     [Header("Unlock assembly")]
     [SerializeField, Range(1f,5f)] private float foregroundShardScale = 2.8f;
+    [SerializeField, Range(1f,8f), Tooltip("集結先での破片倍率。配置も同じ比率で変え、輪郭同士の重なりを保つ")]
+    private float assembledShardScale = 5.8f;
     [SerializeField, Range(0f,1f)] private float fusionWhiteStrength = .7f;
 
     [Header("Sound (replaceable; original chip cues are used when empty)")]
@@ -83,7 +92,13 @@ public sealed class StageSelectController : MonoBehaviour
     private string normalStatus;
     private bool showingGamepad;
     private UnityEngine.UI.Image[] shardImages;
+    private StageSelectCrystalFragment[] shardFragments;
+    private Material sheenMaterial;
     public float UnlockAssemblyProgress { get; private set; }
+    public float UnlockLight { get; private set; }
+    public float UnlockRelease { get; private set; }
+    public float UnlockFocus { get; private set; }
+    public float EntryProgress { get; private set; }
     public SelectPhase Phase { get; private set; } = SelectPhase.Opening;
     public StageSelectStage SelectedStage => stages != null && selected < stages.Length ? stages[selected] : null;
     public int SelectedIndex => selected;
@@ -113,14 +128,22 @@ public sealed class StageSelectController : MonoBehaviour
         selected = Mathf.Max(0, Array.FindIndex(stages, value => value.name == lastCartridge));
         int pending = Array.FindIndex(stages, value => value.NeedsReveal);
         if (pending >= 0) selected = pending;
-        generatedCues = new AudioClip[7];
+        generatedCues = new AudioClip[8];
         for (int i = 0; i < generatedCues.Length; i++) generatedCues[i] = ChipCue(i);
         cartridgeGroup.alpha = controlsGroup.alpha = crystalGroup.alpha = cracks.alpha = 0;
         loadingLabel.alpha = 0;
         flash.color = new Color(1, .8f, .94f, 0);
         foreach (var shard in shards) shard.gameObject.SetActive(false);
         shardImages=Array.ConvertAll(shards, shard => shard.GetComponent<UnityEngine.UI.Image>());
+        shardFragments=Array.ConvertAll(shards, shard => shard.GetComponent<StageSelectCrystalFragment>());
         SetFusionLight(0,0);
+        if (unlockAnnouncement != null) unlockAnnouncement.alpha = 0;
+        if (labelSheen != null)
+        {
+            sheenMaterial = new Material(labelSheen.material);
+            labelSheen.material = sheenMaterial;
+            labelSheen.color = Color.clear;
+        }
         ApplySelection();
         if (!SelectedStage.NeedsReveal) PresentRest();
     }
@@ -229,67 +252,100 @@ public sealed class StageSelectController : MonoBehaviour
     private IEnumerator Opening()
     {
         controlsGroup.alpha = cartridgeGroup.alpha = 0;
+        UnlockRelease = 0;
+        if (unlockLabel != null) unlockLabel.text = "STAGE " + (selected + 1).ToString("00") + "  /  NEW CARTRIDGE";
         Play(gatherClip, 0, .65f);
         yield return Animate(gatherDuration, t =>
         {
             UnlockAssemblyProgress=t;
-            float absorbed=0, pulse=0;
+            UnlockFocus = Mathf.SmoothStep(0, 1, t * 2.5f);
+            UnlockLight = 0;
+            preview.FocusDepth = UnlockFocus;
             for (int i = 0; i < shards.Length; i++)
             {
                 float angle = i * 2.39996f;
                 // All fragments rise from below the frame, shrinking as they leave the foreground.
                 float spread = ((i*11)%shards.Length)/(float)Mathf.Max(1,shards.Length-1)*2-1;
                 Vector2 from = home + new Vector2(spread*(440+i%3*40),-425-i%5*30);
-                Vector2 to = home + new Vector2((i%6-2.5f)*72,(i/6-1.5f)*48);
-                float delay = ((i*7)%shards.Length)/(float)Mathf.Max(1,shards.Length-1)*.28f;
-                float flight=Mathf.Clamp01((t-delay)/.68f);
+                Vector2 to = home + AssemblyCell(i);
+                float flight = AssemblyFlight(t, i);
                 float arrival=flight*flight*(3-2*flight);
-                float fuse=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.72f,.98f,flight));
-                absorbed+=fuse;
-                pulse+=Mathf.Exp(-Mathf.Pow((flight-.82f)/.075f,2));
-                shards[i].gameObject.SetActive(flight>0 && flight<.99f);
+                if(shardFragments[i]!=null) shardFragments[i].SetAssemblyProgress(flight);
+                // Every chip has a fixed destination; the chips alone suggest the rectangular silhouette.
+                shards[i].gameObject.SetActive(flight>0);
                 shards[i].anchoredPosition = Vector2.Lerp(from, to, arrival)
                     + Vector2.right*Mathf.Sin(angle)*Mathf.Sin(arrival*Mathf.PI)*42;
-                shards[i].localScale=Vector3.one*Mathf.Lerp(foregroundShardScale,.65f,arrival)*(1-fuse);
-                shards[i].localEulerAngles=new Vector3(0,0,i*47+70*arrival);
-                if(shardImages[i]!=null) shardImages[i].color=new Color(1,1,1,Mathf.SmoothStep(0,1,flight/.1f));
+                float overlap=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.68f,1,flight));
+                float travellingScale=Mathf.Lerp(foregroundShardScale,1.05f,arrival);
+                shards[i].localScale=Vector3.one*Mathf.Lerp(travellingScale,assembledShardScale,overlap);
+                float spin=i*47+(i%2==0?1:-1)*(38+i%5*17)*arrival;
+                shards[i].localEulerAngles=new Vector3(0,0,HasFittedAssembly ? Mathf.LerpAngle(spin,0,arrival) : spin);
+                if(shardImages[i]!=null)
+                {
+                    Color color=Color.Lerp(new Color(.72f,.54f,.78f,0),Color.white,Mathf.SmoothStep(0,1,flight/.14f));
+                    shardImages[i].color=color;
+                }
             }
-            float growth=Mathf.Clamp01(absorbed/Mathf.Max(1,shards.Length));
-            crystalGroup.alpha=Mathf.SmoothStep(0,1,growth*5);
-            crystal.localScale=new Vector3(Mathf.Lerp(.06f,1,Mathf.Pow(growth,.65f)),Mathf.Lerp(.12f,1,Mathf.Sqrt(growth)),1);
-            SetFusionLight(fusionWhiteStrength*Mathf.Clamp01(pulse*.25f)*Mathf.SmoothStep(0,1,t*4),growth);
+            crystalGroup.alpha=0;
+            crystal.localScale=Vector3.one;
+            SetFusionLight(0,0);
         });
+        yield return Animate(chargeHoldDuration, t =>
+        {
+            float peak=Mathf.Max(0,Mathf.Sin(t*Mathf.PI));
+            bool replaced=t>=.5f;
+            // Swap once beneath the local flash, rather than morphing a rectangular placeholder image.
+            crystalGroup.alpha=replaced ? 1 : 0;
+            crystal.localScale=Vector3.one;
+            crystal.anchoredPosition=home;
+            foreach(var shard in shards) shard.gameObject.SetActive(!replaced);
+            UnlockLight=peak*.95f;
+            SetFusionLight(fusionWhiteStrength*peak*peak*1.36f,1);
+            if(fusionLight!=null) fusionLight.rectTransform.localScale*=1+peak*.45f;
+            Flash(Mathf.Pow(peak,12)*.22f,true);
+        });
+        Flash(0,true);
         foreach(var shard in shards) shard.gameObject.SetActive(false);
         Play(crackClip, 1, .7f);
         yield return Animate(crackDuration, t =>
         {
-            cracks.alpha = t;
-            crystal.anchoredPosition = home + new Vector2(Mathf.Round(Mathf.Sin(t * 80) * t * 3), 0);
-            crystal.localScale = Vector3.one * (1 + t * .025f);
-            SetFusionLight(fusionWhiteStrength*(.12f+t*.18f),1);
+            cracks.alpha = Mathf.SmoothStep(0, 1, t);
+            crystal.anchoredPosition = home + new Vector2(Mathf.Round(Mathf.Sin(t * 54) * t * 1.8f), 0);
+            crystal.localScale = Vector3.one * (1 + t * t * .035f);
+            UnlockLight = .72f + t * .28f;
+            SetFusionLight(fusionWhiteStrength*(.25f+t*t*.28f),1);
         });
         Play(burstClip, 2, .8f);
         crystalGroup.alpha = 0; cracks.alpha = 0;
         cartridgeGroup.alpha = 1;
         preview.SignalLost = false;
-        preview.Disturbance = .35f;
+        preview.SignalRecovery = 0;
+        preview.Disturbance = .16f;
         for(int i=0;i<shards.Length;i++) { shards[i].gameObject.SetActive(true); if(shardImages[i]!=null) shardImages[i].color=Color.white; }
         yield return Animate(burstDuration, t =>
         {
             float eased = EaseOut(t);
+            UnlockRelease = t;
+            UnlockLight = Mathf.Pow(1-t, 1.5f);
+            preview.SignalRecovery = Mathf.SmoothStep(0, 1, t);
             for (int i = 0; i < shards.Length; i++)
             {
                 float angle = i * 2.39996f;
-                Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                shards[i].anchoredPosition = home + direction * (40 + eased * (220 + i % 4 * 48)) + Vector2.down * t * t * 110;
-                shards[i].localScale = Vector3.one * (1 - t);
-                shards[i].localEulerAngles = new Vector3(0, 0, i * 47 + t * 240);
+                Vector2 origin = AssemblyCell(i)*(HasFittedAssembly ? 1 : 1.15f);
+                Vector2 direction = (origin.normalized + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle))*.25f).normalized;
+                shards[i].anchoredPosition = home + origin + direction * eased * (180+i%6*35) + Vector2.down*t*t*110;
+                float depth = .65f + i % 6 * .13f;
+                shards[i].localScale = new Vector3(1, HasFittedAssembly || i%2==0 ? 1 : -1, 1)
+                    * Mathf.Lerp(HasFittedAssembly ? assembledShardScale : .8f, depth, eased);
+                shards[i].localEulerAngles = new Vector3(0, 0, (HasFittedAssembly ? 0 : i * 47)
+                    + t * (i%2==0?1:-1) * (85+i%7*29));
+                if (shardImages[i] != null) shardImages[i].color = new Color(1, 1, 1, 1-Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.22f, 1, t)));
             }
-            cartridge.localScale = Vector3.one * (1 + Mathf.Sin(t * Mathf.PI) * .08f);
-            controlsGroup.alpha = Mathf.SmoothStep(0, 1, t);
-            Flash(Mathf.Pow(1 - t, 4) * .6f,true);
-            SetFusionLight(fusionWhiteStrength*Mathf.Pow(1-t,3),1+t*.5f);
-            world.anchoredPosition = Vector2.right * Mathf.Round(Mathf.Sin(t * 70) * (1 - t) * impactShake);
+            cartridge.localScale = Vector3.one * Mathf.Lerp(.94f, 1, eased);
+            cartridge.anchoredPosition = home + Vector2.down * Mathf.Pow(1-t, 2) * 14;
+            Flash(Mathf.Pow(1 - t, 6) * .28f,true);
+            SetFusionLight(fusionWhiteStrength*Mathf.Pow(1-t,4)*.6f,1+t*.5f);
+            world.anchoredPosition = Vector2.right * Mathf.Round(Mathf.Sin(t * 56) * Mathf.Pow(1-t,3) * impactShake*.5f);
         });
         foreach (var shard in shards) shard.gameObject.SetActive(false);
         world.anchoredPosition = Vector2.zero;
@@ -297,8 +353,42 @@ public sealed class StageSelectController : MonoBehaviour
         crystal.anchoredPosition = home; crystal.localRotation = Quaternion.identity;
         crystal.localScale = Vector3.one;
         SetFusionLight(0,1);
+        // Let the player register the new world before handing navigation back.
+        Play(null, 7, .55f);
+        yield return Animate(unlockSettleDuration, t =>
+        {
+            UnlockFocus = 1 - Mathf.SmoothStep(0, 1, t);
+            preview.FocusDepth = UnlockFocus;
+            controlsGroup.alpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.55f, 1, t));
+            if (unlockAnnouncement != null) unlockAnnouncement.alpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, .18f, t)) * (1-Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.72f, 1, t)));
+            if (labelSheen != null)
+            {
+                labelSheen.color = new Color(1, 1, 1, Mathf.Sin(t * Mathf.PI));
+                sheenMaterial.SetFloat("_Progress", t);
+            }
+        });
+        UnlockFocus = UnlockLight = 0;
+        preview.FocusDepth = 0;
+        if (unlockAnnouncement != null) unlockAnnouncement.alpha = 0;
+        if (labelSheen != null) labelSheen.color = Color.clear;
         StageSelectProgress.CompleteReveal(SelectedStage.sceneName);
         Phase = SelectPhase.Ready;
+    }
+
+    private float AssemblyFlight(float progress, int index)
+    {
+        float delay=((index*7)%shards.Length)/(float)Mathf.Max(1,shards.Length-1)*.4f;
+        return Mathf.Clamp01((progress-delay)/.56f);
+    }
+    private bool HasFittedAssembly => assemblyPositions != null && assemblyPositions.Length == shards.Length;
+
+    private Vector2 AssemblyCell(int index)
+    {
+        if(HasFittedAssembly) return assemblyPositions[index]*assembledShardScale;
+        int columns=Mathf.Max(1,Mathf.CeilToInt(Mathf.Sqrt(shards.Length*4f/3f)));
+        int rows=Mathf.CeilToInt(shards.Length/(float)columns), slot=(index*17)%shards.Length;
+        return new Vector2((slot%columns-(columns-1)*.5f)*56+Mathf.Sin(index*2.4f)*6,
+            (slot/columns-(rows-1)*.5f)*23+Mathf.Cos(index*1.7f)*5)*(assembledShardScale/6.4f);
     }
 
     private IEnumerator Switch(int direction)
@@ -317,7 +407,7 @@ public sealed class StageSelectController : MonoBehaviour
         selected = (selected + direction + stages.Length) % stages.Length;
         ApplySelection();
         crystal.anchoredPosition = home;
-        preview.Disturbance = .85f;
+        preview.Disturbance = .16f;
         yield return Animate(half, t =>
         {
             cartridge.anchoredPosition = Vector2.Lerp(home + Vector2.right * direction * switchTravel, home, EaseOut(t));
@@ -335,6 +425,7 @@ public sealed class StageSelectController : MonoBehaviour
     private IEnumerator EnterStage()
     {
         controlsGroup.alpha = 0;
+        Flash(0);
         cartridge.localRotation = Quaternion.identity;
         Vector2 from = cartridge.anchoredPosition;
         // Align width above the slot, then keep that width while sliding physically down behind its front lip.
@@ -344,20 +435,22 @@ public sealed class StageSelectController : MonoBehaviour
             float eased = Mathf.SmoothStep(0, 1, t);
             cartridge.anchoredPosition = Vector2.Lerp(from, aligned, eased);
             cartridge.localScale = Vector3.one * Mathf.Lerp(1, insertScale, eased);
+            cartridge.localEulerAngles = new Vector3(0, 0, Mathf.Sin(t * Mathf.PI) * -1.4f);
         });
         yield return Animate(insertDuration, t =>
         {
-            cartridge.anchoredPosition = Vector2.Lerp(aligned, insertPosition, t * t);
+            cartridge.anchoredPosition = Vector2.Lerp(aligned, insertPosition, t*t*(3-2*t));
         });
         // The cartridge remains seated and visible above the lip, like a top-loading console.
         Play(insertClip, 4, .9f);
         powerLamp.color = new Color(.65f, 1, .78f);
-        preview.Disturbance = 1;
+        preview.Disturbance = .24f;
         yield return Animate(bootDuration, t =>
         {
             console.anchoredPosition = consoleHome + Vector2.down * Mathf.Round(Mathf.Sin(t * Mathf.PI * 3) * (1 - t) * impactShake);
             cartridge.anchoredPosition = insertPosition + Vector2.down * Mathf.Sin(t * Mathf.PI * 2) * (1 - t) * 1.5f;
-            Flash(Mathf.Sin(t * Mathf.PI) * .32f);
+            preview.EntryProgress = t;
+            EntryProgress = t * .18f;
         });
         Play(bootClip, 5, .7f);
         Phase = SelectPhase.Zooming;
@@ -368,12 +461,12 @@ public sealed class StageSelectController : MonoBehaviour
         float targetScale = Mathf.Max(canvasSize.x / screenSize.x, canvasSize.y / screenSize.y) * 1.14f;
         yield return Animate(zoomDuration, t =>
         {
-            float eased = t * t * (3 - 2 * t);
+            float eased = t * t * t * (t * (t * 6 - 15) + 10);
             float scale = Mathf.Lerp(1, targetScale, eased * eased);
             world.localScale = Vector3.one * scale;
             world.anchoredPosition = -screenCenter * scale * eased;
             preview.ClearBlend = Mathf.SmoothStep(0, .6f, t);
-            Flash(Mathf.Pow(1 - t, 6) * .18f);
+            EntryProgress = Mathf.Lerp(.18f, 1, t);
         });
         // The CRT fills the entire viewport now. Keep rendering it during asset/scene activation.
         Phase = SelectPhase.Loading;
@@ -392,7 +485,7 @@ public sealed class StageSelectController : MonoBehaviour
         yield return null; yield return new WaitForEndOfFrame();
         Time.timeScale = 0;
         Phase = SelectPhase.Revealing;
-        preview.Disturbance = .6f;
+        preview.Disturbance = .08f;
         yield return Animate(revealDuration, t =>
         {
             preview.ClearBlend = Mathf.Lerp(.6f, 1, t);
@@ -421,6 +514,7 @@ public sealed class StageSelectController : MonoBehaviour
         fallbackTitle.text = stage.stageName;
         fallbackTitle.gameObject.SetActive(stage.titleSprite == null);
         normalStatus = !stage.IsUnlocked ? stage.lockedMessage : stage.CanLaunch ? "このカセットで あそぶ" : stage.unavailableMessage;
+        if (stageNumber != null) stageNumber.text = (selected+1).ToString("00") + "  /  " + stages.Length.ToString("00");
         status.text = normalStatus; status.color = stage.accent;
         deniedUntil = 0;
         preview.Show(stage);
@@ -434,6 +528,36 @@ public sealed class StageSelectController : MonoBehaviour
         cartridge.localScale = crystal.localScale = Vector3.one;
         crystal.anchoredPosition = home; crystal.localRotation = Quaternion.identity;
     }
+
+#if UNITY_EDITOR
+    /// <summary>Refresh the live debug cartridge through this presentation's own state/visual writers.</summary>
+    public bool RefreshDebugSelection(string sceneName)
+    {
+        if (!isActiveAndEnabled || !didStart || ownedActions == null
+            || (Phase != SelectPhase.Ready && Phase != SelectPhase.Opening && Phase != SelectPhase.Switching)) return false;
+        int index=Array.FindIndex(stages,stage=>stage.sceneName==sceneName);
+        if(index<0) return false;
+        StopAllCoroutines();
+        if(audioSource!=null) audioSource.Stop();
+        Phase=SelectPhase.Opening;
+        selected=index; queuedDirection=heldDirection=0; idleClock=0;
+        world.anchoredPosition=Vector2.zero; world.localScale=Vector3.one; worldGroup.alpha=1;
+        cartridge.anchoredPosition=home; cartridge.localRotation=Quaternion.identity;
+        console.anchoredPosition=consoleHome;
+        UnlockAssemblyProgress=UnlockLight=UnlockRelease=UnlockFocus=EntryProgress=0;
+        preview.ClearBlend=preview.FocusDepth=preview.EntryProgress=preview.Disturbance=0;
+        preview.SignalRecovery=1;
+        Flash(0); SetFusionLight(0,0);
+        foreach(var shard in shards) shard.gameObject.SetActive(false);
+        if(unlockAnnouncement!=null) unlockAnnouncement.alpha=0;
+        if(labelSheen!=null) labelSheen.color=Color.clear;
+        ApplySelection();
+        PresentRest();
+        if(SelectedStage.NeedsReveal) StartCoroutine(Opening());
+        else Phase=SelectPhase.Ready;
+        return true;
+    }
+#endif
 
     private static IEnumerator Animate(float duration, Action<float> draw)
     {
@@ -465,19 +589,35 @@ public sealed class StageSelectController : MonoBehaviour
 
     private static AudioClip ChipCue(int kind)
     {
-        const int rate = 22050;
-        float length = kind == 0 ? .55f : kind == 5 ? .3f : .12f;
+        const int rate = 44100;
+        float length = kind == 0 ? 1.25f : kind == 5 ? .75f : kind == 7 ? 1.6f : kind == 3 ? .18f : .22f;
         var samples = new float[Mathf.CeilToInt(length * rate)];
+        float[] notes = { 523.25f, 659.25f, 783.99f, 1046.5f };
         uint seed = (uint)(139 + kind);
         for (int i = 0; i < samples.Length; i++)
         {
             float t = i / (float)rate, p = t / length;
-            float frequency = kind == 0 ? Mathf.Lerp(330, 1320, p) : kind == 5 ? (p < .35f ? 523 : p < .65f ? 659 : 1047)
-                : kind == 6 ? 145 : kind == 4 ? Mathf.Lerp(240, 65, p) : kind == 3 ? 880 : 440;
             seed = seed * 1664525u + 1013904223u;
             float noise = ((seed >> 8) / 16777215f) * 2 - 1;
-            float envelope = Mathf.Min(t * 500, 1) * Mathf.Pow(1 - p, kind == 0 ? .6f : 2);
-            samples[i] = (Mathf.Sin(t * frequency * Mathf.PI * 2) * .2f + noise * (kind == 4 ? .25f : .025f)) * envelope;
+            float attack = Mathf.Min(t * 130, 1), v = 0;
+            if (kind == 7 || kind == 5)
+            {
+                // Soft, inharmonic glass partials and delayed notes give the reveal a long tail.
+                for (int n = 0; n < notes.Length; n++)
+                {
+                    float age = t - n * (kind == 7 ? .11f : .075f);
+                    if (age < 0) continue;
+                    float env = Mathf.Min(age * 100, 1) * Mathf.Exp(-age * (kind == 7 ? 3.6f : 7));
+                    v += (Mathf.Sin(age * notes[n] * Mathf.PI * 2) + .22f*Mathf.Sin(age * notes[n] * 2.013f * Mathf.PI * 2)) * env * .075f;
+                }
+            }
+            else if (kind == 0)
+                v = (Mathf.Sin(Mathf.PI*2*(180*t+260*t*t))*.11f+noise*.035f)*Mathf.Sin(p*Mathf.PI)*attack;
+            else if (kind == 3)
+                v = (noise*.13f+Mathf.Sin(t*280*Mathf.PI*2)*.1f)*Mathf.Exp(-t*32)*attack;
+            else
+                v = (Mathf.Sin(t*(kind==6?130:kind==4?85:440)*Mathf.PI*2)*.16f+noise*(kind==4?.23f:.018f))*Mathf.Pow(1-p,3)*attack;
+            samples[i] = v;
         }
         var clip = AudioClip.Create("Cartridge chip cue " + kind, samples.Length, 1, rate, false);
         clip.SetData(samples, 0);
@@ -495,6 +635,7 @@ public sealed class StageSelectController : MonoBehaviour
         if (pendingLoad != null && !pendingLoad.isDone) pendingLoad.allowSceneActivation = true;
         FinishEntry();
         if (ownedActions != null) { ownedActions.Disable(); Destroy(ownedActions); }
+        if (sheenMaterial != null) Destroy(sheenMaterial);
         if (generatedCues != null) foreach (var clip in generatedCues) if (clip != null) Destroy(clip);
     }
 }

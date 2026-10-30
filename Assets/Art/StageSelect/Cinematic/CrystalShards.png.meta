@@ -1,0 +1,539 @@
+fileFormatVersion: 2
+guid: 5c8ce82356431b844920e85767889253
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5811317349808818745
+    second: CrystalShards_0
+  - first:
+      213: -6169089731689927813
+    second: CrystalShards_1
+  - first:
+      213: 9053311799031292526
+    second: CrystalShards_2
+  - first:
+      213: -8101118233840503475
+    second: CrystalShards_3
+  - first:
+      213: 2552871779474116905
+    second: CrystalShards_4
+  - first:
+      213: -3685638159072288580
+    second: CrystalShards_5
+  - first:
+      213: 2861652465172059385
+    second: CrystalShards_6
+  - first:
+      213: 5906559962824512487
+    second: CrystalShards_7
+  - first:
+      213: -1421481974653449371
+    second: CrystalShards_8
+  - first:
+      213: -3241696033810935434
+    second: CrystalShards_9
+  - first:
+      213: -1709167678833650518
+    second: CrystalShards_10
+  - first:
+      213: -3523787299752391759
+    second: CrystalShards_11
+  - first:
+      213: 332917207847323746
+    second: CrystalShards_12
+  - first:
+      213: 624279071514006034
+    second: CrystalShards_13
+  - first:
+      213: 3678291549902419189
+    second: CrystalShards_14
+  - first:
+      213: 9197167736932972601
+    second: CrystalShards_15
+  - first:
+      213: 692176763991504286
+    second: CrystalShards_16
+  - first:
+      213: -7512558076983882595
+    second: CrystalShards_17
+  - first:
+      213: -1908601213863764491
+    second: CrystalShards_18
+  - first:
+      213: -7434706143883189197
+    second: CrystalShards_19
+  - first:
+      213: -4548605554212056301
+    second: CrystalShards_20
+  - first:
+      213: 3919470641469093779
+    second: CrystalShards_21
+  - first:
+      213: 6717080995300706531
+    second: CrystalShards_22
+  - first:
+      213: 2500735898638401108
+    second: CrystalShards_23
+  - first:
+      213: -1548173266100144311
+    second: CrystalShards_24
+  - first:
+      213: 5305131797680766085
+    second: CrystalShards_25
+  - first:
+      213: -6658014430064264560
+    second: CrystalShards_26
+  - first:
+      213: 5647508918785980486
+    second: CrystalShards_27
+  - first:
+      213: -4425745241927672589
+    second: CrystalShards_28
+  - first:
+      213: 7904874886598925620
+    second: CrystalShards_29
+  - first:
+      213: -5706842330339154368
+    second: CrystalShards_30
+  - first:
+      213: 7292250342905806513
+    second: CrystalShards_31
+  - first:
+      213: -1650869065257509909
+    second: CrystalShards_32
+  - first:
+      213: -5799938372207989924
+    second: CrystalShards_33
+  - first:
+      213: -6418029502971761708
+    second: CrystalShards_34
+  - first:
+      213: -3329818348489799215
+    second: CrystalShards_35
+  - first:
+      213: 905675463190993548
+    second: CrystalShards_36
+  - first:
+      213: -1440023900619782226
+    second: CrystalShards_37
+  - first:
+      213: 3143250919089324649
+    second: CrystalShards_38
+  - first:
+      213: -5654540835929990702
+    second: CrystalShards_39
+  - first:
+      213: 3919671552722606040
+    second: CrystalShards_40
+  - first:
+      213: -7852963556546921790
+    second: CrystalShards_41
+  - first:
+      213: -8829617422573266150
+    second: CrystalShards_42
+  - first:
+      213: 1682491801279559925
+    second: CrystalShards_43
+  - first:
+      213: -8513967822522114841
+    second: CrystalShards_44
+  - first:
+      213: 5853207669922452252
+    second: CrystalShards_45
+  - first:
+      213: 6246053850150600836
+    second: CrystalShards_46
+  - first:
+      213: 2954387784995403605
+    second: CrystalShards_47
+  - first:
+      213: 1205213444576766427
+    second: CrystalShards_48
+  - first:
+      213: 4289505252996832902
+    second: CrystalShards_49
+  - first:
+      213: -6429043279097574947
+    second: CrystalShards_50
+  - first:
+      213: -6370066509432337652
+    second: CrystalShards_51
+  - first:
+      213: 5979074883722569176
+    second: CrystalShards_52
+  - first:
+      213: 4201886397005619988
+    second: CrystalShards_53
+  - first:
+      213: 4493564346539499147
+    second: CrystalShards_54
+  - first:
+      213: -4004715798864507411
+    second: CrystalShards_55
+  - first:
+      213: 181973843509868578
+    second: CrystalShards_56
+  - first:
+      213: -3050461210873728101
+    second: CrystalShards_57
+  - first:
+      213: 2328805965251925542
+    second: CrystalShards_58
+  - first:
+      213: -4589108302172991145
+    second: CrystalShards_59
+  - first:
+      213: 538862641624366889
+    second: CrystalShards_60
+  - first:
+      213: -5390506237788630375
+    second: CrystalShards_61
+  - first:
+      213: -28111426924783596
+    second: CrystalShards_62
+  - first:
+      213: -1022909089738519117
+    second: CrystalShards_63
+  - first:
+      213: -6803468918358040236
+    second: CrystalShards_64
+  - first:
+      213: -4069437128279723661
+    second: CrystalShards_65
+  - first:
+      213: 1473947315986465900
+    second: CrystalShards_66
+  - first:
+      213: 3047033764181494093
+    second: CrystalShards_67
+  - first:
+      213: 4454680472897580246
+    second: CrystalShards_68
+  - first:
+      213: 9104298787308492654
+    second: CrystalShards_69
+  - first:
+      213: 6431238019994801241
+    second: CrystalShards_70
+  - first:
+      213: 4809177316410682748
+    second: CrystalShards_71
+  - first:
+      213: -5657762030336637467
+    second: CrystalShards_72
+  - first:
+      213: 4918292531274200567
+    second: CrystalShards_73
+  - first:
+      213: 7151796508261618569
+    second: CrystalShards_74
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: CrystalShard_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 443
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 74c2378cc42fa9543981591ef09a6297
+      internalID: -758922985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_01
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 443
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df5c7960544bf59488b2413f4a1edbf6
+      internalID: -1599707856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_02
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 443
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e87838a34020d8346847f7d4ba65822b
+      internalID: 1852621367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_03
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 443
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dcd8a72d8e3bd5e4798aba28f8ce68ed
+      internalID: -1055672611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0df4d2fcdeba356408734b91fac5fd4f
+      internalID: 835729066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_05
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2669cbaa7c9d934fba769870f091621
+      internalID: 1020587494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_06
+      rect:
+        serializedVersion: 2
+        x: 887
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b394e2553b780d442a65999547ef347d
+      internalID: -214828910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrystalShard_07
+      rect:
+        serializedVersion: 2
+        x: 1330
+        y: 0
+        width: 443
+        height: 443
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65e8c1b49fd690043916856620ae2f23
+      internalID: -1100528566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: ba972e10599ecd14b84fc1bcea4cc66c
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      CrystalShard_00: -758922985
+      CrystalShard_01: -1599707856
+      CrystalShard_02: 1852621367
+      CrystalShard_03: -1055672611
+      CrystalShard_04: 835729066
+      CrystalShard_05: 1020587494
+      CrystalShard_06: -214828910
+      CrystalShard_07: -1100528566
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

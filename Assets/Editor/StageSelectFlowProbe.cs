@@ -22,6 +22,7 @@ public static class StageSelectFlowProbe
     private static double openingVisibleAt;
     private static bool capturedBirth;
     private static bool capturedInsert, capturedGrowth, capturedForeground, sawFusionLight;
+    private static bool capturedBurst, capturedSettle;
     static StageSelectFlowProbe() { if (SessionState.GetBool(Key + "Running", false)) Subscribe(); }
 
     public static string Run(string outputDirectory)
@@ -52,6 +53,7 @@ public static class StageSelectFlowProbe
             openingVisibleAt = -1; capturedBirth = false;
             capturedInsert = capturedGrowth = false;
             capturedForeground=sawFusionLight=false;
+            capturedBurst=capturedSettle=false;
             StageSelectProgress.TestNamespace = "FlowProbe.";
             StageSelectProgress.ClearTestData("Stage1"); StageSelectProgress.ClearTestData("Stage2");
             gamepad = InputSystem.AddDevice<Gamepad>(); keyboard = InputSystem.AddDevice<Keyboard>();
@@ -97,6 +99,9 @@ public static class StageSelectFlowProbe
             if (select != null)
             {
                 var view=new SerializedObject(select);
+                if(StageSelectController.IsEnteringStage)
+                    Require(((UnityEngine.UI.Image)view.FindProperty("flash").objectReferenceValue).color.a==0,
+                        "no diamond sprite flash during cartridge entry / CRT boot");
                 var light=view.FindProperty("fusionLight").objectReferenceValue as UnityEngine.UI.Image;
                 sawFusionLight |= light!=null && light.color.a>.05f;
                 var cardRect=(RectTransform)view.FindProperty("cartridge").objectReferenceValue;
@@ -122,6 +127,15 @@ public static class StageSelectFlowProbe
                     title.OnStartPressed(); title.OnStartPressed(); Next(); break;
                 case 1:
                     if (select == null || !select.InputReady) return;
+                    var artwork = select.GetComponentInChildren<Canvas>().transform.Find("Theatre/Cartridge/PrintedStageArtwork").GetComponent<UnityEngine.UI.RawImage>();
+                    Require(artwork.texture != null && !artwork.raycastTarget, "printed stage artwork is connected without intercepting input");
+                    var reflection = select.GetComponentInChildren<Canvas>().transform.Find("Theatre/CRTGlassReflection").GetComponent<UnityEngine.UI.RawImage>();
+                    Require(reflection.texture == select.GetComponent<StageSelectPreview>().Output && !reflection.raycastTarget, "CRT reflection follows the live render target");
+                    int fittedPieces=0;
+                    foreach(var image in select.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+                        if(image.name.StartsWith("Shard_") && image.sprite!=null
+                            && image.GetComponent<StageSelectCrystalFragment>()!=null) fittedPieces++;
+                    Require(fittedPieces == 80, "eighty fitted crystal pieces share the final cassette silhouette");
                     Require(select.SelectedStage.sceneName == "Stage1" && select.SelectedStage.CanLaunch && !select.SelectedStage.NeedsReveal, "Stage1 initially available without reveal");
                     Require(UnityEngine.Object.FindObjectsByType<CRTFilterController>(FindObjectsSortMode.None).Length == 0, "selection must not have fullscreen CRT");
                     Capture(select, "01-select-ready"); Next(); break;
@@ -209,17 +223,21 @@ public static class StageSelectFlowProbe
                     Require(select.SelectedIndex == 1 && select.SelectedStage.IsUnlocked, "clear selects newly unlocked Stage2");
                     if(!capturedForeground && select.UnlockAssemblyProgress>.12f && select.UnlockAssemblyProgress<.4f)
                     {
-                        int large=0, below=0;
+                        int moving=0, below=0;
                         float centerY=((RectTransform)new SerializedObject(select).FindProperty("cartridge").objectReferenceValue).anchoredPosition.y;
                         foreach(var r in select.GetComponentsInChildren<RectTransform>())
-                            if(r.name.StartsWith("Shard_") && r.localScale.x>1.5f)
-                            { large++; if(r.anchoredPosition.y<centerY) below++; }
-                        Require(large>=3 && below==large,"large crystal fragments rise from the lower foreground");
+                            if(r.name.StartsWith("Shard_") && r.localScale.x>1.1f)
+                            { moving++; if(r.anchoredPosition.y<centerY) below++; }
+                        Require(moving>=3 && below==moving,"crystal fragments rise from the lower foreground");
                         capturedForeground=true;Capture(select,"05b-foreground-fragments");return;
                     }
-                    var growing = (RectTransform)new SerializedObject(select).FindProperty("crystal").objectReferenceValue;
-                    if (!capturedGrowth && growing.localScale.x > .25f && growing.localScale.x < .7f)
-                    { capturedGrowth = true; Capture(select, "05a-crystal-growing"); return; }
+                    var growthView = new SerializedObject(select);
+                    if (!capturedGrowth && select.UnlockAssemblyProgress > .97f)
+                    {
+                        Require(((CanvasGroup)growthView.FindProperty("crystalGroup").objectReferenceValue).alpha==0,
+                            "the rectangular silhouette is formed by chips before the final image is shown");
+                        capturedGrowth = true; Capture(select, "05a-crystal-growing"); return;
+                    }
                     var fracture = new SerializedObject(select).FindProperty("cracks").objectReferenceValue as CanvasGroup;
                     if (select.Phase == StageSelectController.SelectPhase.Opening && fracture.alpha > .2f)
                     {
@@ -236,7 +254,13 @@ public static class StageSelectFlowProbe
                     if (title == null || !title.InputReady) return;
                     title.OnStartPressed(); Next(); break;
                 case 21:
-                    if (select == null || !select.InputReady) return;
+                    if (select == null) return;
+                    if(!capturedBurst && select.UnlockRelease>.18f && select.UnlockRelease<.7f)
+                    { capturedBurst=true; Capture(select,"05c-crystal-release"); return; }
+                    if(!capturedSettle && select.UnlockRelease>=1 && select.UnlockFocus>.2f && select.UnlockFocus<.8f)
+                    { capturedSettle=true; Capture(select,"05d-unlock-afterglow"); return; }
+                    if(!select.InputReady) return;
+                    Require(capturedBurst && capturedSettle, "release and afterglow are visible before input resumes");
                     Require(select.SelectedIndex == 1 && !select.SelectedStage.NeedsReveal, "interrupted unlock replays and completes");
                     Capture(select, "06-stage2-unlocked"); Next(); break;
                 case 22:
@@ -300,6 +324,8 @@ public static class StageSelectFlowProbe
         Require(shader!=null && !Array.Exists(ShaderUtil.GetShaderMessages(shader),message=>message.severity.ToString()=="Error"),"CRT glass shader compiles");
         var surface=Shader.Find("UI/IronBallGirl/StageSelectSurface");
         Require(surface!=null && !Array.Exists(ShaderUtil.GetShaderMessages(surface),message=>message.severity.ToString()=="Error"),"CRT housing shader compiles");
+        var atmosphere=Shader.Find("UI/IronBallGirl/StageSelectAtmosphere");
+        Require(atmosphere!=null && !Array.Exists(ShaderUtil.GetShaderMessages(atmosphere),message=>message.severity.ToString()=="Error"),"reflection/energy shader compiles");
         var material=new Material(shader);
         var source=new Texture2D(320,200,TextureFormat.RGBA32,false);
         var pixels=new Color[320*200];
