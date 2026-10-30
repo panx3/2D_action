@@ -48,7 +48,8 @@ public sealed class TitleStageTransition : MonoBehaviour
     private bool ownsTime;
     private float wipeProgress;
     private TransitionPhase phase;
-    public static bool IsTransitioning => active != null;
+    // The same gate keeps the existing stage entrance, BGM and cursor behind either presentation.
+    public static bool IsTransitioning => active != null || StageSelectController.IsEnteringStage;
     public static bool IsLoadingVisible => active != null && active.phase == TransitionPhase.Loading && active.loadingGroup.alpha > .5f;
     public static TransitionPhase Phase => active != null ? active.phase : TransitionPhase.Complete;
     public static float WipeProgress => active != null ? active.wipeProgress : 1f;

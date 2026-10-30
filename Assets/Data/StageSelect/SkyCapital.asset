@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c9702cde78fce64eb9dd0446d279e83, type: 3}
+  m_Name: SkyCapital
+  m_EditorClassIdentifier: Assembly-CSharp::StageSelectStage
+  stageName: "\u84BC\u5929\u306E\u6D6E\u904A\u738B\u90FD"
+  titleSprite: {fileID: -313556916361090079, guid: 4631ee6e4c1a24644bc12794876942af, type: 3}
+  cartridgeSprite: {fileID: 0}
+  cartridgeTint: {r: 1, g: 1, b: 1, a: 1}
+  accent: {r: 0.5, g: 0.85, b: 1, a: 1}
+  sceneName: Stage1
+  playable: 1
+  unavailableMessage: "\u305F\u3060\u3044\u307E\u5236\u4F5C\u4E2D"
+  screenColor: {r: 0.1, g: 0.15, b: 0.25, a: 1}
+  far:
+    sprite: {fileID: 21300000, guid: 9f67f9fe4f7a855469e317549e6b6929, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    drift: 0.025
+  middle:
+    sprite: {fileID: 21300000, guid: 291304a547d51774a8ff9308f1c6c792, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    drift: 0.04
+  near:
+    sprite: {fileID: 21300000, guid: ac05e6c8e2af2664a97518812c233aea, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    drift: 0.065

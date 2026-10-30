@@ -75,6 +75,11 @@ public static class TitleLoadingTransitionPlayModeTest
             {
                 var title = UnityEngine.Object.FindAnyObjectByType<TitleScreenController>();
                 if (title == null || !title.InputReady) return;
+                // This probe exercises the reusable dot wipe into gameplay. The shipped menu route
+                // is covered by StageSelectFlowProbe; override only this Play Mode instance.
+                var destination = new SerializedObject(title);
+                destination.FindProperty("stageSceneName").stringValue = "Stage1";
+                destination.ApplyModifiedPropertiesWithoutUndo();
                 if (cycle == 1)
                 {
                     var settings = new SerializedObject(title).FindProperty("transitionSettings");
