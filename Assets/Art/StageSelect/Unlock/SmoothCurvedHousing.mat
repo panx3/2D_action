@@ -31,6 +31,7 @@ Material:
     m_Floats:
     - _ColorMask: 15
     - _DstBlend: 10
+    - _FaceClear: 0
     - _Mode: 4
     - _Stencil: 0
     - _StencilComp: 8
@@ -41,7 +42,9 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _DisplayWindow: {r: 0.08, g: 0.12, b: 0.92, a: 0.92}
-    - _HousingSize: {r: 840, g: 548, b: 720, a: 440}
+    - _FaceOffset: {r: 0, g: 40, b: 0, a: 0}
+    - _FaceShape: {r: 0.06, g: 30, b: 0, a: 0}
+    - _HousingSize: {r: 700, g: 520, b: 620, a: 400}
     - _PixelGrid: {r: 840, g: 572, b: 0, a: 0}
     - _SpriteUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _Tone: {r: 1, g: 1, b: 1, a: 1}

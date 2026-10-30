@@ -246,7 +246,34 @@ public static class StageSelectFlowProbe
                 case 23:
                     if (select == null || !select.InputReady) return;
                     Require(select.SelectedStage.IsUnlocked && !select.SelectedStage.NeedsReveal, "unlock persists / completed animation never replays");
-                    SessionState.SetString(Key + "Result", "PASS: draw order throughout insertion; seated cartridge; locked static; foreground shards/white fusion/rectangular growth; unlock persistence; inputs/CRT entry/Stage1 intro/BGM; "+SessionState.GetString(Key+"Glass","")+"; errors="+errors+"; warnings="+warnings);
+                    Require(select.SelectedStage.sceneName == "Stage2" && select.SelectedStage.CanLaunch, "unlocked cartridge launches the real Stage2 scene");
+                    capturedInsert=false;
+                    select.Confirm(); select.Confirm(); Next(); break;
+                case 24:
+                    if (select == null) return;
+                    if (!capturedInsert && select.Phase == StageSelectController.SelectPhase.Inserting)
+                    {
+                        var seated = new SerializedObject(select);
+                        var card = (RectTransform)seated.FindProperty("cartridge").objectReferenceValue;
+                        if (Mathf.Abs(card.anchoredPosition.y-seated.FindProperty("insertPosition").vector2Value.y)>=3) return;
+                        Require(((CanvasGroup)seated.FindProperty("cartridgeGroup").objectReferenceValue).alpha>.99f,"Stage2 cartridge remains seated and visible");
+                        capturedInsert=true; Capture(select,"07-stage2-cartridge-seated"); return;
+                    }
+                    if (select.Phase != StageSelectController.SelectPhase.Zooming) return;
+                    Require(capturedInsert,"Stage2 cartridge insertion before CRT zoom");
+                    Next(); break;
+                case 25:
+                    if (SceneManager.GetActiveScene().name!="Stage2" || TitleStageTransition.IsTransitioning) return;
+                    var stage2Intro=UnityEngine.Object.FindAnyObjectByType<PlayerStartIntro>();
+                    if (stage2Intro==null || stage2Intro.Phase!=PlayerStartIntro.IntroPhase.Complete) return;
+                    Require(!StageSelectController.IsEnteringStage && Mathf.Approximately(Time.timeScale,1),"Stage2 transition/time cleanup");
+                    Require(UnityEngine.Object.FindObjectsByType<StageSelectController>(FindObjectsSortMode.None).Length==0,"Stage2 theatre cleanup");
+                    Require(UnityEngine.Object.FindAnyObjectByType<Player>().InputEnabled,"Stage2 player input restored");
+                    Require(GameBgmController.Instance!=null && GameBgmController.Instance.CurrentState==GameBgmController.BgmState.Stage,"Stage2 stage BGM");
+                    Require(UnityEngine.Object.FindObjectsByType<CRTFilterController>(FindObjectsSortMode.None).Length==1,"one Stage2 gameplay CRT");
+                    capturing=true; stage2Intro.StartCoroutine(Snapshot("08-stage2-start")); Next(); break;
+                case 26:
+                    SessionState.SetString(Key + "Result", "PASS: insertion draw order/seated cartridges; locked static; lower foreground crystal fusion/unlock persistence; inputs/CRT entry/Stage1 + Stage2 scenes/intro/BGM/input cleanup; "+SessionState.GetString(Key+"Glass","")+"; errors="+errors+"; warnings="+warnings);
                     EditorApplication.isPlaying = false; break;
             }
         }
@@ -269,7 +296,11 @@ public static class StageSelectFlowProbe
 
     private static string VerifyGlassRendering()
     {
-        var material=new Material(Shader.Find("Hidden/IronBallGirl/StageSelectGlass"));
+        var shader=Shader.Find("Hidden/IronBallGirl/StageSelectGlass");
+        Require(shader!=null && !Array.Exists(ShaderUtil.GetShaderMessages(shader),message=>message.severity.ToString()=="Error"),"CRT glass shader compiles");
+        var surface=Shader.Find("UI/IronBallGirl/StageSelectSurface");
+        Require(surface!=null && !Array.Exists(ShaderUtil.GetShaderMessages(surface),message=>message.severity.ToString()=="Error"),"CRT housing shader compiles");
+        var material=new Material(shader);
         var source=new Texture2D(320,200,TextureFormat.RGBA32,false);
         var pixels=new Color[320*200];
         for(int y=0;y<200;y++) for(int x=0;x<320;x++) pixels[y*320+x]=x>=228&&x<=231?Color.white:Color.black;
@@ -279,25 +310,33 @@ public static class StageSelectFlowProbe
         var old=RenderTexture.active;
         try
         {
-            material.SetFloat("_Curvature",.18f);material.SetFloat("_Brightness",1);
-            material.SetVector("_GlassSize",new Vector4(720,440,58,0));
+            material.SetFloat("_Curvature",.12f);material.SetFloat("_Brightness",1);
+            material.SetVector("_FaceShape",new Vector4(.06f,30,0,0));
+            material.SetVector("_GlassSize",new Vector4(620,400,30,0));
             Graphics.Blit(source,target,material);RenderTexture.active=target;
             readback.ReadPixels(new Rect(0,0,600,400),0,0);readback.Apply();
             float Center(int row)
             {
                 float sum=0,weight=0;
-                for(int x=300;x<565;x++){float w=readback.GetPixel(x,row).r;sum+=x*w;weight+=w;}
+                for(int x=300;x<565;x++){var pixel=readback.GetPixel(x,row);float w=pixel.r*pixel.a;sum+=x*w;weight+=w;}
                 Require(weight>.2f,"CRT calibration stripe is rendered");return sum/weight;
             }
             float displacement=Mathf.Abs(Center(200)-Center(340));
             Require(displacement>4,"GPU radial barrel distortion is visible");
+            int Top(int x) { for(int y=399;y>=200;y--) if(readback.GetPixel(x,y).a>.5f) return y; return 200; }
+            int Right(int y) { for(int x=599;x>=300;x--) if(readback.GetPixel(x,y).a>.5f) return x; return 300; }
+            int topBow=Top(300)-Top(540), sideBow=Right(200)-Right(340);
+            Require(topBow>=4 && topBow<=15 && sideBow>=4 && sideBow<=18,"reference CRT has gently bowed edges rather than an oval outline");
             material.SetFloat("_Scanlines",.32f);material.SetFloat("_ScanlineCount",240);
             Graphics.Blit(Texture2D.grayTexture,target,material);
             readback.ReadPixels(new Rect(0,0,600,400),0,0);readback.Apply();
             float low=1,high=0;
             for(int y=40;y<360;y++){float v=readback.GetPixel(300,y).r;low=Mathf.Min(low,v);high=Mathf.Max(high,v);}
             Require(high-low>.035f,"GPU scanline contrast is visible");
-            return "GPU glass: warp="+displacement.ToString("F1")+"px, scanline contrast="+(high-low).ToString("F3");
+            material.SetFloat("_Clear",.6f);Graphics.Blit(Texture2D.grayTexture,target,material);
+            readback.ReadPixels(new Rect(0,0,600,400),0,0);readback.Apply();
+            Require(readback.GetPixel(563,362).a>.99f,"CRT fills viewport corners at the end of the entry zoom");
+            return "GPU glass: bowed edges="+topBow+"/"+sideBow+"px, warp="+displacement.ToString("F1")+"px, scanline contrast="+(high-low).ToString("F3");
         }
         finally
         {

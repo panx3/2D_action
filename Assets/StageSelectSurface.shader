@@ -11,6 +11,9 @@ Shader "UI/IronBallGirl/StageSelectSurface"
         _Window ("CRT source window", Vector) = (.16,.20,.84,.84)
         _DisplayWindow ("CRT display window", Vector) = (.08,.12,.92,.92)
         _HousingSize ("Housing / glass dimensions", Vector) = (840,572,720,460)
+        _FaceShape ("CRT edge bow / corner radius", Vector) = (.06,30,0,0)
+        _FaceOffset ("CRT glass center in housing", Vector) = (0,50,0,0)
+        _FaceClear ("CRT entry flattening", Range(0,1)) = 0
         _DstBlend ("Destination Blend", Float) = 10
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -37,11 +40,12 @@ Shader "UI/IronBallGirl/StageSelectSurface"
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
+            #include "StageSelectCRTShape.cginc"
             struct appdata { float4 vertex:POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; };
             struct v2f { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float4 world:TEXCOORD1; };
             sampler2D _MainTex;
-            float4 _PixelGrid, _Tone, _ClipRect, _Window, _DisplayWindow, _HousingSize, _SpriteUVRect;
-            float _Mode, _SurfaceClipY;
+            float4 _PixelGrid, _Tone, _ClipRect, _Window, _DisplayWindow, _HousingSize, _SpriteUVRect, _FaceShape, _FaceOffset;
+            float _Mode, _SurfaceClipY, _FaceClear;
             float Hash(float2 p) { return frac(sin(dot(p,float2(127.1,311.7)))*43758.5453); }
             float RoundBox(float2 p,float2 b,float r) { float2 q=abs(p)-b+r; return length(max(q,0))+min(max(q.x,q.y),0)-r; }
             float RemapWindow(float x, float a, float b, float u, float v)
@@ -97,25 +101,34 @@ Shader "UI/IronBallGirl/StageSelectSurface"
                 }
                 else
                 {
-                    // Analytic matched curves: no color key, UV deformation, or hard alpha threshold on the bezel.
+                    // Stepped, faceted hardware around a gently bowed glass opening, matching the reference CRT.
                     float2 p=(i.uv-.5)*_HousingSize.xy;
-                    float outer=RoundBox(p,_HousingSize.xy*.5-3,27);
-                    float inner=RoundBox(p-float2(0,16),_HousingSize.zw*.5,58);
-                    float innerRim=exp(-abs(inner-6)*.15);
-                    float outerRim=exp(-abs(outer+10)*.16);
-                    float top=saturate(p.y/_HousingSize.y+.5);
-                    float3 col=lerp(float3(.035,.03,.052),float3(.105,.085,.12),top);
-                    col+=outerRim*float3(.068,.035,.063)*(top*.7+.3);
-                    col+=innerRim*float3(.027,.062,.1);
-                    col*=1-.55*exp(-abs(inner-1)*.28);
-                    col+=pow(saturate(1-abs(p.y-(_HousingSize.y*.5-15))/3),3)*float3(.05,.035,.055);
-                    col+=exp(-abs(p.x+_HousingSize.x*.5-13)*.2)*float3(.055,.015,.03);
-                    col+=(Hash(floor(i.uv*_HousingSize.xy))-.5)*.008;
+                    float outer=RoundBox(p,_HousingSize.xy*.5-2,3);
+                    float inner=StageSelectFaceDistance(p-_FaceOffset.xy,_HousingSize.zw*.5-1,_FaceShape.xy,_FaceClear);
+                    float2 pixel=(floor(p/2)+.5)*2;
+                    float depth=-RoundBox(pixel,_HousingSize.xy*.5-2,3);
+                    float top=saturate(pixel.y/_HousingSize.y+.5);
+                    float left=saturate(.5-pixel.x/_HousingSize.x);
+                    float3 col=lerp(float3(.044,.036,.055),float3(.095,.068,.083),top);
+                    float3 edgeLight=float3(.025,.035,.055)*top+float3(.042,.009,.019)*left;
+                    if(depth<5) col=float3(.025,.021,.034);
+                    else if(depth<12) col=float3(.052,.042,.057)+edgeLight;
+                    else if(depth<17) col=float3(.021,.02,.03);
+                    else if(depth<23) col=float3(.055,.043,.057)+edgeLight*.7;
+                    float rim=floor(max(inner,0)/2)*2;
+                    if(rim<3) col=float3(.012,.015,.023);
+                    else if(rim<6) col=float3(.025,.045,.071);
+                    else if(rim<11) col=float3(.057,.045,.063)+edgeLight*.45;
+                    else if(rim<15) col=float3(.02,.023,.034);
+                    else if(rim<20) col=float3(.053,.041,.059)+edgeLight;
+                    col+=exp(-abs(inner-8)*.18)*float3(.012,.026,.048);
+                    col+=exp(-abs(pixel.y-(_HousingSize.y*.5-19))*.7)*float3(.014,.025,.048);
+                    col+=(Hash(floor(pixel))-.5)*.012;
                     #ifndef UNITY_COLORSPACE_GAMMA
                         col=GammaToLinearSpace(col);
                     #endif
-                    float aa=max(fwidth(outer),.55);
-                    c=float4(col,(1-smoothstep(-aa,aa,outer))*smoothstep(-aa,aa,inner));
+                    float aa=max(fwidth(outer),.55), innerAA=max(fwidth(inner),.55);
+                    c=float4(col,(1-smoothstep(-aa,aa,outer))*smoothstep(-innerAA,innerAA,inner));
                 }
                 c *= i.color;
                 #ifdef UNITY_UI_CLIP_RECT

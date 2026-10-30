@@ -11,19 +11,19 @@ Shader "Hidden/IronBallGirl/StageSelectGlass"
             #pragma fragment frag
             #pragma target 3.0
             #include "UnityCG.cginc"
+            #include "StageSelectCRTShape.cginc"
             sampler2D _MainTex;
-            float4 _MainTex_TexelSize, _GlassSize;
+            float4 _MainTex_TexelSize, _GlassSize, _FaceShape;
             float _PreviewTime, _Curvature, _Softness, _Brightness, _Scanlines, _Vignette, _Noise, _Glass, _SignalLost, _Disturbance, _Clear;
             float _ScanlineCount, _RGB;
             float Hash(float2 p) { float3 q=frac(float3(p.xyx)*.1031); q+=dot(q,q.yzx+33.33); return frac((q.x+q.y)*q.z); }
-            float RoundBox(float2 p,float2 b,float r) { float2 q=abs(p)-b+r; return length(max(q,0))+min(max(q.x,q.y),0)-r; }
             fixed4 frag(v2f_img i):SV_Target
             {
                 float2 p=i.uv*2-1;
                 float curve=_Curvature*(1-_Clear);
                 // Match the pause screen's radial barrel mapping, with bounded overscan so
                 // edge pixels stay inside the source instead of smearing the last texture column.
-                float2 uv=.5+p*(1+curve*dot(p,p))/(1+curve*1.85)*.5;
+                float2 uv=.5+p*(1+curve*dot(p,p))/(1+curve*1.4)*.5;
                 float row=floor(i.uv.y*300), frame=floor(_PreviewTime*30);
                 uv.x+=(Hash(float2(floor(row/8),frame))-.5)*_Disturbance*.012;
                 float2 d=abs(_MainTex_TexelSize.xy)*_Softness*(1-_Clear);
@@ -55,8 +55,9 @@ Shader "Hidden/IronBallGirl/StageSelectGlass"
                 float upper=pow(saturate(1-abs(p.y-.86)*7),3)*(.45+.55*saturate(1-p.x*p.x));
                 float sheen=exp(-dot((uv-float2(.19,.84))*float2(4,6),(uv-float2(.19,.84))*float2(4,6)))*.07;
                 c+=(reflection+upper*.08+sheen)*_Glass*(1-_Clear)*float3(.45,.67,1);
-                float sd=RoundBox((i.uv-.5)*_GlassSize.xy,_GlassSize.xy*.5-1,_GlassSize.z);
-                float alpha=1-smoothstep(-.65,.65,sd);
+                float sd=StageSelectFaceDistance((i.uv-.5)*_GlassSize.xy,_GlassSize.xy*.5-1,_FaceShape.xy,_Clear);
+                float aa=max(fwidth(sd),.65);
+                float alpha=1-smoothstep(-aa,aa,sd);
                 return float4(max(c,0),alpha);
             }
             ENDCG

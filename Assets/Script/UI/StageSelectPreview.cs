@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class StageSelectPreview : MonoBehaviour
 {
     [SerializeField] private UnityEngine.UI.RawImage screen;
+    [SerializeField] private UnityEngine.UI.Image televisionHousing;
     [SerializeField] private Shader compositionShader;
     [SerializeField] private Shader crtShader;
     [SerializeField] private Vector2Int resolution = new Vector2Int(640, 360);
@@ -13,12 +14,14 @@ public sealed class StageSelectPreview : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float vignette = .22f;
     [SerializeField, Range(0f, .1f)] private float noise = .015f;
     [SerializeField, Range(.3f, 1.5f)] private float brightness = 1.06f;
-    [SerializeField, Range(0f, .5f)] private float curvature = .18f;
+    [SerializeField, Range(0f, .5f)] private float curvature = .12f;
+    [SerializeField, Range(0f, .15f)] private float edgeBow = .06f;
+    [SerializeField, Range(1f, 60f)] private float cornerRadius = 30f;
     [SerializeField, Range(80f,400f)] private float scanlineCount = 240f;
     [SerializeField, Range(0f,3f)] private float rgbSeparation = .9f;
     [SerializeField, Range(0f, .3f)] private float glassReflection = .12f;
 
-    private Material composition, crt;
+    private Material composition, crt, housingSource, housingRuntime;
     private RenderTexture source, output;
     private float disturbance, clearBlend, clock;
     private StageSelectStage stage;
@@ -38,6 +41,12 @@ public sealed class StageSelectPreview : MonoBehaviour
         }
         composition = new Material(compositionShader) { name = "Cartridge background (runtime)" };
         crt = new Material(crtShader) { name = "Cartridge CRT only (runtime)" };
+        if (televisionHousing != null)
+        {
+            housingSource = televisionHousing.material;
+            housingRuntime = new Material(housingSource) { name = "Convex CRT bezel (runtime)" };
+            televisionHousing.material = housingRuntime;
+        }
         int width = Mathf.Clamp(resolution.x, 160, 1280), height = Mathf.Clamp(resolution.y, 90, 720);
         source = Target("Stage preview layers", width, height);
         output = Target("Stage preview CRT", width, height);
@@ -91,6 +100,13 @@ public sealed class StageSelectPreview : MonoBehaviour
         crt.SetFloat("_Vignette", vignette); crt.SetFloat("_Glass", glassReflection);
         crt.SetFloat("_SignalLost", SignalLost ? 1 : 0); crt.SetFloat("_Disturbance", disturbance);
         crt.SetFloat("_Clear", clearBlend);
+        Vector4 shape = new Vector4(edgeBow, cornerRadius, 0, 0);
+        crt.SetVector("_FaceShape", shape);
+        if (housingRuntime != null)
+        {
+            housingRuntime.SetVector("_FaceShape", shape);
+            housingRuntime.SetFloat("_FaceClear", clearBlend);
+        }
         Vector2 size = screen.rectTransform.rect.size;
         crt.SetVector("_GlassSize", new Vector4(size.x, size.y, 58, 0));
         Graphics.Blit(source, output, crt, 0);
@@ -111,5 +127,10 @@ public sealed class StageSelectPreview : MonoBehaviour
             if (rt != null) { rt.Release(); Destroy(rt); }
         if (composition != null) Destroy(composition);
         if (crt != null) Destroy(crt);
+        if (housingRuntime != null)
+        {
+            if (televisionHousing != null) televisionHousing.material = housingSource;
+            Destroy(housingRuntime);
+        }
     }
 }

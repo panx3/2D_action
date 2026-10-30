@@ -32,7 +32,7 @@ public static class StageSelectSceneBuilder
             CreateArt();
             CreateFont();
             StageSelectStage first = Cartridge("SkyCapital", "蒼天の浮遊王都", 0, "Stage1", true);
-            StageSelectStage second = Cartridge("MachineCity", "紅蓮の機巧都市", 1, "Stage2", false);
+            StageSelectStage second = Cartridge("MachineCity", "紅蓮の機巧都市", 1, "Stage2", true);
             first.far.sprite = Load<Sprite>("Assets/image_/背景_一番後ろ.png");
             first.middle.sprite = Load<Sprite>("Assets/image_/背景_真ん中.png"); first.middle.drift = .04f;
             first.near.sprite = Load<Sprite>("Assets/image_/背景_一番手前.png"); first.near.drift = .065f;
@@ -55,7 +55,7 @@ public static class StageSelectSceneBuilder
             var buildSettings = Resources.FindObjectsOfTypeAll<EditorBuildSettings>().Single();
             EditorUtility.SetDirty(buildSettings);
             AssetDatabase.SaveAssetIfDirty(buildSettings);
-            return "Created StageSelectScene; Title → StageSelect → Stage1. Stage2 uses its existing backgrounds and is preview-only on this branch.";
+            return "Created StageSelectScene; Title → StageSelect → Stage1, then unlocked Stage2 with its existing backgrounds and scene.";
         }
         finally
         {

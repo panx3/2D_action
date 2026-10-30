@@ -10,21 +10,21 @@ using UnityEngine.SceneManagement;
 public static class StageSelectExperienceUpgrade
 {
     private const string Art = "Assets/Art/StageSelect/Unlock/";
-    public static string Apply()
+    public static string Apply(bool configureStage1Route = true)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Exit Play Mode first.");
         Scene previous = SceneManager.GetActiveScene();
         try
         {
             WithScene(StageSelectSceneBuilder.ScenePath, ApplyToScene);
-            WithScene("Assets/Scenes/Stage1.unity", s =>
+            if (configureStage1Route) WithScene("Assets/Scenes/Stage1.unity", s =>
             {
                 var goal = s.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<GoalMenuController>(true)).Single();
                 Edit(goal, so => { so.FindProperty("nextSceneName").stringValue = "StageSelectScene"; so.FindProperty("showDemoEnding").boolValue = false; });
             });
         }
         finally { if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous); }
-        return "Applied curved CRT / slot slide / new crystal art; Stage1 clear earns Stage2 reveal. Stage1 NEXT returns to select.";
+        return "Applied convex CRT / slot slide / clear-earned Stage2 reveal. Stage1 NEXT returns to select; unlocked Stage2 launches Stage2.unity.";
     }
     private static void WithScene(string path, Action<Scene> edit)
     {
@@ -90,20 +90,43 @@ public static class StageSelectExperienceUpgrade
             so.FindProperty("insertClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(Art + "CartridgeClack.wav");
         });
         var stage = AssetDatabase.LoadAssetAtPath<StageSelectStage>("Assets/Data/StageSelect/MachineCity.asset");
-        Edit(stage, so => { so.FindProperty("unlockAfterScene").stringValue = "Stage1"; so.FindProperty("lockedMessage").stringValue = "Stage1クリアで解放"; }); AssetDatabase.SaveAssetIfDirty(stage);
+        Edit(stage, so => { so.FindProperty("unlockAfterScene").stringValue = "Stage1"; so.FindProperty("lockedMessage").stringValue = "Stage1クリアで解放";
+            so.FindProperty("sceneName").stringValue = "Stage2"; so.FindProperty("playable").boolValue = true; }); AssetDatabase.SaveAssetIfDirty(stage);
+        ConnectStageScenes();
         ApplyRichFinish(root);
+    }
+
+    private static void ConnectStageScenes()
+    {
+        const string stage2Path = "Assets/Scenes/Stage2.unity";
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(stage2Path) == null)
+            throw new InvalidOperationException("The existing Stage2 scene is required: " + stage2Path);
+        var scenes = EditorBuildSettings.globalScenes.ToList();
+        foreach (string path in new[] { StageSelectSceneBuilder.ScenePath, stage2Path })
+        {
+            var entry = scenes.FirstOrDefault(value => value.path == path);
+            if (entry == null) scenes.Add(new EditorBuildSettingsScene(path, true));
+            else entry.enabled = true;
+        }
+        EditorBuildSettings.globalScenes = scenes.ToArray();
+        var settings = Resources.FindObjectsOfTypeAll<EditorBuildSettings>().Single();
+        EditorUtility.SetDirty(settings); AssetDatabase.SaveAssetIfDirty(settings);
     }
 
     private static void ApplyRichFinish(GameObject root)
     {
         CreateRichCracks(); Import(Art + "JaggedFractures.png");
         RectTransform Find(string n) => root.GetComponentsInChildren<RectTransform>(true).Single(r => r.name == n);
-        var screen = Find("BackgroundCRT"); screen.anchoredPosition = new Vector2(0, 78); screen.sizeDelta = new Vector2(720, 440);
+        var screen = Find("BackgroundCRT"); screen.anchoredPosition = new Vector2(0, 128); screen.sizeDelta = new Vector2(620, 400);
         var tv = Find("Television").GetComponent<UnityEngine.UI.Image>();
-        tv.sprite = null; tv.rectTransform.anchoredPosition = new Vector2(0, 62); tv.rectTransform.sizeDelta = new Vector2(840, 548);
+        tv.sprite = null; tv.rectTransform.anchoredPosition = new Vector2(0, 88); tv.rectTransform.sizeDelta = new Vector2(700, 520);
         tv.material = Material("SmoothCurvedHousing", 4, new Vector2(840,572), Color.white);
-        tv.material.SetVector("_HousingSize",new Vector4(840,548,720,440));
+        tv.material.SetVector("_HousingSize",new Vector4(700,520,620,400));
+        tv.material.SetVector("_FaceShape",new Vector4(.06f,30,0,0));
+        tv.material.SetVector("_FaceOffset",new Vector4(0,40,0,0)); tv.material.SetFloat("_FaceClear",0);
         EditorUtility.SetDirty(tv.material); AssetDatabase.SaveAssetIfDirty(tv.material);
+        Find("Previous").anchoredPosition = new Vector2(-350,72);
+        Find("Next").anchoredPosition = new Vector2(350,72);
         Import(Art + "JaggedCartridgeCrystal.png");
         var mass = Find("ExistingCrystal").GetComponent<UnityEngine.UI.Image>();
         mass.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + "JaggedCartridgeCrystal.png");
@@ -127,8 +150,10 @@ public static class StageSelectExperienceUpgrade
         {
             so.FindProperty("crtShader").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>("Assets/StageSelectGlass.shader");
             so.FindProperty("resolution").vector2IntValue = new Vector2Int(960,600);
-            so.FindProperty("curvature").floatValue = .18f; so.FindProperty("glassReflection").floatValue = .24f;
-            so.FindProperty("softness").floatValue = 1.2f; so.FindProperty("scanlines").floatValue = .32f;
+            so.FindProperty("curvature").floatValue = .12f; so.FindProperty("glassReflection").floatValue = .24f;
+            so.FindProperty("edgeBow").floatValue = .06f; so.FindProperty("cornerRadius").floatValue = 30;
+            so.FindProperty("televisionHousing").objectReferenceValue = tv;
+            so.FindProperty("softness").floatValue = 1.4f; so.FindProperty("scanlines").floatValue = .26f;
             so.FindProperty("scanlineCount").floatValue = 240; so.FindProperty("rgbSeparation").floatValue = .9f;
             so.FindProperty("vignette").floatValue = .26f;
         });
