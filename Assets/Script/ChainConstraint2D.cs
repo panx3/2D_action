@@ -98,7 +98,7 @@ public class ChainConstraint2D : MonoBehaviour
     public float TensionDamping => tensionDamping;
     public float AirTensionMultiplier => airTensionMultiplier;
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
-    public bool IsPlayerPullSuppressed => _suppressPlayerPull;
+    public bool IsPlayerPullSuppressed => _suppressPlayerPull || (_player != null && _player.IsElectricStunned);
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
     public bool HasOneWaySupport => _oneWaySupport.IsSupporting;
@@ -1084,7 +1084,7 @@ public class ChainConstraint2D : MonoBehaviour
     private void ApplyRopeTension(Vector2 handPosition)
     {
         // トランポリン跳躍中はBall側の長さ補正だけで追従させ、Playerへ力を返さない。
-        if (_suppressPlayerPull)
+        if (IsPlayerPullSuppressed)
             return;
 
         float distance = GetRopePathLength();
@@ -1436,7 +1436,7 @@ public class ChainConstraint2D : MonoBehaviour
 
             RebuildRopePath(handPosition, morningStarRb.position);
             float blockedRemainder = GetRopePathLength() - maxRopeLength;
-            if (!_suppressPlayerPull && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
+            if (!IsPlayerPullSuppressed && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
                 Vector2 playerCorrection = GetSafeEndpointCorrection(
                     playerRb, handPosition, _ropePathPoints[1], blockedRemainder);
@@ -1469,7 +1469,7 @@ public class ChainConstraint2D : MonoBehaviour
                 0f,
                 excessSeparatingSpeed);
             float blockedRemainder = excessSeparatingSpeed - correctedByBall;
-            if (!_suppressPlayerPull && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
+            if (!IsPlayerPullSuppressed && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
                 // 補正差分でなく最終速度を接触面へ投影する。
                 // 壁から離れる速度の打ち消しまで禁止すると鎖が伸び続けてしまう。

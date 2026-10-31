@@ -49,6 +49,15 @@ MonoBehaviour:
   radius: 1
   effectIntensity: 1
   body: {fileID: 6974297960333085936}
+  dischargeSound: {fileID: 0}
+  dischargeVolume: 0.5
+  dischargeMaxDistance: 15
+  holdEnabled: 1
+  holdPoint: {x: 0, y: 0.85}
+  captureSpeed: 2
+  holdSpring: 4
+  holdDamping: 3
+  holdGravityLimit: 1.25
 --- !u!1 &4771636256139505445
 GameObject:
   m_ObjectHideFlags: 0

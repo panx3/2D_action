@@ -9,7 +9,7 @@ using UnityEngine.Serialization;
 /// 通常時は ChainConstraint2D、Hook/Swing中は既存 DistanceJoint2D を
 /// Max Distance Only のロープとして使い、手元と固定支点の最大距離を守る。
 /// </summary>
-public class MorningStarLauncher : MonoBehaviour
+public partial class MorningStarLauncher : MonoBehaviour
 {
     private const string LauncherPoseLayerName = "Launcher Pose";
 
@@ -799,6 +799,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        ReleaseElectricHold();
         EndTrampolineJump();
         CancelHitStop();
         SetGoalCollisionIgnoredForRecall(false);
@@ -825,13 +826,14 @@ public class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked || _gimmickInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned)
         {
             UpdateFallbackLineRenderer();
             return;
         }
 
         UpdateGamepadInputState();
+        if (WaitForElectricInputNeutral()) return;
         ProcessRecoilTrigger();
         UpdateFallbackLineRenderer();
 
@@ -901,6 +903,12 @@ public class MorningStarLauncher : MonoBehaviour
             return;
 
         float dt = Time.fixedDeltaTime;
+        if (IsElectricStunned)
+        {
+            UpdateElectricHold();
+            RecordThrowVelocityBeforePhysics();
+            return;
+        }
         UpdateTrampolineJump();
         Vector2 hand = GetHandWorld();
         TryPlayChainFullStretchSound();
@@ -944,6 +952,7 @@ public class MorningStarLauncher : MonoBehaviour
         }
 
         LimitBallFallSpeed();
+        UpdateElectricHold();
         RecordThrowVelocityBeforePhysics();
     }
 
@@ -972,6 +981,7 @@ public class MorningStarLauncher : MonoBehaviour
     /// </summary>
     private void TransitionToState(MorningStarState nextState)
     {
+        if (nextState != MorningStarState.Dragging && nextState != MorningStarState.Dropping) ReleaseElectricHold();
         // 明示的なHook/Magnet操作と演出状態では通常の状態別物理へ戻す。
         if (nextState == MorningStarState.Hooked || nextState == MorningStarState.Swinging
             || nextState == MorningStarState.StartIntro || nextState == MorningStarState.Respawning)
@@ -2247,7 +2257,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     private void PlayCombatHitStop(float duration)
     {
-        if (!isActiveAndEnabled || _goalInputBlocked || _gimmickInputBlocked || _respawnPresentation || duration <= 0f
+        if (!isActiveAndEnabled || _goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || _respawnPresentation || duration <= 0f
             || (_playerHealth != null && _playerHealth.IsDead))
             return;
 
@@ -3326,7 +3336,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3338,7 +3348,7 @@ public class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || _respawnPresentation)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping

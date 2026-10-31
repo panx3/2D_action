@@ -18,14 +18,16 @@ public sealed class ElectricDoor : MonoBehaviour
     private Vector3 leftClosed, rightClosed;
     private bool requestedOpen, openedOnce, subscribed;
     private float progress, effectRemaining;
-    private ElectricArcEffect activationArc;
+    private ElectricArcEffect activationArc, activationArcRight;
     public bool IsFullyOpen => progress >= 0.9999f;
+    public event System.Action FullyOpened;
 
     private void Awake()
     {
         if (leftPanel != null) leftClosed = leftPanel.localPosition;
         if (rightPanel != null) rightClosed = rightPanel.localPosition;
         activationArc = gameObject.AddComponent<ElectricArcEffect>();
+        activationArcRight = gameObject.AddComponent<ElectricArcEffect>();
     }
     private void OnEnable()
     {
@@ -38,6 +40,7 @@ public sealed class ElectricDoor : MonoBehaviour
         if (receiver != null && subscribed) { receiver.PowerStarted -= Open; receiver.PowerEnded -= Close; }
         subscribed = false;
         if (activationArc != null) activationArc.Hide();
+        if (activationArcRight != null) activationArcRight.Hide();
     }
     public void Open()
     {
@@ -54,6 +57,7 @@ public sealed class ElectricDoor : MonoBehaviour
     private void Update()
     {
         if (leftPanel == null || rightPanel == null || passageCollider == null) return;
+        bool wasFullyOpen = IsFullyOpen;
         bool occupied = !requestedOpen && (progress > 0.0001f || !passageCollider.enabled) && PassageOccupied();
         float target = requestedOpen || occupied ? 1f : 0f;
         progress = Mathf.MoveTowards(progress, target, speed * Time.deltaTime / Mathf.Max(0.01f, openDistance));
@@ -64,6 +68,7 @@ public sealed class ElectricDoor : MonoBehaviour
         // Do not enable a collider while either actor overlaps the passage, including during reversal.
         passageCollider.enabled = progress < 0.9999f && (passageCollider.enabled || (progress <= 0f && !occupied));
         effectRemaining = Mathf.Max(0f, effectRemaining - Time.deltaTime);
+        if (!wasFullyOpen && IsFullyOpen) FullyOpened?.Invoke();
     }
     private bool PassageOccupied()
     {
@@ -81,7 +86,9 @@ public sealed class ElectricDoor : MonoBehaviour
     }
     private void LateUpdate()
     {
-        if (activationArc != null) activationArc.DrawBurst(transform.TransformPoint(new Vector2(0f, 2.3f)), 0.3f, effectRemaining > 0f ? activationEffectIntensity : 0f);
+        float intensity = effectRemaining > 0f ? activationEffectIntensity : 0f;
+        if (activationArc != null) activationArc.DrawOutline(leftPanel != null ? leftPanel.GetComponent<SpriteRenderer>() : null, intensity);
+        if (activationArcRight != null) activationArcRight.DrawOutline(rightPanel != null ? rightPanel.GetComponent<SpriteRenderer>() : null, intensity);
     }
 }
 

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 336551767722014053}
   - component: {fileID: 2268861577872738531}
   - component: {fileID: 5814461678833482745}
+  - component: {fileID: 1732801224899407428}
   m_Layer: 0
   m_Name: ElectricReceiverCable
   m_TagString: Untagged
@@ -53,7 +54,7 @@ MonoBehaviour:
   activationDelay: 0.8
   contactGrace: 0.12
   effectIntensity: 1
-  latchAfterActivation: 0
+  latchAfterActivation: 1
   audioSource: {fileID: 5814461678833482745}
   activationSound: {fileID: 8300000, guid: f5fddacbe25adfc419b22b57d26efc76, type: 3}
   deactivationSound: {fileID: 0}
@@ -162,6 +163,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1732801224899407428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4499755136263389142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a97894b0377082a4b9ee0523a5c9817e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElectricActivationSequence
+  receiver: {fileID: 2268861577872738531}
+  door: {fileID: 0}
+  player: {fileID: 0}
+  skeletonSprite: {fileID: 21300000, guid: d2eb078381a745643b5159907a0c2c5b, type: 3}
+  blinkInterval: 0.08
 --- !u!1 &6131118208345957847
 GameObject:
   m_ObjectHideFlags: 0
@@ -243,7 +261,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: a9ddd69181825a74f8d708b12615ff8f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5a28bed40a0096d4b9b12486cbc55f76, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
