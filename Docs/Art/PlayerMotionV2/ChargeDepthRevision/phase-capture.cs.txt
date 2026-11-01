@@ -1,0 +1,57 @@
+using System;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+
+// Play Mode only: sample the existing ball orbit and capture the actual Stage2 camera.
+public static class ChargeDepthPhaseCapture
+{
+    static readonly BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
+    static object Call(object obj, string name, params object[] args)
+        => obj.GetType().GetMethod(name, PrivateInstance).Invoke(obj, args);
+    static void Set(object obj, string name, object value)
+        => obj.GetType().GetField(name, PrivateInstance).SetValue(obj, value);
+
+    public static string Run()
+    {
+        if (!EditorApplication.isPlaying || !EditorApplication.isPaused) throw new Exception("Paused Play Mode required.");
+        var player = UnityEngine.Object.FindFirstObjectByType<Player>();
+        var launcher = player.GetComponent<MorningStarLauncher>();
+        var line = UnityEngine.Object.FindFirstObjectByType<ChainLineController>();
+        var links = UnityEngine.Object.FindFirstObjectByType<ChainLinkVisualController>();
+        var capture = typeof(PlayerMotionV2PlayExercise).GetMethod("Capture", BindingFlags.NonPublic | BindingFlags.Static);
+        Vector2 oldPosition = launcher.BallBody.position;
+        bool input = player.InputEnabled;
+        try
+        {
+            player.SetInputEnabled(false);
+            launcher.EndRespawnPresentation();
+            launcher.ResetForRespawn();
+            player.SetLaunchFacing(1f);
+            Call(launcher, "BeginSpinCharging");
+            Set(launcher, "_chargeTime", .6f);
+            for (int phase = 0; phase < 8; phase++)
+            {
+                Set(launcher, "_spinAngle", phase * Mathf.PI / 4f);
+                Vector2 orbit = (Vector2)Call(launcher, "ResolveChargeOrbitPosition");
+                launcher.BallBody.position = orbit;
+                Vector3 ballPosition = launcher.BallBody.transform.position;
+                ballPosition.x = orbit.x;
+                ballPosition.y = orbit.y;
+                launcher.BallBody.transform.position = ballPosition;
+                Call(launcher, "UpdateUnifiedMotionVisual");
+                Call(links, "LateUpdate");
+                Call(line, "LateUpdate");
+                capture.Invoke(null, new object[] { "Stage2-charge-phase-" + phase + ".png" });
+            }
+        }
+        finally
+        {
+            launcher.ResetForRespawn();
+            launcher.BallBody.position = oldPosition;
+            player.ClearAimFacing();
+            player.SetInputEnabled(input);
+        }
+        return "Captured 8 real Stage2 charge phases without changing the orbit or saving the scene.";
+    }
+}

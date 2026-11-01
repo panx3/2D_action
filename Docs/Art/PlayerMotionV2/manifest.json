@@ -1,0 +1,85 @@
+{
+  "stage": "production-integrated",
+  "branch": "codex/player-motion-unification",
+  "baseCommit": "3257ea5d4b94c4fb64587a489c8794c4966f460d",
+  "reference": {
+    "file": "idle-reference.png",
+    "original": "Assets/image_/立ち絵(sprite).png",
+    "frame": [
+      0,
+      0,
+      128,
+      128
+    ],
+    "unchanged": true
+  },
+  "existingWeaponReferences": [
+    {
+      "file": "existing-ball.png",
+      "original": "Assets/image_/鉄球.png"
+    },
+    {
+      "file": "existing-chain.png",
+      "original": "Assets/image_/鎖.png"
+    }
+  ],
+  "axisReference": "charge-axis-reference.jpg",
+  "previewPolicy": "Original generated PNGs are retained. Logical preview normalizes displayed body size, with integer zoom. Ball/chain overlay is an axis illustration using existing art, not a Unity implementation or exact runtime scale/speed.",
+  "poseIds": [
+    "idle",
+    "run",
+    "jump",
+    "fall",
+    "throw_up_right",
+    "throw_down_right",
+    "charge_1",
+    "charge_2",
+    "charge_3",
+    "charge_4",
+    "hanging_1",
+    "hanging_2",
+    "climb_1",
+    "climb_2",
+    "climb_3",
+    "climb_4"
+  ],
+  "productionIntegration": true,
+  "revision": 4,
+  "implementationReport": "Implementation/README.md",
+  "productionPromptHistory": "production-prompts.json",
+  "nativeSprites": "../../../Assets/Art/Player/MotionV2",
+  "frameCount": 78,
+  "latestRevisionReport": "CalmRevision/README.md",
+  "calibration": "CalmSources/calibration.json",
+  "nativeCellSize": 192,
+  "pixelsPerUnit": 32,
+  "latestFeedback": [
+    "Warm rose-pink hair closer to original Idle",
+    "Hanging and climbing poses required",
+    "Both climbing grips on one vertical chain through body center",
+    "Charge uses two different grips: ordinary handle in one hand; near-ball chain in other hand; latter is rotation axis"
+  ],
+  "artReview": {
+    "basicDirection": "generally approved with hair-color correction",
+    "climbing": "center-chain correction shown in this revision"
+  },
+  "chargeHandling": {
+    "handleHand": "holds original baton normally",
+    "axisHand": "other hand grips chain near ball connection",
+    "chainPath": "handle tip -> other-hand chain grip -> rotating existing ball",
+    "runtimeHandAnchor": "keep ordinary handle anchor; separate charge chain-grip point is required"
+  },
+  "browserValidation": {
+    "climbSequence": true,
+    "climbStop": true,
+    "hangingSequence": true,
+    "imagesLoaded": true,
+    "backgroundToggle": true,
+    "integerZoom": true,
+    "chargeSequence": true,
+    "chargeStop": true,
+    "detailView": true,
+    "canvasCount": 20,
+    "scriptExceptions": []
+  }
+}

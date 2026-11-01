@@ -349,6 +349,7 @@ public static class GameplayFeatureIntegrator
 
     private static bool ConfigureLauncherAnimation()
     {
+        if (PlayerMotionV2Setup.ApplyInstalledClips()) return true;
         if (!File.Exists(LauncherTexturePath))
             return false;
 

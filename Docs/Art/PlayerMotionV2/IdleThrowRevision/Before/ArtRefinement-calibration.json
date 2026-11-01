@@ -1,0 +1,335 @@
+{
+  "sheets": [
+    {
+      "name": "RunRefined",
+      "source": "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/Run-v1.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "poses": [
+        {
+          "sourceIndex": -1,
+          "headX": 349.5,
+          "headY": 177,
+          "skullHeight": 115,
+          "targetX": 103,
+          "targetY": 77,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 325,
+          "headY": 176.5,
+          "skullHeight": 116,
+          "targetX": 103,
+          "targetY": 77,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 357,
+          "headY": 178,
+          "skullHeight": 117,
+          "targetX": 103,
+          "targetY": 77,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 347,
+          "headY": 137,
+          "skullHeight": 117,
+          "targetX": 103,
+          "targetY": 77,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 325,
+          "headY": 138,
+          "skullHeight": 115,
+          "targetX": 103,
+          "targetY": 77,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 353.5,
+          "headY": 136.5,
+          "skullHeight": 118,
+          "targetX": 103,
+          "targetY": 77,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "FallRefined",
+      "source": "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/Fall-v2.png",
+      "sourceColumns": 2,
+      "sourceRows": 1,
+      "poses": [
+        {
+          "sourceIndex": -1,
+          "headX": 732,
+          "headY": 194.5,
+          "skullHeight": 214,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1,
+          "hasVisualAnchor": true,
+          "visualAnchorX": -1.5625,
+          "visualAnchorY": -1.125
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 594,
+          "headY": 194.5,
+          "skullHeight": 216,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1,
+          "hasVisualAnchor": true,
+          "visualAnchorX": -1.46875,
+          "visualAnchorY": -1.125
+        }
+      ]
+    },
+    {
+      "name": "ThrowDownRefined",
+      "source": "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowDown-v2.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "poses": [
+        {
+          "sourceIndex": -1,
+          "headX": 338.5,
+          "headY": 160,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 78,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 321.5,
+          "headY": 167,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 78,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 321,
+          "headY": 160.5,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 78,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 351,
+          "headY": 126.5,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 78,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 331.5,
+          "headY": 132.5,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 78,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 345,
+          "headY": 132,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 78,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowDownRightRefined",
+      "source": "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowDownRight-v2.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "poses": [
+        {
+          "sourceIndex": -1,
+          "headX": 305.5,
+          "headY": 172.5,
+          "skullHeight": 124,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 286,
+          "headY": 172.5,
+          "skullHeight": 126,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 301.5,
+          "headY": 172.5,
+          "skullHeight": 126,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 322.5,
+          "headY": 119,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1,
+          "hasVisualAnchor": true,
+          "visualAnchorX": -1.875,
+          "visualAnchorY": 1.5625
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 292.5,
+          "headY": 132,
+          "skullHeight": 125,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": -1,
+          "headX": 313.5,
+          "headY": 136.5,
+          "skullHeight": 130,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1.08,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowUpRightAirRefined",
+      "source": "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowUpRight-v2.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "poses": [
+        {
+          "sourceIndex": 3,
+          "headX": 289,
+          "headY": 166.5,
+          "skullHeight": 110,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1,
+          "hasVisualAnchor": true,
+          "visualAnchorX": -0.46875,
+          "visualAnchorY": 1.625
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 253.5,
+          "headY": 164.5,
+          "skullHeight": 110,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1,
+          "hasVisualAnchor": true,
+          "visualAnchorX": 2.21875,
+          "visualAnchorY": 2.15625
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 269.5,
+          "headY": 163.5,
+          "skullHeight": 110,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 32,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    }
+  ]
+}

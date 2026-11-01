@@ -559,6 +559,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     {
         EndTrampolineJump();
         CancelHitStop();
+        CancelMotionLaunchVisual();
         SetGoalCollisionIgnoredForRecall(false);
         if (_chargeFeedback != null)
             _chargeFeedback.ResetFeedback();
@@ -678,6 +679,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (handAnchor == null)
             handAnchor = transform;
         ResolvePlayerBodySprite();
+        InitializePlayerMotion();
         RefreshPhysicalUpperHangContactFilter();
 
         _hashBackwardAim = Animator.StringToHash(backwardAimParam);
@@ -799,6 +801,12 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelMotionLaunchVisual();
+        RestoreUnifiedMotionSprite();
+        RestoreChainClimbVisual();
+        SetMotionLaunchLayerSuppressed(false);
+        RestoreChargeSorting();
+        motionHangingVisual = false;
         ReleaseElectricHold();
         EndTrampolineJump();
         CancelHitStop();
@@ -967,6 +975,8 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (UpdateUnifiedMotionVisual())
+            return;
         if (_state == MorningStarState.StartIntro || _respawnPresentation)
             return;
         if (UpdateChainClimbVisual())
@@ -981,6 +991,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     /// </summary>
     private void TransitionToState(MorningStarState nextState)
     {
+        PrepareMotionStateTransition(nextState);
         if (nextState != MorningStarState.Dragging && nextState != MorningStarState.Dropping) ReleaseElectricHold();
         // 明示的なHook/Magnet操作と演出状態では通常の状態別物理へ戻す。
         if (nextState == MorningStarState.Hooked || nextState == MorningStarState.Swinging
@@ -1630,9 +1641,7 @@ public partial class MorningStarLauncher : MonoBehaviour
             _chargeFeedback.SetCharge(ChargeProgress);
         _spinAngle += spinAngularSpeed * dt * Mathf.Deg2Rad;
 
-        Vector2 center = GetHandWorld();
-        Vector2 offset = new Vector2(Mathf.Cos(_spinAngle), Mathf.Sin(_spinAngle)) * spinRadius;
-        morningStarRb.MovePosition(center + offset);
+        morningStarRb.MovePosition(ResolveChargeOrbitPosition());
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
     }
@@ -3187,6 +3196,8 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private Vector2 GetVisualRopeAnchorWorld()
     {
+        if (TryGetMotionVisualAnchor(out Vector2 motionAnchor))
+            return motionAnchor;
         Vector2 targetWorld = ShouldUseUpwardPose()
             ? GetUpwardPoseChainAnchorWorld()
             : GetPlayerRopeAnchorWorld();
@@ -3360,6 +3371,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void BeginLaunchPose(bool launchedInAir)
     {
+        StartMotionLaunchVisual();
         _launchPoseActive = true;
         _upwardLaunchPoseSelected = IsUpwardLaunchDirection(_pendingLaunchDir);
         _launchForwardAnchorApplied = false;

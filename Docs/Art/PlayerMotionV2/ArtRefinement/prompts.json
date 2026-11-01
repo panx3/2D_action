@@ -1,0 +1,91 @@
+{
+  "firstPass": [
+    {
+      "key": "Run",
+      "prompt": "Pixel-art animation revision for the existing Unity action game. EDIT TARGET Image 1 is the approved ORIGINAL six-frame running strip. Image 2 is the PERFECT idle character reference. Re-render the same six running poses as a clean production-quality 3 columns x 2 rows sprite sheet, read left to right, matching the original sequence: calm low forward-lean Naruto-like running, feet pass smoothly, one hand holding the pink baton behind her. The body's low forward lean, skull orientation, eye line and silhouette stay almost fixed while only legs alternate; tiny, gentle hair tip and coat movement. Preserve the original pose and 0.85s running rhythm. Carefully clean up pixel placement: consistent crisp dark 1-native-pixel silhouette, connected intentional pixel clusters, legible face and hands and shoes, coherent fabric folds; no noisy isolated pixels, no fine fuzzy shading, no vector-like smoothing. She must be the SAME exact girl as Idle: warm rose-pink twin tails, exact bangs and black beaded accessories, cream cardigan, burgundy ribbon, black pleated skirt with pink edging, white socks and brown shoes. Physical head-to-torso-to-leg proportions exactly like Idle; the lower crouch is only pose, not a smaller girl. Use consistent character scale and the SAME head dimensions and near-identical head position in all six frames. Ground contact stable, no sudden foot slides, clear six-phase stride with distinct alternating left and right foot. Only two arms and two legs. Sprite in each cell isolated on genuinely transparent background, no ball, no chain, no ground, no glow, no halo, no text, generous transparent margin. Output individual pixel art game sprites, not a portrait or illustration.",
+      "refs": [
+        "Assets/image_/run_test_run3-export.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ]
+    },
+    {
+      "key": "Fall",
+      "prompt": "Create TWO adjacent side-by-side horizontal frames for the DESCENDING phase of the pink-haired girl in Image 1, matching the PERFECT Idle character identity, head size, physical torso/limb proportions, clothes and pixel technique in Image 2. Take the posture specifically from Image 1 top-right/bottom-left falling frames: 3/4 view facing right, floating slightly bent knees, one hand holding the original pink baton behind her. Improve the hair: both twin tails gently STREAM OUTWARD and partly UPWARD, suspended behind and above the shoulders by falling air; individual pointed tapered locks with readable silhouette, lively 'basa' shape halfway between normal idle and a big wind gust. Not round puffy balloons, not vertical horns or fire, not a dramatic head shake. Keep the head, face, torso, hands and legs practically identical in BOTH frames, with a small 1–2 pixel difference only at the outer hair ends; she settles into the second frame and holds it, no flapping cycle. The upper torso stays the same size as Idle, no chibi proportion change, no scale pulsing. Coat floats a little with pointed hem, not enormous sleeves. Faithful rose hair, cream cardigan, burgundy bow, black skirt, pale socks, brown shoes, black hair bands. Crisp clean game-native pixel clusters, no blurry gradients, smooth silhouettes or fake pixels. Two complete equal-sized sprites centered in two equal cells with enough transparent margins for hair and baton, genuinely transparent background, no text, no ball, no chain, no effects.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/CalmSources/Air.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ]
+    },
+    {
+      "key": "ThrowDown",
+      "prompt": "Edit Image 1, an existing 3x2 six-pose STRAIGHT DOWN THROW sprite sheet for the game character in Image 2 (perfect idle). Image 3 supplies her correct body/head proportions in another throw. Keep first row grounded, second row airborne, columns windup/release/settle, exactly the same girl holding the pink baton, and face and eyes looking DOWN along the vertically downward baton. Fix an important anatomical problem: the head looks too dominant and leans away from a short, cramped upper torso. Give her a clearly visible natural neck, full shoulder and upper-body length, coherent shoulder-to-elbow and elbow-to-hand anatomy, face/head size matching the original Idle and the reference throw; retain the same shoulder width, chest size and leg thickness in all six frames, ground and air. A bent pose should not shrink or grow the actual girl. Do not scale the head larger just because she tips it down. Use a gentle diagonal head inclination while eyes look downward, avoid crushing chin into collar, avoid large head swings across the three frames. Airborne legs bend naturally under the SAME body, neither tiny nor giant. Preserve user's approved wand, cream cardigan, skirt, ribbon, black beaded hair bands, warm rose twin tails and Idle's face. The down-pointing wand must remain fully visible and uncut, one hand holding it; never draw ball or chain. Clean deliberate native-resolution game pixel art clusters and outlines, not an anime illustration, no fuzzy or glossy details. Six figures spaced evenly in 3x2 cells with transparent padding, actual transparent background, no glow, no text, no extra limbs.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/CalmSources/ThrowDown.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png"
+      ]
+    },
+    {
+      "key": "ThrowDownRight",
+      "prompt": "Edit Image 1's 3x2 SIX-POSE DIAGONAL DOWN-RIGHT THROW game sprite sheet. Image 2 is the perfect Idle girl and Image 3 is her correct physical body/head/limb proportions during a horizontal throw. Keep each of the six existing gesture ideas (three grounded then three airborne: windup, release, settle), aim baton diagonally DOWN RIGHT, and make her face and eyes look toward that direction. Repair the visual anatomy and scale: the current head is too dominant relative to the torso, and neck and shoulder join are cramped. Keep the same skull size as Idle and the horizontal throw, a visible natural neck, a full torso with normal chest/shoulder length, believable arm joints and consistently sized hands, legs and feet across all frames. Do not change actual character size between ground and airborne poses: only bend knees. Avoid shrinking a pose or inflating the head, and keep her gaze/head angle nearly stable between frames so she does not nod. Hair and coat move mildly, not huge round blobs or flapping. Preserve exact identity and clothes: rose pink hair, cream cardigan, burgundy ribbon, black pleated skirt with pink edge, black beaded hair bands, white socks, brown shoes and original pink baton. Pixel-art style identical to Idle: crisp connected deliberate pixel clusters and consistent outline thickness, no artificial glow or fuzzy fine detail. One full figure plus full baton per cell, 3x2 even layout, true transparency and ample margins. No iron ball, no chain, no extra limbs, no text.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/CalmSources/ThrowDownRight.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png"
+      ]
+    },
+    {
+      "key": "ThrowUpRight",
+      "prompt": "Edit Image 1 (the existing six-frame DIAGONAL UP-RIGHT throw animation) based on the PERFECT Idle girl in Image 2 and body/head scale in Image 3. The upper three GROUNDED poses are already good: reproduce those poses faithfully. Improve the lower three AIRBORNE poses, which appear too big/bulky in game: make the physical head, torso, arm length, hands and leg thickness visually the SAME as the Idle character and the grounded row; remove oversized puffy sleeves and overly broad hair mass, and use the same natural small cardigan folds and compact flowing twin tails. This is an anatomy/proportion correction, not just shrinking the rectangular image: head-to-body balance and local limb lengths must match ground poses; keep equivalent native character height/scale even with knees bent. Character face and eyes look along the up-right baton, mild raised chin, no extreme headbanging. Three stages per row, original direction and pose spirit kept, normal shoulder anatomy, consistent head center and skull dimensions across poses. Same rose pink hair, beaded black accessories, cream cardigan, dark skirt, burgundy bow, socks and shoes as Idle. Refined hand-clustered crisp pixel art as the game uses, no blurry edges, no fake pixels, no lighting halo, true transparent background. Exactly 3 columns x 2 rows, no labels, no ball, no chain, no extra limbs or cropped baton.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/CalmSources/ThrowUpRight.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png"
+      ]
+    }
+  ],
+  "secondPass": [
+    {
+      "key": "Fall-v2",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/Fall-v1.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "prompt": "TARGETED EDIT of Image 1's TWO-frame pixel sprite sheet. Image 2 is the perfect original Idle identity. Keep the exact same small airborne body, face, head size, expression, knees, hands, outfit, baton, camera angle and center in both cells. Only revise the HAIR silhouette: the current twin tails are too rounded and heavy. While falling, let both pigtails remain lightly suspended in the air, spreading OUT and slightly UP like soft ribbon. Split the outer edge of EACH pigtail into 3–4 tapered pointed pixel-lock tips, with some negative space between the tips; give the long far-left tail a clear swept, extended form, and lift the outer right tail slightly rather than a round bob. A gentle medium amount of breeze, no straight-up horns, no violent explosion, no head tilt. Two near-identical held-in-air poses, just the outermost tips moving a little between them, no repeated flapping. Do not increase the width or apparent size of the skull itself. Crisp connected pixel clusters, same warm rose Idle palette. Equal horizontal cells, true transparent background, full character and baton visible, no added ball, chain, effects or text. Ensure hair joins naturally to both black beaded bands."
+    },
+    {
+      "key": "ThrowDown-v2",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowDown-v1.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png"
+      ],
+      "prompt": "Make a focused anatomical revision to Image 1's same six-frame DOWNWARD throw sheet. Original Idle and correct reference body proportions are in Images 2 and 3. The current pink head/core skull is noticeably too dominant relative to her chest: REDUCE the skull and face (excluding ponytails) by roughly 10–12% RELATIVE TO HER TORSO in all six frames; keep the body/shoulder width and actual overall girl scale consistent with the reference throw. Give the cardigan and upper torso a full readable collar-to-waist length, and show a small natural neck between the angled head and collar. Do not make the whole character smaller, do not enlarge the head when she looks down. Slightly lower chin/eyes toward the downward baton, yet keep the 3 head angles stable through the action. Six poses: 3 ground, 3 air, windup and vertical down throw as in target. Preserve pink baton hand, body direction, legs, all outfit details, face identity, original warm-rose pink, black hair bands, cream knit cardigan, socks and shoes. Render original Idle's pixel-grid look with clean deliberate clusters and consistent outlines; no smoothing, no fuzzy halo, no text, no ball or chain, no added limbs. Entire figures plus baton in six equal 3x2 transparent cells with no cropping."
+    },
+    {
+      "key": "ThrowDownRight-v2",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowDownRight-v1.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png"
+      ],
+      "prompt": "Make a focused anatomical revision to Image 1's six-frame DIAGONAL DOWN-RIGHT throw sheet. Images 2 and 3 are the original Idle and correct reference body proportions. Current head dominates the little torso: REDUCE the pink skull/face excluding pigtails by about 10–12% RELATIVE TO THE CHEST in each cell, keep the character's overall ground/air body scale and full torso size matching the reference, and give her a visible normal neck and anatomically connected shoulder. Keep arms and legs naturally proportioned and the hand no larger than in Image 3. Looking down-right should happen through eyes and a modest head inclination, not by enlarging, compressing or hunching the head into the collar. Same face/head size across windup, release and settle; same body size in ground row and airborne bent-knee row. Preserve two-arm pose and existing down-right baton direction, pink twin tails, black beaded bands, cream cardigan, black skirt, burgundy bow, socks and brown shoes. Crisp clean game-native pixel art, with clear blocky coherent contours, same palette as Image 2. Six full characters and uncropped baton, exactly 3x2 uniform cells, genuine transparent background, no text, no ball, no chain or added limbs."
+    },
+    {
+      "key": "ThrowUpRight-v2",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowUpRight-v1.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png"
+      ],
+      "prompt": "Edit the existing SIX up-right throw poses in Image 1. Images 2 and 3 show the correct Idle and other-direction proportions. Keep the upper grounded row faithfully unchanged. On the LOWER airborne row, repair the bulky look: sleeves and forearms should be as slim and physically small as the grounded row, not inflated; hands stay modest; tighten the billowing cardigan and simplify the very broad hair silhouette, while maintaining the same head, torso, thighs and feet sizes as the grounded girl. Do not resize only the rectangular image or make the character randomly tiny; maintain matching face/head-to-body proportions and believable bent knees. For lower three poses preserve the same original windup, angled-up-right release and settle, face and eyes clearly looking up-right. Keep body identity, hair bands, pink baton, colors, nose and features as existing; stable head angle across the three. The game needs crisp handmade pixel art, no blur or glow, uniform native-pixel outlines. 3x2 uniform transparent sheet with all limbs and weapon handle uncropped, no ball, chain, text, extra limbs or visual effects."
+    }
+  ],
+  "acceptedSources": [
+    "Run-v1.png",
+    "Fall-v2.png",
+    "ThrowDown-v2.png",
+    "ThrowDownRight-v2.png",
+    "ThrowUpRight-v2.png"
+  ]
+}

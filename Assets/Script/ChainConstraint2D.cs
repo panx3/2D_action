@@ -92,6 +92,7 @@ public class ChainConstraint2D : MonoBehaviour
     private float _playerClimbSpeed;
     private float _playerClimbMinimumLength;
 
+    public Vector2 LastAppliedPlayerTension { get; private set; }
     public float MaxRopeLength => maxRopeLength;
     public float TensionStartRatio => tensionStartRatio;
     public float TensionStrength => tensionStrength;
@@ -252,6 +253,7 @@ public class ChainConstraint2D : MonoBehaviour
 
     private void FixedUpdate()
     {
+        LastAppliedPlayerTension = Vector2.zero;
         if (!enabled)
             return;
 
@@ -1151,6 +1153,7 @@ public class ChainConstraint2D : MonoBehaviour
             if (!grounded)
                 runJumpMomentumProtection = ProtectRunJumpMomentum(ref playerForce);
 
+            LastAppliedPlayerTension = playerForce;
             playerRb.AddForce(playerForce, ForceMode2D.Force);
             ApplyRunJumpBallFollow(
                 ballPathDirection,

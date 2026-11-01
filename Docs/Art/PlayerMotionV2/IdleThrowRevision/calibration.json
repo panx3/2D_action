@@ -1,0 +1,490 @@
+{
+  "sheets": [
+    {
+      "name": "ChargeIdleStable",
+      "source": "Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/Charge-stable-v1.png",
+      "sourceColumns": 4,
+      "sourceRows": 2,
+      "columns": 4,
+      "rows": 2,
+      "detectorName": "Charge",
+      "poses": [
+        {
+          "sourceIndex": 0,
+          "headX": 253,
+          "headY": 151.5,
+          "skullHeight": 118,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 1,
+          "headX": 267.5,
+          "headY": 151,
+          "skullHeight": 119,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 2,
+          "headX": 275.5,
+          "headY": 151,
+          "skullHeight": 117,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 3,
+          "headX": 269,
+          "headY": 156,
+          "skullHeight": 111,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 270.5,
+          "headY": 124,
+          "skullHeight": 117,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 271,
+          "headY": 127.5,
+          "skullHeight": 110,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 6,
+          "headX": 275.5,
+          "headY": 127.5,
+          "skullHeight": 110,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 7,
+          "headX": 269,
+          "headY": 123.5,
+          "skullHeight": 118,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 32,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowUpIdle",
+      "source": "Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowUp-idle-v1.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "columns": 3,
+      "rows": 2,
+      "detectorName": "ThrowUp",
+      "poses": [
+        {
+          "sourceIndex": 0,
+          "headX": 349.5,
+          "headY": 239,
+          "skullHeight": 99,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 26,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 1,
+          "headX": 260,
+          "headY": 228,
+          "skullHeight": 99,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 26,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 2,
+          "headX": 179.5,
+          "headY": 229,
+          "skullHeight": 99,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 26,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 3,
+          "headX": 352,
+          "headY": 210,
+          "skullHeight": 97,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 26,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 258.5,
+          "headY": 195,
+          "skullHeight": 101,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 26,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 179.5,
+          "headY": 217.5,
+          "skullHeight": 98,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 26,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowUpRightIdle",
+      "source": "Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowUpRight-idle-v2.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "columns": 3,
+      "rows": 2,
+      "detectorName": "ThrowUpRight",
+      "poses": [
+        {
+          "sourceIndex": 0,
+          "headX": 300.5,
+          "headY": 167,
+          "skullHeight": 129,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 1,
+          "headX": 281,
+          "headY": 164,
+          "skullHeight": 117,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 2,
+          "headX": 271.5,
+          "headY": 167.5,
+          "skullHeight": 116,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 3,
+          "headX": 300,
+          "headY": 134.5,
+          "skullHeight": 130,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 281,
+          "headY": 137,
+          "skullHeight": 117,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 274.5,
+          "headY": 138.5,
+          "skullHeight": 116,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowDownIdle",
+      "source": "Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowDown-idle-v2.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "columns": 3,
+      "rows": 2,
+      "detectorName": "ThrowDown",
+      "poses": [
+        {
+          "sourceIndex": 0,
+          "headX": 327.5,
+          "headY": 163.5,
+          "skullHeight": 136,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 1,
+          "headX": 306,
+          "headY": 166,
+          "skullHeight": 141,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 2,
+          "headX": 289.5,
+          "headY": 166.5,
+          "skullHeight": 142,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 3,
+          "headX": 331,
+          "headY": 128,
+          "skullHeight": 135,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 302,
+          "headY": 129,
+          "skullHeight": 139,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 288,
+          "headY": 129.5,
+          "skullHeight": 138,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowDownRightIdle",
+      "source": "Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowDownRight-idle-v2.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "columns": 3,
+      "rows": 2,
+      "detectorName": "ThrowDownRight",
+      "poses": [
+        {
+          "sourceIndex": 0,
+          "headX": 294,
+          "headY": 175,
+          "skullHeight": 145,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 1,
+          "headX": 311.5,
+          "headY": 188,
+          "skullHeight": 139,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 2,
+          "headX": 308,
+          "headY": 188,
+          "skullHeight": 139,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 3,
+          "headX": 323,
+          "headY": 135.5,
+          "skullHeight": 140,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 298.5,
+          "headY": 151,
+          "skullHeight": 135,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 292,
+          "headY": 155,
+          "skullHeight": 135,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1.03,
+          "importScaleCompensation": 1
+        }
+      ]
+    },
+    {
+      "name": "ThrowForwardAirIdle",
+      "source": "Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowForwardAir-idle-v1.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "columns": 3,
+      "rows": 1,
+      "detectorName": "ThrowForward",
+      "poses": [
+        {
+          "sourceIndex": 3,
+          "headX": 308.5,
+          "headY": 153,
+          "skullHeight": 135,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 279.5,
+          "headY": 151.5,
+          "skullHeight": 132,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 279.5,
+          "headY": 151.5,
+          "skullHeight": 132,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    }
+  ]
+}

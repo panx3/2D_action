@@ -1,0 +1,47 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class IdleThrowNewSheet
+{
+    const string NewPath = "Assets/Art/Player/MotionV2/ThrowForwardAirIdle.png";
+    const string Preview = "Docs/Art/PlayerMotionV2/IdleThrowRevision/Preview/ThrowForwardAirIdle.png";
+    public static string Run()
+    {
+        if (!EditorApplication.isPlaying || Time.timeScale != 0f)
+            throw new InvalidOperationException("The previously paused session changed; stop before modifying assets.");
+        var scene = SceneManager.GetActiveScene();
+        var launcher = UnityEngine.Object.FindFirstObjectByType<MorningStarLauncher>();
+        var set = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Resources/PlayerMotion/PlayerMotionV2.asset");
+        if (scene.name != "Stage1" || scene.isDirty || launcher == null || !ReferenceEquals(set, launcher.MotionSet))
+            throw new InvalidOperationException("Scene or motion-set state changed; no assets were modified.");
+        if (File.Exists(NewPath) || File.Exists(NewPath + ".meta"))
+            throw new InvalidOperationException("New sprite path already exists; refusing to overwrite it.");
+        var before = launcher.transform.position;
+        try
+        {
+            File.Copy(Preview, NewPath);
+            AssetDatabase.ImportAsset(NewPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            typeof(PlayerMotionV2Setup).GetMethod("ImportSprites", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { NewPath, 3, 3 });
+            var sprites = AssetDatabase.LoadAllAssetsAtPath(NewPath).OfType<Sprite>().OrderBy(x => x.name).ToArray();
+            var importer = (TextureImporter)AssetImporter.GetAtPath(NewPath);
+            if (sprites.Length != 3 || sprites.Any(x => x.pixelsPerUnit != 32f)
+                || importer.filterMode != FilterMode.Point || importer.mipmapEnabled
+                || importer.textureCompression != TextureImporterCompression.Uncompressed)
+                throw new InvalidOperationException("New sprite import settings did not match the project's pixel-art standard.");
+            if (!EditorApplication.isPlaying || Time.timeScale != 0f || scene.isDirty || launcher.transform.position != before)
+                throw new InvalidOperationException("Paused session state changed during import.");
+            return "Imported three airborne horizontal-throw sprites at 32 PPU; scene, paused session and existing references remain intact.";
+        }
+        catch
+        {
+            if (File.Exists(NewPath) || File.Exists(NewPath + ".meta")) AssetDatabase.DeleteAsset(NewPath);
+            throw;
+        }
+    }
+}

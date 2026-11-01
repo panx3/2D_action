@@ -1,0 +1,134 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+
+// Temporary Play Mode review; this is loaded by Unity MCP and never added to a scene.
+public static class RefinedLiveReview
+{
+    static Player player;
+    static MorningStarLauncher launcher;
+    static Gamepad pad, previousPad;
+    static Animator animator;
+    static FieldInfo holdActive, holdElapsed;
+    static float began, lastSample;
+    static int phase;
+    static bool charge, moving, airborne, thrown, recovered, earlyReturn, wantedAir;
+    static string mode, prefix;
+    static Vector2 aim;
+    static StringBuilder trace;
+    const string DirectoryPath = "Docs/Art/PlayerMotionV2/ArtRefinement";
+
+    public static string StartCharge() { return Start("charge", Vector2.up, false); }
+    public static string StartDown() { return Start("down", Vector2.down, false); }
+    public static string StartDiagonalAir() { return Start("down-right-air", new Vector2(1f, -1f).normalized, true); }
+    public static string StartUpRightAir() { return Start("up-right-air", new Vector2(1f, 1f).normalized, true); }
+
+    static string Start(string testMode, Vector2 direction, bool air)
+    {
+        if (!EditorApplication.isPlaying || !EditorApplication.isPaused) throw new Exception("Paused Play Mode required.");
+        player = UnityEngine.Object.FindFirstObjectByType<Player>();
+        launcher = player.GetComponent<MorningStarLauncher>();
+        animator = player.GetComponent<Animator>();
+        holdActive = typeof(MorningStarLauncher).GetField("_launchPoseActive", BindingFlags.NonPublic | BindingFlags.Instance);
+        holdElapsed = typeof(MorningStarLauncher).GetField("_launchPoseElapsed", BindingFlags.NonPublic | BindingFlags.Instance);
+        var intro = player.GetComponent<PlayerStartIntro>();
+        if (intro != null) intro.enabled = false;
+        player.SetStartIntroControl(false);
+        player.GetComponent<PlayerHealth>().ResetToFullHp();
+        player.GetComponent<PlayerHealth>().BeginRespawnProtection();
+        launcher.EndRespawnPresentation();
+        launcher.ResetForRespawn();
+        player.SetInputEnabled(true);
+        player.SetGoalInputBlocked(false);
+        player.SetGimmickInputBlocked(false);
+        previousPad = Gamepad.current;
+        pad = InputSystem.AddDevice<Gamepad>();
+        pad.MakeCurrent();
+        mode = testMode; aim = direction; wantedAir = air;
+        prefix = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name + "-" + mode;
+        charge = moving = airborne = thrown = recovered = earlyReturn = false;
+        phase = -1; began = Time.time; lastSample = -1f;
+        trace = new StringBuilder("elapsed,state,sprite,vx,vy,launchHold,holdElapsed,layer,ballX,ballY\n");
+        EditorApplication.update -= Tick;
+        EditorApplication.update += Tick;
+        Time.timeScale = 1f;
+        Application.runInBackground = true;
+        EditorApplication.isPaused = false;
+        return "Reviewing actual Input System " + prefix + ".";
+    }
+
+    static void Capture(string name)
+    {
+        typeof(PlayerMotionV2PlayExercise).GetMethod("Capture", BindingFlags.NonPublic | BindingFlags.Static)
+            .Invoke(null, new object[] { prefix + "-" + name + ".png" });
+    }
+
+    static void Tick()
+    {
+        if (!EditorApplication.isPlaying || player == null) { Finish(); return; }
+        float t = Time.time - began;
+        int next = mode == "charge"
+            ? (t < .2f ? 0 : t < .75f ? 1 : t < 1.5f ? 2 : t < 1.65f ? 3 : t < 2.2f ? 4 : t < 2.5f ? 5 : t < 2.65f ? 6 : t < 3.8f ? 7 : 8)
+            : (t < .3f ? 0 : wantedAir && t < .46f ? 1 : t < (wantedAir ? .65f : .43f) ? 2 : t < (wantedAir ? .8f : .58f) ? 3 : t < 1.5f ? 4 : 8);
+        if (next != phase)
+        {
+            phase = next;
+            var state = new GamepadState();
+            if (mode == "charge")
+            {
+                if (phase >= 2 && phase <= 4) state.leftStick = Vector2.right;
+                if (phase >= 1 && phase <= 4) state = state.WithButton(GamepadButton.LeftShoulder);
+                if (phase == 3) state = state.WithButton(GamepadButton.South);
+                if (phase == 6) state.rightStick = aim;
+            }
+            else
+            {
+                if (wantedAir && phase == 1) state = state.WithButton(GamepadButton.South);
+                if (phase == 3) state.rightStick = aim;
+            }
+            InputSystem.QueueStateEvent(pad, state);
+        }
+        player.GetComponent<PlayerHealth>().BeginRespawnProtection();
+        string sprite = player.BodySprite.sprite != null ? player.BodySprite.sprite.name : "suspended";
+        var velocity = player.GetComponent<Rigidbody2D>().linearVelocity;
+        bool active = (bool)holdActive.GetValue(launcher);
+        float elapsed = (float)holdElapsed.GetValue(launcher);
+        float layer = animator.GetLayerWeight(animator.GetLayerIndex("Launcher Pose"));
+        if (!charge && sprite.StartsWith("Charge_")) { charge = true; Capture("charge"); }
+        if (!moving && sprite.StartsWith("ChargeRun_") && Mathf.Abs(velocity.x) > .5f) { moving = true; Capture("charge-run"); }
+        if (!airborne && sprite.StartsWith("ChargeAir_")) { airborne = true; Capture("charge-air"); }
+        if (!thrown && sprite.StartsWith("Throw") && launcher.State == MorningStarLauncher.MorningStarState.Thrown)
+        { thrown = true; Capture("throw"); }
+        if (thrown && !recovered && active && elapsed >= .22f && layer < .01f && !sprite.StartsWith("Throw") && !sprite.StartsWith("Utility"))
+        { recovered = true; Capture("after-throw"); }
+        if (thrown && !recovered && !earlyReturn && !active && launcher.State == MorningStarLauncher.MorningStarState.Dragging
+            && !sprite.StartsWith("Throw") && !sprite.StartsWith("Utility"))
+        { earlyReturn = true; Capture("after-early-return"); }
+        if (t - lastSample > .025f)
+        {
+            lastSample = t;
+            trace.AppendLine(t.ToString("F3") + "," + launcher.State + "," + sprite + "," + velocity.x.ToString("F3") + "," + velocity.y.ToString("F3")
+                + "," + active + "," + elapsed.ToString("F3") + "," + layer.ToString("F2") + "," + launcher.BallBody.position.x + "," + launcher.BallBody.position.y);
+        }
+        if (phase == 8) Finish();
+    }
+
+    static void Finish()
+    {
+        EditorApplication.update -= Tick;
+        if (pad != null && pad.added) InputSystem.RemoveDevice(pad);
+        if (previousPad != null && previousPad.added) previousPad.MakeCurrent();
+        pad = null;
+        if (!EditorApplication.isPlaying) return;
+        EditorApplication.isPaused = true;
+        File.WriteAllText(DirectoryPath + "/" + prefix + "-trace.csv", trace.ToString());
+        File.WriteAllText(DirectoryPath + "/" + prefix + "-validation.txt", "charge=" + charge + " movingCharge=" + moving
+            + " airborneCharge=" + airborne + " thrown=" + thrown + " normalPoseDuringPhysicalHold=" + recovered
+            + " normalPoseAfterEarlyReturn=" + earlyReturn);
+    }
+}

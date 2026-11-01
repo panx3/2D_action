@@ -1,0 +1,156 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+// Called through Unity MCP; limits writes to the listed sprites and the motion set.
+public static class IdleThrowRevisionInstaller
+{
+    const string Root = "Docs/Art/PlayerMotionV2/IdleThrowRevision/";
+    const string SpriteRoot = "Assets/Art/Player/MotionV2/";
+    const string SetPath = "Assets/Resources/PlayerMotion/PlayerMotionV2.asset";
+    static readonly string[] Names = { "Charge", "ThrowUp", "ThrowUpRight", "ThrowUpRightAirRefined", "ThrowDownRefined", "ThrowDownRightRefined" };
+    static readonly string[] Previews = { "ChargeSelective", "ThrowUpIdle", "ThrowUpRightIdle", "ThrowUpRightAirIdle", "ThrowDownIdle", "ThrowDownRightIdle" };
+
+    sealed class SavedFrame { public string path, name; public Vector2 chain, grip; }
+    sealed class SavedSequence { public PlayerMotionSet.Sequence sequence; public SavedFrame[] frames; }
+
+    public static string Run()
+    {
+        if (!EditorApplication.isPlaying || EditorApplication.isCompiling || Time.timeScale != 0f)
+            throw new InvalidOperationException("The paused Play session changed; installation was not started.");
+        var scene = SceneManager.GetActiveScene();
+        var launcher = UnityEngine.Object.FindFirstObjectByType<MorningStarLauncher>();
+        var set = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>(SetPath);
+        if (scene.name != "Stage1" || scene.isDirty || launcher == null || !ReferenceEquals(set, launcher.MotionSet))
+            throw new InvalidOperationException("Scene or motion-set state changed; installation was not started.");
+        if (EditorUtility.IsDirty(set) || !File.ReadAllBytes(SetPath).SequenceEqual(File.ReadAllBytes(Root + "Before/PlayerMotionV2.asset")))
+            throw new InvalidOperationException("The motion asset has unsaved or newer changes; refusing to overwrite them.");
+        Vector3 previousPosition = launcher.transform.position;
+        var anchors = ReadAnchors();
+        var newAir = Sprites("ThrowForwardAirIdle");
+        if (newAir.Length != 3 || set.throws.Length != 5 || set.charge.frames.Length != 8)
+            throw new InvalidOperationException("Unexpected existing motion or new sprite count.");
+        var sequences = new List<SavedSequence>();
+        sequences.Add(Snapshot(set.charge));
+        sequences.Add(Snapshot(set.throws[0].air));
+        for (int i = 1; i < 5; i++) { sequences.Add(Snapshot(set.throws[i].ground)); sequences.Add(Snapshot(set.throws[i].air)); }
+        var oldIds = new Dictionary<string, string[]>();
+        for (int i = 0; i < Names.Length; i++)
+        {
+            string path = SpriteRoot + Names[i] + ".png";
+            if (!File.ReadAllBytes(path).SequenceEqual(File.ReadAllBytes(Root + "Before/" + Names[i] + ".png")))
+                throw new InvalidOperationException(path + " changed since the backup; refusing to overwrite it.");
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (importer == null || importer.spriteImportMode != SpriteImportMode.Multiple
+                || importer.spritePixelsPerUnit != 32 || importer.filterMode != FilterMode.Point
+                || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed)
+                throw new InvalidOperationException("Unexpected existing importer: " + path);
+            oldIds[Names[i]] = SpriteIds(Names[i]);
+            var source = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!source.LoadImage(File.ReadAllBytes(Root + "Preview/" + Previews[i] + ".png"), false))
+                throw new InvalidOperationException("Invalid preview: " + Previews[i]);
+            var original = (Texture2D)AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (source.width != original.width || source.height != original.height)
+                throw new InvalidOperationException("Sheet dimensions differ: " + path);
+            UnityEngine.Object.DestroyImmediate(source);
+        }
+        var changed = new List<string>();
+        bool motionModified = false;
+        try
+        {
+            for (int i = 0; i < Names.Length; i++)
+            {
+                string path = SpriteRoot + Names[i] + ".png";
+                File.Copy(Root + "Preview/" + Previews[i] + ".png", path, true);
+                changed.Add(Names[i]);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+                if (!oldIds[Names[i]].SequenceEqual(SpriteIds(Names[i])))
+                    throw new InvalidOperationException("Sprite GUID or local file ID changed: " + path);
+            }
+            motionModified = true;
+            Replace(set.throws[0].air, newAir, 0, anchors["throwForwardAir"], 0);
+            Replace(set.throws[1].ground, Sprites("ThrowUpRight"), 0, anchors["throwUpRight"], 0);
+            Replace(set.throws[1].air, Sprites("ThrowUpRightAirRefined"), 0, anchors["throwUpRight"], 3);
+            Replace(set.throws[2].ground, Sprites("ThrowUp"), 0, anchors["throwUp"], 0);
+            Replace(set.throws[2].air, Sprites("ThrowUp"), 3, anchors["throwUp"], 3);
+            Replace(set.throws[3].ground, Sprites("ThrowDownRightRefined"), 0, anchors["throwDownRight"], 0);
+            Replace(set.throws[3].air, Sprites("ThrowDownRightRefined"), 3, anchors["throwDownRight"], 3);
+            Replace(set.throws[4].ground, Sprites("ThrowDownRefined"), 0, anchors["throwDown"], 0);
+            Replace(set.throws[4].air, Sprites("ThrowDownRefined"), 3, anchors["throwDown"], 3);
+            var chargeSprites = Sprites("Charge").ToDictionary(x => x.name);
+            var originalCharge = sequences[0].frames;
+            set.charge.frames = originalCharge.Select(f => new PlayerMotionSet.Frame {
+                sprite = chargeSprites[f.name], chargeGrip = f.grip,
+                chainAnchor = f.name == "Charge_03" ? anchors["chargeFrame3"][0] : f.chain
+            }).ToArray();
+            set.RebuildLookup();
+            if (!EditorApplication.isPlaying || Time.timeScale != 0f || scene.isDirty || launcher.transform.position != previousPosition)
+                throw new InvalidOperationException("Paused session changed unexpectedly.");
+            if (set.charge.frames.Where((f, i) => f.chargeGrip != originalCharge[i].grip).Any())
+                throw new InvalidOperationException("A physical charge grip changed unexpectedly.");
+            EditorUtility.SetDirty(set);
+            AssetDatabase.SaveAssetIfDirty(set);
+            return "Installed six existing sheets with their GUIDs and sprite IDs intact, plus airborne forward sprites. "
+                + "Charge grip/physics and all sequence timings preserved; paused Stage1 session remains intact.";
+        }
+        catch
+        {
+            foreach (string name in changed)
+            {
+                string path = SpriteRoot + name + ".png";
+                File.Copy(Root + "Before/" + name + ".png", path, true);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            }
+            if (motionModified)
+            {
+                foreach (var saved in sequences) Restore(saved);
+                set.RebuildLookup(); EditorUtility.SetDirty(set); AssetDatabase.SaveAssetIfDirty(set);
+            }
+            throw;
+        }
+    }
+
+    static Dictionary<string, Vector2[]> ReadAnchors()
+    {
+        var points = new Dictionary<string, List<Vector2>>();
+        foreach (string line in File.ReadAllLines(Root + "anchors.csv"))
+        {
+            var parts = line.Split(',');
+            if (parts.Length != 4) throw new InvalidOperationException("Invalid anchor row: " + line);
+            if (!points.ContainsKey(parts[0])) points[parts[0]] = new List<Vector2>();
+            float x = float.Parse(parts[2], CultureInfo.InvariantCulture), y = float.Parse(parts[3], CultureInfo.InvariantCulture);
+            points[parts[0]].Add(new Vector2((x - 96f) / 32f, (96f - y) / 32f));
+        }
+        return points.ToDictionary(x => x.Key, x => x.Value.ToArray());
+    }
+    static Sprite[] Sprites(string name) => AssetDatabase.LoadAllAssetsAtPath(SpriteRoot + name + ".png")
+        .OfType<Sprite>().OrderBy(x => x.name, StringComparer.Ordinal).ToArray();
+    static string[] SpriteIds(string name) => Sprites(name).Select(sprite => {
+        if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(sprite, out string guid, out long id))
+            throw new InvalidOperationException("Could not read sprite ID: " + sprite.name);
+        return sprite.name + ":" + guid + ":" + id;
+    }).ToArray();
+    static SavedSequence Snapshot(PlayerMotionSet.Sequence sequence) => new SavedSequence { sequence = sequence,
+        frames = sequence.frames.Select(frame => new SavedFrame { path = AssetDatabase.GetAssetPath(frame.sprite),
+            name = frame.sprite.name, chain = frame.chainAnchor, grip = frame.chargeGrip }).ToArray() };
+    static void Replace(PlayerMotionSet.Sequence sequence, Sprite[] sprites, int spriteStart, Vector2[] anchors, int anchorStart)
+    {
+        if (sequence.frames.Length != 3 || sprites.Length < spriteStart + 3 || anchors.Length < anchorStart + 3)
+            throw new InvalidOperationException("Unexpected throw sequence size.");
+        sequence.frames = sequence.frames.Select((old, i) => new PlayerMotionSet.Frame {
+            sprite = sprites[spriteStart + i], chainAnchor = anchors[anchorStart + i], chargeGrip = old.chargeGrip
+        }).ToArray();
+    }
+    static void Restore(SavedSequence saved)
+    {
+        saved.sequence.frames = saved.frames.Select(frame => new PlayerMotionSet.Frame {
+            sprite = AssetDatabase.LoadAllAssetsAtPath(frame.path).OfType<Sprite>().First(x => x.name == frame.name),
+            chainAnchor = frame.chain, chargeGrip = frame.grip
+        }).ToArray();
+    }
+}

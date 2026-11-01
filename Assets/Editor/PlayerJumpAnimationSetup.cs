@@ -16,6 +16,7 @@ public static class PlayerJumpAnimationSetup
     [MenuItem("鉄球少女/Player/3段階ジャンプアニメーションを設定")]
     public static void Apply()
     {
+        if (PlayerMotionV2Setup.ApplyInstalledClips()) return;
         Sprite[] sprites = AssetDatabase.LoadAllAssetsAtPath(SpriteSheetPath)
             .OfType<Sprite>()
             .OrderBy(sprite => sprite.name, StringComparer.Ordinal)
@@ -107,6 +108,11 @@ public static class PlayerJumpAnimationSetup
 
     public static void Validate()
     {
+        if (AssetDatabase.LoadAssetAtPath<PlayerMotionSet>(PlayerMotionV2Setup.MotionAssetPath) != null)
+        {
+            Debug.Log("[JumpAnimationValidation] Player Motion V2 clips installed.");
+            return;
+        }
         AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         AnimatorStateMachine machine = controller.layers[0].stateMachine;
         AnimationClip up = AssetDatabase.LoadAssetAtPath<AnimationClip>(JumpUpPath);

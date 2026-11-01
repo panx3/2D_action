@@ -1,0 +1,4 @@
+Climbing_0 bounds=110,81,404,669 rootX=278.61 chain=(0.00, 1.96) grip=(0.66, 0.54)
+Climbing_1 bounds=659,55,967,669 rootX=840.49 chain=(0.00, 2.02) grip=(0.64, 0.75)
+Climbing_2 bounds=1193,83,1493,669 rootX=1358.49 chain=(0.00, 1.95) grip=(0.72, 0.83)
+Climbing_3 bounds=1729,75,2024,669 rootX=1909.94 chain=(0.00, 1.98) grip=(0.58, 0.50)

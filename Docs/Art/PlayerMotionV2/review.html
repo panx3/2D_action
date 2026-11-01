@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>鉄球少女｜プレイヤーモーション比較</title>
+<style>
+:root{color-scheme:dark;--bg:#15141d;--panel:#201e2b;--line:#3b3548;--text:#f4edf3;--muted:#bdb2c4;--pink:#efa1c2;--ground:#a2829b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.65 "Yu Gothic UI","Meiryo",sans-serif}
+main{max-width:1720px;margin:auto;padding:30px 30px 48px}
+header{border-bottom:1px solid var(--line);padding-bottom:18px}
+.eyebrow{font-size:11px;letter-spacing:.16em;color:var(--pink)}
+h1{font-size:27px;line-height:1.4;margin:5px 0 8px;letter-spacing:.03em}
+h2{font-size:17px;margin:22px 0 10px}
+p{margin:4px 0;color:var(--muted)}
+.badge{display:inline-block;color:#f6d3e1;border:1px solid #765269;border-radius:20px;padding:2px 10px;font-size:11px;margin-left:10px;vertical-align:middle}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+button,select{font:inherit;color:var(--text);background:#2c2838;border:1px solid #51465c;border-radius:6px;padding:5px 12px;cursor:pointer}
+button:hover,select:hover{border-color:var(--pink)}
+button[aria-pressed="true"]{background:#754b63;border-color:#d48eae}
+.control-label{color:var(--muted);font-size:12px;margin-right:2px}
+.legend{font-size:11px;color:var(--muted);margin-top:8px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:9px;background:var(--panel);overflow:hidden}
+.card button{display:block;width:100%;padding:0;border:0;border-radius:0;background:transparent;text-align:center}
+.card.selected{border-color:var(--pink);box-shadow:0 0 0 1px #efa1c233}
+.card-title{padding:8px 8px 0;font-weight:600}
+.card-note{color:var(--muted);font-size:11px;padding:0 7px 8px}
+.stage{position:relative;display:flex;justify-content:center;align-items:center;overflow:hidden;background:#292430}
+.stage::after{content:"";position:absolute;bottom:15px;height:1px;left:0;right:0;background:var(--ground);opacity:.25;pointer-events:none}
+.stage[data-bg="light"]{background:#e4dce3}
+.stage[data-bg="checker"]{background-color:#302a37;background-image:linear-gradient(45deg,#393240 25%,transparent 25%),linear-gradient(-45deg,#393240 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#393240 75%),linear-gradient(-45deg,transparent 75%,#393240 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+canvas{display:block;flex:none;image-rendering:pixelated;image-rendering:crisp-edges}
+.native canvas{width:192px;height:192px}
+.viewer{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px}
+.viewer-top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.pair{display:flex;gap:18px;overflow:auto;align-items:flex-start;padding-bottom:8px}
+.zoom-card{flex:none;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.zoom-card .card-title{padding:8px 12px;background:var(--panel)}
+.zoom-stage::after{bottom:calc(16px * var(--zoom));height:calc(1px * var(--zoom))}
+.notes{padding:14px 18px;border:1px solid var(--line);border-radius:9px;background:#211e29;margin-top:20px}
+.notes p{color:#d6c6d4;font-size:12px}
+footer{font-size:11px;color:var(--muted);margin-top:16px}
+a{color:var(--pink)}
+.error{color:#ffb3ac}
+body.detail header,body.detail section[aria-labelledby="basic-heading"],body.detail section[aria-labelledby="charge-heading"],body.detail section[aria-labelledby="suspension-heading"]{display:none}
+body.detail #zoom-heading{margin-top:0}
+body.overview section[aria-labelledby="zoom-heading"],body.overview .notes,body.overview footer{display:none}
+body.suspension header,body.suspension section[aria-labelledby="basic-heading"],body.suspension section[aria-labelledby="charge-heading"],body.suspension section[aria-labelledby="zoom-heading"],body.suspension .notes,body.suspension footer{display:none}
+body.suspension #suspension-heading{margin-top:0}
+@media(max-width:1040px){.gallery{display:flex;overflow:auto;padding-bottom:8px}.card{min-width:202px}}
+@media(max-width:600px){main{padding:18px 14px}h1{font-size:22px}.badge{margin-left:0}.viewer{padding:8px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">鉄球少女 / PLAYER MOTION / REVIEW 02</div>
+<h1>プレイヤーモーション 比較資料 <span class="badge">代表案・ゲーム未組み込み</span></h1>
+<p>Idleを基準に、走り・空中動作・発射・チャージ・ぶら下がり・中央の鎖登りを見比べるための資料です。</p>
+<div class="toolbar">
+<span class="control-label">背景</span>
+<button data-background="dark" aria-pressed="true">暗色</button>
+<button data-background="light" aria-pressed="false">明色</button>
+<button data-background="checker" aria-pressed="false">透過確認</button>
+<button id="play-hanging" aria-pressed="false">ぶら下がり2コマを再生</button>
+<button id="play-climb" aria-pressed="false">登り4コマを再生</button>
+<span class="control-label" style="margin-left:12px">チャージ</span>
+<button id="play" aria-pressed="false">回転軸プレビューを再生</button>
+</div>
+<div class="legend">一覧は比較サイズ1倍。生成原画は表示上だけIdleの身長に合わせています。ゲーム用の最終ドットデータではありません。</div>
+</header>
+
+<section aria-labelledby="basic-heading">
+<h2 id="basic-heading">基本ポーズ <span class="badge">クリックで下の拡大表示を切り替え</span></h2>
+<div class="gallery" id="basic-gallery"></div>
+</section>
+<section aria-labelledby="charge-heading">
+<h2 id="charge-heading">チャージ：持ち手は片手、鉄球側の鎖はもう片手で握って回す</h2>
+<div class="gallery" id="charge-gallery"></div>
+</section>
+
+<section aria-labelledby="suspension-heading">
+<h2 id="suspension-heading">ぶら下がり・よじ登り <span class="badge">登りは中央の一本の鎖を握る</span></h2>
+<div class="gallery" id="suspension-gallery"></div>
+</section>
+<section aria-labelledby="zoom-heading">
+<h2 id="zoom-heading">Idleと並べて拡大</h2>
+<div class="viewer">
+<div class="viewer-top">
+<label>比較するポーズ <select id="pose"></select></label>
+<div><span class="control-label">整数倍表示</span>
+<button data-zoom="2" aria-pressed="false">2倍</button>
+<button data-zoom="4" aria-pressed="true">4倍</button>
+<button data-zoom="6" aria-pressed="false">6倍</button></div>
+</div>
+<div class="pair">
+<div class="zoom-card"><div class="card-title">基準：既存Idle</div><div class="stage zoom-stage" data-bg="dark"><canvas id="idle-zoom" width="192" height="192" aria-label="既存Idleの拡大"></canvas></div></div>
+<div class="zoom-card"><div class="card-title" id="selected-title">引きずり走り</div><div class="stage zoom-stage" data-bg="dark"><canvas id="selected-zoom" width="192" height="192" aria-label="選択した代表案の拡大"></canvas></div></div>
+</div>
+</div>
+</section>
+
+<div class="notes">
+<p><strong>確認したいこと：</strong>顔つきと頭身、髪・服の色、走りの雰囲気、投げる方向、チャージの全身の動き。</p>
+<p>Idleから採った髪色を基準に再調整しました。衣装の細部や最終ピクセル整形は未確定です。登りは中央の鎖に握りを合わせた修正案で、髪・服と膝の連動を確認できます。チャージは片手で持ち手を保持し、もう片手で鉄球側の鎖を握ります。持ち手→もう片手の握り→既存鉄球の経路を重ねています。球の大きさ・速度は資料用で、Unityへの組み込みは承認後です。</p>
+</div>
+<footer>
+原画：<a href="run.png">走り</a> / <a href="jump.png">上昇</a> / <a href="fall.png">降下</a> / <a href="throw_up_right.png">斜め上</a> / <a href="throw_down_right.png">斜め下</a> / <a href="charge.png">人物のみのチャージ4枚</a> / <a href="charge-axis-reference.jpg">回転軸の参考図</a> / <a href="idle-reference.png">既存Idle</a> / <a href="hanging.png">ぶら下がり2枚</a> / <a href="climb.png">中央の鎖登り4枚</a><br>
+制作記録：<a href="README.md">README</a> / <a href="prompts.json">使用プロンプト</a>。Idle・ゲームコード・Scene・Prefabは変更していません。
+<span id="status" role="status"></span>
+</footer>
+</main>
+<script>
+const poses=[
+ {
+  "id": "idle",
+  "label": "既存Idle",
+  "note": "基準 / 変更なし",
+  "file": "idle-reference.png",
+  "rect": [
+   0,
+   0,
+   128,
+   128
+  ],
+  "scale": 1,
+  "rootX": 64,
+  "feet": 127,
+  "lift": 0
+ },
+ {
+  "id": "run",
+  "label": "引きずり走り",
+  "note": "前傾・脚の運びを継承",
+  "file": "run.png",
+  "rect": [
+   240,
+   280,
+   760,
+   840
+  ],
+  "scale": 0.14675324675324675,
+  "rootX": 620,
+  "feet": 1092,
+  "lift": 0
+ },
+ {
+  "id": "jump",
+  "label": "ジャンプ上昇",
+  "note": "上向きの勢い・髪の遅れ",
+  "file": "jump.png",
+  "rect": [
+   280,
+   220,
+   730,
+   850
+  ],
+  "scale": 0.135678391959799,
+  "rootX": 650,
+  "feet": 1040,
+  "lift": 14
+ },
+ {
+  "id": "fall",
+  "label": "ジャンプ降下",
+  "note": "髪と服を大きくバサッと",
+  "file": "fall.png",
+  "rect": [
+   260,
+   150,
+   800,
+   990
+  ],
+  "scale": 0.15694444444444444,
+  "rootX": 650,
+  "feet": 1116,
+  "lift": 14
+ },
+ {
+  "id": "throw_up_right",
+  "label": "斜め上発射",
+  "note": "腕・視線を上の狙いへ",
+  "file": "throw_up_right.png",
+  "rect": [
+   280,
+   260,
+   850,
+   820
+  ],
+  "scale": 0.17384615384615384,
+  "rootX": 635,
+  "feet": 1052,
+  "lift": 0
+ },
+ {
+  "id": "throw_down_right",
+  "label": "斜め下発射",
+  "note": "前への踏み込み・下向き",
+  "file": "throw_down_right.png",
+  "rect": [
+   220,
+   270,
+   870,
+   820
+  ],
+  "scale": 0.14947089947089948,
+  "rootX": 585,
+  "feet": 1055,
+  "lift": 0
+ },
+ {
+  "id": "charge_1",
+  "label": "チャージ 1 / 前",
+  "note": "柄を保持・別の手で鎖を握る",
+  "file": "charge.png",
+  "rect": [
+   45,
+   85,
+   440,
+   580
+  ],
+  "scale": 0.22420634920634921,
+  "hub": [
+   434,
+   373
+  ],
+  "phase": 0,
+  "rootX": 270,
+  "feet": 623,
+  "lift": 0,
+  "handleTip": [
+   81,
+   528
+  ]
+ },
+ {
+  "id": "charge_2",
+  "label": "チャージ 2 / 上",
+  "note": "鉄球側の握りを回転軸に",
+  "file": "charge.png",
+  "rect": [
+   580,
+   85,
+   440,
+   580
+  ],
+  "scale": 0.22420634920634921,
+  "hub": [
+   969,
+   332
+  ],
+  "phase": 1,
+  "rootX": 790,
+  "feet": 623,
+  "lift": 0,
+  "handleTip": [
+   622,
+   522
+  ]
+ },
+ {
+  "id": "charge_3",
+  "label": "チャージ 3 / 後",
+  "note": "持ち手からの鎖はたるむ",
+  "file": "charge.png",
+  "rect": [
+   1110,
+   85,
+   455,
+   580
+  ],
+  "scale": 0.22420634920634921,
+  "hub": [
+   1506,
+   355
+  ],
+  "phase": 2,
+  "rootX": 1360,
+  "feet": 623,
+  "lift": 0,
+  "handleTip": [
+   1158,
+   528
+  ]
+ },
+ {
+  "id": "charge_4",
+  "label": "チャージ 4 / 下",
+  "note": "膝と体で回転の重さを受ける",
+  "file": "charge.png",
+  "rect": [
+   1650,
+   130,
+   485,
+   535
+  ],
+  "scale": 0.22420634920634921,
+  "hub": [
+   2056,
+   403
+  ],
+  "phase": 3,
+  "rootX": 1900,
+  "feet": 623,
+  "lift": 0,
+  "handleTip": [
+   1698,
+   536
+  ]
+ },
+ {
+  "id": "hanging_1",
+  "label": "ぶら下がり 1",
+  "note": "片手に体重・左への揺れ",
+  "file": "hanging.png",
+  "rect": [
+   330,
+   65,
+   475,
+   760
+  ],
+  "scale": 0.21161048689138576,
+  "chainGrip": [
+   558,
+   101
+  ],
+  "gripY": 24,
+  "chainLength": 24,
+  "rootX": 570,
+  "feet": 780,
+  "lift": 0
+ },
+ {
+  "id": "hanging_2",
+  "label": "ぶら下がり 2",
+  "note": "右へ揺れ・髪と服の遅れ",
+  "file": "hanging.png",
+  "rect": [
+   1060,
+   65,
+   480,
+   760
+  ],
+  "scale": 0.21161048689138576,
+  "chainGrip": [
+   1223,
+   101
+  ],
+  "gripY": 24,
+  "chainLength": 24,
+  "rootX": 1300,
+  "feet": 785,
+  "lift": 0
+ },
+ {
+  "id": "climb_1",
+  "label": "鎖登り 1",
+  "note": "中央の鎖・左膝を上げる",
+  "file": "climb.png",
+  "rect": [
+   85,
+   55,
+   380,
+   640
+  ],
+  "scale": 0.22376237623762377,
+  "chainGrip": [
+   278.61,
+   109.99
+  ],
+  "gripY": 32,
+  "chainLength": 176,
+  "rootX": 270,
+  "feet": 666,
+  "lift": 0
+ },
+ {
+  "id": "climb_2",
+  "label": "鎖登り 2",
+  "note": "同じ中心線へ手を送る",
+  "file": "climb.png",
+  "rect": [
+   610,
+   45,
+   400,
+   650
+  ],
+  "scale": 0.22376237623762377,
+  "chainGrip": [
+   840.49,
+   101.77
+  ],
+  "gripY": 32,
+  "chainLength": 176,
+  "rootX": 840,
+  "feet": 666,
+  "lift": 0
+ },
+ {
+  "id": "climb_3",
+  "label": "鎖登り 3",
+  "note": "中央の鎖・右膝を上げる",
+  "file": "climb.png",
+  "rect": [
+   1150,
+   55,
+   380,
+   640
+  ],
+  "scale": 0.22376237623762377,
+  "chainGrip": [
+   1358.49,
+   111.17
+  ],
+  "gripY": 32,
+  "chainLength": 176,
+  "rootX": 1360,
+  "feet": 666,
+  "lift": 0
+ },
+ {
+  "id": "climb_4",
+  "label": "鎖登り 4",
+  "note": "引き上げ・服と髪が追従",
+  "file": "climb.png",
+  "rect": [
+   1680,
+   50,
+   400,
+   650
+  ],
+  "scale": 0.22376237623762377,
+  "chainGrip": [
+   1909.94,
+   107.82
+  ],
+  "gripY": 32,
+  "chainLength": 176,
+  "rootX": 1910,
+  "feet": 666,
+  "lift": 0
+ }
+];
+const images=new Map();
+let selected="climb_1",zoom=4,timer=null,motionTimer=null,motionGroup=null;
+function paint(canvas,id,angleOverride){
+ const p=poses.find(x=>x.id===id),ctx=canvas.getContext("2d"),img=images.get(p.file);
+ ctx.clearRect(0,0,192,192);ctx.imageSmoothingEnabled=false;
+ const [sx,sy,sw,sh]=p.rect;
+ let dx=80+(sx-p.rootX)*p.scale,dy=176-p.lift+(sy-p.feet)*p.scale;
+ const chargeHubY=p.hub?176+(p.hub[1]-623)*p.scale:105;
+ if(p.hub){dx=125+(sx-p.hub[0])*p.scale;dy=chargeHubY+(sy-p.hub[1])*p.scale;}
+ if(p.chainGrip){dx=96+(sx-p.chainGrip[0])*p.scale;dy=p.gripY+(sy-p.chainGrip[1])*p.scale;}
+ const drawBody=()=>ctx.drawImage(img,sx,sy,sw,sh,dx,dy,sw*p.scale,sh*p.scale);
+ if(p.chainGrip){
+  ctx.save();ctx.translate(96,0);ctx.rotate(Math.PI/2);ctx.drawImage(images.get("existing-chain.png"),0,0,153,10,0,-1.25,p.chainLength,2.5);ctx.restore();
+  drawBody();return;
+ }
+ if(!p.hub){drawBody();return;}
+ const angle=angleOverride??p.phase*Math.PI/2;
+ const bx=125+Math.cos(angle)*32,by=chargeHubY-Math.sin(angle)*32;
+ const drawWeapon=()=>{
+  const chain=images.get("existing-chain.png"),ball=images.get("existing-ball.png");
+  ctx.save();ctx.translate(125,chargeHubY);ctx.rotate(-angle);
+  ctx.drawImage(chain,0,0,153,10,0,-1.25,18,2.5);ctx.restore();
+  const tx=125+(p.handleTip[0]-p.hub[0])*p.scale,ty=chargeHubY+(p.handleTip[1]-p.hub[1])*p.scale;
+  const guide=[[tx,ty],[(tx+125)/2,Math.max(ty,chargeHubY)+8],[125,chargeHubY]];
+  for(let i=0;i<2;i++){const [ax,ay]=guide[i],[ex,ey]=guide[i+1],length=Math.hypot(ex-ax,ey-ay);ctx.save();ctx.translate(ax,ay);ctx.rotate(Math.atan2(ey-ay,ex-ax));ctx.drawImage(chain,0,0,153,10,0,-1.25,length,2.5);ctx.restore();}
+  ctx.drawImage(ball,bx-16,by-16,32,32);
+ };
+ if(Math.cos(angle)<0){drawWeapon();drawBody();}else{drawBody();drawWeapon();}
+ ctx.fillStyle="#efa1c2";ctx.fillRect(124,chargeHubY-1,2,2);
+}
+function choose(id){
+ selected=id;document.getElementById("pose").value=id;
+ document.getElementById("selected-title").textContent=poses.find(p=>p.id===id).label;
+ paint(document.getElementById("selected-zoom"),id);
+ document.querySelectorAll("[data-pose]").forEach(el=>{const active=el.dataset.pose===id;el.closest(".card").classList.toggle("selected",active);el.setAttribute("aria-pressed",String(active))});
+}
+function applyZoom(value){
+ zoom=value;
+ document.querySelectorAll(".zoom-stage").forEach(el=>el.style.setProperty("--zoom",String(zoom)));
+ document.querySelectorAll(".zoom-stage canvas").forEach(el=>{el.style.width=(192*zoom)+"px";el.style.height=(192*zoom)+"px"});
+ document.querySelectorAll("[data-zoom]").forEach(el=>el.setAttribute("aria-pressed",String(Number(el.dataset.zoom)===zoom)));
+}
+function card(p){
+ const el=document.createElement("article");el.className="card";
+ const button=document.createElement("button");button.type="button";button.dataset.pose=p.id;button.setAttribute("aria-pressed","false");
+ const title=document.createElement("div");title.className="card-title";title.textContent=p.label;
+ const stage=document.createElement("div");stage.className="stage native";stage.dataset.bg="dark";
+ const canvas=document.createElement("canvas");canvas.width=192;canvas.height=192;canvas.setAttribute("aria-label",p.label);stage.append(canvas);
+ const note=document.createElement("div");note.className="card-note";note.textContent=p.note;
+ button.append(title,stage,note);button.addEventListener("click",()=>{stopSequence();stopMotionSequence();choose(p.id)});el.append(button);paint(canvas,p.id);return el;
+}
+function stopSequence(){cancelAnimationFrame(timer);timer=null;const b=document.getElementById("play");b.textContent="回転軸プレビューを再生";b.setAttribute("aria-pressed","false")}
+function stopMotionSequence(){clearInterval(motionTimer);motionTimer=null;motionGroup=null;for(const [id,label] of [["play-hanging","ぶら下がり2コマを再生"],["play-climb","登り4コマを再生"]]){const b=document.getElementById(id);b.textContent=label;b.setAttribute("aria-pressed","false")}}
+function playMotion(group,ids,buttonId,interval){if(motionGroup===group){stopMotionSequence();return}stopSequence();stopMotionSequence();motionGroup=group;let index=0;choose(ids[0]);const b=document.getElementById(buttonId);b.textContent="再生を停止";b.setAttribute("aria-pressed","true");motionTimer=setInterval(()=>{index=(index+1)%ids.length;choose(ids[index])},interval)}
+async function init(){
+ await Promise.all([...new Set([...poses.map(p=>p.file),"existing-ball.png","existing-chain.png"])].map(file=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{images.set(file,img);resolve()};img.onerror=()=>reject(new Error(file+"を読み込めません"));img.src=file})));
+ poses.slice(0,6).forEach(p=>document.getElementById("basic-gallery").append(card(p)));
+ poses.filter(p=>p.id==="idle"||p.id.startsWith("charge_")).forEach(p=>document.getElementById("charge-gallery").append(card(p)));
+ poses.filter(p=>p.id==="idle"||p.chainGrip).forEach(p=>document.getElementById("suspension-gallery").append(card(p)));
+ const select=document.getElementById("pose");
+ poses.forEach(p=>{const option=document.createElement("option");option.value=p.id;option.textContent=p.label;select.append(option)});
+ select.addEventListener("change",e=>{stopSequence();stopMotionSequence();choose(e.target.value)});
+ document.querySelectorAll("[data-background]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".stage").forEach(s=>s.dataset.bg=b.dataset.background);document.querySelectorAll("[data-background]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)))}));
+ document.querySelectorAll("[data-zoom]").forEach(b=>b.addEventListener("click",()=>applyZoom(Number(b.dataset.zoom))));
+ document.getElementById("play").addEventListener("click",()=>{if(timer){stopSequence();return}stopMotionSequence();choose("charge_1");const b=document.getElementById("play");b.textContent="回転を停止";b.setAttribute("aria-pressed","true");const start=performance.now();function tick(now){const angle=((now-start)/1800)*Math.PI*2,phase=Math.floor((angle%(Math.PI*2))/(Math.PI/2));choose("charge_"+(phase+1));paint(document.getElementById("selected-zoom"),selected,angle);timer=requestAnimationFrame(tick)}timer=requestAnimationFrame(tick)});
+ document.getElementById("play-hanging").addEventListener("click",()=>playMotion("hanging",["hanging_1","hanging_2"],"play-hanging",550));
+ document.getElementById("play-climb").addEventListener("click",()=>playMotion("climb",["climb_1","climb_2","climb_3","climb_4"],"play-climb",250));
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){stopSequence();stopMotionSequence()}});
+ const options=new URLSearchParams(location.search);
+ if(["detail","overview","suspension"].includes(options.get("view")))document.body.classList.add(options.get("view"));
+ if(poses.some(p=>p.id===options.get("pose")))selected=options.get("pose");
+ if([2,4,6].includes(Number(options.get("zoom"))))zoom=Number(options.get("zoom"));
+ paint(document.getElementById("idle-zoom"),"idle");choose(selected);applyZoom(zoom);
+ document.documentElement.dataset.ready="true";document.getElementById("status").textContent=" / 画像11点の読み込み完了";
+}
+init().catch(e=>{document.getElementById("status").className="error";document.getElementById("status").textContent=e.message;console.error(e)});
+</script>
+</body>
+</html>
+

@@ -2713,6 +2713,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 338a1ce36f9a17241bf7515109620056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MorningStarLauncher
+  playerMotionSet: {fileID: 11400000, guid: 66280c45ec0af4943b0ed8ba027dfdee, type: 2}
   morningStarRb: {fileID: 29217296}
   lineRenderer: {fileID: 982617693}
   chainLineController: {fileID: 982617691}

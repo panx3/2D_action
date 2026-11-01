@@ -1,0 +1,2 @@
+FallRefined_0 bounds=290,28,991,679 rootX=635.9496 chain=(-1.56, -1.13) grip=(1.08, 0.37) skull=32 head=(103.00, 73.00) bodyY=1.08
+FallRefined_1 bounds=1249,28,1944,680 rootX=1593.31 chain=(-1.47, -1.13) grip=(1.11, 0.36) skull=32 head=(103.00, 73.00) bodyY=1.08

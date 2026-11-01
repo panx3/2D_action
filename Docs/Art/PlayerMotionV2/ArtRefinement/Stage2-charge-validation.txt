@@ -1,0 +1,1 @@
+charge=True movingCharge=True airborneCharge=True thrown=True normalPoseDuringPhysicalHold=True

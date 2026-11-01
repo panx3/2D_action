@@ -1,0 +1,36 @@
+using System;using System.IO;using System.Text;using System.Reflection;using UnityEditor;using UnityEngine;using UnityEngine.InputSystem;using UnityEngine.InputSystem.LowLevel;
+public static class CalmCombatReview {
+ static Player p;static MorningStarLauncher l;static Gamepad pad,oldPad;static float began,lastSample;static int phase=-1;
+ static bool charge,run,air,up;static StringBuilder trace;
+ static string Name(){return p.BodySprite.sprite!=null?p.BodySprite.sprite.name:"suspended";}
+ static void Capture(string name){typeof(PlayerMotionV2PlayExercise).GetMethod("Capture",BindingFlags.NonPublic|BindingFlags.Static).Invoke(null,new object[]{name});}
+ public static string Start(){
+ if(!EditorApplication.isPlaying||!EditorApplication.isPaused)throw new Exception("Paused Play required");
+ p=UnityEngine.Object.FindFirstObjectByType<Player>();l=p.GetComponent<MorningStarLauncher>();
+ var intro=p.GetComponent<PlayerStartIntro>();if(intro!=null)intro.enabled=false;p.SetStartIntroControl(false);
+ p.GetComponent<PlayerHealth>().ResetToFullHp();p.GetComponent<PlayerHealth>().BeginRespawnProtection();l.EndRespawnPresentation();l.ResetForRespawn();
+ p.SetInputEnabled(true);p.SetGoalInputBlocked(false);p.SetGimmickInputBlocked(false);
+ oldPad=Gamepad.current;pad=InputSystem.AddDevice<Gamepad>();pad.MakeCurrent();
+ charge=run=air=up=false;phase=-1;began=Time.time;lastSample=-1;trace=new StringBuilder("elapsed,state,sprite,vx,vy,spin,ballX,ballY\n");
+ EditorApplication.update+=Tick;Time.timeScale=1;Application.runInBackground=true;EditorApplication.isPaused=false;
+ return "Running shoulder charge -> moving charge -> airborne charge -> cancel -> right-stick upward throw -> follow-through.";
+ }
+ static void Tick(){
+ if(!EditorApplication.isPlaying||p==null){Finish();return;}
+ float t=Time.time-began;int next=t<.2f?0:t<.75f?1:t<1.5f?2:t<1.65f?3:t<2.2f?4:t<2.5f?5:t<2.65f?6:t<3.8f?7:8;
+ if(next!=phase){phase=next;var state=new GamepadState{leftStick=phase>=2&&phase<=4?Vector2.right:Vector2.zero,rightStick=phase==6?Vector2.up:Vector2.zero};if(phase>=1&&phase<=4)state=state.WithButton(GamepadButton.LeftShoulder);if(phase==3)state=state.WithButton(GamepadButton.South);InputSystem.QueueStateEvent(pad,state);}
+ p.GetComponent<PlayerHealth>().BeginRespawnProtection();string n=Name();var velocity=p.GetComponent<Rigidbody2D>().linearVelocity;
+ if(!charge&&n.StartsWith("Charge_")){charge=true;Capture("Stage2-calm-charge.png");}
+ if(!run&&n.StartsWith("ChargeRun_")&&Mathf.Abs(velocity.x)>.5f){run=true;Capture("Stage2-calm-charge-run.png");}
+ if(!air&&n.StartsWith("ChargeAir_")){air=true;Capture("Stage2-calm-charge-air.png");}
+ if(!up&&n.StartsWith("ThrowUp_")&&l.State==MorningStarLauncher.MorningStarState.Thrown){up=true;Capture("Stage2-calm-throw-up.png");}
+ if(t-lastSample>.04f){lastSample=t;trace.AppendLine(t.ToString("F3")+","+l.State+","+n+","+velocity.x.ToString("F3")+","+velocity.y.ToString("F3")+","+l.ChargeProgress+","+l.BallBody.position.x+","+l.BallBody.position.y);}
+ if(phase==8){Capture("Stage2-calm-after-throw.png");Finish();}
+ }
+ static void Finish(){
+ EditorApplication.update-=Tick;if(pad!=null&&pad.added)InputSystem.RemoveDevice(pad);pad=null;if(oldPad!=null&&oldPad.added)oldPad.MakeCurrent();
+ if(!EditorApplication.isPlaying)return;EditorApplication.isPaused=true;
+ File.WriteAllText("Docs/Art/PlayerMotionV2/CalmRevision/live-combat-trace.csv",trace.ToString());
+ File.WriteAllText("Docs/Art/PlayerMotionV2/CalmRevision/live-combat-validation.txt","charge="+charge+" movingCharge="+run+" airborneCharge="+air+" upwardRightStickThrow="+up);
+ }
+}

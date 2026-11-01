@@ -1,0 +1,124 @@
+{
+  "tool": "built-in image_gen",
+  "fallbackCLIUsed": false,
+  "jobs": [
+    {
+      "key": "Charge",
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Edit target Image 1 is a production pixel-art character sprite sheet, 4 columns x 2 rows, eight charge poses. Image 2 is the original perfect Idle character identity reference. Correct ONLY the excessive head motion: give all eight poses ONE STABLE head angle, fixed eye line, near-identical head size and core skull silhouette, calm 3/4-right face. No nodding, no headbanging, no big tilts; head center varies less than 1% of body height. Preserve the EIGHT APPROVED BELOW-NECK POSES, the shoulders, one forward raised chain-gripping fist near mouth height, rear hand holding pink baton, waist twist, legs, clothes and feet as closely as possible to Image 1. The stable head counterbalances the rotating torso with a naturally joined neck. Keep rose pink twin tails as two compact rounded masses with only small delayed tip motion, do not alternate huge hair spikes. Original Idle face, bangs, black hair accessories, cream cardigan, black pleated skirt, rose trim. Same physical proportions as Image 2, consistent head size all eight cells, not a new chibi redesign. Full figure and weapon handle in each cell, transparent padding, precisely even 4x2 grid, no ball, no chain, no effects, no labels, no red halo, no background. Crisp native pixel art, no smooth illustration. Do not change gesture design or invent extra arms.",
+      "refs": [
+        "Assets/Art/Player/MotionV2/Charge.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "adopted": true,
+      "output": "../CalmSources/Charge.png"
+    },
+    {
+      "key": "Air",
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Edit Image 1 (8-frame jumping pixel-art girl sheet) to make a calm coherent restrained airborne animation. Image 2 is her perfect original Idle identity/proportions. EXACT 4 columns x 2 rows, eight full figures facing 3/4 right in even equal cells. Read left-to-right: rising A, rising B, apex, floating descent A, floating descent B, soft landing compression, soft recovery, relaxed standing recovery. The descent is FLOATY rather than flapping: twin tails hang suspended softly above/behind shoulders from air drag, like soft fabric floating in water, not gigantic upright horns or explosive spikes. TWO descent frames nearly identical, hair tips move at most 1-2 native pixels, steady face, steady skull angle, no nodding or headbanging. Keep identical core head size/skull silhouette, face features, torso length, limb thickness across every frame, matching Idle 3.2-head standing body proportion; bent knees only change pose, not character scale. Smooth subtle progression in elbows, knees, shoulder and coat, no sudden body tilt or huge anticipation squash. Pink baton held behind/down in same hand, opposite hand relaxed to balance; never draw ball or chain. Rose pink hair, cream cardigan, black pleated skirt, black hair bands, brown shoes and pale socks exactly Idle colors. Crisp 2D game pixel art using native-sized clustered pixels, detailed consistent cute face. Transparent canvas and margins, no background, no text, no motion lines or glow. Keep all full silhouettes uncut.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/Air.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "adopted": true,
+      "output": "../CalmSources/Air.png"
+    },
+    {
+      "key": "ChargeRun",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "prompt": "Production sprite-sheet edit/new pose sequence based on Image 1 original quiet running girl, Image 2 Idle identity, Image 3 approved charge-hand roles. EXACT 3 columns x 2 rows, SIX sequential poses of a QUIET low Naruto-style forward-lean running cycle WHILE holding the charge grips. Same stable body lean and nearly motionless head/core torso as original running Image 1, same smooth six footstep phases. Head at fixed angle and consistent dimensions across cells, eye line constant within 1 native pixel, no rocking, nodding, changing face, scale pumping, or wild hair. Back hand holds pink baton pointing behind like original run; other/front hand stays in a compact raised fist at lower-cheek/mouth height gripping an invisible short near-ball chain. BOTH hand positions nearly fixed relative torso; this is not punching forward with each step. Exactly two arms; no third hand. Low trailing twin tails move softly only at tips, compact coat trails gently. Match Idle actual body proportions and rose-pink palette. Six legs phases must genuinely alternate left/right supporting legs with one foot reaching forward, then passing/crossing, then opposite stride, in a small smooth repeated cycle. Keep head and torso much steadier than feet; do not animate the entire girl from scratch in each cell. Whole figure and baton inside each uniform cell, generous transparent padding. Pixel art, no ball, no chain, no speed effects, no text, no red outline, no background.",
+      "refs": [
+        "Assets/image_/run_test_run3-export.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png",
+        "Assets/Art/Player/MotionV2/ChargeRun.png"
+      ],
+      "adopted": false,
+      "output": "../CalmSources/ChargeRun.png"
+    },
+    {
+      "key": "ThrowUp",
+      "prompt": "Image 1 is the edit target: a six-pose production sprite sheet. Image 2 is the exact Idle identity/physical proportions reference. Preserve the approved torso, arms, hand-held pink baton, leg poses and gesture of Image 1 as closely as possible. EXACT even 3 columns x 2 rows: first row three ground throw frames (windup, release, quiet follow-through); second row corresponding three airborne throw frames with bent knees. Fix only head/gaze direction and visual size consistency. SAME head/skull size, torso length, face proportions, limb thickness in all six cells, matching Idle; do not shrink the girl in airborne poses.  She throws STRAIGHT UP: tip her face distinctly UPWARD, chin raised, nose pointing skyward, eyes visibly tracking a target almost directly OVERHEAD, look-up 3/4-right profile. This is essential: the original incorrectly looks sideways. The raised throwing arm and vertical baton remain above her. Do not merely move pupils while leaving the face facing sideways. Across the three frames, do not nod, bow, headbang or swing the head; keep the gaze direction steady through the quiet follow-through, hair tips move only slightly. Soft compact twin tails, cream cardigan, black pleated skirt, original warm rose hair. Fully visible figure and baton in every cell, ample transparent margins. Crisp game pixel-art clusters. No ball, no chain, no extra hands, no background, no red halo, no labels or motion effects.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowUp.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "adopted": true,
+      "output": "../CalmSources/ThrowUp.png"
+    },
+    {
+      "key": "ThrowUpRight",
+      "prompt": "Image 1 is the edit target: a six-pose production sprite sheet. Image 2 is the exact Idle identity/physical proportions reference. Preserve the approved torso, arms, hand-held pink baton, leg poses and gesture of Image 1 as closely as possible. EXACT even 3 columns x 2 rows: first row three ground throw frames (windup, release, quiet follow-through); second row corresponding three airborne throw frames with bent knees. Fix only head/gaze direction and visual size consistency. SAME head/skull size, torso length, face proportions, limb thickness in all six cells, matching Idle; do not shrink the girl in airborne poses.  She throws DIAGONALLY UP AND RIGHT: lift her chin and angle the face/gaze about 35-45 degrees UP-RIGHT following the outstretched baton direction. Original sideways gaze is wrong. Turn face naturally toward the target, keep neck stable. Across the three frames, do not nod, bow, headbang or swing the head; keep the gaze direction steady through the quiet follow-through, hair tips move only slightly. Soft compact twin tails, cream cardigan, black pleated skirt, original warm rose hair. Fully visible figure and baton in every cell, ample transparent margins. Crisp game pixel-art clusters. No ball, no chain, no extra hands, no background, no red halo, no labels or motion effects.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowUpRight.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "adopted": true,
+      "output": "../CalmSources/ThrowUpRight.png"
+    },
+    {
+      "key": "ThrowDownRight",
+      "prompt": "Image 1 is the edit target: a six-pose production sprite sheet. Image 2 is the exact Idle identity/physical proportions reference. Preserve the approved torso, arms, hand-held pink baton, leg poses and gesture of Image 1 as closely as possible. EXACT even 3 columns x 2 rows: first row three ground throw frames (windup, release, quiet follow-through); second row corresponding three airborne throw frames with bent knees. Fix only head/gaze direction and visual size consistency. SAME head/skull size, torso length, face proportions, limb thickness in all six cells, matching Idle; do not shrink the girl in airborne poses.  She throws DIAGONALLY DOWN AND RIGHT: face and eyes look 35-45 degrees DOWN-RIGHT along the baton, slight chin tuck but no drastic bow. Keep her core head shape and physical scale unchanged; a tilted face is not a smaller skull. Across the three frames, do not nod, bow, headbang or swing the head; keep the gaze direction steady through the quiet follow-through, hair tips move only slightly. Soft compact twin tails, cream cardigan, black pleated skirt, original warm rose hair. Fully visible figure and baton in every cell, ample transparent margins. Crisp game pixel-art clusters. No ball, no chain, no extra hands, no background, no red halo, no labels or motion effects.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowDownRight.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "adopted": true,
+      "output": "../CalmSources/ThrowDownRight.png"
+    },
+    {
+      "key": "ThrowDown",
+      "prompt": "Image 1 is the edit target: a six-pose production sprite sheet. Image 2 is the exact Idle identity/physical proportions reference. Preserve the approved torso, arms, hand-held pink baton, leg poses and gesture of Image 1 as closely as possible. EXACT even 3 columns x 2 rows: first row three ground throw frames (windup, release, quiet follow-through); second row corresponding three airborne throw frames with bent knees. Fix only head/gaze direction and visual size consistency. SAME head/skull size, torso length, face proportions, limb thickness in all six cells, matching Idle; do not shrink the girl in airborne poses.  She throws STRAIGHT DOWN: clearly angle chin, face and gaze toward the space BELOW her and the downward baton, especially in airborne poses. Keep head size consistent, do not bow the whole torso or squash the skull. Across the three frames, do not nod, bow, headbang or swing the head; keep the gaze direction steady through the quiet follow-through, hair tips move only slightly. Soft compact twin tails, cream cardigan, black pleated skirt, original warm rose hair. Fully visible figure and baton in every cell, ample transparent margins. Crisp game pixel-art clusters. No ball, no chain, no extra hands, no background, no red halo, no labels or motion effects.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ThrowDown.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "adopted": true,
+      "output": "../CalmSources/ThrowDown.png"
+    },
+    {
+      "key": "ChargeAir",
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ChargeAir.png",
+        "Docs/Art/PlayerMotionV2/idle-reference.png"
+      ],
+      "prompt": "Edit Image 1 (eight airborne charge poses 4x2 grid), using Image 2 original perfect Idle character face, rose hair and proportions. Preserve APPROVED body, legs, waist twists, cardigan, hands: rear hand normally holds pink baton; front fist raised around lower-cheek height grips near-ball chain. Correct only excessive HEAD shaking and hair thrashing: same head angle and consistent skull size all eight frames, near-fixed eye line, no nodding or down/up swinging. Front hair and face must appear held stable while shoulders twist underneath. Twin tails FLOAT SOFTLY up/back from air drag in a compact soft shape, no huge vertical spikes or giant alternating flaps. Hair tips move only minimally around one retained suspended shape. Keep all eight approved below-neck charge poses nearly unchanged, natural neck join. Exactly 4 columns x2rows eight full bodies with handle, even cells and transparency, no ball, no chain, no extra limbs, no effects or text or red halo. Pixel art with original Idle detail and 3.2-head body proportions, no rescaling between cells.",
+      "adopted": true,
+      "output": "../CalmSources/ChargeAir.png"
+    },
+    {
+      "key": "ChargeRun",
+      "prompt": "Edit only the FORWARD CHAIN-GRIPPING FIST in this exact 3x2 six-frame sprite sheet. Raise the front fist and its wrist by about 35 source pixels in EVERY cell so the knuckles are beside the girl's LOWER CHEEK/MOUTH, not below the chin or in front of her upper chest. The raised grip is the pivot for a very large existing iron ball, so a low chest-level fist causes the orbit to hit the floor. Keep the Naruto forward lean, head size, face, fixed head angle, steady eye line, all six leg phases, rear baton-holding arm, torso, shoes, palette and cell layout EXACTLY AS THEY ARE. Only bend/raise the small forward forearm naturally. Exactly two arms. No ball and no chain and no effects. Crisp same pixel art, transparent background, preserve every full figure with margins, no glow or backdrop or text. Do not reanimate or shift the head.",
+      "stage": "final-raised-front-fist",
+      "adopted": true,
+      "output": "../CalmSources/ChargeRun.png",
+      "refs": [
+        "../CalmSources/ChargeRun.png (preceding low-grip revision)"
+      ]
+    }
+  ],
+  "unchanged": "Idle and Hanging. Climbing also preserved.",
+  "reused": "Original run_test_run3-export.png six poses; existing horizontal throw and utility poses, normalized at native export.",
+  "export": "CalmSources/calibration.json holds reviewed per-frame skull center/height and ground contact. Python inspection reads only; final Sprite export is through the Unity editor/MCP."
+}

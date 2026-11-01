@@ -1,0 +1,227 @@
+{
+  "tool": "built-in image_gen",
+  "fallbackCLIUsed": false,
+  "transparency": true,
+  "referencePolicy": "Idle is the style/identity/color reference. Approved representative poses and native generated sheets are pose references/edit targets. Existing ball and chain remain runtime Unity objects.",
+  "jobs": [
+    {
+      "key": "Run",
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY EIGHT running frames in a 4-COLUMN x 2-ROW grid, read left-to-right top row then bottom row. A seamless ONE FULL RUN CYCLE: 1 right-leg forward contact / left back, 2 weight drops on right leg, 3 left knee passes forward, 4 flight left knee up, 5 LEFT-leg forward contact / right back, 6 weight drops left, 7 right knee passes, 8 flight right knee up returning to1. MUST contain alternating lead legs, not repeated same-leg poses. Preserve approved forward lean and rear hand dragging the baton behind hip pointed backward/down; free hand near torso. Both hands/weapon stay consistent. Body has subtle down/up bob. Twin tails/cardigan trail, flare and settle with delayed rhythmic bounce. Face and head proportions EXACTLY Idle, no larger chibi head. Transparent wide 2:1 sheet.",
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/run.png"
+      ],
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/Run.png"
+    },
+    {
+      "key": "Air",
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY EIGHT distinct air/landing frames in a 4-COLUMN x 2-ROW grid, read left-to-right then next row. Frames: 1 jumping UP knees flex and coat/hair lag down; 2 stretched ascent with one knee ahead; 3 APEX knees relaxed hair begins lifting; 4 fast FALL hair/coat flare UPWARD dramatically as approved falling reference; 5 second fall flutter frame hair tips/coat shift with same falling silhouette; 6 LANDING impact crouch knees bent with feet planted and hair still lifted; 7 rebound rising from crouch hair and coat flop DOWN with delayed follow-through; 8 settle nearly Idle, feet planted, hair returning to neutral. Body and head sizes never change, compressed height comes from posture. Weapon hand holds same baton rear/down throughout. Big readable cloth and hair follow-through especially fall, not an empty pose change. No floor or dust/effects. Transparent wide 2:1 sheet.",
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/jump.png",
+        "Docs/Art/PlayerMotionV2/fall.png"
+      ],
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/Air.png"
+    },
+    {
+      "key": "Charge",
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY EIGHT sequential one-cycle windup frames in a 4-COLUMN x 2-ROW grid. CRITICAL TWO-HAND ROLES: rear hand holds ONE existing pink-black HANDLE/BATON normally behind/down by hip; OTHER hand extends forward/right lower chest height and grips an imaginary CHAIN NEAR THE BALL CONNECTION, not a handle. No chain or ball drawn. Front gripping fist is fixed hub of rotating ball and stays same position in every cell. Rear hand NEVER drops baton or trades it to front hand. Feet stay planted, soft feminine nimble stance. Eight phases spaced 45 degrees in a vertical-circle rotation: front, up-front, up, up-back, back, down-back, down, down-front. Shoulders/waist/forearm subtly drive rotating weight while the fist stays fixed. Twin tails/cardigan have exaggerated delayed circular follow-through. Distinct meaningful in-between poses, not duplicates. The same approved pose as reference, extended to smooth eight-frame cycle. Transparent wide 2:1 sheet.",
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/charge.png"
+      ],
+      "stage": "initial-production",
+      "adopted": false,
+      "output": "ProductionSources/Charge.png"
+    },
+    {
+      "key": "Utility",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY SIX distinct frames in a 3-COLUMN x 2-ROW grid. Frames 1-2 RECALL: girl pulls the rear baton toward her waist then draws elbow back, free hand balances, knees braced, hair/coat lag. Frames3-4 GROUND BRACE: standing still resisting chain tug from FRONT RIGHT, original baton held forward toward pull, feet apart and knees bent, torso leaning back slightly, alternating small cloth/hair strain/flutter, no walking. Frames5-6 AIR PULLED: suspended pulled forward/up-right by taut chain, baton hand reaches forward, torso follows, knees trail behind/down, hair and cardigan strongly trail back/left. Slight follow-through difference in frame6. Natural joint anatomy and readable arms. Baton is same ONE baton, no extra weapons. Clear full-body action differentiation, body/head identity locked. Transparent 3:2 canvas.",
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/fall.png"
+      ],
+      "stage": "initial-production",
+      "adopted": false,
+      "output": "ProductionSources/Utility.png"
+    },
+    {
+      "key": "ThrowForward",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/ランチャーポーズAni.png"
+      ],
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY SIX throw-animation frames in a 3-COLUMN x 2-ROW grid. Target direction is HORIZONTALLY to the RIGHT at 0 degrees. This direction is essential; weapon arm and baton tip align with that target.\nTOP ROW = GROUNDED: frame1 anticipation, knees bend/torso winds up, baton pulled back; frame2 decisive release/extension toward target, feet planted apart; frame3 follow-through/held extension toward same target with coat and twin tails flaring from momentum.\nBOTTOM ROW = AIRBORNE versions of the same three phases: frame4 anticipation, frame5 release, frame6 follow-through; body floating, knees bent/feet trailing naturally, NO feet planted, no ground. Keep exactly the same upper-body/weapon direction as the corresponding top row.\nOne original baton in the weapon hand throughout, other arm balances. No weapon trade between hands, no duplicate arms. Preserve original girl size and proportions across all six cells, no size change for the airborne versions. Clear frame-to-frame movement of elbow/shoulders/torso and big delayed hair/cardigan action. No iron ball, chain, glow, ground shadow or background of ANY KIND. ABSOLUTELY true alpha transparency with zero visible backdrop. All six figures separate, full figure and baton visible. Transparent 3:2 canvas.",
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/ThrowForward.png"
+    },
+    {
+      "key": "ThrowUpRight",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/throw_up_right.png"
+      ],
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY SIX throw-animation frames in a 3-COLUMN x 2-ROW grid. Target direction is DIAGONALLY UP-RIGHT at exactly 45 degrees. This direction is essential; weapon arm and baton tip align with that target.\nTOP ROW = GROUNDED: frame1 anticipation, knees bend/torso winds up, baton pulled back; frame2 decisive release/extension toward target, feet planted apart; frame3 follow-through/held extension toward same target with coat and twin tails flaring from momentum.\nBOTTOM ROW = AIRBORNE versions of the same three phases: frame4 anticipation, frame5 release, frame6 follow-through; body floating, knees bent/feet trailing naturally, NO feet planted, no ground. Keep exactly the same upper-body/weapon direction as the corresponding top row.\nOne original baton in the weapon hand throughout, other arm balances. No weapon trade between hands, no duplicate arms. Preserve original girl size and proportions across all six cells, no size change for the airborne versions. Clear frame-to-frame movement of elbow/shoulders/torso and big delayed hair/cardigan action. No iron ball, chain, glow, ground shadow or background of ANY KIND. ABSOLUTELY true alpha transparency with zero visible backdrop. All six figures separate, full figure and baton visible. Transparent 3:2 canvas.",
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/ThrowUpRight.png"
+    },
+    {
+      "key": "ThrowUp",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/上投げモーション.png"
+      ],
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY SIX throw-animation frames in a 3-COLUMN x 2-ROW grid. Target direction is STRAIGHT UP at 90 degrees, baton vertical above her head. This direction is essential; weapon arm and baton tip align with that target.\nTOP ROW = GROUNDED: frame1 anticipation, knees bend/torso winds up, baton pulled back; frame2 decisive release/extension toward target, feet planted apart; frame3 follow-through/held extension toward same target with coat and twin tails flaring from momentum.\nBOTTOM ROW = AIRBORNE versions of the same three phases: frame4 anticipation, frame5 release, frame6 follow-through; body floating, knees bent/feet trailing naturally, NO feet planted, no ground. Keep exactly the same upper-body/weapon direction as the corresponding top row.\nOne original baton in the weapon hand throughout, other arm balances. No weapon trade between hands, no duplicate arms. Preserve original girl size and proportions across all six cells, no size change for the airborne versions. Clear frame-to-frame movement of elbow/shoulders/torso and big delayed hair/cardigan action. No iron ball, chain, glow, ground shadow or background of ANY KIND. ABSOLUTELY true alpha transparency with zero visible backdrop. All six figures separate, full figure and baton visible. Transparent 3:2 canvas.",
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/ThrowUp.png"
+    },
+    {
+      "key": "ThrowDownRight",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/throw_down_right.png"
+      ],
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY SIX throw-animation frames in a 3-COLUMN x 2-ROW grid. Target direction is DIAGONALLY DOWN-RIGHT at exactly -45 degrees. This direction is essential; weapon arm and baton tip align with that target.\nTOP ROW = GROUNDED: frame1 anticipation, knees bend/torso winds up, baton pulled back; frame2 decisive release/extension toward target, feet planted apart; frame3 follow-through/held extension toward same target with coat and twin tails flaring from momentum.\nBOTTOM ROW = AIRBORNE versions of the same three phases: frame4 anticipation, frame5 release, frame6 follow-through; body floating, knees bent/feet trailing naturally, NO feet planted, no ground. Keep exactly the same upper-body/weapon direction as the corresponding top row.\nOne original baton in the weapon hand throughout, other arm balances. No weapon trade between hands, no duplicate arms. Preserve original girl size and proportions across all six cells, no size change for the airborne versions. Clear frame-to-frame movement of elbow/shoulders/torso and big delayed hair/cardigan action. No iron ball, chain, glow, ground shadow or background of ANY KIND. ABSOLUTELY true alpha transparency with zero visible backdrop. All six figures separate, full figure and baton visible. Transparent 3:2 canvas.",
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/ThrowDownRight.png"
+    },
+    {
+      "key": "ThrowDown",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/throw_down_right.png"
+      ],
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create EXACTLY SIX throw-animation frames in a 3-COLUMN x 2-ROW grid. Target direction is STRAIGHT DOWN at -90 degrees, weapon points vertically below the hand, not diagonally. This direction is essential; weapon arm and baton tip align with that target.\nTOP ROW = GROUNDED: frame1 anticipation, knees bend/torso winds up, baton pulled back; frame2 decisive release/extension toward target, feet planted apart; frame3 follow-through/held extension toward same target with coat and twin tails flaring from momentum.\nBOTTOM ROW = AIRBORNE versions of the same three phases: frame4 anticipation, frame5 release, frame6 follow-through; body floating, knees bent/feet trailing naturally, NO feet planted, no ground. Keep exactly the same upper-body/weapon direction as the corresponding top row.\nOne original baton in the weapon hand throughout, other arm balances. No weapon trade between hands, no duplicate arms. Preserve original girl size and proportions across all six cells, no size change for the airborne versions. Clear frame-to-frame movement of elbow/shoulders/torso and big delayed hair/cardigan action. No iron ball, chain, glow, ground shadow or background of ANY KIND. ABSOLUTELY true alpha transparency with zero visible backdrop. All six figures separate, full figure and baton visible. Transparent 3:2 canvas.",
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/ThrowDown.png"
+    },
+    {
+      "key": "UtilityClean",
+      "cols": 3,
+      "rows": 2,
+      "count": 6,
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/Utility.png"
+      ],
+      "prompt": "Remove ONLY the entire dark burgundy glow/background behind the SIX existing pixel-art figures in the reference. Preserve all six figures and their exact pixels, poses, arrangement, colors, cell grid and dimensions. Output a genuinely transparent PNG with alpha outside the character silhouettes, including between hair strands/limbs. No residual haze or backdrop, no shadow, no red fringe. Do not redraw characters. One 3-column by 2-row sprite sheet, same canvas. The actual girl and weapon remain crisp opaque pixel art.",
+      "stage": "initial-production",
+      "adopted": true,
+      "output": "ProductionSources/Utility.png"
+    },
+    {
+      "key": "ChargeRun",
+      "pose": "runs to the RIGHT while charging: legs follow an alternating eight-phase running gait (right contact, down, passing, flight, left contact, down, passing, flight), modest forward lean. Weapon hand remains behind hip, other fist forward. Hair/cardigan trail with running AND the rotating weight",
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/charge.png",
+        "Docs/Art/PlayerMotionV2/run.png"
+      ],
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create exactly EIGHT charge poses in a 4-column x 2-row animation sheet. SAME TWO-HAND ROLES IN ALL FRAMES: rear hand holds ONE original pink-black baton normally behind/down near hip; OTHER empty forward/right fist grasps an imaginary chain near the iron ball, at a fixed lower-chest-height hub. Do not draw chain or ball. Never trade the baton to the front hand or drop it.\nThe girl runs to the RIGHT while charging: legs follow an alternating eight-phase running gait (right contact, down, passing, flight, left contact, down, passing, flight), modest forward lean. Weapon hand remains behind hip, other fist forward. Hair/cardigan trail with running AND the rotating weight. Eight sequential phases of circular windup at45-degree intervals, first front then up-front/up/up-back/back/down-back/down/down-front, animate shoulders/waist/elbow around the same front fist. Same head/body size and hand positions across cells. Exactly 8 complete figures with ample transparent margins, no clipping. Real alpha transparency, no ground shadow, no background or halo.",
+      "stage": "initial-production",
+      "adopted": false,
+      "output": "ProductionSources/ChargeRun.png"
+    },
+    {
+      "key": "ChargeAir",
+      "pose": "is AIRBORNE while charging: both feet off ground, knees bent/trailing at different heights, torso balanced by the rotating weight. Subtle alternating leg tucks and big delayed hair/cardigan flutter. No running stride, no feet on a ground plane",
+      "refs": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/charge.png",
+        "Docs/Art/PlayerMotionV2/fall.png"
+      ],
+      "cols": 4,
+      "rows": 2,
+      "count": 8,
+      "prompt": "Production sprite sheet for Unity pixel-art game 鉄球少女. Input 1 ORIGINAL IDLE is the sole authority for EXACT girl, small face/head proportions, outfit, native coarse pixel density. Other references are approved motion identity/pose examples. Match Idle: warm pink twin tails base #E08398, shadows #BD637E/#B35D78, darkest #551E31/#4A1728; cream cardigan with the SAME details, pink bow, charcoal skirt, socks, brown shoes, slender pink-black baton. NO redesigned accessories, no extra buttons. Crisp hand-placed pixel clusters, dark colored 1-pixel outlines, simple shading, no antialiasing, glow, soft shadows, effects or text. Genuine transparent background. Same character scale, root position and foot baseline in EVERY cell. Each complete figure has ample transparent margins, no clipping/overlap. ALL face RIGHT in Idle's three-quarter view. Do not draw iron ball or chain: those are existing game objects. Create exactly EIGHT charge poses in a 4-column x 2-row animation sheet. SAME TWO-HAND ROLES IN ALL FRAMES: rear hand holds ONE original pink-black baton normally behind/down near hip; OTHER empty forward/right fist grasps an imaginary chain near the iron ball, at a fixed lower-chest-height hub. Do not draw chain or ball. Never trade the baton to the front hand or drop it.\nThe girl is AIRBORNE while charging: both feet off ground, knees bent/trailing at different heights, torso balanced by the rotating weight. Subtle alternating leg tucks and big delayed hair/cardigan flutter. No running stride, no feet on a ground plane. Eight sequential phases of circular windup at45-degree intervals, first front then up-front/up/up-back/back/down-back/down/down-front, animate shoulders/waist/elbow around the same front fist. Same head/body size and hand positions across cells. Exactly 8 complete figures with ample transparent margins, no clipping. Real alpha transparency, no ground shadow, no background or halo.",
+      "stage": "initial-production",
+      "adopted": false,
+      "output": "ProductionSources/ChargeAir.png"
+    },
+    {
+      "key": "ChargeRun",
+      "stage": "moving-charge-cleanup",
+      "prompt": "Edit the EIGHT-FRAME running charge sheet in image1. Image2 is the approved correct two-hand charge pose. Preserve image1's EXACT eight-frame running LEGS, hair, clothing, body identities, transparent background and 4-column x 2-row arrangement.\nCORRECT ONLY THE FRONT/RIGHT ARM: the fist that grips the near-ball chain must stay IN FRONT OF THE CHEST at the SAME relative coordinate throughout ALL EIGHT frames, like image2. It must NOT pump up/down with running. In image1 frames2-7 it incorrectly raises above the head, swings behind and drops down; replace those arm poses with a consistent forward extended forearm and clenched gripping fist at lower-chest height. Shoulder may subtly move, elbow bends naturally, but the front fist does not orbit. The existing iron ball orbits that stationary fist in the game. The OTHER/rear hand keeps holding the existing pink-black baton behind/down near hip in ALL frames. No chain, ball or effects. Keep the eight running leg phases unchanged and do not add/remove frames. Warm rose-pink hair exactly matching original Idle. Same pixel art and real alpha transparency.",
+      "adopted": false
+    },
+    {
+      "key": "ChargeRun",
+      "stage": "moving-charge-extra-arm-removal",
+      "prompt": "Precise cleanup of the existing 8-frame pixel-art sheet. Preserve the entire image EXACTLY except the SECOND ROW, THIRD COLUMN (frame7 of8). That one girl incorrectly has TWO FRONT ARMS: one lowered forward with a fist near knee height, and one correct extended forward/right at chest height.\nREMOVE the extra LOWERED front arm and lower fist in that single cell. Keep the correct upper forward fist at lower-chest height, and keep the rear hand holding the baton. Restore the coat edge underneath the removed extra limb so the girl has exactly TWO ARMS total: one back holding baton, one forward grasping imaginary chain. Do not alter the other7 cells, legs, face, hair, baton, colors, pixel style, grid or canvas dimensions. True transparent PNG. No ball/chain drawn.",
+      "adopted": false
+    },
+    {
+      "key": "Charge",
+      "prompt": "Edit the EXISTING eight-frame charge sprite sheet. Preserve every girl's exact face, body, costume, hair, leg pose, rear baton hand, frame layout and transparent canvas.\nRefine ONLY the FRONT chain-gripping arm in ALL eight cells so the heavy real game ball can rotate above the floor. Lift the front clenched fist from lower-chest level to MOUTH/LOWER-CHEEK HEIGHT, still extended WELL FORWARD away from her face (about one head width in front). The upper arm angles slightly up and the forearm extends forward, elbow softly bent, a natural energetic feminine windup stance. It is NOT above her head and not touching her face. In each cell the front fist is at the SAME height relative to the mouth and same forward extension. Its fingers grip an invisible chain near the iron ball. No baton in this fist.\nKeep the OTHER hand holding the ONE original pink-black baton normally behind/down near hip in all frames. Two arms total; no extra arms or fists. Same eight different leg/torso/hair follow-through poses, no changing posture other than that front arm. Do not redraw or add a ball or chain. True transparent background, same coarse crisp pixel art, same warm Idle pink palette. Do not change the four-column by two-row grid, scale or image dimensions.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/Charge.png"
+      ],
+      "stage": "final-raised-near-ball-grip",
+      "adopted": true,
+      "output": "ProductionSources/Charge.png"
+    },
+    {
+      "key": "ChargeRun",
+      "prompt": "Edit the EXISTING eight-frame charge sprite sheet. Preserve every girl's exact face, body, costume, hair, leg pose, rear baton hand, frame layout and transparent canvas.\nRefine ONLY the FRONT chain-gripping arm in ALL eight cells so the heavy real game ball can rotate above the floor. Lift the front clenched fist from lower-chest level to MOUTH/LOWER-CHEEK HEIGHT, still extended WELL FORWARD away from her face (about one head width in front). The upper arm angles slightly up and the forearm extends forward, elbow softly bent, a natural energetic feminine windup stance. It is NOT above her head and not touching her face. In each cell the front fist is at the SAME height relative to the mouth and same forward extension. Its fingers grip an invisible chain near the iron ball. No baton in this fist.\nKeep the OTHER hand holding the ONE original pink-black baton normally behind/down near hip in all frames. Two arms total; no extra arms or fists. Same eight different leg/torso/hair follow-through poses, no changing posture other than that front arm. Do not redraw or add a ball or chain. True transparent background, same coarse crisp pixel art, same warm Idle pink palette. Do not change the four-column by two-row grid, scale or image dimensions.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ChargeRun.png"
+      ],
+      "stage": "final-raised-near-ball-grip",
+      "adopted": true,
+      "output": "ProductionSources/ChargeRun.png"
+    },
+    {
+      "key": "ChargeAir",
+      "prompt": "Edit the EXISTING eight-frame charge sprite sheet. Preserve every girl's exact face, body, costume, hair, leg pose, rear baton hand, frame layout and transparent canvas.\nRefine ONLY the FRONT chain-gripping arm in ALL eight cells so the heavy real game ball can rotate above the floor. Lift the front clenched fist from lower-chest level to MOUTH/LOWER-CHEEK HEIGHT, still extended WELL FORWARD away from her face (about one head width in front). The upper arm angles slightly up and the forearm extends forward, elbow softly bent, a natural energetic feminine windup stance. It is NOT above her head and not touching her face. In each cell the front fist is at the SAME height relative to the mouth and same forward extension. Its fingers grip an invisible chain near the iron ball. No baton in this fist.\nKeep the OTHER hand holding the ONE original pink-black baton normally behind/down near hip in all frames. Two arms total; no extra arms or fists. Same eight different leg/torso/hair follow-through poses, no changing posture other than that front arm. Do not redraw or add a ball or chain. True transparent background, same coarse crisp pixel art, same warm Idle pink palette. Do not change the four-column by two-row grid, scale or image dimensions.",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/ProductionSources/ChargeAir.png"
+      ],
+      "stage": "final-raised-near-ball-grip",
+      "adopted": true,
+      "output": "ProductionSources/ChargeAir.png"
+    }
+  ],
+  "additionalAdoptedSources": {
+    "Hanging": "../hanging.png (accepted representative, prompt history in ../prompts.json)",
+    "Climbing": "../climb.png (accepted central-chain correction, prompt history in ../prompts.json)"
+  },
+  "nativeExport": "PlayerMotionV2Setup.Build: connected-character extraction, nearest native resampling, 96-color Idle palette, 192px cells, 32PPU. No generated ball or chain is included in player art."
+}

@@ -1,0 +1,154 @@
+{
+  "initial": [
+    {
+      "key": "charge",
+      "prompt": "Edit the FIRST reference, a 4-column by 2-row eight-frame pixel-art charge animation. The SECOND reference is the exact existing Idle girl for identity and pixel style. This is a small surgical edit: in EVERY frame keep the arm on the viewer's LEFT that holds the pink-and-black baton near her hip in the SAME relaxed lowered position and SAME baton angle as the FIRST upper-left frame. Do not swing, lift, windmill or thrust that arm; the hand, elbow and baton tip stay nearly fixed relative to her torso. Preserve the other raised fist and its role as the chain-gripping pivot, and preserve all other poses, body proportions, legs, hair, face, outfit, positions and subtle motion of the source. The character is holding two separate things: left-side hand holds only the baton; right-side fist grips the chain near the rotating ball. Do not draw any ball or chain. Eight distinct complete figures, equally spaced in an exact 4x2 grid, no overlaps or cropping, ample clear margin. Pixel art matching the actual Idle reference: crisp intentional native pixel clusters, dark outline, muted rose twin tails with black segmented bead ornaments, cream cardigan, burgundy bow, black skirt, white socks and brown shoes. No extra limbs, no glow, no shading backdrop, genuinely transparent background.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/CalmSources/Charge.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png"
+      ]
+    },
+    {
+      "key": "up",
+      "prompt": "Edit the FIRST reference, the existing six-frame UPWARD THROW animation for a 2D pixel-art game. The SECOND reference is the exact real in-game Idle sprite; it defines the SAME girl's precise face, eye shape, dusty rose hair color, twin-tail shape and black chain-bead hair ties, cream cardigan details, burgundy bow, black dress with pink hem, white socks, brown shoes, pixel silhouette and physical head-to-torso-to-leg proportions. The THIRD reference is the approved ground horizontal throw (style/scale reference only). Rework all six first-reference poses so the character looks like the Idle sprite animated, not like a smoother chibi anime illustration: match the native-size square-pixel cluster scale, dense but deliberate details and dark contour, consistent head size, shoulders, torso and limbs in every grounded and airborne pose. Retain 3 columns x 2 rows: top row grounded up throw (windup/release/settle), bottom row same movements while airborne with naturally bent legs. Keep face and eyes looking upward toward her raised arm. Keep the original small pink-black baton in the throwing hand and show its full tip; do not draw a ball or chain. Keep gentle deliberate motion without head bobbing or size pulsing. Make six full separated sprites with identical character scale in six equally sized cells on a truly transparent background. No text, grid, halo, gradients, effects, extra arms or cropped body.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/CalmSources/ThrowUp.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    }
+  ],
+  "poseReferenceDrafts": [
+    {
+      "key": "up",
+      "prompt": "Create production sprite artwork for the EXACT SAME girl as IMAGE 1, which is the real Idle sprite enlarged using nearest-neighbour. IMAGE 1 is the absolute authority for character identity and real in-game pixel size: dusty rose pink twin tails with black segmented bead/chain hair ties, exact fringe and face with dark rose eyes, dark pixel outline, oversized cream textured cardigan, burgundy ribbon, black skirt with pink edge and round pink ornament, pale socks and brown shoes. Match its head width, body and limb proportions, palette, granular pixel clusters and distinctive face. IMAGE 2 provides only the desired action poses, not its overly smooth face or drawing style. IMAGE 3 is the approved horizontal ground-throw reference for the same character; do not change it. Do not add weapon ball or chain. The pink-black baton is fully visible and held by one hand; keep its shape and its direction. No glow, gradients, shadows, writing, gridlines, frame borders or background; true transparent background. Every sprite complete with generous margins, separate equal-size cells, consistent physical character size across frames; an airborne bent leg does not make the girl bigger. Each pixel should form crisp, deliberate clusters of the SAME visible density and rough pixel texture as IMAGE 1, NOT smooth digital cartoon art or a detailed illustration. Preserve clear eyes, clothing details and black hair ties. Produce exactly SIX complete UPWARD throw poses as 3 columns x 2 rows, matching the silhouette and baton direction in IMAGE 2: top row three grounded poses and bottom row three airborne versions, columns windup, release, settle. All faces and eyes look upward along the upward baton. Hold the head nearly still and consistent; avoid giant hair, tiny torsos, and wildly exaggerated changes.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/CalmSources/ThrowUp.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "upright",
+      "prompt": "Create production sprite artwork for the EXACT SAME girl as IMAGE 1, which is the real Idle sprite enlarged using nearest-neighbour. IMAGE 1 is the absolute authority for character identity and real in-game pixel size: dusty rose pink twin tails with black segmented bead/chain hair ties, exact fringe and face with dark rose eyes, dark pixel outline, oversized cream textured cardigan, burgundy ribbon, black skirt with pink edge and round pink ornament, pale socks and brown shoes. Match its head width, body and limb proportions, palette, granular pixel clusters and distinctive face. IMAGE 2 provides only the desired action poses, not its overly smooth face or drawing style. IMAGE 3 is the approved horizontal ground-throw reference for the same character; do not change it. Do not add weapon ball or chain. The pink-black baton is fully visible and held by one hand; keep its shape and its direction. No glow, gradients, shadows, writing, gridlines, frame borders or background; true transparent background. Every sprite complete with generous margins, separate equal-size cells, consistent physical character size across frames; an airborne bent leg does not make the girl bigger. Each pixel should form crisp, deliberate clusters of the SAME visible density and rough pixel texture as IMAGE 1, NOT smooth digital cartoon art or a detailed illustration. Preserve clear eyes, clothing details and black hair ties. Produce exactly SIX complete DIAGONAL UP-RIGHT throw poses as 3 columns x 2 rows based on the gesture in IMAGE 2: upper row three grounded poses, lower row three naturally bent-legged airborne variants, columns windup, release, settle. The throwing arm and baton aim 45 degrees up-right, and face and eyes follow that direction. Do not enlarge the airborne girl or her sleeves. Keep skull width, torso and boots the same physical size as IMAGE 1.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/CalmSources/ThrowUpRight.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "down",
+      "prompt": "Create production sprite artwork for the EXACT SAME girl as IMAGE 1, which is the real Idle sprite enlarged using nearest-neighbour. IMAGE 1 is the absolute authority for character identity and real in-game pixel size: dusty rose pink twin tails with black segmented bead/chain hair ties, exact fringe and face with dark rose eyes, dark pixel outline, oversized cream textured cardigan, burgundy ribbon, black skirt with pink edge and round pink ornament, pale socks and brown shoes. Match its head width, body and limb proportions, palette, granular pixel clusters and distinctive face. IMAGE 2 provides only the desired action poses, not its overly smooth face or drawing style. IMAGE 3 is the approved horizontal ground-throw reference for the same character; do not change it. Do not add weapon ball or chain. The pink-black baton is fully visible and held by one hand; keep its shape and its direction. No glow, gradients, shadows, writing, gridlines, frame borders or background; true transparent background. Every sprite complete with generous margins, separate equal-size cells, consistent physical character size across frames; an airborne bent leg does not make the girl bigger. Each pixel should form crisp, deliberate clusters of the SAME visible density and rough pixel texture as IMAGE 1, NOT smooth digital cartoon art or a detailed illustration. Preserve clear eyes, clothing details and black hair ties. Produce exactly SIX complete STRAIGHT DOWN throw poses as 3 columns x 2 rows based on IMAGE 2: top row three grounded poses, bottom row three airborne variants, columns windup, release, settle. In release/settle the baton points straight down and she looks down toward it. Keep neck and shoulders readable, head not too large, torso long enough, arms anatomically connected; the same head and body size as IMAGE 1.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowDown-v2.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "downright",
+      "prompt": "Create production sprite artwork for the EXACT SAME girl as IMAGE 1, which is the real Idle sprite enlarged using nearest-neighbour. IMAGE 1 is the absolute authority for character identity and real in-game pixel size: dusty rose pink twin tails with black segmented bead/chain hair ties, exact fringe and face with dark rose eyes, dark pixel outline, oversized cream textured cardigan, burgundy ribbon, black skirt with pink edge and round pink ornament, pale socks and brown shoes. Match its head width, body and limb proportions, palette, granular pixel clusters and distinctive face. IMAGE 2 provides only the desired action poses, not its overly smooth face or drawing style. IMAGE 3 is the approved horizontal ground-throw reference for the same character; do not change it. Do not add weapon ball or chain. The pink-black baton is fully visible and held by one hand; keep its shape and its direction. No glow, gradients, shadows, writing, gridlines, frame borders or background; true transparent background. Every sprite complete with generous margins, separate equal-size cells, consistent physical character size across frames; an airborne bent leg does not make the girl bigger. Each pixel should form crisp, deliberate clusters of the SAME visible density and rough pixel texture as IMAGE 1, NOT smooth digital cartoon art or a detailed illustration. Preserve clear eyes, clothing details and black hair ties. Produce exactly SIX complete DIAGONAL DOWN-RIGHT throw poses as 3 columns x 2 rows based on IMAGE 2: top row three grounded poses, bottom row three airborne variants, columns windup, release, settle. Baton, gaze and head point diagonally down-right during release/settle. Maintain visible neck, believable shoulders and arms, same head/body scale and pixel detail as IMAGE 1, and calm hair rather than large rounded blobs.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/ArtRefinement/Sources/ThrowDownRight-v2.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "forwardair",
+      "prompt": "Create production sprite artwork for the EXACT SAME girl as IMAGE 1, which is the real Idle sprite enlarged using nearest-neighbour. IMAGE 1 is the absolute authority for character identity and real in-game pixel size: dusty rose pink twin tails with black segmented bead/chain hair ties, exact fringe and face with dark rose eyes, dark pixel outline, oversized cream textured cardigan, burgundy ribbon, black skirt with pink edge and round pink ornament, pale socks and brown shoes. Match its head width, body and limb proportions, palette, granular pixel clusters and distinctive face. IMAGE 2 provides only the desired action poses, not its overly smooth face or drawing style. IMAGE 3 is the approved horizontal ground-throw reference for the same character; do not change it. Do not add weapon ball or chain. The pink-black baton is fully visible and held by one hand; keep its shape and its direction. No glow, gradients, shadows, writing, gridlines, frame borders or background; true transparent background. Every sprite complete with generous margins, separate equal-size cells, consistent physical character size across frames; an airborne bent leg does not make the girl bigger. Each pixel should form crisp, deliberate clusters of the SAME visible density and rough pixel texture as IMAGE 1, NOT smooth digital cartoon art or a detailed illustration. Preserve clear eyes, clothing details and black hair ties. Produce exactly SIX complete HORIZONTAL throw poses as 3 columns x 2 rows based on IMAGE 2, with 3 grounded on top and 3 airborne on bottom, windup/release/settle. The bottom AIRBORNE row is the deliverable; keep baton aiming right, knees naturally bent, and match the face, costume, physical scale and pixel feel of IMAGE 1 and approved IMAGE 3. The top row is a reference only; do not make the airborne body larger or smaller than the girl on the ground.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/ProductionSources/ThrowForward.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    }
+  ],
+  "idleOnlyPilots": [
+    {
+      "key": "upfromidle",
+      "prompt": "The first reference is the EXACT in-game Idle sprite enlarged with nearest-neighbor, not merely a mood board: reproduce the same pixel art girl, NOT a new stylization. Second reference is the approved ground horizontal throwing sprite at the same 32 PPU. Use their dark clustered outlines, matte muted rose pink hair, tiny detailed eyes, small natural face, individual bead-like black hair bands, cream knit long cardigan with the little pale patterned edge, wine bow, black dress and pink hem, pale socks, dark brown shoes, and pink-black baton. Draw at the same effective native pixel density and face/head-to-shoulder-to-body-to-leg ratios as reference one. The face should remain identifiably the Idle sprite even at game resolution. No smooth gradients, glossy vector art or high-resolution anime illustration. Do NOT trace enlarged illustrations, imitate discrete square pixels and same palette. Each pose exactly the same character and physical size, head dimensions, hair color, limbs and clothes, only the pose changes. Three columns and two rows, equally sized isolated sprite cells, full figure and baton visible inside every cell with ample padding; transparent background, no grid, text, glow, iron ball or chain. Create a six-frame UP THROW animation: top row three grounded poses, bottom row three airborne poses with naturally bent knees; columns preparation, arm reaches up, final up pose. The throwing arm and baton point near vertically upward on release, and her face and eyes visibly look UP toward the throw. Keep hair calm and hold the same head size; grounded feet align, hands natural, no extra limbs. Make no change to the approved horizontal ground throw.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "downfromidle",
+      "prompt": "The first reference is the EXACT in-game Idle sprite enlarged with nearest-neighbor, not merely a mood board: reproduce the same pixel art girl, NOT a new stylization. Second reference is the approved ground horizontal throwing sprite at the same 32 PPU. Use their dark clustered outlines, matte muted rose pink hair, tiny detailed eyes, small natural face, individual bead-like black hair bands, cream knit long cardigan with the little pale patterned edge, wine bow, black dress and pink hem, pale socks, dark brown shoes, and pink-black baton. Draw at the same effective native pixel density and face/head-to-shoulder-to-body-to-leg ratios as reference one. The face should remain identifiably the Idle sprite even at game resolution. No smooth gradients, glossy vector art or high-resolution anime illustration. Do NOT trace enlarged illustrations, imitate discrete square pixels and same palette. Each pose exactly the same character and physical size, head dimensions, hair color, limbs and clothes, only the pose changes. Three columns and two rows, equally sized isolated sprite cells, full figure and baton visible inside every cell with ample padding; transparent background, no grid, text, glow, iron ball or chain. Create a six-frame DOWN THROW animation: top row three grounded poses, bottom row three airborne poses with naturally bent knees; columns preparation, arm reaches down, final down pose. The throwing hand and pink baton point down on release and she looks down toward it. Preserve same face size as the Idle, a visible natural neck and full torso with long sleeves, no giant head or squat body, and complete limbs. Keep the original character and no dramatic head bob.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    }
+  ],
+  "idleOnlyDirections": [
+    {
+      "key": "uprightidle",
+      "prompt": "Create animation artwork from the exact real in-game pixel sprite in IMAGE 1, enlarged using nearest-neighbor. This must be the SAME girl, at the same effective native pixel size as Idle: her distinctive small rose eyes and subtle expression, dusty rose twin tails with black bead-like segmented ties and the same bangs/ahoge, cream knitted cardigan with its patterned long front edge, wine bow, black dress with pink hem and small pink ring, pale socks and brown shoes. IMAGE 2 is her approved horizontal ground throw: matching physical head/face/torso/leg scale and pixel density. Use the matte palette, dark square-pixel contour and granular pixel clusters of the actual idle; no smooth anime/vector face, airbrush or shiny gradients. Natural slender proportions and connected shoulders/elbows/hands, visible neck, no giant head or tiny body, no resizing between poses. Draw 6 complete equal-scale sprites in exactly 3 columns x 2 rows with generous transparent padding, no text, grid, background, halo, iron ball, chain or extra limbs. Top row is grounded, bottom row airborne. All gestures have the original small pink-and-black baton clearly held in one hand with full tip visible. No extra designs. Direction is diagonal up-right. Top row: grounded preparation with baton near shoulder, then release diagonally UP RIGHT, then same release pose slightly settled. Bottom row: corresponding three airborne poses with naturally bent legs. Face and eyes look in the throwing direction on release. Head shape, crown and gaze change only slightly between frames; torso and clothing stay consistent and no giant flying character. All shoulders, hands and baton align naturally.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "downrightidle",
+      "prompt": "Create animation artwork from the exact real in-game pixel sprite in IMAGE 1, enlarged using nearest-neighbor. This must be the SAME girl, at the same effective native pixel size as Idle: her distinctive small rose eyes and subtle expression, dusty rose twin tails with black bead-like segmented ties and the same bangs/ahoge, cream knitted cardigan with its patterned long front edge, wine bow, black dress with pink hem and small pink ring, pale socks and brown shoes. IMAGE 2 is her approved horizontal ground throw: matching physical head/face/torso/leg scale and pixel density. Use the matte palette, dark square-pixel contour and granular pixel clusters of the actual idle; no smooth anime/vector face, airbrush or shiny gradients. Natural slender proportions and connected shoulders/elbows/hands, visible neck, no giant head or tiny body, no resizing between poses. Draw 6 complete equal-scale sprites in exactly 3 columns x 2 rows with generous transparent padding, no text, grid, background, halo, iron ball, chain or extra limbs. Top row is grounded, bottom row airborne. All gestures have the original small pink-and-black baton clearly held in one hand with full tip visible. No extra designs. Direction is diagonal down-right. Top row: grounded preparation with baton near hip, then release diagonally DOWN RIGHT, then settle. Bottom row: corresponding airborne poses with naturally bent legs. Face and eyes look down-right, but head tilts only a little, especially keep the last two nearly identical head angle and size to avoid nodding. The torso is complete and naturally proportioned, do not shorten it, feet and hands retain Idle's scale. Baton points down-right in release and settle.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "forwardairidle",
+      "prompt": "Create animation artwork from the exact real in-game pixel sprite in IMAGE 1, enlarged using nearest-neighbor. This must be the SAME girl, at the same effective native pixel size as Idle: her distinctive small rose eyes and subtle expression, dusty rose twin tails with black bead-like segmented ties and the same bangs/ahoge, cream knitted cardigan with its patterned long front edge, wine bow, black dress with pink hem and small pink ring, pale socks and brown shoes. IMAGE 2 is her approved horizontal ground throw: matching physical head/face/torso/leg scale and pixel density. Use the matte palette, dark square-pixel contour and granular pixel clusters of the actual idle; no smooth anime/vector face, airbrush or shiny gradients. Natural slender proportions and connected shoulders/elbows/hands, visible neck, no giant head or tiny body, no resizing between poses. Draw 6 complete equal-scale sprites in exactly 3 columns x 2 rows with generous transparent padding, no text, grid, background, halo, iron ball, chain or extra limbs. Top row is grounded, bottom row airborne. All gestures have the original small pink-and-black baton clearly held in one hand with full tip visible. No extra designs. Direction is horizontal right. Top row three grounded phases and bottom row three matching airborne phases: prepare, extend baton horizontally RIGHT, settle. The grounded row is only a visual comparison and will not replace the approved existing horizontal ground throw. For the airborne row keep the girl's head, shoulders, body and proportions exactly as the real Idle and ground reference; bend the knees, do not shrink or enlarge her. Hair and eyes are calm, same size and expression through all three frames.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    },
+    {
+      "key": "downidle2",
+      "prompt": "Create animation artwork from the exact real in-game pixel sprite in IMAGE 1, enlarged using nearest-neighbor. This must be the SAME girl, at the same effective native pixel size as Idle: her distinctive small rose eyes and subtle expression, dusty rose twin tails with black bead-like segmented ties and the same bangs/ahoge, cream knitted cardigan with its patterned long front edge, wine bow, black dress with pink hem and small pink ring, pale socks and brown shoes. IMAGE 2 is her approved horizontal ground throw: matching physical head/face/torso/leg scale and pixel density. Use the matte palette, dark square-pixel contour and granular pixel clusters of the actual idle; no smooth anime/vector face, airbrush or shiny gradients. Natural slender proportions and connected shoulders/elbows/hands, visible neck, no giant head or tiny body, no resizing between poses. Draw 6 complete equal-scale sprites in exactly 3 columns x 2 rows with generous transparent padding, no text, grid, background, halo, iron ball, chain or extra limbs. Top row is grounded, bottom row airborne. All gestures have the original small pink-and-black baton clearly held in one hand with full tip visible. No extra designs. Direction is STRAIGHT DOWN. Top row three grounded phases, bottom row three matching airborne phases: preparation, extend baton downward at the girl's right side, settle. In release and settle the baton is vertical and she looks downward toward it mainly with her eyes, with only a subtle head tilt; make the last two poses almost the same head orientation so there is no headbanging. Keep a visible neck, full-length torso, arms, hands and legs in the Idle proportions; no rounded enlarged head or compressed torso and no extreme crouching.",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Ground-forward-approved-4x.png"
+      ]
+    }
+  ],
+  "targetedCorrections": [
+    {
+      "key": "uprightgaze",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowUpRight-idle-v1.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png"
+      ],
+      "prompt": "Edit IMAGE 1's existing six-frame diagonal-up-right throw sprite sheet. IMAGE 2 is the exact real idle girl's face and pixel style. Keep every pose, body, hair, arm, baton, scale, position, clothes and 3x2 layout unchanged. Surgical correction: on columns 2 and 3 in BOTH rows, turn the chin and eyes subtly UP AND RIGHT, so her face visibly looks along the diagonally raised baton. Keep face and head the SAME SIZE and hair and body in their current positions; tilt only a few degrees, no headbanging, no huge eyes, no expression change, keep the exact original pixel clusters from the Idle reference. Ground first row, air second row. Full sprites on transparent background, no ball, no chain, no added objects, no glow."
+    },
+    {
+      "key": "downrightgaze",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowDownRight-idle-v1.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png"
+      ],
+      "prompt": "Edit IMAGE 1's existing six-frame diagonal-down-right throw sprite sheet; IMAGE 2 is the exact in-game Idle character. Retain every body pose, clothing, baton, hair, scale and exact 3x2 layout. Surgical edit: in columns 2 and 3 of both rows, make her eyes and face visibly look slightly DOWN-RIGHT in the direction of the pink baton, without deeply bowing or moving the head. Keep head size and dark rose facial features precisely the same as Idle, and keep both last frames almost the same head angle. Do not add new poses, objects, ball, chain, glow, or crop the sprite. Transparent background and consistent original pixel texture."
+    },
+    {
+      "key": "forwardairsettle",
+      "refs": [
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Sources/ThrowForwardAir-idle-v1.png",
+        "D:/卒業制作２D/2D_action/Docs/Art/PlayerMotionV2/IdleThrowRevision/Idle-reference-6x.png"
+      ],
+      "prompt": "Edit IMAGE 1, a six-frame horizontal throwing sprite sheet. Preserve every figure, expression, head, hair, outfit and pixel style in exactly the same 3x2 arrangement. Only fix the THIRD sprite in the BOTTOM ROW: it must be a held horizontal rightward THROW pose, not a return to idle. Make its throwing arm and pink-black baton point straight RIGHT, matching the SECOND sprite in the BOTTOM ROW; retain its same bent airborne legs, same head and hair positions, and give only a very small natural settling difference. Do not alter the approved top-row ground sprites. The baton tip must not be cropped. Transparent background, no iron ball, no chain, no extra limbs or glow."
+    }
+  ],
+  "selected": [
+    "Charge-stable-v1.png",
+    "ThrowUp-idle-v1.png",
+    "ThrowUpRight-idle-v2.png",
+    "ThrowDown-idle-v2.png",
+    "ThrowDownRight-idle-v2.png",
+    "ThrowForwardAir-idle-v1.png (air source frames 3,4,4)"
+  ]
+}

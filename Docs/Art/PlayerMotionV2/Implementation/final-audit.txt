@@ -1,0 +1,4 @@
+PASS: 82 native frames; 8-direction ground/air throws; 32 PPU Point/uncompressed/no mipmaps; shared references valid.
+PASS: 82 sprite rectangles have transparent margins; no hair/weapon touches exported cell boundary.
+Assets/Scenes/Stage2.unity dirty=False
+Play stopped; compilation settled.

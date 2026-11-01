@@ -1,0 +1,9 @@
+PASS: 78 native frames; original 6-frame running rhythm; non-looping descent/tension settle; 8-direction ground/air throws; 32 PPU Point/uncompressed/no mipmaps; shared references valid.
+PASS: all 78 exported sprite rectangles have transparent margins.
+throwSpeed=30
+spinRadius=1
+spinAngularSpeed=720
+maxChargeTime=1.2
+groundLaunchPoseHoldDuration=0.5
+launchPoseMaxHoldTime=0.4
+Stage2 open; dirty=False; Play stopped; compilation settled.
