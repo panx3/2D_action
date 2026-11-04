@@ -54,7 +54,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 42
+  spritePixelsToUnits: 38
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
@@ -145,20 +145,20 @@ TextureImporter:
       name: MachineCityGrate_Left
       rect:
         serializedVersion: 2
-        x: 0
+        x: 6
         y: 0
-        width: 42
-        height: 42
+        width: 38
+        height: 38
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape:
-      - - {x: -17, y: -3}
-        - {x: 21, y: -3}
-        - {x: 21, y: 5}
-        - {x: -17, y: 5}
+      - - {x: -19, y: -2}
+        - {x: 19, y: -2}
+        - {x: 19, y: 9}
+        - {x: -19, y: 9}
       tessellationDetail: 0
       bones: []
       spriteID: 6f763b0053e4ea74ebe5f15782bd455d
@@ -171,20 +171,20 @@ TextureImporter:
       name: MachineCityGrate_Middle
       rect:
         serializedVersion: 2
-        x: 42
+        x: 44
         y: 0
-        width: 42
-        height: 42
+        width: 38
+        height: 38
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape:
-      - - {x: -21, y: -3}
-        - {x: 21, y: -3}
-        - {x: 21, y: 5}
-        - {x: -21, y: 5}
+      - - {x: -19, y: -2}
+        - {x: 19, y: -2}
+        - {x: 19, y: 9}
+        - {x: -19, y: 9}
       tessellationDetail: 0
       bones: []
       spriteID: f132877877905fe4b80b5737427ff805
@@ -197,20 +197,20 @@ TextureImporter:
       name: MachineCityGrate_Right
       rect:
         serializedVersion: 2
-        x: 84
+        x: 82
         y: 0
-        width: 42
-        height: 42
+        width: 38
+        height: 38
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape:
-      - - {x: -21, y: -3}
-        - {x: 17, y: -3}
-        - {x: 17, y: 5}
-        - {x: -21, y: 5}
+      - - {x: -19, y: -2}
+        - {x: 19, y: -2}
+        - {x: 19, y: 9}
+        - {x: -19, y: 9}
       tessellationDetail: 0
       bones: []
       spriteID: 674e1c0ca9c2bac4285cd9c05645f9c0
