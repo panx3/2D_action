@@ -286,6 +286,7 @@ public partial class Player : MonoBehaviour
     }
 
     public Rigidbody2D Rigidbody2D => _rigid;
+    public LayerMask GroundLayers => _groundLayers;
 
     public bool IsGrounded => _startIntroControlled ? _introGrounded : _isGrounded;
 

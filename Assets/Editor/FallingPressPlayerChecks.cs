@@ -101,7 +101,7 @@ public static class FallingPressPlayerChecks
                     minFeet = Mathf.Min(minFeet, collider.bounds.min.y);
                     Require(minFeet > -0.08f, "Player embedded in floor: " + minFeet);
                     var squash = player.GetComponent<PressPlayerSquash>();
-                    if (squash != null && squash.VerticalScale < 0.7f)
+                    if (squash != null && squash.VerticalScale < 0.9f)
                     {
                         squashSeen = true;
                         Require(squash.HorizontalScale > 1f && squash.HorizontalScale <= 1.19f, "incorrect horizontal stretch");

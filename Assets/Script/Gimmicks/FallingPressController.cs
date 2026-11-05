@@ -5,13 +5,14 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FallingPressController : MonoBehaviour
 {
-    public enum CycleState { TopWait, Warning, Descending, BottomWait, Rising, BallBlocked, StandBlocked }
+    public enum CycleState { TopWait, Warning, Descending, BottomWait, Rising, BallBlocked, StandBlocked, PlayerBlocked }
     [Header("Pair / geometry (root = floor, head pivot = underside)")]
     [SerializeField, Tooltip("配置確認用の任意参照。停止判定はこの参照に依存せず、接触した台座・鉄球を使います。")]
     private PressBallStandController ballStand;
     [SerializeField] private Rigidbody2D head;
     [SerializeField] private BoxCollider2D pressCollider;
     [SerializeField] private BoxCollider2D damageDetector;
+    [SerializeField] private BoxCollider2D playerTopSurface;
     [SerializeField] private SpriteRenderer body;
     [SerializeField] private SpriteRenderer warningLight;
     [SerializeField] private Transform[] pistons;
@@ -41,8 +42,10 @@ public sealed class FallingPressController : MonoBehaviour
     [SerializeField] private AudioClip floorImpact;
     [SerializeField] private AudioClip ballImpact;
     [SerializeField] private ParticleSystem sparks;
-    private readonly List<Collider2D> damageHits = new List<Collider2D>(16);
     private readonly List<RaycastHit2D> supportHits = new List<RaycastHit2D>(16);
+    private readonly List<RaycastHit2D> playerHits = new List<RaycastHit2D>(8);
+    private readonly List<RaycastHit2D> groundHits = new List<RaycastHit2D>(16);
+    private readonly List<Collider2D> pressureCandidates = new List<Collider2D>(4);
     private readonly ContactPoint2D[] playerSupportContacts = new ContactPoint2D[16];
     private ContactFilter2D damageFilter;
     private MorningStarLauncher launcher;
@@ -51,7 +54,8 @@ public sealed class FallingPressController : MonoBehaviour
     public CycleState State { get; private set; }
     public bool IsBallBlocked => State == CycleState.BallBlocked;
     public bool IsStandBlocked => State == CycleState.StandBlocked;
-    public bool IsBlocked => IsBallBlocked || IsStandBlocked;
+    public bool IsPlayerBlocked => State == CycleState.PlayerBlocked;
+    public bool IsBlocked => IsBallBlocked || IsStandBlocked || IsPlayerBlocked;
     public float UndersideY => head != null ? head.position.y : transform.position.y;
     public float CurrentClearance => UndersideY - transform.position.y;
     public bool HasSafeClearance => IsBlocked && CurrentClearance >= requiredPlayerClearance;
@@ -78,6 +82,7 @@ public sealed class FallingPressController : MonoBehaviour
                 bodyHeight / body.sprite.bounds.size.y, 1f);
         if (pressCollider != null) { pressCollider.size = new Vector2(width, bodyHeight); pressCollider.offset = new Vector2(0f, bodyHeight * 0.5f); }
         if (damageDetector != null) { damageDetector.size = new Vector2(width + 0.04f, bodyHeight + 0.04f); damageDetector.offset = new Vector2(0f, bodyHeight * 0.5f); }
+        if (playerTopSurface != null) { playerTopSurface.size = new Vector2(width, 0.12f); playerTopSurface.offset = new Vector2(0f, bodyHeight - 0.06f); }
         if (warningLight != null) warningLight.transform.localScale = new Vector3(width * 0.43f, 0.08f, 1f);
     }
 
@@ -97,6 +102,8 @@ public sealed class FallingPressController : MonoBehaviour
         float target = transform.position.y + contactSkin + y;
         if (LimitDescent(top - target, out float allowed, out bool onBall, out _))
         { target = top - allowed; Enter(onBall ? CycleState.BallBlocked : CycleState.StandBlocked); }
+        if (LimitPlayerDescent(top, ref target)) Enter(CycleState.PlayerBlocked);
+        pressureCandidates.Clear();
         head.position = new Vector2(transform.position.x, target);
     }
 
@@ -126,6 +133,7 @@ public sealed class FallingPressController : MonoBehaviour
         float dt = Time.fixedDeltaTime;
         float bottom = transform.position.y + contactSkin, top = bottom + travelDistance;
         float y = head.position.y, next = y;
+        pressureCandidates.Clear();
         elapsed += dt;
         switch (State)
         {
@@ -134,12 +142,15 @@ public sealed class FallingPressController : MonoBehaviour
             case CycleState.Descending:
             case CycleState.BallBlocked:
             case CycleState.StandBlocked:
+            case CycleState.PlayerBlocked:
                 next = Mathf.MoveTowards(y, bottom, descentSpeed * dt);
-                if (LimitDescent(y - next, out float allowed, out bool onBall, out Vector2 point))
+                bool solidBlocked = LimitDescent(y - next, out float allowed, out bool onBall, out Vector2 point);
+                if (solidBlocked) next = y - allowed;
+                bool playerBlocked = LimitPlayerDescent(y, ref next);
+                if (solidBlocked || playerBlocked)
                 {
-                    next = y - allowed;
-                    CycleState blocked = onBall ? CycleState.BallBlocked : CycleState.StandBlocked;
-                    if (State != blocked) { Enter(blocked); Impact(onBall, point); }
+                    CycleState blocked = playerBlocked ? CycleState.PlayerBlocked : onBall ? CycleState.BallBlocked : CycleState.StandBlocked;
+                    if (State != blocked) { Enter(blocked); if (!playerBlocked) Impact(onBall, point); }
                     if (elapsed >= bottomWait) Enter(CycleState.Rising);
                 }
                 else
@@ -154,41 +165,76 @@ public sealed class FallingPressController : MonoBehaviour
                 if (next >= top) Enter(CycleState.TopWait);
                 break;
         }
-        DamageSweep(y, next);
+        ApplyCrushDamage(next);
         head.MovePosition(new Vector2(transform.position.x, next));
     }
 
     private void Enter(CycleState state) { State = state; elapsed = 0f; }
 
-    private void DamageSweep(float from, float to)
+    private bool LimitPlayerDescent(float from, ref float target)
     {
-        // 本体との重なりは候補抽出だけ。待機・上昇・側面接触では被弾させない。
-        if (State == CycleState.TopWait || State == CycleState.Warning || State == CycleState.Rising) return;
-        Vector2 center = new Vector2(head.position.x, (from + to + bodyHeight) * 0.5f);
-        Vector2 size = new Vector2(width + 0.04f, bodyHeight + Mathf.Abs(to - from) + 0.04f);
-        Physics2D.OverlapBox(center, size, 0f, damageFilter, damageHits);
-        foreach (var c in damageHits)
+        float requested = from - target;
+        if (requested <= 0f) return false;
+        pressCollider.Cast(Vector2.down, damageFilter, playerHits, requested + contactSkin, true);
+        bool blocked = false;
+        float allowed = requested;
+        foreach (var hit in playerHits)
+        {
+            Collider2D c = hit.collider;
+            if (c == null || hit.normal.y <= 0.001f || c.GetComponentInParent<Player>() == null ||
+                c.bounds.min.y >= from + bodyHeight - contactSkin || c.bounds.center.y >= from) continue;
+            float gap = Mathf.Max(0f, hit.distance - contactSkin);
+            float needed = Mathf.Max(0f, requested - gap);
+            float free = PlayerDownSpace(c, needed);
+            if (gap + free >= requested - 0.001f) continue;
+            allowed = Mathf.Min(allowed, gap + free); blocked = true;
+            pressureCandidates.Add(c);
+        }
+        if (blocked) target = from - allowed;
+        return blocked;
+    }
+
+    private float PlayerDownSpace(Collider2D c, float requested)
+    {
+        if (HasFootSupport(c)) return 0f;
+        Player player = c.GetComponentInParent<Player>();
+        ContactFilter2D filter = damageFilter; filter.SetLayerMask(player.GroundLayers);
+        c.Cast(Vector2.down, filter, groundHits, requested + contactSkin, true);
+        float available = requested;
+        foreach (var hit in groundHits)
+        {
+            if (hit.collider == null || hit.normal.y <= 0.5f || hit.collider.attachedRigidbody == head ||
+                hit.collider.transform.IsChildOf(player.transform) || Physics2D.GetIgnoreCollision(c, hit.collider)) continue;
+            var oneWay = hit.collider.GetComponentInParent<OneWayPlatform>();
+            if (oneWay != null && !oneWay.BlocksBodyCorrection(c.attachedRigidbody, Vector2.down, hit.normal)) continue;
+            available = Mathf.Min(available, Mathf.Max(0f, hit.distance - contactSkin));
+        }
+        return available;
+    }
+
+    private void ApplyCrushDamage(float underside)
+    {
+        // 閉じる動きがPlayerの可動空間を塞いだ場合だけ。停止済みの狭い隙間への横接触は対象外。
+        if (!IsPlayerBlocked) return;
+        foreach (var c in pressureCandidates)
         {
             PlayerHealth hp = c.GetComponentInParent<PlayerHealth>();
-            if (hp == null || hp.IsDead || hp.IsRespawning || hp.GetComponent<Player>() == null || !IsPlayerCrushed(c, to)) continue;
+            Bounds player = c.bounds, press = pressCollider.bounds;
+            float overlap = Mathf.Min(player.max.x, press.max.x) - Mathf.Max(player.min.x, press.min.x);
+            if (hp == null || hp.IsDead || hp.IsRespawning || overlap < player.size.x * 0.5f ||
+                Mathf.Abs(player.max.y - underside) > contactSkin + 0.08f || !HasFootSupport(c)) continue;
             var squash = hp.GetComponent<PressPlayerSquash>();
             if (squash == null) squash = hp.gameObject.AddComponent<PressPlayerSquash>();
-            squash.Contact(to, minimumSquashHeight, maximumSquashWidth,
+            squash.Contact(underside, minimumSquashHeight, maximumSquashWidth,
                 squashHoldTime, squashRecoveryTime, body != null ? body.sortingOrder : 3);
             float side = c.bounds.center.x < head.position.x ? -1f : 1f;
             hp.TakeDamage(damage, new Vector2(knockback.x * side, knockback.y));
         }
     }
 
-    private bool IsPlayerCrushed(Collider2D playerCollider, float underside)
+    private bool HasFootSupport(Collider2D playerCollider)
     {
         Bounds player = playerCollider.bounds;
-        Bounds press = pressCollider.bounds;
-        float overlap = Mathf.Min(player.max.x, press.max.x) - Mathf.Max(player.min.x, press.min.x);
-        // 体の半分以上が下面の内側に入り、高さが1割以上圧迫されたときに限る。
-        // 頭をかするだけ・側面の端だけ・プレスより上にいる場合は挟み込みではない。
-        if (overlap < player.size.x * 0.5f || player.max.y - underside < player.size.y * 0.1f ||
-            player.min.y >= underside + contactSkin) return false;
         int count = playerCollider.GetContacts(playerSupportContacts);
         for (int i = 0; i < count; i++)
         {

@@ -158,17 +158,7 @@ public static class FallingPressSetup
 
     public static void UpdateExistingPrefabs()
     {
-        var press = PrefabUtility.LoadPrefabContents(PressPath);
-        try
-        {
-            var head = press.transform.Find("MovingHead");
-            head.GetComponent<Rigidbody2D>().useFullKinematicContacts = true;
-            var solid = head.GetComponent<BoxCollider2D>();
-            int layers = (1 << 2) | (1 << 7);
-            solid.includeLayers = layers; solid.excludeLayers = ~layers;
-            PrefabUtility.SaveAsPrefabAsset(press, PressPath);
-        }
-        finally { PrefabUtility.UnloadPrefabContents(press); }
+        UpdatePressCollisionPrefab();
         var stand = PrefabUtility.LoadPrefabContents(StandPath);
         try
         {
@@ -180,6 +170,36 @@ public static class FallingPressSetup
         }
         finally { PrefabUtility.UnloadPrefabContents(stand); }
         AssetDatabase.SaveAssets();
+    }
+
+    public static void UpdatePressCollisionPrefab()
+    {
+        var press = PrefabUtility.LoadPrefabContents(PressPath);
+        try
+        {
+            var head = press.transform.Find("MovingHead");
+            head.GetComponent<Rigidbody2D>().useFullKinematicContacts = true;
+            var solid = head.GetComponent<BoxCollider2D>();
+            int layers = (1 << 2) | (1 << 3) | (1 << 7);
+            solid.includeLayers = layers; solid.excludeLayers = ~layers;
+            ConfigurePlayerTopSurface(press);
+            PrefabUtility.SaveAsPrefabAsset(press, PressPath);
+        }
+        finally { PrefabUtility.UnloadPrefabContents(press); }
+    }
+
+    private static void ConfigurePlayerTopSurface(GameObject press)
+    {
+        var head = press.transform.Find("MovingHead");
+        var existing = head.Find("PlayerTopSurface");
+        var go = existing != null ? existing.gameObject : Child("PlayerTopSurface", head);
+        go.layer = 0;
+        var surface = go.GetComponent<BoxCollider2D>();
+        if (surface == null) surface = go.AddComponent<BoxCollider2D>();
+        surface.includeLayers = 1 << 3; surface.excludeLayers = ~(1 << 3); surface.layerOverridePriority = 30;
+        var controller = press.GetComponent<FallingPressController>();
+        Set(controller, "playerTopSurface", surface);
+        controller.ApplyGeometry();
     }
 
     private static GameObject BuildPress()
@@ -204,7 +224,7 @@ public static class FallingPressSetup
         var light = Sprite("WarningLight", "LightPixel", visual.transform, 4);
         light.transform.localPosition = new Vector3(0f, 1.35f, 0f);
         var collider = moving.AddComponent<BoxCollider2D>();
-        int pressLayers = (1 << 2) | (1 << 7);
+        int pressLayers = (1 << 2) | (1 << 3) | (1 << 7);
         collider.includeLayers = pressLayers; collider.excludeLayers = ~pressLayers; collider.layerOverridePriority = 30;
         var detector = Child("DamageDetector", moving.transform); detector.layer = 2;
         var trigger = detector.AddComponent<BoxCollider2D>(); trigger.isTrigger = true;
@@ -231,7 +251,7 @@ public static class FallingPressSetup
         Set(controller, "sparks", particles);
         var so = new SerializedObject(controller); var array = so.FindProperty("pistons"); array.arraySize = rods.Length;
         for (int i = 0; i < rods.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = rods[i];
-        so.ApplyModifiedPropertiesWithoutUndo(); controller.ApplyGeometry();
+        so.ApplyModifiedPropertiesWithoutUndo(); ConfigurePlayerTopSurface(root);
         return root;
     }
 
@@ -246,9 +266,12 @@ public static class FallingPressSetup
             throw new Exception("Press prefab must be independent; assign the stand on the scene instance.");
         if (stand.GetComponent<PressBallStandController>() == null) throw new Exception("Missing stand controller.");
         foreach (var c in press.GetComponentsInChildren<Collider2D>())
+        {
+            if (c.gameObject.layer == 0) continue; // Playerの接地用上面はPlayer専用。
             if (c.isTrigger ? (c.excludeLayers.value & (1 << 7)) == 0 :
                 (c.excludeLayers.value & ((1 << 7) | (1 << 2))) != 0)
                 throw new Exception("Incorrect actor collision filtering: " + c.name);
+        }
         if (!press.GetComponentInChildren<Rigidbody2D>().useFullKinematicContacts) throw new Exception("Missing full kinematic contacts.");
         foreach (var c in stand.GetComponentsInChildren<Collider2D>())
             if (c.gameObject.layer == 0 ? (c.includeLayers.value & (1 << 3)) == 0 :
@@ -256,7 +279,12 @@ public static class FallingPressSetup
                 throw new Exception("Incorrect stand collision filtering: " + c.name);
         if (stand.transform.Find("CollisionRoot_Player") == null) throw new Exception("Missing Player stand collider.");
         var pressSolid = press.transform.Find("MovingHead").GetComponent<BoxCollider2D>();
-        if ((pressSolid.excludeLayers.value & (1 << 3)) == 0) throw new Exception("Press must not push Player into floor.");
+        if (pressSolid.isTrigger || (pressSolid.excludeLayers.value & (1 << 3)) != 0 ||
+            (pressSolid.includeLayers.value & (1 << 3)) == 0) throw new Exception("Press must always collide with Player.");
+        var topSurface = press.transform.Find("MovingHead/PlayerTopSurface");
+        if (topSurface == null || topSurface.gameObject.layer != 0 || topSurface.GetComponent<BoxCollider2D>().isTrigger ||
+            topSurface.GetComponent<BoxCollider2D>().includeLayers.value != (1 << 3))
+            throw new Exception("Missing Player grounding surface on press top.");
         var standSettings = new SerializedObject(stand.GetComponent<PressBallStandController>());
         if (standSettings.FindProperty("stoneLights").objectReferenceValue == null || standSettings.FindProperty("stoneGlow").objectReferenceValue == null)
             throw new Exception("Missing placement feedback.");

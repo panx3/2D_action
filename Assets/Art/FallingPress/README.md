@@ -5,12 +5,12 @@
 ## 設計・使い方
 
 - ルートを床に置く。回転0、Scale1で使用する。動くのは `MovingHead` のKinematic Rigidbody2Dだけ。
-- 台座は側面・上面ともPlayerに当たる。鉄球/プレス用ColliderはLayer2に維持し、Player用の同寸ColliderをDefault Layer0に追加して既存の接地判定にも対応する。プレス本体のPlayerへの物理的な押し込みは除外し、ダメージは専用判定を使う。ProjectSettingsは変更しない。
-- プレス下降前に実際のBoxCollider2Dを `Collider2D.Cast` でスイープし、最初に当たった台座または鉄球の直前まで移動する。Kinematicのため静的な台座との接触も有効にする。Playerや敵を停止支点にはしない。
+- 台座は側面・上面ともPlayerに当たる。鉄球/プレス用ColliderはLayer2に維持し、Player用の同寸ColliderをDefault Layer0に追加して既存の接地判定にも対応する。プレス本体も常にPlayerと物理衝突する。上面には接地用のPlayer専用Collider（Default Layer0）を持つ。ProjectSettingsは変更しない。
+- プレス下降前に実際のBoxCollider2Dを `Collider2D.Cast` でスイープし、最初に当たった台座または鉄球の直前まで移動する。Kinematicのため静的な台座との接触も有効にする。Playerの頭上と足元の移動余地も確認し、床へ押し込む直前でプレスの下降量を制限する。PlayerのCollider・速度・重力・位置は書き換えない。
 - 鉄球は `MorningStarLauncher.BallBody` で識別する。台座の有無、中央範囲、速度、State、Player用クリアランスで鉄球との衝突を無効化しない。台座だけでも止まり、台座がない場所の鉄球でも止まる。
 - 台座上の鉄球なら台座高1.9+直径1.7+接触余白0.04で、標準停止高は約3.64。台座だけなら約1.94、床の鉄球だけなら約1.74でも停止する。クリアランス3.5は安全表示の基準であり、停止の成立条件ではない。
 - 支点がなくなると下降を再開し、次に当たる台座・鉄球で再停止する。支点が残っていれば下待機後に上昇する。鉄球の質量・速度・重力・Stateへの書き込みはない。プレス側だけの移動を制御して鉄球を押し潰さない。
-- 既存 `PlayerHealth.TakeDamage(1, knockback)` を使用。OverlapBoxは候補抽出のみ。下降中・下部停止中に、体の半分以上が下面の内側に入り、頭上の高さがCollider高の1割以上圧迫され、足元が床・台座などと実接触している場合だけ被弾する。上部待機・警告・上昇・空中・端や頭をかするだけの接触は無害。無敵・死亡・復帰は既存HP処理に任せる。
+- 既存 `PlayerHealth.TakeDamage(1, knockback)` を使用。下降スイープがPlayerに当たり、足元の床・台座との間にそれ以上下がれないとき（PlayerBlocked）、Player幅の半分以上が下面に入っていれば被弾する。足元は実接触と相対速度で確認する。上部待機・警告・上昇・上に乗る・空中・側面接触は無害。停止済みの狭い隙間には通常寸法のPlayer Colliderが入れないため、後から重なって被弾することはない。無敵・死亡・復帰は既存HP処理に任せる。
 - 挟まれたPlayerは `PressPlayerSquash` が足元を支点にSpriteの頂点だけを縦圧縮・横伸びさせる。PlayerルートとColliderは変形しない。既存のライティング・点滅を維持し、離脱・死亡・復帰・無効化で元の表示に戻す。
 - プレス・台座は独立配置できる。Inspectorの `Ball Stand` は配置確認用で、停止に専用所有権や1対1の割り当ては必要ない。複製した未接続のプレスも、接触した台座・鉄球で止まる。
 - 台座の上面に鉄球が実接触すると、左右の石が赤から水色に光る。鉄球が外れると赤に戻る。元の石のドット絵をマスク化した表示なので、金属や鉄球マークの色は変えない。チェックマーク・発光枠・上部バーは撤去した。セット時の小さな金属SEは維持。
@@ -60,13 +60,14 @@ imagegen組み込みツールで新規生成した画像を切り出し、最近
 
 Unityメニュー `Tools/Falling Press/Validate Saved Assets` と `Run Play Mode Checks`。後者はStage2の保存データに触れず、遠方の仮設床で実Player/鉄球と仮想Gamepadを使用し、終了後は編集モードに戻る。結果は `FallingPressPlayModeChecks.Result()` で取得できる。最終的な操作感、音量、コース全体の難易度は実機Gamepadで評価する。
 
-2026-11-05の被挟み判定修正:
+2026-11-05の衝突・被挟み判定修正:
 
-- 原因は、本体全体との重なりだけでダメージと圧縮を発生させ、サイクル状態・下面・足元の支持面を区別していなかったこと。
-- `FallingPressCrushChecks` で、上部待機中の接触、側面のかすり、下面への軽い接触、空中接触、上昇中の接触が無傷・圧縮なしになることを確認。
-- 床とプレス、台座とプレスに挟まれる場合は1ダメージ・既存無敵・圧縮が発生し、足元がめり込まないことを確認。検証中のError/Exceptionは0。
-- Inspector項目の追加・既存値の変更なし。Scene/Prefabは変更しない。実機での最終的な判定の感触はユーザー確認。
-- 参照API: [Collider2D.GetContacts](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Collider2D.GetContacts.html)、[ContactPoint2D.normal](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/ContactPoint2D-normal.html)。接地猶予フラグではなく、上向きの実接触と支持面に対する相対速度を見る。
+- 原因は以前のめり込み対策でプレス本体のPlayer衝突を除外していたこと。常時の実体衝突に戻し、めり込み対策はプレスの移動量制限に移した。
+- Playerに触れるだけでは被弾せず、下降が足元の支持面との空間を閉じる場合だけダメージ・描画圧縮が発生する。PlayerのColliderは縮めない。
+- Playerに追加した公開APIは既存接地レイヤーを読む `GroundLayers` のみ。Input、鉄球・鎖のState、Rigidbody2D設定は変更しない。
+- `Run Crush Damage Checks` は実Playerと仮想Gamepadを使い、下面へのジャンプ、閉じた隙間の側面、上面の接地、床/台座との被挟み、床の鉄球停止、わずかに高さ不足の隙間を確認する。閉じたプレス内へPlayerをワープさせる検証は廃止した。
+- Inspectorのサイクル・ダメージ値は維持。プレスPrefabに内部参照 `Player Top Surface` と上面Colliderを追加。Stage2の配置とScene保存データは変更しない。
+- 衝突・被挟みの7ケース、圧縮/復元と石の赤→水色→赤、連続回帰確認がPASS。床/台座との被挟み、鉄球停止、複数台、警告/上下動、射出→Recall→Dragging、Magnet/Swingを確認し、実行時Error/Exceptionは0。連続テストではPlayerを開いた通路へ入れ、鎖の張力で判定外へ移らない位置に鉄球を置く。
 
 2026-10-30の変更と検証:
 

@@ -106,12 +106,21 @@ public static class FallingPressPlayModeChecks
                     if (!press.IsStandBlocked) { Require(t < 2f, "removing ball did not resume descent onto stand"); return; }
                     Require(!press.BallStand.IsOccupied && press.BallStand.StoneColor.r > press.BallStand.StoneColor.b, "ready feedback did not clear");
                     Pass("ball removal clears feedback and press descends until actual stand contact");
-                    playerBody.position = new Vector2(1002.7f, 2.06f);
-                    playerBody.transform.position = new Vector3(1002.7f, 2.06f, playerBody.transform.position.z);
-                    playerBody.linearVelocity = Vector2.zero;
                     Next(); break;
                 case 6:
-                    if (hp.CurrentHp == initialHp) { Require(t < 1f, "grounded Player pinched below press did not take damage"); return; }
+                    // 閉じた本体へPlayerをワープさせず、開いてから入り、次の下降を待つ。
+                    if (playerBody.position.x > 1003.6f)
+                    {
+                        if (press.CurrentClearance < 4.5f) { Require(t < 8f, "press did not open for pinch check"); return; }
+                        playerBody.position = new Vector2(1002.7f, 2.06f);
+                        playerBody.transform.position = new Vector3(1002.7f, 2.06f, playerBody.transform.position.z);
+                        playerBody.linearVelocity = Vector2.zero;
+                        // 鎖の張力で判定範囲外へ引かれないよう、鉄球もプレス外の近くへ移す。
+                        ball.position = new Vector2(1005f, 0.86f); ball.linearVelocity = Vector2.zero;
+                        ball.transform.position = new Vector3(1005f, 0.86f, ball.transform.position.z);
+                        phaseTime = Time.time; Physics2D.SyncTransforms(); return;
+                    }
+                    if (hp.CurrentHp == initialHp) { Require(t < 8f, "grounded Player pinched below press did not take damage; state=" + press.State + " head=" + press.UndersideY + " player=" + playerBody.position + " ball=" + ball.position); return; }
                     Require(hp.CurrentHp == initialHp - 1, "damage did not use existing invulnerability");
                     Pass("Player pinch uses existing HP/invulnerability");
                     launcher.ResetForRespawn(); playerBody.position = new Vector2(990f, 2.06f); playerBody.linearVelocity = Vector2.zero;
@@ -135,8 +144,8 @@ public static class FallingPressPlayModeChecks
                         "existing Magnet/Swing attach failed");
                     Pass("existing Magnet/Swing transition"); launcher.ResetForRespawn();
                     // 補間Transform/鎖アンカーが移動先に追従してから床の鉄球を置く。
-                    playerBody.position = new Vector2(995.9f, 2.06f);
-                    playerBody.transform.position = new Vector3(995.9f, 2.06f, playerBody.transform.position.z);
+                    playerBody.position = new Vector2(995.2f, 2.06f);
+                    playerBody.transform.position = new Vector3(995.2f, 2.06f, playerBody.transform.position.z);
                     playerBody.linearVelocity = Vector2.zero;
                     press.BallStand.gameObject.SetActive(false); Next(); break;
                 case 9:
@@ -189,9 +198,9 @@ public static class FallingPressPlayModeChecks
     private static void PlaceBall(bool onStand)
     {
         // 床の鉄球では通路高が足りない。Playerをプレス外へ置き、被弾ノックバックで鉄球を引き抜かない。
-        launcher.ResetForRespawn(); playerBody.position = new Vector2(onStand ? 998f : 995.9f, 2.06f); playerBody.linearVelocity = Vector2.zero;
+        launcher.ResetForRespawn(); playerBody.position = new Vector2(onStand ? 998f : 995.2f, 2.06f); playerBody.linearVelocity = Vector2.zero;
         playerBody.transform.position = new Vector3(playerBody.position.x, playerBody.position.y, playerBody.transform.position.z);
-        ball.position = new Vector2(1000f, onStand ? 2.76f : 0.86f);
+        ball.position = new Vector2(onStand ? 1000f : 999f, onStand ? 2.76f : 0.86f);
         ball.transform.position = new Vector3(ball.position.x, ball.position.y, ball.transform.position.z);
         ball.linearVelocity = Vector2.zero; Physics2D.SyncTransforms();
     }
