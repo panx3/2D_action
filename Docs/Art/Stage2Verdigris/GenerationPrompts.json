@@ -1,0 +1,36 @@
+{
+  "mode": "Built-in image_gen; no CLI/API fallback.",
+  "artDirection": "Sunset copper factory with bright emerald/turquoise copper corrosion. Unequal large concentrations; retain warm copper districts. Do not make every object equally corroded or target equal color ratios in every screen.",
+  "terrainPolicy": "Original terrain textures, tile assets, placement and collision retained. No rust painted into terrain tiles. Future ground rust must be a separate collider-free decorative overlay prefab.",
+  "sources": [
+    {
+      "name": "PipeCluster",
+      "source": "Source/PipeCluster.png",
+      "prompt": "Use case: precise-object-edit. Production game sprite, edit supplied original ONLY. Important art direction: natural aged COPPER PATINA, not painted alternate-color parts. FEW LARGE CONNECTED shapes, not many small flecks. Brighter richer emerald and turquoise: #27b8a0, #43cfc0, lit #78e5cd, shaded #238d88; vibrant under warm copper sunset, non-neon, matte dry mineral crust. Preserve the ORIGINAL sprite's fine metal texture and shading under patina. Internally use a few medium size fractured copper gaps, retain engraved metal details; coarse ragged edges with a little granular edge wear, NO tiny scattered flecks, vines, leaves, moss, liquid drips or tendrils. Do NOT recolor a whole pipe section/panel or make borders follow modular part boundaries. Keep original dark brown outline, silhouette, pixel scale, composition, transparent space and copper shading exactly. No smooth vectors, no posterization, no new object or background. Add TWO large NATURAL IRREGULAR oxidation patches: one on lower left vertical pipe, one across the right elbow. Each patch covers only PART of its pipe section and has a broken asymmetric craggy outline that cuts diagonally across the cylindrical surface; its boundary must NOT follow pipe-part/collar borders. Copper showing through large uneven gaps. Preserve all collars, valves, gauge and glossy copper highlights."
+    },
+    {
+      "name": "Furnace",
+      "source": "Source/Furnace.png",
+      "prompt": "Use case: precise-object-edit. Production game sprite, edit supplied original ONLY. Important art direction: natural aged COPPER PATINA, not painted alternate-color parts. FEW LARGE CONNECTED shapes, not many small flecks. Brighter richer emerald and turquoise: #27b8a0, #43cfc0, lit #78e5cd, shaded #238d88; vibrant under warm copper sunset, non-neon, matte dry mineral crust. Preserve the ORIGINAL sprite's fine metal texture and shading under patina. Internally use a few medium size fractured copper gaps, retain engraved metal details; coarse ragged edges with a little granular edge wear, NO tiny scattered flecks, vines, leaves, moss, liquid drips or tendrils. Do NOT recolor a whole pipe section/panel or make borders follow modular part boundaries. Keep original dark brown outline, silhouette, pixel scale, composition, transparent space and copper shading exactly. No smooth vectors, no posterization, no new object or background. Add TWO large NATURAL IRREGULAR oxidation patches: one broad patch creeping diagonally from left foot into only part of the left curved casing, another on upper right shoulder near pipe join. Neither entire foot nor entire casing panel is turquoise. Jagged asymmetric borders cut across metal panels, original copper remains visible around AND within each patch. Keep all bars, flames, bolts, chimney and shape untouched."
+    },
+    {
+      "name": "IndustrialLamp",
+      "source": "Source/IndustrialLamp.png",
+      "prompt": "Use case: precise-object-edit. Production game sprite, edit supplied original ONLY. Important art direction: natural aged COPPER PATINA, not painted alternate-color parts. FEW LARGE CONNECTED shapes, not many small flecks. Brighter richer emerald and turquoise: #27b8a0, #43cfc0, lit #78e5cd, shaded #238d88; vibrant under warm copper sunset, non-neon, matte dry mineral crust. Preserve the ORIGINAL sprite's fine metal texture and shading under patina. Internally use a few medium size fractured copper gaps, retain engraved metal details; coarse ragged edges with a little granular edge wear, NO tiny scattered flecks, vines, leaves, moss, liquid drips or tendrils. Do NOT recolor a whole pipe section/panel or make borders follow modular part boundaries. Keep original dark brown outline, silhouette, pixel scale, composition, transparent space and copper shading exactly. No smooth vectors, no posterization, no new object or background. Add ONE broad NATURAL IRREGULAR oxidized patch spreading across part of the triangular base and up its center joint, leaving much copper and edge highlights exposed. A smaller connected oxide patch near the lantern cap. Broken asymmetrical dry edges, not all of any component is teal. Keep light panes and pole untouched."
+    },
+    {
+      "name": "CoolingReservoir",
+      "source": "Source/CoolingReservoir.png",
+      "prompt": "Use case: precise-object-edit. This exact cooling-reservoir sprite is now approved in architecture, emerald color, natural mottled transition and pixel-art style. Make ONE SMALL finishing adjustment: increase the area of the ALREADY EXISTING green mineral patina by about 10 percent relative to its current area, by widening its existing mottled margins a little on the left dome and lower main tank face. Do not create new separate spots or change the distribution. Keep a broad warm copper region across the upper/right dome and around the top right inspection window. Keep frames, pipework and iron base mostly copper/dark metal. Preserve the current diffuse dry oxidation boundary, the dark brown under-oxidation and all coarse texture exactly. No outlines around exposed copper, no peeled paint, no huge smooth all-turquoise panels. The result should look almost the same as the input, just slightly more heavily weathered. All shape, silhouette, windows, gauges, framing, orange glow and transparency unchanged. Native 256x192 coarse square-pixel grid, no new finer grain. Transparent background."
+    }
+  ],
+  "materialReferences": [
+    "https://www.canada.ca/en/conservation-institute/services/conservation-preservation-publications/canadian-conservation-institute-notes/identifying-archaeological-metal.html",
+    "https://www.canada.ca/en/conservation-institute/services/preventive-conservation/guidelines-collections/metal-objects.html"
+  ],
+  "preparation": [
+    "Existing props: align the generated patina to the original native pixel grid, transfer only green mineral regions over the original artwork; keep copper RGB and original silhouettes. Six green material shades, discard detached tiny flecks. Remove an inherited stray detached pipe stripe from the new derived sprite.",
+    "Reservoir: resize generated art to 256x192, 96-color native palette, hard transparent silhouette. Tower is a 54x128 crop from the same new facility.",
+    "Small details reuse native crops of existing art. All final assets live under Assets/image_/Stage/Stage2/Verdigris."
+  ]
+}
