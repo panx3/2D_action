@@ -43,6 +43,7 @@ public sealed class FallingPressController : MonoBehaviour
     [SerializeField] private ParticleSystem sparks;
     private readonly List<Collider2D> damageHits = new List<Collider2D>(16);
     private readonly List<RaycastHit2D> supportHits = new List<RaycastHit2D>(16);
+    private readonly ContactPoint2D[] playerSupportContacts = new ContactPoint2D[16];
     private ContactFilter2D damageFilter;
     private MorningStarLauncher launcher;
     private float elapsed;
@@ -161,24 +162,49 @@ public sealed class FallingPressController : MonoBehaviour
 
     private void DamageSweep(float from, float to)
     {
-        // 下降1tick分を含む領域を先に検査。高速下降のすり抜けでも既存HP処理に届く。
+        // 本体との重なりは候補抽出だけ。待機・上昇・側面接触では被弾させない。
+        if (State == CycleState.TopWait || State == CycleState.Warning || State == CycleState.Rising) return;
         Vector2 center = new Vector2(head.position.x, (from + to + bodyHeight) * 0.5f);
         Vector2 size = new Vector2(width + 0.04f, bodyHeight + Mathf.Abs(to - from) + 0.04f);
         Physics2D.OverlapBox(center, size, 0f, damageFilter, damageHits);
         foreach (var c in damageHits)
         {
             PlayerHealth hp = c.GetComponentInParent<PlayerHealth>();
-            if (hp == null) continue;
-            if (!hp.IsDead && !hp.IsRespawning && hp.GetComponent<Player>() != null)
-            {
-                var squash = hp.GetComponent<PressPlayerSquash>();
-                if (squash == null) squash = hp.gameObject.AddComponent<PressPlayerSquash>();
-                squash.Contact(Mathf.Min(from, to), minimumSquashHeight, maximumSquashWidth,
-                    squashHoldTime, squashRecoveryTime, body != null ? body.sortingOrder : 3);
-            }
+            if (hp == null || hp.IsDead || hp.IsRespawning || hp.GetComponent<Player>() == null || !IsPlayerCrushed(c, to)) continue;
+            var squash = hp.GetComponent<PressPlayerSquash>();
+            if (squash == null) squash = hp.gameObject.AddComponent<PressPlayerSquash>();
+            squash.Contact(to, minimumSquashHeight, maximumSquashWidth,
+                squashHoldTime, squashRecoveryTime, body != null ? body.sortingOrder : 3);
             float side = c.bounds.center.x < head.position.x ? -1f : 1f;
             hp.TakeDamage(damage, new Vector2(knockback.x * side, knockback.y));
         }
+    }
+
+    private bool IsPlayerCrushed(Collider2D playerCollider, float underside)
+    {
+        Bounds player = playerCollider.bounds;
+        Bounds press = pressCollider.bounds;
+        float overlap = Mathf.Min(player.max.x, press.max.x) - Mathf.Max(player.min.x, press.min.x);
+        // 体の半分以上が下面の内側に入り、高さが1割以上圧迫されたときに限る。
+        // 頭をかするだけ・側面の端だけ・プレスより上にいる場合は挟み込みではない。
+        if (overlap < player.size.x * 0.5f || player.max.y - underside < player.size.y * 0.1f ||
+            player.min.y >= underside + contactSkin) return false;
+        int count = playerCollider.GetContacts(playerSupportContacts);
+        for (int i = 0; i < count; i++)
+        {
+            ContactPoint2D contact = playerSupportContacts[i];
+            if (contact.normal.y <= 0.5f || contact.point.y > player.min.y + 0.12f) continue;
+            Collider2D support = contact.collider == playerCollider ? contact.otherCollider : contact.collider;
+            if (support == null || support.isTrigger || support.transform.IsChildOf(playerCollider.transform) ||
+                support.attachedRigidbody == head) continue;
+            // 接地猶予フラグを使わず実接触を見る。跳び立った直後の古い接触も除く。
+            float supportSpeed = support.attachedRigidbody != null
+                ? support.attachedRigidbody.GetPointVelocity(contact.point).y : 0f;
+            float playerSpeed = playerCollider.attachedRigidbody != null
+                ? playerCollider.attachedRigidbody.GetPointVelocity(contact.point).y : 0f;
+            if (playerSpeed - supportSpeed <= 0.1f) return true;
+        }
+        return false;
     }
 
     private void Impact(bool onBall, Vector2 point)

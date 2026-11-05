@@ -106,12 +106,14 @@ public static class FallingPressPlayModeChecks
                     if (!press.IsStandBlocked) { Require(t < 2f, "removing ball did not resume descent onto stand"); return; }
                     Require(!press.BallStand.IsOccupied && press.BallStand.StoneColor.r > press.BallStand.StoneColor.b, "ready feedback did not clear");
                     Pass("ball removal clears feedback and press descends until actual stand contact");
-                    playerBody.position = new Vector2(1000f, press.UndersideY + 1f); playerBody.linearVelocity = Vector2.zero;
+                    playerBody.position = new Vector2(1002.7f, 2.06f);
+                    playerBody.transform.position = new Vector3(1002.7f, 2.06f, playerBody.transform.position.z);
+                    playerBody.linearVelocity = Vector2.zero;
                     Next(); break;
                 case 6:
-                    if (hp.CurrentHp == initialHp) { Require(t < 1f, "press contact did not damage Player"); return; }
+                    if (hp.CurrentHp == initialHp) { Require(t < 1f, "grounded Player pinched below press did not take damage"); return; }
                     Require(hp.CurrentHp == initialHp - 1, "damage did not use existing invulnerability");
-                    Pass("Player contact uses existing HP/invulnerability");
+                    Pass("Player pinch uses existing HP/invulnerability");
                     launcher.ResetForRespawn(); playerBody.position = new Vector2(990f, 2.06f); playerBody.linearVelocity = Vector2.zero;
                     ball.position = new Vector2(989f, 0.85f); ball.linearVelocity = Vector2.zero;
                     Physics2D.SyncTransforms(); Next(); break;
