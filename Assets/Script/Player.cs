@@ -213,6 +213,7 @@ public partial class Player : MonoBehaviour
     /// <summary>入力だけを禁止する。演出中の物理所有権はSetStartIntroControlで切り替える。</summary>
     public void SetInputEnabled(bool enabled)
     {
+        if (!enabled) EndItemDrink();
         if (!enabled) { EndElectricStun(); CancelEnemyHitReaction(); }
         InputEnabled = enabled;
         _actionMoveInput = Vector2.zero;
@@ -225,6 +226,7 @@ public partial class Player : MonoBehaviour
 
     public void SetStartIntroControl(bool active)
     {
+        if (active) EndItemDrink();
         _startIntroControlled = active;
         _bjump = false;
         _moveInput = Vector2.zero;
@@ -253,6 +255,7 @@ public partial class Player : MonoBehaviour
     public void SetGimmickInputBlocked(bool blocked)
     {
         if (_gimmickInputBlocked == blocked) return;
+        if (blocked) EndItemDrink();
         _gimmickInputBlocked = blocked;
         if (_morningStarLauncher == null) _morningStarLauncher = GetComponent<MorningStarLauncher>();
         if (_morningStarLauncher != null) _morningStarLauncher.SetGimmickInputBlocked(blocked);
@@ -269,6 +272,7 @@ public partial class Player : MonoBehaviour
     {
         if (_goalInputBlocked == blocked)
             return;
+        if (blocked) EndItemDrink();
         _goalInputBlocked = blocked;
         if (_morningStarLauncher == null)
             _morningStarLauncher = GetComponent<MorningStarLauncher>();
@@ -386,6 +390,7 @@ public partial class Player : MonoBehaviour
     private void OnDisable()
 
     {
+        EndItemDrink();
         EndElectricStun();
         CancelEnemyHitReaction();
         _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
@@ -440,6 +445,7 @@ public partial class Player : MonoBehaviour
     private void Update()
 
     {
+        UpdateItemDrink();
 
         if (_startIntroControlled)
             _moveInput = _introGrounded ? new Vector2(Mathf.Clamp(_introVelocity.x, -1f, 1f), 0f) : Vector2.zero;
@@ -498,7 +504,7 @@ public partial class Player : MonoBehaviour
 
     {
 
-        if (_startIntroControlled || IsElectricStunned)
+        if (_startIntroControlled || IsElectricStunned || IsItemDrinking)
             return;
 
         RefreshGroundedState();
@@ -533,7 +539,7 @@ public partial class Player : MonoBehaviour
     private void PollMovementInput()
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking)
         {
             _moveInput = Vector2.zero;
             return;
@@ -707,7 +713,7 @@ public partial class Player : MonoBehaviour
         bool isAlive = _playerHealth == null || !_playerHealth.IsDead;
 
         bool shouldPlay = grounded
-            && !_goalInputBlocked && !_gimmickInputBlocked
+            && !_goalInputBlocked && !_gimmickInputBlocked && !IsItemDrinking
 
             && !_bjump
 
@@ -820,6 +826,7 @@ public partial class Player : MonoBehaviour
     private void HandlePlayerDead()
 
     {
+        EndItemDrink();
         EndElectricStun();
         CancelEnemyHitReaction();
         _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
@@ -1062,7 +1069,7 @@ public partial class Player : MonoBehaviour
     public void _OnMove(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking)
             return;
 
         if (!InputEnabled)
@@ -1079,7 +1086,7 @@ public partial class Player : MonoBehaviour
     public void _OnJump(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking)
             return;
 
         if (!InputEnabled)
@@ -1134,7 +1141,7 @@ public partial class Player : MonoBehaviour
     /// <summary>トランポリン接触の前後だけ追加ジャンプを受け付ける。速度の適用はPlayerが所有する。</summary>
     public void BeginTrampolineJumpInput(float window)
     {
-        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled || IsElectricStunned || IsEnemyHitStunned) return;
+        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking) return;
         _trampolineJumpUntil = Time.time + Mathf.Max(0f, window);
         if (Time.time - _lastJumpPressedAt <= window)
             _jumpBufferTimer = Mathf.Max(_jumpBufferTimer, Time.fixedDeltaTime * 2f);
@@ -1146,7 +1153,7 @@ public partial class Player : MonoBehaviour
 
     {
 
-        if (_rigid == null || IsElectricStunned) return;
+        if (_rigid == null || IsElectricStunned || IsItemDrinking) return;
 
         _rigid.AddForce(worldImpulse, mode);
 

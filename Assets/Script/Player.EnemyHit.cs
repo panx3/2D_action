@@ -19,7 +19,7 @@ public partial class Player
     public void BeginEnemyHitReaction(Vector2 impulse)
     {
         if (!isActiveAndEnabled || !InputEnabled || _startIntroControlled || _goalInputBlocked || _gimmickInputBlocked
-            || IsElectricStunned || (_playerHealth != null && (_playerHealth.IsDead || _playerHealth.IsRespawning))) return;
+            || IsElectricStunned || IsItemDrinking || (_playerHealth != null && (_playerHealth.IsDead || _playerHealth.IsRespawning))) return;
 
         enemyHitStartedAt = Time.time;
         enemyHitUntil = Time.time + Mathf.Max(0f, enemyHitControlLockDuration);

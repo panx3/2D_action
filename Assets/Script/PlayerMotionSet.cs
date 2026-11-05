@@ -52,6 +52,7 @@ public sealed class PlayerMotionSet : ScriptableObject
     public Sequence climbing = new Sequence();
     public Sequence hurtGround = new Sequence();
     public Sequence hurtAir = new Sequence();
+    public Sequence drink = new Sequence();
     [Tooltip("横、斜め上、上、斜め下、下。左右は既存のFacingを使う。")]
     public DirectionalThrow[] throws = new DirectionalThrow[5];
     [Min(0.1f)] public float chargeOrbitRadius = 1.25f;
@@ -68,6 +69,7 @@ public sealed class PlayerMotionSet : ScriptableObject
         Add(run); Add(jumpUp); Add(apex); Add(fall); Add(land); Add(charge);
         Add(chargeRunning); Add(chargeAirborne);
         Add(recall); Add(brace); Add(pulled); Add(hanging); Add(climbing); Add(hurtGround); Add(hurtAir);
+        Add(drink);
         if (throws == null) return;
         foreach (DirectionalThrow direction in throws)
         {

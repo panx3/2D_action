@@ -43,7 +43,12 @@ public class PlayerHealth : MonoBehaviour
     public int CurrentHp { get; private set; }
     public int MaxHp => _maxHp;
     public bool IsDead { get; private set; }
-    public bool IsInvincible { get; private set; }
+    private bool damageInvincible;
+    public bool IsInvincible
+    {
+        get => damageInvincible || (_player != null && _player.IsItemDrinking);
+        private set => damageInvincible = value;
+    }
     public bool IsRespawning { get; private set; }
     public int DamageSoundPlayCount { get; private set; }
     /// <summary>遅延回復を死亡・復帰・無効化の前後で持ち越さないための世代番号。</summary>
@@ -96,6 +101,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_player != null) _player.EndItemDrink();
         RecoveryVersion++;
         StopInvincible();
     }
@@ -163,6 +169,7 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void ResetToFullHp()
     {
+        if (_player != null) _player.EndItemDrink();
         RecoveryVersion++;
         int before = CurrentHp;
         CurrentHp = _maxHp;
@@ -181,6 +188,7 @@ public class PlayerHealth : MonoBehaviour
         if (CurrentHp <= 0)
             return;
 
+        if (_player != null) _player.EndItemDrink();
         RecoveryVersion++;
         IsDead = false;
         StopInvincible();
@@ -222,6 +230,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
+        if (_player != null) _player.EndItemDrink();
         RecoveryVersion++;
         IsDead = true;
         StopInvincible();
@@ -237,6 +246,8 @@ public class PlayerHealth : MonoBehaviour
 
     public void BeginRespawnProtection()
     {
+        RecoveryVersion++;
+        if (_player != null) _player.EndItemDrink();
         IsRespawning = true;
         if (_player != null) _player.CancelEnemyHitReaction();
         StopInvincible();

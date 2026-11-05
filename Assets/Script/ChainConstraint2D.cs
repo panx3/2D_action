@@ -99,7 +99,8 @@ public class ChainConstraint2D : MonoBehaviour
     public float TensionDamping => tensionDamping;
     public float AirTensionMultiplier => airTensionMultiplier;
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
-    public bool IsPlayerPullSuppressed => _suppressPlayerPull || (_player != null && _player.IsElectricStunned);
+    public bool IsPlayerPullSuppressed => _suppressPlayerPull
+        || (_player != null && (_player.IsElectricStunned || _player.IsItemDrinking));
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
     public bool HasOneWaySupport => _oneWaySupport.IsSupporting;
