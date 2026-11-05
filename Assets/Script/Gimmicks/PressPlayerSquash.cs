@@ -31,7 +31,8 @@ public sealed class PressPlayerSquash : MonoBehaviour
         Vector3 foot = new Vector3(sprite.center.x, body.flipY ? -sprite.max.y : sprite.min.y, 0f);
         float footY = body.transform.TransformPoint(foot).y;
         float height = sprite.size.y * Mathf.Abs(body.transform.lossyScale.y);
-        float target = Mathf.Clamp((underside - footY) / Mathf.Max(0.01f, height), minimumHeight, 0.85f);
+        // 実体が頭上で止まっていても、被挟み時の描画は高さ30%まで潰して見せる。
+        float target = Mathf.Clamp((underside - footY) / Mathf.Max(0.01f, height), minimumHeight, Mathf.Max(minimumHeight, 0.3f));
         if (lastFixed != Time.fixedTime) { requested = 1f; lastFixed = Time.fixedTime; }
         requested = Mathf.Min(requested, target);
         maximumWidth = width; recovery = Mathf.Max(0.01f, recoveryTime);
