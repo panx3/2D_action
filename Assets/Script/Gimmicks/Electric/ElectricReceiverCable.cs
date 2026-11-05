@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>受電判定とイベント。接続先の装置の実装には依存しない。</summary>
+[DefaultExecutionOrder(75)]
 public sealed class ElectricReceiverCable : MonoBehaviour
 {
     [SerializeField] private TeslaCoil source;
@@ -23,10 +24,18 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     [SerializeField, Min(0.1f)] private float actorEffectRadius = 0.65f;
     private float flashRemaining;
     private ElectricArcEffect tipArc, ballArc, playerArc, chainArc, contactArc;
+    private PlayerHealth playerHealth;
+    private Player actor;
+    private ElectricActivationSequence sequence;
+    private SpriteRenderer ballVisual;
+    public event System.Action ConductionStarted;
+    public event System.Action ConductionEnded;
     public event System.Action PowerStarted;
     public event System.Action PowerEnded;
     public bool IsConducting => conducting;
     public bool IsPowered => powered;
+    public MorningStarLauncher Launcher => launcher;
+    public Vector2 TipWorld => transform.TransformPoint(tip);
 
     private void Awake()
     {
@@ -36,6 +45,10 @@ public sealed class ElectricReceiverCable : MonoBehaviour
         chainArc = gameObject.AddComponent<ElectricArcEffect>();
         contactArc = gameObject.AddComponent<ElectricArcEffect>();
         if (launcher == null) launcher = FindAnyObjectByType<MorningStarLauncher>();
+        if (launcher != null) playerHealth = launcher.GetComponent<PlayerHealth>();
+        if (launcher != null) actor = launcher.GetComponent<Player>();
+        if (launcher != null) ballVisual = ElectricArcEffect.BallVisual(launcher.BallBody);
+        sequence = GetComponent<ElectricActivationSequence>();
     }
     private bool PlayerInRange()
     {
@@ -53,17 +66,19 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     }
     private void Update()
     {
+        if (Time.deltaTime <= 0f) return;
         bool connected = launcher != null && launcher.isActiveAndEnabled && launcher.gameObject.activeInHierarchy &&
             launcher.BallBody != null && launcher.BallBody.simulated && launcher.IsRopeLineVisible &&
             launcher.State != MorningStarLauncher.MorningStarState.StartIntro &&
-            launcher.State != MorningStarLauncher.MorningStarState.Respawning;
+            launcher.State != MorningStarLauncher.MorningStarState.Respawning &&
+            (playerHealth == null || (!playerHealth.IsDead && !playerHealth.IsRespawning));
         ballContact = connected && source != null && source.Contains(launcher.BallBody);
         if (source != null) source.SetBallInRange(ballContact, ballContact ? launcher.BallBody.transform : null);
-        bool raw = ballContact && PlayerInRange();
+        bool raw = ballContact && launcher.CanBeginElectricStun && PlayerInRange();
         if (!connected) lostTime = contactGrace + 1f;
         else if (raw) lostTime = 0f;
         else lostTime += Time.deltaTime;
-        conducting = raw || (conducting && connected && lostTime <= contactGrace);
+        SetConducting(raw || (conducting && connected && lostTime <= contactGrace));
         if (conducting)
         {
             heldTime += Time.deltaTime;
@@ -88,10 +103,17 @@ public sealed class ElectricReceiverCable : MonoBehaviour
         onPowerEnded.Invoke();
         PowerEnded?.Invoke();
     }
+    private void SetConducting(bool value)
+    {
+        if (conducting == value) return;
+        conducting = value;
+        if (value) ConductionStarted?.Invoke();
+        else ConductionEnded?.Invoke();
+    }
     private void OnDisable()
     {
         if (source != null) source.SetBallInRange(false);
-        conducting = false; heldTime = 0f; flashRemaining = 0f;
+        SetConducting(false); heldTime = 0f; lostTime = 0f; flashRemaining = 0f; ballContact = false;
         if (body != null) body.color = Color.white;
         if (tipArc != null) tipArc.Hide();
         if (ballArc != null) ballArc.Hide();
@@ -104,15 +126,12 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     {
         flashRemaining = Mathf.Max(0f, flashRemaining - Time.deltaTime);
         if (body != null) body.color = flashRemaining > 0f ? new Color(1f, 1f, 0.7f) : conducting ? new Color(1f, 0.84f, 0.48f) : Color.white;
-        tipArc.DrawBurst(transform.TransformPoint(tip), radius, effectIntensity * (conducting ? 1.8f : 0.8f));
+        tipArc.DrawOutline(body, conducting ? effectIntensity * 1.8f : 0f, TipWorld, null, 0.55f);
         bool charged = ballContact && launcher != null;
-        Collider2D ballCollider = charged ? launcher.BallBody.GetComponentInChildren<Collider2D>() : null;
-        float ballRadius = ballCollider != null ? Mathf.Max(ballCollider.bounds.extents.x, ballCollider.bounds.extents.y) + 0.12f : actorEffectRadius;
-        ballArc.DrawBurst(charged ? launcher.BallBody.position : Vector2.zero, ballRadius, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
-        Collider2D playerCollider = charged ? launcher.GetComponent<Collider2D>() : null;
-        Vector2 playerCenter = playerCollider != null ? (Vector2)playerCollider.bounds.center : charged ? (Vector2)launcher.transform.position : Vector2.zero;
-        playerArc.DrawBurst(playerCenter, actorEffectRadius, charged ? effectIntensity * (conducting ? 0.9f : 0.6f) : 0f);
-        contactArc.DrawBolt(playerCenter, transform.TransformPoint(tip), conducting ? effectIntensity : 0f);
+        ballArc.DrawOutline(ballVisual, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
+        SpriteRenderer playerVisual = sequence != null ? sequence.EffectSprite : actor != null ? actor.BodySprite : null;
+        playerArc.DrawOutline(playerVisual, charged ? effectIntensity : 0f);
+        contactArc.DrawBetweenOutlines(playerVisual, body, conducting ? effectIntensity : 0f);
         chainArc.DrawChain(charged ? launcher : null, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
     }
     private void OnDrawGizmosSelected() { Gizmos.color = Color.yellow; Gizmos.matrix = transform.localToWorldMatrix; Gizmos.DrawWireSphere(tip, radius); }

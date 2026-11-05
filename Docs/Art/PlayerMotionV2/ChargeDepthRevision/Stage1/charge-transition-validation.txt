@@ -1,0 +1,2 @@
+PASS charge interruption: ground/air x left/right x 8 phases; ball always immediately behind player, Respawn restores original visual depth/sorting and physics.
+PASS charge -> original recall-before-throw -> thrown -> Respawn; dedicated orbit/path/sorting released.

@@ -1,0 +1,2 @@
+PASS charge interruption: ground/air x left/right; mirrored grip/orbit, far-side sorting, Respawn -> original Rest physics and sorting.
+PASS charge -> original recall-before-throw -> thrown -> Respawn; dedicated orbit/path/sorting released.

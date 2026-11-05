@@ -1,0 +1,61 @@
+using System;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class IdleThrowInstalledValidation
+{
+    const string SetPath = "Assets/Resources/PlayerMotion/PlayerMotionV2.asset";
+    const string Backup = "Docs/Art/PlayerMotionV2/IdleThrowRevision/Before/PlayerMotionV2.asset";
+    public static string Run()
+    {
+        var set = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>(SetPath);
+        var scene = SceneManager.GetActiveScene();
+        var launcher = UnityEngine.Object.FindFirstObjectByType<MorningStarLauncher>();
+        if (set == null || launcher == null || !ReferenceEquals(set, launcher.MotionSet)) throw new Exception("Motion set mismatch.");
+        if (EditorApplication.isCompiling) throw new Exception("Unity is still compiling.");
+        string[] before = File.ReadAllLines(Backup), after = File.ReadAllLines(SetPath);
+        foreach (string field in new[] { "chargeGrip:", "framesPerSecond:", "loop:", "chargeOrbitRadius:", "chargeEntryTime:", "chargeSlackDepth:" })
+            if (!before.Where(x => x.TrimStart().StartsWith(field, StringComparison.Ordinal))
+                .SequenceEqual(after.Where(x => x.TrimStart().StartsWith(field, StringComparison.Ordinal))))
+                throw new Exception("Unintended serialized change: " + field);
+        if (!set.throws[0].ground.frames.Select(f => f.sprite.name)
+            .SequenceEqual(new[] { "ThrowForward_00", "ThrowForward_01", "ThrowForward_02" }))
+            throw new Exception("Grounded horizontal throw changed.");
+        int[] sectors = { 0, 1, 2, 1, 0, 3, 4, 3 };
+        for (int i = 0; i < sectors.Length; i++)
+        {
+            float theta = i * Mathf.PI / 4f;
+            var dir = new Vector2(Mathf.Cos(theta), Mathf.Sin(theta));
+            foreach (bool air in new[] { false, true })
+            {
+                var seq = set.Throw(dir, air);
+                var expected = air ? set.throws[sectors[i]].air : set.throws[sectors[i]].ground;
+                if (!ReferenceEquals(seq, expected) || seq.frames.Length != 3 || seq.loop
+                    || Mathf.Abs(seq.framesPerSecond - 16.666668f) > .001f)
+                    throw new Exception("Wrong throw direction or sequence timing: " + i + " air=" + air);
+            }
+        }
+        int frames = 0;
+        foreach (var direction in set.throws)
+        foreach (var sequence in new[] { direction.ground, direction.air })
+        foreach (var frame in sequence.frames)
+        {
+            if (frame.sprite == null || !set.TryGetFrame(frame.sprite, out var mapped) || mapped != frame)
+                throw new Exception("A throw sprite is missing or has an incorrect lookup.");
+            var importer = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(frame.sprite));
+            if (frame.sprite.pixelsPerUnit != 32 || importer.filterMode != FilterMode.Point || importer.mipmapEnabled
+                || importer.textureCompression != TextureImporterCompression.Uncompressed || importer.maxTextureSize < 768)
+                throw new Exception("Unexpected sprite import settings: " + frame.sprite.name);
+            frames++;
+        }
+        string[] expectedCharge = { "Charge_00", "Charge_00", "Charge_01", "Charge_01", "Charge_03", "Charge_03", "Charge_07", "Charge_07" };
+        if (!set.charge.frames.Select(f => f.sprite.name).SequenceEqual(expectedCharge)) throw new Exception("Charge frame order changed.");
+        if (!EditorApplication.isPlaying || Time.timeScale != 0 || scene.name != "Stage1" || scene.isDirty)
+            throw new Exception("Previously paused session or scene state changed.");
+        return "PASS: " + frames + " throw-frame references, 8 directions on ground/in air, unchanged hold timing and charge grips; "
+            + "32 PPU / Point / no mipmaps / uncompressed. Stage1 remains paused and clean; player=" + launcher.transform.position.ToString("F3");
+    }
+}

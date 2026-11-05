@@ -1,0 +1,43 @@
+using System;
+using System.IO;
+using UnityEngine;
+
+// Reorders whole existing frames; no artwork is drawn or resampled.
+public static class IdleThrowContinuityPreview
+{
+    const string Root = "Docs/Art/PlayerMotionV2/IdleThrowRevision/Preview/";
+    public static string Run()
+    {
+        var up = Read("ThrowUpIdle");
+        var down = Read("ThrowDownIdle");
+        var diagonal = Read("ThrowDownRightIdle");
+        Pack("ThrowUpContinuity", new[] { up, up, up, up, up, up }, new[] { 1, 2, 2, 4, 5, 5 });
+        Pack("ThrowDownRightContinuity", new[] { down, diagonal, diagonal, down, diagonal, diagonal }, new[] { 0, 1, 2, 3, 4, 5 });
+        UnityEngine.Object.DestroyImmediate(up); UnityEngine.Object.DestroyImmediate(down); UnityEngine.Object.DestroyImmediate(diagonal);
+        return "Reordered two native-size preview sheets; no game asset or scene modified.";
+    }
+    static Texture2D Read(string name)
+    {
+        var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        if (!texture.LoadImage(File.ReadAllBytes(Root + name + ".png"), false)) throw new Exception("Missing " + name);
+        return texture;
+    }
+    static void Pack(string name, Texture2D[] source, int[] indices)
+    {
+        const int cell = 192, width = 768, height = 384;
+        var result = new Color32[width * height];
+        for (int i = 0; i < indices.Length; i++)
+        {
+            int index = indices[i], sourceX = index % 4 * cell, sourceY = index / 4 * cell;
+            int targetX = i % 4 * cell, targetY = i / 4 * cell;
+            var pixels = source[i].GetPixels32();
+            for (int y = 0; y < cell; y++) for (int x = 0; x < cell; x++)
+                result[(height - 1 - targetY - y) * width + targetX + x] =
+                    pixels[(source[i].height - 1 - sourceY - y) * source[i].width + sourceX + x];
+        }
+        var output = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        output.SetPixels32(result); output.Apply();
+        File.WriteAllBytes(Root + name + ".png", output.EncodeToPNG());
+        UnityEngine.Object.DestroyImmediate(output);
+    }
+}

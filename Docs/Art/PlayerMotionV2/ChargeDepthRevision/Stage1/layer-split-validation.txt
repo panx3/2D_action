@@ -1,0 +1,1 @@
+PASS: 8 charge phases keep handle-side links in front, ball-side links behind; supplemental and line-only renderers split at the grip; return restores normal sorting and physics.

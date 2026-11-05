@@ -1,0 +1,5 @@
+PASS charge: 8 phases, separate near-ball grip, handle-to-grip sag path, cancel -> identical Rest physics.
+PASS throws: 8 directions x ground/air, unsnapped direction retained, correct sprite selected.
+PASS hanging: dedicated anchored sprite replaces upward-throw pose.
+PASS climb: all 4 high grips stay on chain axis; stationary climb phase can freeze.
+PASS recall -> Rest: Rigidbody settings match initial Rest.

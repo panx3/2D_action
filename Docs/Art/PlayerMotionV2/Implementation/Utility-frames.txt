@@ -1,0 +1,6 @@
+Utility_0 bounds=107,72,425,478 rootX=249.5248 chain=(-1.10, -1.03) grip=(1.00, -0.43) skull=32 head=(103.00, 73.00) bodyY=1.110372
+Utility_1 bounds=562,80,908,478 rootX=736.7527 chain=(-1.49, -0.74) grip=(0.94, -0.34) skull=32 head=(103.00, 73.00) bodyY=1.153666
+Utility_2 bounds=1046,77,1487,478 rootX=1229.557 chain=(2.00, 0.03) grip=(2.09, -0.19) skull=32 head=(103.00, 73.00) bodyY=1.091677
+Utility_3 bounds=69,583,499,967 rootX=242.2802 chain=(1.83, 0.11) grip=(1.90, -0.13) skull=32 head=(103.00, 73.00) bodyY=1.11129
+Utility_4 bounds=556,575,1023,964 rootX=753.3082 chain=(1.94, 0.82) grip=(1.86, -0.30) skull=32 head=(103.00, 73.00) bodyY=1
+Utility_5 bounds=1048,553,1520,936 rootX=1258.13 chain=(1.66, 0.68) grip=(1.46, 0.50) skull=32 head=(103.00, 73.00) bodyY=1

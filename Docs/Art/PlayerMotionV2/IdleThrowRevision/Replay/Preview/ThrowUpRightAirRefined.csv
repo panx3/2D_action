@@ -1,0 +1,4 @@
+index,sourceIndex,chainX,chainY,gripX,gripY,bodyStretch,touchesOutputEdge
+0,0,-1.36406946,0.788496733,0.9340277,0,1,False
+1,1,-2.28000021,-1.07999992,1.59375,-0.109375,1,False
+2,2,-2.27999973,-1.07999992,1.5625,-0.125,1,False

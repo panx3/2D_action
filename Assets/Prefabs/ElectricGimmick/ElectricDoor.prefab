@@ -194,7 +194,7 @@ MonoBehaviour:
   openDirection: {x: 1, y: 0}
   openDistance: 0.75
   speed: 1.5
-  stayOpenOnceActivated: 0
+  stayOpenOnceActivated: 1
   audioSource: {fileID: 1177988515598816319}
   openSound: {fileID: 8300000, guid: f5fddacbe25adfc419b22b57d26efc76, type: 3}
   closeSound: {fileID: 0}

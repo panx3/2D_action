@@ -1,0 +1,1 @@
+PASS: throwing frames finish and release the Animator layer while physical hold remains; ground/air tension adds no pose; layer weight restores; charge gait and falling settle remain correct.

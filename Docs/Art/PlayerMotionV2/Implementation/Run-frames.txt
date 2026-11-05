@@ -1,0 +1,6 @@
+Run_0 bounds=34,38,177,199 rootX=107.4271 chain=(-2.07, -1.41) grip=(0.59, -0.25) skull=32 head=(103.00, 77.00) bodyY=1.015832
+Run_1 bounds=240,41,376,200 rootX=307.7699 chain=(-1.94, -1.35) grip=(0.58, -0.21) skull=32 head=(103.00, 77.00) bodyY=1.050541
+Run_2 bounds=439,36,573,200 rootX=504.5176 chain=(-1.90, -1.28) grip=(0.56, -0.24) skull=32 head=(103.00, 77.00) bodyY=1.027263
+Run_3 bounds=638,38,778,199 rootX=711.9721 chain=(-2.05, -1.42) grip=(0.57, -0.25) skull=32 head=(103.00, 77.00) bodyY=1.015832
+Run_4 bounds=839,41,983,201 rootX=911.2234 chain=(-1.93, -1.08) grip=(0.59, -0.22) skull=32 head=(103.00, 77.00) bodyY=1.085356
+Run_5 bounds=1042,41,1182,200 rootX=1113.952 chain=(-1.88, -1.40) grip=(0.56, -0.23) skull=32 head=(103.00, 77.00) bodyY=1.108757

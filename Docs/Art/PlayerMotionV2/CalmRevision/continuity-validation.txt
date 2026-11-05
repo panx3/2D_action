@@ -1,0 +1,1 @@
+PASS: tension does not interrupt throw; follow-through remains one direction across changing tension angles; charge gait advances independently of spin phase; descent/brace/pull settle once without repeated flapping/nodding.

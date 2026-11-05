@@ -1,0 +1,1 @@
+PASS: final throwing frame remains visible through 0.25s, including an early physical return, then releases at 0.32s; tension adds no pose and charge gait remains correct.
