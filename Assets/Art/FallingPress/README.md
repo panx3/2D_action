@@ -1,19 +1,19 @@
 # Stage2 落下プレス機
 
-`Assets/Prefabs/Environment/Stage2/FallingPress/` の `FallingPress.prefab`（プレス機のみ）と `PressBallStand.prefab`（鉄球マーク付き専用台座）は独立したPrefab。停止は実Colliderへの衝突で決まり、`Ball Stand` の割り当ては任意。保存済みStage2では x=88, y=1.23808 に1組を配置している。
+`Assets/Prefabs/Environment/Stage2/FallingPress/` の `FallingPress.prefab`（プレス機のみ）と `PressBallStand.prefab`（鉄球マーク付き専用台座）は独立したPrefab。停止は台座上の鉄球との実Collider接触で決まり、`Ball Stand` の割り当ては任意。保存済みStage2では x=88, y=1.23808 に1組を配置している。
 
 ## 設計・使い方
 
 - ルートを床に置く。回転0、Scale1で使用する。動くのは `MovingHead` のKinematic Rigidbody2Dだけ。
-- 台座は側面・上面ともPlayerに当たる。鉄球/プレス用ColliderはLayer2に維持し、Player用の同寸ColliderをDefault Layer0に追加して既存の接地判定にも対応する。プレス本体も常にPlayerと物理衝突する。上面には接地用のPlayer専用Collider（Default Layer0）を持つ。ProjectSettingsは変更しない。
-- プレス下降前に実際のBoxCollider2Dを `Collider2D.Cast` でスイープし、最初に当たった台座または鉄球の直前まで移動する。Kinematicのため静的な台座との接触も有効にする。Playerの頭上と足元の移動余地も確認し、床へ押し込む直前でプレスの下降量を制限する。PlayerのCollider・速度・重力・位置は書き換えない。
-- 鉄球は `MorningStarLauncher.BallBody` で識別する。台座の有無、中央範囲、速度、State、Player用クリアランスで鉄球との衝突を無効化しない。台座だけでも止まり、台座がない場所の鉄球でも止まる。
-- 台座上の鉄球なら台座高1.9+直径1.7+接触余白0.04で、標準停止高は約3.64。台座だけなら約1.94、床の鉄球だけなら約1.74でも停止する。クリアランス3.5は安全表示の基準であり、停止の成立条件ではない。
-- 支点がなくなると下降を再開し、次に当たる台座・鉄球で再停止する。支点が残っていれば下待機後に上昇する。鉄球の質量・速度・重力・Stateへの書き込みはない。プレス側だけの移動を制御して鉄球を押し潰さない。
-- 既存 `PlayerHealth.TakeDamage(1, knockback)` を使用。下降スイープがPlayerに当たり、足元の床・台座との間にそれ以上下がれないとき（PlayerBlocked）、Player幅の半分以上が下面に入っていれば被弾する。足元は実接触と相対速度で確認する。上部待機・警告・上昇・上に乗る・空中・側面接触は無害。停止済みの狭い隙間には通常寸法のPlayer Colliderが入れないため、後から重なって被弾することはない。無敵・死亡・復帰は既存HP処理に任せる。
+- 台座は側面・上面ともPlayerに当たる。鉄球/プレス用ColliderはLayer2に維持し、Player用の同寸ColliderをDefault Layer0に追加して既存の接地判定にも対応する。プレス本体の側面・上面は通常どおりPlayerに当たる。下降で挟む直前だけ、そのPlayerとの実体衝突を解除して押し込みを防ぐ。上面には接地用のPlayer専用Collider（Default Layer0）を持つ。ProjectSettingsは変更しない。
+- 下降位置を制限できるのは、台座上面に実接触している `MorningStarLauncher.BallBody` だけ。鉄球の接触相手から `PressBallStandController.TryGetSupport` を確認し、`Collider2D.Cast` の最初の接触直前で止める。Player・空の台座・未セットの鉄球では下降を制限しない。
+- 台座高1.9+鉄球直径1.7+接触余白0.04で標準停止高は約3.64。台座から鉄球が外れたら下降を再開し、床基準の最下点0.04まで進んで通常周期で上昇する。安全表示の基準3.5、開始位相、上下の基準点は維持。
+- 未セットの鉄球を床へ押し込まないよう、下降で接触するその鉄球とプレスの組み合わせだけ実体衝突を解除する。鉄球の質量・速度・重力・Stateや、鉄球/Playerと台座・床の衝突には書き込まない。
+- Player判定は移動とは独立した移動区間のOverlapBoxで行う。頭上と足元の支持面に挟む場合だけ、Playerとこのプレス本体/上面の衝突を一時解除し、既存 `PlayerHealth.TakeDamage` を使用する。解除してもダメージ検出は継続でき、プレスは最下点まで下降する。無敵・死亡・復帰は既存HP処理に任せる。
+- 衝突の解除はColliderの組み合わせ単位。形状が離れたら元の設定に戻し、無効化時にも後始末する。他のプレスとの衝突や、停止済みの狭い隙間への新たな侵入防止は維持する。PlayerのCollider・速度・重力・位置は変更しない。
 - 挟まれたPlayerは `PressPlayerSquash` が足元を支点にSpriteの頂点だけを縦圧縮・横伸びさせる。PlayerルートとColliderは変形しない。既存のライティング・点滅を維持し、離脱・死亡・復帰・無効化で元の表示に戻す。
 - 被挟み時の描画高さは通常時の30%以下（従来は85%以下）。標準設定では横幅が約13%伸び、ぺちゃんこになる。Inspectorの最小高さが30%を超える場合は、その設定を優先する。物理衝突・被弾条件・保持/復元時間は維持。
-- プレス・台座は独立配置できる。Inspectorの `Ball Stand` は配置確認用で、停止に専用所有権や1対1の割り当ては必要ない。複製した未接続のプレスも、接触した台座・鉄球で止まる。
+- プレス・台座は独立配置できる。Inspectorの `Ball Stand` は配置確認用で、停止に専用所有権や1対1の割り当ては必要ない。複製した未接続のプレスも、実際に台座で支持された鉄球に当たれば止まる。
 - 台座の上面に鉄球が実接触すると、左右の石が赤から水色に光る。鉄球が外れると赤に戻る。元の石のドット絵をマスク化した表示なので、金属や鉄球マークの色は変えない。チェックマーク・発光枠・上部バーは撤去した。セット時の小さな金属SEは維持。
 - プレス停止時は、安全な通路高なら緑、低すぎる場合はアンバーを表示する。衝突時の火花・SE・既存CameraShake2D、下降前の赤/黄点滅は維持。
 
@@ -61,14 +61,13 @@ imagegen組み込みツールで新規生成した画像を切り出し、最近
 
 Unityメニュー `Tools/Falling Press/Validate Saved Assets` と `Run Play Mode Checks`。後者はStage2の保存データに触れず、遠方の仮設床で実Player/鉄球と仮想Gamepadを使用し、終了後は編集モードに戻る。結果は `FallingPressPlayModeChecks.Result()` で取得できる。最終的な操作感、音量、コース全体の難易度は実機Gamepadで評価する。
 
-2026-11-05の衝突・被挟み判定修正:
+Player接触で下降が停止する不具合の修正:
 
-- 原因は以前のめり込み対策でプレス本体のPlayer衝突を除外していたこと。常時の実体衝突に戻し、めり込み対策はプレスの移動量制限に移した。
-- Playerに触れるだけでは被弾せず、下降が足元の支持面との空間を閉じる場合だけダメージ・描画圧縮が発生する。PlayerのColliderは縮めない。
-- Playerに追加した公開APIは既存接地レイヤーを読む `GroundLayers` のみ。Input、鉄球・鎖のState、Rigidbody2D設定は変更しない。
-- `Run Crush Damage Checks` は実Playerと仮想Gamepadを使い、下面へのジャンプ、閉じた隙間の側面、上面の接地、床/台座との被挟み、床の鉄球停止、わずかに高さ不足の隙間を確認する。閉じたプレス内へPlayerをワープさせる検証は廃止した。
-- Inspectorのサイクル・ダメージ値は維持。プレスPrefabに内部参照 `Player Top Surface` と上面Colliderを追加。Stage2の配置とScene保存データは変更しない。
-- 衝突・被挟みの7ケース、圧縮/復元と石の赤→水色→赤、連続回帰確認がPASS。床/台座との被挟み、鉄球停止、複数台、警告/上下動、射出→Recall→Dragging、Magnet/Swingを確認し、実行時Error/Exceptionは0。連続テストではPlayerを開いた通路へ入れ、鎖の張力で判定外へ移らない位置に鉄球を置く。
+- 原因は `LimitPlayerDescent` が移動先をPlayer頭上に制限し、`PlayerBlocked` を下待機状態として扱っていたこと。Player用の停止位置制限を廃止し、ダメージ判定を独立させた。`StandBlocked` / `PlayerBlocked` の旧enum値は互換性のため残すが使用しない。
+- 現在のぺちゃんこ演出スクリプト・Shader・保持/復元時間は変更しない。呼び出す接触面は最初の被挟み位置に固定し、下降するプレス下面に合わせてさらに潰れたり、演出が延長されたりしないようにする。
+- Inspector・Prefabデザイン・Scene配置は維持。検証対象は、Player被弾後の最下点到達、床へのめり込み防止、描画高さ30%、台座上の鉄球だけの支持、取り外し後の再下降、複数台・周期・既存射出/回収/Dragging/Swing。
+- 実Playerの衝突/被挟み7ケースと連続回帰確認がPASS。被挟み後の最下点0.04到達、描画高さ30%、既存無敵時間、未セット鉄球の保護、台座上の鉄球による停止/取り外し、離脱後の衝突復元、複数台、射出→Recall→Dragging、Magnet/Swingを確認。コンパイル成功、新規Error/Exceptionは0。保存済みPrefab/Sprite/Script参照は正常、Stage2は未保存変更なし。動画ファイルは取得できず、動画との直接比較・実機Gamepadの通し評価は未実施。
+- 使用API: [Physics2D.IgnoreCollision](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Physics2D.IgnoreCollision.html)、[Collider2D.Distance](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Collider2D.Distance.html)、[Rigidbody2D.GetContacts](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/Rigidbody2D.GetContacts.html)。
 
 2026-10-30の変更と検証:
 

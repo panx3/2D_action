@@ -10,7 +10,7 @@ using UnityEngine.InputSystem.LowLevel;
 public static class FallingPressCrushChecks
 {
     private const string Key = "FallingPressCrushChecks";
-    private static readonly string[] Names = { "upper underside collision", "closed gap side collision", "press top grounding", "floor pinch", "stand pinch", "floor ball stop", "almost tall enough gap" };
+    private static readonly string[] Names = { "upper underside collision", "closed gap side collision", "press top grounding", "floor pinch", "stand pinch", "unplaced ball does not stop press", "almost tall enough gap" };
     private static readonly List<string> passed = new List<string>();
     private static MorningStarLauncher launcher;
     private static Player player;
@@ -84,9 +84,12 @@ public static class FallingPressCrushChecks
             {
                 Require(health.CurrentHp == hpBefore - 1 && health.IsInvincible && squashSeen, "no protected crush damage/squash; state=" + press.State + " head=" + press.UndersideY + " player=" + playerBody.position);
                 Require(minimumFeet > (testCase == 4 ? 1.82f : -0.08f), "Player embedded in support");
-                Require(playerCollider.bounds.max.y <= press.UndersideY + 0.08f, "press passed into Player");
+                Require(press.State == FallingPressController.CycleState.BottomWait && press.CurrentClearance < 0.08f,
+                    "Player stopped press before bottom: " + press.State + "/" + press.CurrentClearance);
+                Require(squash != null && Mathf.Abs(squash.VerticalScale - 0.3f) < 0.01f,
+                    "existing 30% squash changed: " + (squash != null ? squash.VerticalScale : 1f));
             }
-            if (testCase == 5) Require(press.IsBallBlocked && press.CurrentClearance > 1.6f && press.CurrentClearance < 1.9f && ball.GetComponent<Collider2D>().bounds.min.y > -0.1f, "floor ball no longer stops press");
+            if (testCase == 5) Require(!press.IsBlocked && press.CurrentClearance < 0.08f && ball.GetComponent<Collider2D>().bounds.min.y > -0.1f, "unplaced ball stopped press or embedded in floor");
             passed.Add(Names[testCase] + ": PASS");
             if (++testCase == Names.Length)
             {
@@ -108,7 +111,7 @@ public static class FallingPressCrushChecks
         floor.transform.localPosition = new Vector2(1000f, -0.5f); floor.AddComponent<BoxCollider2D>().size = new Vector2(24f, 1f);
         var pressRoot = new GameObject("PressRoot"); pressRoot.transform.SetParent(fixture.transform, false); pressRoot.SetActive(false);
         var go = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FallingPressSetup.PressPath), pressRoot.transform, false);
-        go.transform.localPosition = new Vector2(1000f, 0f); press = go.GetComponent<FallingPressController>();
+        go.transform.localPosition = new Vector2(1000f, testCase == 6 ? 3.2f : 0f); press = go.GetComponent<FallingPressController>();
         var settings = new SerializedObject(press);
         settings.FindProperty("topWait").floatValue = testCase == 0 || testCase == 2 ? 10f : 0.4f;
         settings.FindProperty("warningTime").floatValue = 0.2f;
@@ -116,12 +119,12 @@ public static class FallingPressCrushChecks
         settings.FindProperty("knockback").vector2Value = Vector2.zero;
         settings.FindProperty("startPhase").floatValue = testCase == 1 || testCase == 6 ? 0.3f : 0f;
         settings.ApplyModifiedPropertiesWithoutUndo();
-        if (testCase == 1 || testCase == 4 || testCase == 6)
+        if (testCase == 1 || testCase == 4)
         {
             var stand = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FallingPressSetup.StandPath), fixture.transform, false);
-            stand.transform.localPosition = new Vector2(1000f, testCase == 6 ? 1.3f : 0f);
+            stand.transform.localPosition = new Vector2(1000f, 0f);
         }
-        Vector2 position = testCase == 0 ? new Vector2(1000f, 4.6f) : testCase == 2 ? new Vector2(1000f, 10.1f) :
+        Vector2 position = testCase == 0 ? new Vector2(1000f, 4.75f) : testCase == 2 ? new Vector2(1000f, 10.1f) :
             testCase == 4 ? new Vector2(1000f, 3.96f) : testCase == 5 ? new Vector2(1004.5f, 2.06f) :
             testCase == 1 || testCase == 6 ? new Vector2(995.5f, 2.06f) : new Vector2(1000f, 2.06f);
         Move(playerBody, position); launcher.ResetForRespawn();
@@ -129,7 +132,11 @@ public static class FallingPressCrushChecks
         // 鉄球はPlayerとは反対側へ。落下経路の支点として使うのは専用のケースのみ。
         if (testCase == 3 || testCase == 4) Move(ball, new Vector2(995f, 0.86f));
         Physics2D.SyncTransforms(); pressRoot.SetActive(true); Physics2D.SyncTransforms();
-        if (testCase == 0) playerBody.linearVelocity = Vector2.up * 10f;
+        if (testCase == 0)
+        {
+            InputSystem.QueueStateEvent(pad, new GamepadState().WithButton(GamepadButton.South));
+            playerBody.linearVelocity = Vector2.up * 10f;
+        }
         if (testCase == 1 || testCase == 6)
         { press.enabled = false; InputSystem.QueueStateEvent(pad, new GamepadState { leftStick = Vector2.right }); }
         began = Time.time; minimumFeet = playerCollider.bounds.min.y; maximumHead = playerCollider.bounds.max.y;
