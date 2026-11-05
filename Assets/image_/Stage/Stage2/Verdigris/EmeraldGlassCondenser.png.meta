@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 55c5928ce5bf6cc4eb06fef985a4c97f
+guid: 880885933d080ca43821809f47024760
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5932716046432555403
-    second: ValveWheel_0
+      213: 1808825834940396512
+    second: EmeraldGlassCondenser_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ValveWheel_0
+      name: EmeraldGlassCondenser_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 23
-        height: 23
+        width: 144
+        height: 144
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 57ea02b4032caada0800000000000000
-      internalID: -5932716046432555403
+      spriteID: 0e3fb28638d3a1910800000000000000
+      internalID: 1808825834940396512
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ValveWheel_0: -5932716046432555403
+      EmeraldGlassCondenser_0: 1808825834940396512
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

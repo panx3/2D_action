@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 96cdd21cbad1c844c9788237cb20e7b6
+guid: 43265e9dd57357643b4218568d8fed35
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -453068005985004480
-    second: GearSalvage_0
+      213: -4123336539376132623
+    second: EmeraldCoolingCistern_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 7
   spritePivot: {x: 0.5, y: 0}
-  spritePixelsToUnits: 21
+  spritePixelsToUnits: 24
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GearSalvage_0
+      name: EmeraldCoolingCistern_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 34
-        height: 43
+        width: 168
+        height: 112
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0445b2c8c0166b9f0800000000000000
-      internalID: -453068005985004480
+      spriteID: 1fdd8198347f6c6c0800000000000000
+      internalID: -4123336539376132623
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      GearSalvage_0: -453068005985004480
+      EmeraldCoolingCistern_0: -4123336539376132623
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

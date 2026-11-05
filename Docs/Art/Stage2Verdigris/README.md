@@ -1,64 +1,57 @@
-# Stage2 — 夕焼けの廃工場と緑青
+# Stage2 — 銅工場とエメラルドの冷却水
 
-既存の夕焼け・銅製機械を保ち、場所ごとに錆の密度が異なる設備と中景を追加した美術調整。Runtime C#、入力、敵AI、鉄球、鎖、ギミック、カメラ設定は変更していない。
+夕焼けの銅工場を巡る冷却水を、ステージ2の青緑の主題とする。水を蓄える貯水槽、ガラス越しに水が見える循環装置、熱を逃がす放熱器、緑青の付いた導管を、一つの工業設備群として配置した。
 
-## 配置と方針
+## 今回の修正
 
-- `Assets/Scenes/Stage2.unity` に新規Prefabインスタンス19個を実配置。`Stage2VerdigrisArt` 配下に小型設備、残骸、中景機械、冷却設備を整理。
-- 既存の配管2個、炉1個、ランプ1個を緑青バリエーションへ変更。銅色の炉・ランプ・配管も残した。
-- 中盤の冷却槽は錆の多い専用設備。明るいエメラルド／ターコイズを広く使い、黒褐色の酸化面との境界は不均一な色むらとして描写。剥がれた塗装のような穴や明るい輪郭線は避けた。
-- 銅色主体の電気扉区間、緑青が多い整備設備区間、暖色を残すゴール側で偏りを作る。約20%という色の目安を各画面へ均等に割り当てない。
-- **地面は元の状態を維持。** 地面テクスチャ・Tileアセットの改変はなく、試作した錆タイルと関連画像は削除済み。今後地面に錆を追加する場合は、当たり判定のない装飾Prefabを重ねる方式とする。
-- 既存の空・工場背景画像・Material・パララックスは維持。追加した中景4組と冷却ランドマーク2個は、近い工場設備としてワールド固定。連続する背景面を作らないため、ループ端の隙間は生じない。
+- 小さく切り出した配管・歯車、接続が曖昧な小型設備、旧中景の組み合わせなど18組をSceneから撤去。旧Prefab8個と未使用の切り抜きテクスチャ5枚も削除。
+- ガラス冷却装置4台、放熱器3台、貯水槽2基を実配置。2か所の既存装飾を大型の放熱設備に置き換えた。設置する地面の高さと、左右の脚が同じ平面に乗ることを確認。
+- 青緑は、透明なエメラルドの水、ターコイズの陶製放熱部品、銅の緑青で材質を分けた。錆の小斑点だけで色を増やす方式をやめた。
+- 背景の大型タンク・ドーム・水平配管にも青緑を追加。元画像の透過と輪郭、非編集領域の画素を維持し、Stage2の背景だけに適用。
+- 地面・足場・Tile・当たり判定は変更しない。地面へ錆を追加する場合は、今後も衝突のない独立した装飾Prefabを重ねる方式とする。
 
-## 追加テクスチャ
+## 現在のアセット
 
-場所: `Assets/image_/Stage/Stage2/Verdigris/`
+画像: Assets/image_/Stage/Stage2/Verdigris/
 
-| 画像 | サイズ | PPU | 用途 |
-|---|---:|---:|---|
-| PipeCluster_Verdigris.png | 84×70 | 21 | 既存配管の緑青バリエーション |
-| Furnace_Verdigris.png | 82×71 | 21 | 炉の外装。炎は元の画素を保持 |
-| IndustrialLamp_Verdigris.png | 34×77 | 21 | ランプの緑青バリエーション |
-| PressureGauge.png | 19×21 | 21 | 既存素材から再利用した圧力計 |
-| PipeElbow.png | 18×38 | 21 | 再利用した小型配管 |
-| ValveWheel.png | 23×23 | 21 | 再利用したバルブ |
-| GearSalvage.png | 34×43 | 21 | 再利用した歯車の残骸 |
-| MachineCityCoolingReservoir.png | 256×192 | 28 | 新規の大型冷却槽 |
-| MachineCityCoolingTower.png | 54×128 | 28 | 新規冷却設備の側塔を使った中景 |
+| 画像 | ネイティブ寸法 | PPU |
+|---|---:|---:|
+| EmeraldGlassCondenser.png | 144×144 | 21 |
+| TurquoiseRadiatorBank.png | 144×112 | 21 |
+| EmeraldCoolingCistern.png | 168×112 | 24 |
+| MachineCityEmeraldSkyline.png | 2172×724 | 100 |
+| MachineCityCoolingReservoir.png | 256×192 | 28 |
+| PipeCluster_Verdigris.png | 84×70 | 21 |
+| Furnace_Verdigris.png | 82×71 | 21 |
+| IndustrialLamp_Verdigris.png | 34×77 | 21 |
 
-すべて **Point / 圧縮なし / MipMapなし / Clamp / NPOTリサイズなし**。透過を保持。既存装飾は元のピクセル寸法を維持し、緑青を少数の色へ整理。新規設備も画像自体をネイティブ解像度へ縮小してから取り込んだ。Prefab化だけでドット絵になるという扱いはしていない。
+すべてPoint、無圧縮、MipMapなし。新設備は元画像自体をゲーム用の解像度に整えている。
 
-## 追加Prefab
+Prefab: Assets/Prefabs/Environment/Stage2/Verdigris/
 
-場所: `Assets/Prefabs/Environment/Stage2/Verdigris/`
+- S2_EmeraldGlassCondenser / S2_TurquoiseRadiatorBank / S2_EmeraldCoolingCistern
+- S2_OxidizedCoolingReservoir
+- S2_PatinaPipeCluster / S2_PatinaFurnace / S2_PatinaIndustrialLamp
 
-- `S2_PatinaPipeCluster` / `S2_PatinaFurnace` / `S2_PatinaIndustrialLamp`
-- `S2_ServiceBoiler` / `S2_WallServicePipes` / `S2_PressureValve`
-- `S2_ElbowExhaust` / `S2_FloorSalvage` / `S2_SmallSteamVent`
-- `S2_MidgroundMachinery`
-- `S2_OxidizedCoolingReservoir` / `S2_DistantCoolingTower`
+7種類ともSpriteRendererのみの装飾。Collider、Rigidbody、動作スクリプトなし。追加ルートは新設備9台と既存の大型冷却槽1基で合計10 SpriteRenderer。前回の36 Rendererから整理した。通常設備の描画順はDefault:0、貯水槽は-450、大型の緑青冷却槽は-720。人物・敵・鉄球・ギミックの手前には出さない。
 
-12種ともCollider・Rigidbody・ゲーム用スクリプトなし。`Default` Sorting Layer、通常の小物はOrder 0〜1、中景機械は-601〜-599、冷却ランドマークは-720 / -710。既存の前景配管の透過処理とユーザー調整済み配置は維持。
+## 色を保つマテリアル
 
-追加オブジェクトは合計36 SpriteRenderer。新しい粒子、回転スクリプト、追加CRTは導入していない。小型蒸気口は既存の半透明の蒸気画像を再利用。
+- Assets/Art/Stage2Pilot/CoolingWaterSurface.mat: Built-in Unlit/Transparent。新設備3種の色を保持し、暖色のWorld Toneによる水・ガラスの濁りを避ける。元絵には銅の夕焼け反射を描き込んである。既存CRTは通常どおり最後に1回適用。
+- Assets/Art/Stage2Pilot/MachineCityEmeraldDistrictAtmosphere.mat: 既存の背景用Materialを複製。Saturation=1、AtmosphereStrength=0.025。既存の空・元背景・共有Material・Profileは変更しない。
 
-## 検証
+既存のパララックス、ループ、カメラ設定は維持。近い設備はワールド固定。
 
-- Unity AssetDatabaseの取り込みと動的C#実行に成功。ゲーム用C#変更なし、Unityコンパイルエラーなし。
-- 最終確認期間のConsole Error / Exceptionはともに0件。
-- 変更前後の既存ゲーム用コンポーネント284個のシリアライズ値が一致。
-- 521セルのタイル寸法・PPU・Transform・Physics Shapeが一致。676地点の床Raycast結果も一致。
-- 地面は元のTile参照へ復元。Stage1、共有の元画像、ProjectSettings、Packagesの変更なし。
-- 追加PrefabのSprite参照・Sorting・衝突なしを検査。CRTは既存の1個。
-- Play Modeの画面確認は、静止した美術レイアウト検査のため一時的に敵AIと物理時間を停止し、カメラを各地点へ移動して実施。これらの検査操作は保存していない。
-- 通し攻略、実機コントローラー操作、最終的な色の密度・見た目・操作感の評価は未実施。最終評価はユーザーのPlay Mode確認に委ねる。
-- Stage2と新規Prefabは保存済み。検査終了時はEdit Mode、未保存変更なし、`Time.timeScale=1`。
+## 検証と保存
 
-画面記録: [冷却槽区間](Stage2-CoolingReservoir-GameView.png) / [整備設備区間](Stage2-ServiceDistrict-GameView.png) / [開始地点](Stage2-Start-GameView.png)。最終的な美術評価用であり、通し攻略の記録ではない。
+既存ゲーム用コンポーネント284個のシリアライズ値、521セルのタイル形状・PPU・Transform、676地点の床Raycast結果は変更前と一致。Stage1、Runtime C#、入力、鉄球、鎖、AI、ギミック、Packages、ProjectSettingsは変更なし。
 
-## 画像生成と材質資料
+Play Modeでは静止レイアウトを見るため、一時的に敵AI・物理時間を停止し、カメラを移動して確認した。画像記録では開始時のステージ名表示を一時的に隠している。これらの検査操作は保存しない。通し攻略、実機コントローラー、最終的な見た目の評価はユーザー確認が必要。
 
-Built-in `image_gen`を使用。採用した生成元は`Source/`、プロンプトと取り込み方針は[GenerationPrompts.json](GenerationPrompts.json)。写真資料は色と材質の観察に使用し、ゲーム画像へ直接貼り付けていない。
+最終確認: Unityコンパイルエラーなし、Console Error / Exception 0件。Prefab参照・インポート・153個のSceneアセットGUID・設備の足元27地点を検査済み。Scene / Prefab / Materialは保存済み。検査終了時はEdit Mode、Scene未保存変更なし、Time.timeScale=1。
 
-銅の腐食の青緑・赤褐色・暗色の層と、安定した緑青／局所的な腐食の違いは、[Canadian Conservation Institute: Identifying Archaeological Metal](https://www.canada.ca/en/conservation-institute/services/conservation-preservation-publications/canadian-conservation-institute-notes/identifying-archaeological-metal.html)と[Caring for metal objects](https://www.canada.ca/en/conservation-institute/services/preventive-conservation/guidelines-collections/metal-objects.html)を参照。実際の腐食の説明を基に、ゲームで読み取れる粗い色面へ美術的に整理している。
+画面記録: [開始地点](Stage2-Start-GameView.png) / [放熱設備](Stage2-Radiator-GameView.png) / [終盤の冷却水槽](Stage2-CoolingWater-GameView.png)。
+
+画像生成にはBuilt-in image_genを使用。今回の採用プロンプトは[CoolingWaterPrompts.json](CoolingWaterPrompts.json)、以前から残している緑青設備の生成記録は[GenerationPrompts.json](GenerationPrompts.json)。採用元PNGはSource/。新背景は生成元を全面置換せず、緑の材質領域のみ元画像へ反映し、元の透過を完全に保持。
+
+銅の腐食材質の資料は[Canadian Conservation Institute](https://www.canada.ca/en/conservation-institute/services/preventive-conservation/guidelines-collections/metal-objects.html)を参照。今回の水・ガラス・陶製部品は、緑青とは別の青緑要素として設計している。

@@ -1,0 +1,51 @@
+{
+  "mode": "Built-in image_gen",
+  "concept": "夕焼けの銅工場を巡る、エメラルドの冷却水",
+  "preparation": "Native-size pixel reduction for new machines; background reuses original pixels outside generated green material regions and preserves original alpha exactly.",
+  "sources": [
+    {
+      "name": "EmeraldGlassCondenser",
+      "nativeSize": [
+        144,
+        144
+      ],
+      "ppu": 21,
+      "role": "copper-framed emerald glass condenser",
+      "source": "Source/EmeraldGlassCondenser.png",
+      "prompt": "Use case: stylized-concept. Asset: a new production sprite for a detailed side-view 2D pixel-art copper/steam factory. Reference image is STYLE ONLY, do not copy its furnace subject. Make a substantial industrial EMERALD GLASS CONDENSER: three tall thick glass cylinders of unequal heights, securely integrated in one wide dark bronze pedestal and copper cage. Broad visible luminous-by-reflection emerald glass surfaces, deep emerald green cores #086e57, rich #11a981, bright turquoise edge reflections #47d9c4 and small mint highlights #9cebd4. About 65% of the visible assembly is beautiful emerald/turquoise glass, 35% worn copper and dark frames. Glass shows thickness, subtle internal mechanical coils, a restrained coolant meniscus and warm sunset reflections; not magic crystal, not neon beam. Large curved copper headers connect the cylinders across the top, thick return pipes and a few pressure gauges are structurally attached. Every part belongs to one coherent load-bearing machine, no loose miniature accessories. Human-scale industrial machinery, broad flat feet, all components reach their supports. Rich dimensional pixel shading matching the original furnace, warm rim highlights, restrained real oxidation only in copper joints. The green is GLASS material, not green paint or a rust pattern. Crisp hard hand-pixel clusters, native 144x144px design, substantial 1-3px structural details, no micro-speckled noise, no antialiasing, no vector appearance. Straight side-on elevation matching a side-scrolling platformer, slight depth only. Entire machine within frame, tightly framed but no clipping. Transparent background, no floor, no external shadow, no labels, no letters, no warning stripes, no arrows, no electric sparks. It is scenery, not a playable switch or collectible."
+    },
+    {
+      "name": "TurquoiseRadiatorBank",
+      "nativeSize": [
+        144,
+        112
+      ],
+      "ppu": 21,
+      "role": "turquoise glazed ceramic radiator / heat exchanger",
+      "source": "Source/TurquoiseRadiatorBank.png",
+      "prompt": "Use case: stylized-concept. Asset: production side-view machinery sprite for detailed 2D pixel art copper/steam factory. Reference furnace gives STYLE, pixel density and lighting only. New subject: a large old TURQUOISE CERAMIC / ENAMEL HEAT EXCHANGER manifold. Asymmetrical horizontal bank of 5 broad blue-green glazed ceramic radiator fins inside a strong dark copper frame, a large rounded turquoise housing on the left with a deep emerald circular glass sight window, thick copper elbow headers, visible bolts and chunky supporting feet. A couple warm amber pressure dials are firmly attached to the housing. About 65% broad visible rich turquoise/emerald surfaces, 35% warm copper and deep brown outline. Colors #168c87 #30b9a9 #62d1b7, emerald glass #087452. The blue-green is deliberately manufactured glazed ceramic/enamel, with convincing specular edge shading and small worn copper edges, not camouflage or scattered rust. Beautiful saturated cool color blocks counterbalanced by copper sunset rim light. No huge peeling patches. All hardware structurally connected, nothing floating or detached. Whole object of comparable scale and visual complexity to the original furnace; this is a substantial machine, not a tiny tabletop gadget. Match hard square pixel art on native 144x112px grid. Clear grouped shading, few medium clusters, no subpixel texture, no smooth vector art. Straight side-on elevation, flat base, no scenic background or floor or cast shadow outside object. Transparent background. No text, logos, hazard signs, arrows, lightning or collectible icons."
+    },
+    {
+      "name": "EmeraldCoolingCistern",
+      "nativeSize": [
+        168,
+        112
+      ],
+      "ppu": 24,
+      "role": "emerald cooling-water cistern with visible water surface",
+      "source": "Source/EmeraldCoolingCistern.png",
+      "prompt": "Use case: stylized-concept. Production scenery sprite for the same detailed pixel-art copper steam factory. STYLE REFERENCE ONLY: match original furnace's chunky pixel density, dark brown outlines, copper sunset highlights. Subject: a large old INDUSTRIAL COOLING-WATER CISTERN with a generous beautiful EMERALD WATER SURFACE, protected by thick copper rim and low bronze safety railing. A broad horizontal oval/rectangular reservoir basin on substantial riveted metal legs; deep green water center #078664, turquoise shallows #2bc6aa and a few clean mint ripple reflections. Front wall has two large thick green glass water-level windows showing the same emerald water, so the cool color reads strongly in side view. Copper structure 35-40%, emerald/turquoise water and glass 60-65%. A thick copper inlet elbow pours a very short contained stream INSIDE the basin, and a large attached return pipe joins the base. All pieces supported and joined, no loose accessories. This is factory cooling infrastructure, decorative background, not a pool the player jumps into. No magic, poison bubbles, warning stripes, electric effects or collectible sparkle. Wide coherent machine, native 168x112px design, straight-on side view with a shallow visible upper water surface matching platformer art. Real material depth, strong grouped shading, restrained tarnish on copper, no dispersed rust flecks. Keep pixel clusters broad, no fine subpixel grain, no smooth vectors. Full asset in frame, transparent background, no floor, no external shadow, no text."
+    },
+    {
+      "name": "MachineCityEmeraldSkyline",
+      "nativeSize": [
+        2172,
+        724
+      ],
+      "ppu": 100,
+      "role": "selective emerald material variant of original factory skyline",
+      "source": "Source/MachineCityEmeraldSkyline.png",
+      "prompt": "Use case: precise-object-edit. EDIT TARGET: this existing long transparent pixel-art factory skyline. Preserve EXACTLY the entire composition, architecture, silhouette, all chimneys and smoke, windows, girders, gears, negative spaces and transparency. Do not redraw or simplify it. Upgrade only selected MATERIAL COLORS: this factory has extensive emerald cooling-water infrastructure. Make the large domed tank roofs, a few tall cylindrical copper storage tanks, and several long thick horizontal pipe runs naturally dark EMERALD / TURQUOISE oxidized copper. Give the cool areas LARGE connected architectural shapes, not little isolated dots. About 40-50% of the foreground factory structures should have clear blue-green metal, in UNEQUAL connected groups, with some blocks remaining copper. Use #175b5b #23877b #2c9e8e for large shaded green surfaces, existing bronze #a55c29 for metal edges, and deep brown-violet structure shadows. Keep saturation lower than a close foreground glass machine, but the green MUST be visible against a red sunset, not almost black. Preserve all existing warm orange lit windows as contrast. All distant silhouettes and smoke remain neutral muted gray/dark brown; do not tint the whole image blue. Exact existing pixel grid and fine shading retained. No new objects, water, labels, lights, sky, backdrop, photorealism, blur or changed geometry. Transparent background preserved. This is a selective material color edit, not a new drawing."
+    }
+  ]
+}
