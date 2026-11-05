@@ -1,0 +1,373 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1fa3deabce63934096f2068bf61b1d2, type: 3}
+  m_Name: PlayerMotionV2
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMotionSet
+  run:
+    frames:
+    - sprite: {fileID: 1074893986, guid: ddf3844c09f17cc4e878db0e552b00c5, type: 3}
+      chainAnchor: {x: -2.0361779, y: -1.2552642}
+      chargeGrip: {x: 0.60849553, y: 0.34633404}
+    - sprite: {fileID: 99506376, guid: ddf3844c09f17cc4e878db0e552b00c5, type: 3}
+      chainAnchor: {x: -1.899905, y: -1.2705271}
+      chargeGrip: {x: 0.6547104, y: 0.3237377}
+    - sprite: {fileID: -804240392, guid: ddf3844c09f17cc4e878db0e552b00c5, type: 3}
+      chainAnchor: {x: -1.9014549, y: -1.3023618}
+      chargeGrip: {x: 0.66068107, y: 0.3735388}
+    - sprite: {fileID: -1669726829, guid: ddf3844c09f17cc4e878db0e552b00c5, type: 3}
+      chainAnchor: {x: -1.9113022, y: -1.2562983}
+      chargeGrip: {x: 0.68428445, y: 0.32002348}
+    - sprite: {fileID: -1756019696, guid: ddf3844c09f17cc4e878db0e552b00c5, type: 3}
+      chainAnchor: {x: -1.9300138, y: -1.0667505}
+      chargeGrip: {x: 0.67442834, y: 0.25085557}
+    - sprite: {fileID: -749335943, guid: ddf3844c09f17cc4e878db0e552b00c5, type: 3}
+      chainAnchor: {x: -1.8672702, y: -1.2643222}
+      chargeGrip: {x: 0.6763171, y: 0.28824732}
+    framesPerSecond: 7.058823
+    loop: 1
+  jumpUp:
+    frames:
+    - sprite: {fileID: 739148829, guid: 2d0f89ac71f375c43a157f5fcc2858e0, type: 3}
+      chainAnchor: {x: -1.7494522, y: -0.8773395}
+      chargeGrip: {x: 0.88530546, y: 0.393099}
+    - sprite: {fileID: 1803841868, guid: 2d0f89ac71f375c43a157f5fcc2858e0, type: 3}
+      chainAnchor: {x: -1.598627, y: -0.92707944}
+      chargeGrip: {x: 0.8409694, y: 0.26170364}
+    framesPerSecond: 10
+    loop: 0
+  apex:
+    frames:
+    - sprite: {fileID: 823929761, guid: 2d0f89ac71f375c43a157f5fcc2858e0, type: 3}
+      chainAnchor: {x: -1.4009081, y: -1.0143974}
+      chargeGrip: {x: 0.9048043, y: 0.31509098}
+    framesPerSecond: 1
+    loop: 0
+  fall:
+    frames:
+    - sprite: {fileID: 1016702499, guid: 4bcc8edaa98d44146a0cb73af4ba7b64, type: 3}
+      chainAnchor: {x: -1.5625, y: -1.125}
+      chargeGrip: {x: 1.083082, y: 0.36598322}
+    - sprite: {fileID: 136107798, guid: 4bcc8edaa98d44146a0cb73af4ba7b64, type: 3}
+      chainAnchor: {x: -1.46875, y: -1.125}
+      chargeGrip: {x: 1.1141205, y: 0.3616764}
+    framesPerSecond: 5.5555553
+    loop: 0
+  land:
+    frames:
+    - sprite: {fileID: 1966723176, guid: 2d0f89ac71f375c43a157f5fcc2858e0, type: 3}
+      chainAnchor: {x: -1.536911, y: -1.1114669}
+      chargeGrip: {x: 0.82907903, y: 0.17208731}
+    - sprite: {fileID: 1208953391, guid: 2d0f89ac71f375c43a157f5fcc2858e0, type: 3}
+      chainAnchor: {x: -1.536911, y: -1.0982372}
+      chargeGrip: {x: 0.82907903, y: 0.20333731}
+    - sprite: {fileID: -366837506, guid: 2d0f89ac71f375c43a157f5fcc2858e0, type: 3}
+      chainAnchor: {x: -1.5092497, y: -0.735832}
+      chargeGrip: {x: 0.8371306, y: 0.12730557}
+    framesPerSecond: 30
+    loop: 0
+  charge:
+    frames:
+    - sprite: {fileID: -1785391191, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.246536, y: -1.017983}
+      chargeGrip: {x: 1.1148814, y: 0.17668694}
+    - sprite: {fileID: -1785391191, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.246536, y: -1.017983}
+      chargeGrip: {x: 1.1148814, y: 0.17668694}
+    - sprite: {fileID: -658411525, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.2695742, y: -1.1903644}
+      chargeGrip: {x: 1.0974833, y: 0.14125732}
+    - sprite: {fileID: -658411525, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.2695742, y: -1.1903644}
+      chargeGrip: {x: 1.0974833, y: 0.14125732}
+    - sprite: {fileID: -1395077128, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.46875, y: -1.109375}
+      chargeGrip: {x: 1.0801202, y: 0.1694768}
+    - sprite: {fileID: -1395077128, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.46875, y: -1.109375}
+      chargeGrip: {x: 1.0801202, y: 0.1694768}
+    - sprite: {fileID: -2074968657, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.3100653, y: -1.2416298}
+      chargeGrip: {x: 1.1323043, y: 0.22006291}
+    - sprite: {fileID: -2074968657, guid: 88aef7fa3918e4c4bb1848bfdf796cc1, type: 3}
+      chainAnchor: {x: -1.3100653, y: -1.2416298}
+      chargeGrip: {x: 1.1323043, y: 0.22006291}
+    framesPerSecond: 16
+    loop: 1
+  chargeRunning:
+    frames:
+    - sprite: {fileID: 791030484, guid: 3a032b4a972280441be0905fd3f406e9, type: 3}
+      chainAnchor: {x: -2.0322104, y: -1.0301352}
+      chargeGrip: {x: 0.5995503, y: 0.10288218}
+    - sprite: {fileID: 596356821, guid: 3a032b4a972280441be0905fd3f406e9, type: 3}
+      chainAnchor: {x: -1.9756919, y: -1.0089266}
+      chargeGrip: {x: 0.6089202, y: 0.080284}
+    - sprite: {fileID: -1632481601, guid: 3a032b4a972280441be0905fd3f406e9, type: 3}
+      chainAnchor: {x: -1.9246905, y: -1.0433108}
+      chargeGrip: {x: 0.6102533, y: 0.08544588}
+    - sprite: {fileID: -870680232, guid: 3a032b4a972280441be0905fd3f406e9, type: 3}
+      chainAnchor: {x: -2.0377605, y: -0.99805677}
+      chargeGrip: {x: 0.6222849, y: 0.11716452}
+    - sprite: {fileID: 2087164942, guid: 3a032b4a972280441be0905fd3f406e9, type: 3}
+      chainAnchor: {x: -2.078664, y: -1.0040311}
+      chargeGrip: {x: 0.6073598, y: 0.12421706}
+    - sprite: {fileID: -1485888186, guid: 3a032b4a972280441be0905fd3f406e9, type: 3}
+      chainAnchor: {x: -2.0903792, y: -0.9973829}
+      chargeGrip: {x: 0.6389826, y: 0.12385246}
+    framesPerSecond: 4.588235
+    loop: 1
+  chargeAirborne:
+    frames:
+    - sprite: {fileID: -1311648007, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.6699226, y: -0.8590487}
+      chargeGrip: {x: 0.9455907, y: 0.20029902}
+    - sprite: {fileID: -1311648007, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.6699226, y: -0.8590487}
+      chargeGrip: {x: 0.9455907, y: 0.20029902}
+    - sprite: {fileID: -41992203, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.6066413, y: -0.8756305}
+      chargeGrip: {x: 0.9713453, y: 0.16548413}
+    - sprite: {fileID: -41992203, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.6066413, y: -0.8756305}
+      chargeGrip: {x: 0.9713453, y: 0.16548413}
+    - sprite: {fileID: -1213073089, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.8115995, y: -0.77009773}
+      chargeGrip: {x: 0.98081034, y: 0.17719549}
+    - sprite: {fileID: -1213073089, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.8115995, y: -0.77009773}
+      chargeGrip: {x: 0.98081034, y: 0.17719549}
+    - sprite: {fileID: -1013896088, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.8136994, y: -0.75895464}
+      chargeGrip: {x: 0.9743323, y: 0.19338593}
+    - sprite: {fileID: -1013896088, guid: 1c81a7f1ec396fe47befbe20a49349ed, type: 3}
+      chainAnchor: {x: -1.8136994, y: -0.75895464}
+      chargeGrip: {x: 0.9743323, y: 0.19338593}
+    framesPerSecond: 16
+    loop: 1
+  recall:
+    frames:
+    - sprite: {fileID: -985034933, guid: 94d1cbd9de2819a4eaa5ebf5d9b90449, type: 3}
+      chainAnchor: {x: -1.0999328, y: -1.0286729}
+      chargeGrip: {x: 1.0013062, y: -0.4274044}
+    - sprite: {fileID: -1514014038, guid: 94d1cbd9de2819a4eaa5ebf5d9b90449, type: 3}
+      chainAnchor: {x: -1.4896226, y: -0.73614}
+      chargeGrip: {x: 0.938008, y: -0.33554924}
+    framesPerSecond: 10
+    loop: 0
+  brace:
+    frames:
+    - sprite: {fileID: 620813368, guid: 94d1cbd9de2819a4eaa5ebf5d9b90449, type: 3}
+      chainAnchor: {x: 2.002362, y: 0.029222846}
+      chargeGrip: {x: 2.0886686, y: -0.18922728}
+    - sprite: {fileID: -679770269, guid: 94d1cbd9de2819a4eaa5ebf5d9b90449, type: 3}
+      chainAnchor: {x: 1.8321289, y: 0.106692076}
+      chargeGrip: {x: 1.8954741, y: -0.12937415}
+    framesPerSecond: 10
+    loop: 0
+  pulled:
+    frames:
+    - sprite: {fileID: -300505409, guid: 94d1cbd9de2819a4eaa5ebf5d9b90449, type: 3}
+      chainAnchor: {x: 1.944555, y: 0.82309616}
+      chargeGrip: {x: 1.856005, y: -0.3008579}
+    - sprite: {fileID: 1789194241, guid: 94d1cbd9de2819a4eaa5ebf5d9b90449, type: 3}
+      chainAnchor: {x: 1.6564018, y: 0.6816217}
+      chargeGrip: {x: 1.4593648, y: 0.49997985}
+    framesPerSecond: 10
+    loop: 0
+  hanging:
+    frames:
+    - sprite: {fileID: -1758643572, guid: 4ef8697c948b1fb4b9fd02a04af34350, type: 3}
+      chainAnchor: {x: -0.01744686, y: 2.4937499}
+      chargeGrip: {x: 1.045761, y: 0.64653075}
+    - sprite: {fileID: 399459751, guid: 4ef8697c948b1fb4b9fd02a04af34350, type: 3}
+      chainAnchor: {x: -0.4124209, y: 2.5003123}
+      chargeGrip: {x: 1.0132036, y: 0.66}
+    framesPerSecond: 2.5
+    loop: 1
+  climbing:
+    frames:
+    - sprite: {fileID: -1957829558, guid: cf005b232471591428bbbf1a346aa92f, type: 3}
+      chainAnchor: {x: 0, y: 1.961789}
+      chargeGrip: {x: 0.65661913, y: 0.54093456}
+    - sprite: {fileID: -739902111, guid: cf005b232471591428bbbf1a346aa92f, type: 3}
+      chainAnchor: {x: 0, y: 2.0195858}
+      chargeGrip: {x: 0.63882965, y: 0.75038934}
+    - sprite: {fileID: -764640539, guid: cf005b232471591428bbbf1a346aa92f, type: 3}
+      chainAnchor: {x: 0, y: 1.953492}
+      chargeGrip: {x: 0.72027135, y: 0.8258705}
+    - sprite: {fileID: -1932741113, guid: cf005b232471591428bbbf1a346aa92f, type: 3}
+      chainAnchor: {x: 0, y: 1.9770467}
+      chargeGrip: {x: 0.57886875, y: 0.5045082}
+    framesPerSecond: 5
+    loop: 1
+  hurtGround:
+    frames:
+    - sprite: {fileID: 817753092, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -0.6875, y: -1.203125}
+      chargeGrip: {x: 0, y: 0}
+    - sprite: {fileID: -1655551701, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -0.90625, y: -1.796875}
+      chargeGrip: {x: 0, y: 0}
+    - sprite: {fileID: -1655551701, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -0.90625, y: -1.796875}
+      chargeGrip: {x: 0, y: 0}
+    - sprite: {fileID: -1894016089, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -1.375, y: -1.359375}
+      chargeGrip: {x: 0, y: 0}
+    framesPerSecond: 6.6666665
+    loop: 0
+  hurtAir:
+    frames:
+    - sprite: {fileID: 792284411, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -0.6875, y: -0.796875}
+      chargeGrip: {x: 0, y: 0}
+    - sprite: {fileID: 374234, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -0.90625, y: -0.734375}
+      chargeGrip: {x: 0, y: 0}
+    - sprite: {fileID: 374234, guid: cbc46fedd6f4f2d41afc81ef28742a38, type: 3}
+      chainAnchor: {x: -0.90625, y: -0.734375}
+      chargeGrip: {x: 0, y: 0}
+    framesPerSecond: 5
+    loop: 0
+  throws:
+  - ground:
+      frames:
+      - sprite: {fileID: -426737616, guid: 2afb3918ced3bce408686c38a16c120d, type: 3}
+        chainAnchor: {x: -1.7559187, y: -0.8180361}
+        chargeGrip: {x: 0.7292512, y: -0.40520513}
+      - sprite: {fileID: 1773503236, guid: 2afb3918ced3bce408686c38a16c120d, type: 3}
+        chainAnchor: {x: 2.2646174, y: 0.15707636}
+        chargeGrip: {x: 1.9828815, y: 0.112571}
+      - sprite: {fileID: 1427513902, guid: 2afb3918ced3bce408686c38a16c120d, type: 3}
+        chainAnchor: {x: 2.2600758, y: 0.1587736}
+        chargeGrip: {x: 1.9278071, y: 0.11039114}
+      framesPerSecond: 16.666668
+      loop: 0
+    air:
+      frames:
+      - sprite: {fileID: -1444467661, guid: 1be037f1672da914ca1262b57c13b616, type: 3}
+        chainAnchor: {x: -1.6875, y: -0.625}
+        chargeGrip: {x: 0.80631757, y: -0.27761525}
+      - sprite: {fileID: -591263678, guid: 1be037f1672da914ca1262b57c13b616, type: 3}
+        chainAnchor: {x: 2.34375, y: 0.109375}
+        chargeGrip: {x: 1.8706509, y: 0.16106403}
+      - sprite: {fileID: -947224912, guid: 1be037f1672da914ca1262b57c13b616, type: 3}
+        chainAnchor: {x: 2.34375, y: 0.109375}
+        chargeGrip: {x: 1.9316417, y: 0.116142154}
+      framesPerSecond: 16.666668
+      loop: 0
+  - ground:
+      frames:
+      - sprite: {fileID: -2375882, guid: 25054ab457a0d5547b14fa855fe619ad, type: 3}
+        chainAnchor: {x: -0.421875, y: 1.375}
+        chargeGrip: {x: 1.1349941, y: -0.46559238}
+      - sprite: {fileID: -1716545484, guid: 25054ab457a0d5547b14fa855fe619ad, type: 3}
+        chainAnchor: {x: 2.0625, y: 1.359375}
+        chargeGrip: {x: 2.27875, y: 0.15375}
+      - sprite: {fileID: -1604200412, guid: 25054ab457a0d5547b14fa855fe619ad, type: 3}
+        chainAnchor: {x: 2.0625, y: 1.234375}
+        chargeGrip: {x: 2.18375, y: 0.16375}
+      framesPerSecond: 16.666668
+      loop: 0
+    air:
+      frames:
+      - sprite: {fileID: 218026049, guid: a3a978f43364efb40af0d111e7f705c6, type: 3}
+        chainAnchor: {x: -0.453125, y: 1.34375}
+        chargeGrip: {x: 1.0614152, y: -0.38270152}
+      - sprite: {fileID: 1883476626, guid: a3a978f43364efb40af0d111e7f705c6, type: 3}
+        chainAnchor: {x: 2.0625, y: 1.4375}
+        chargeGrip: {x: 2.141477, y: 0.091477275}
+      - sprite: {fileID: -486073078, guid: a3a978f43364efb40af0d111e7f705c6, type: 3}
+        chainAnchor: {x: 2.03125, y: 1.265625}
+        chargeGrip: {x: 2.0232954, y: 0.082386374}
+      framesPerSecond: 16.666668
+      loop: 0
+  - ground:
+      frames:
+      - sprite: {fileID: -83089656, guid: 575e9bdbd65422e47a659ccda88c49ec, type: 3}
+        chainAnchor: {x: 1.234375, y: 1.78125}
+        chargeGrip: {x: 0.9904927, y: -0.5253886}
+      - sprite: {fileID: -64636052, guid: 575e9bdbd65422e47a659ccda88c49ec, type: 3}
+        chainAnchor: {x: 0.65625, y: 2.5}
+        chargeGrip: {x: 0.92688376, y: -0.40225935}
+      - sprite: {fileID: -1396505454, guid: 575e9bdbd65422e47a659ccda88c49ec, type: 3}
+        chainAnchor: {x: 0.65625, y: 2.5}
+        chargeGrip: {x: 0.9025841, y: -0.17440951}
+      framesPerSecond: 16.666668
+      loop: 0
+    air:
+      frames:
+      - sprite: {fileID: -1826651461, guid: 575e9bdbd65422e47a659ccda88c49ec, type: 3}
+        chainAnchor: {x: 1.1875, y: 1.9375}
+        chargeGrip: {x: 1.0229509, y: -0.6300249}
+      - sprite: {fileID: -1481007839, guid: 575e9bdbd65422e47a659ccda88c49ec, type: 3}
+        chainAnchor: {x: 0.65625, y: 2.34375}
+        chargeGrip: {x: 0.98875415, y: -0.5701705}
+      - sprite: {fileID: 226909772, guid: 575e9bdbd65422e47a659ccda88c49ec, type: 3}
+        chainAnchor: {x: 0.65625, y: 2.34375}
+        chargeGrip: {x: 1.0886655, y: -0.6635672}
+      framesPerSecond: 16.666668
+      loop: 0
+  - ground:
+      frames:
+      - sprite: {fileID: -1478640973, guid: d5f39f2824f88c1488bcca5668854b42, type: 3}
+        chainAnchor: {x: -0.375, y: 1.6875}
+        chargeGrip: {x: 0.80904734, y: 0.09278417}
+      - sprite: {fileID: 816423954, guid: d5f39f2824f88c1488bcca5668854b42, type: 3}
+        chainAnchor: {x: 1.8125, y: -1.046875}
+        chargeGrip: {x: 1.8377978, y: -0.13476473}
+      - sprite: {fileID: 30530046, guid: d5f39f2824f88c1488bcca5668854b42, type: 3}
+        chainAnchor: {x: 1.375, y: -1.59375}
+        chargeGrip: {x: 1.7306548, y: -0.13794625}
+      framesPerSecond: 16.666668
+      loop: 0
+    air:
+      frames:
+      - sprite: {fileID: -427555310, guid: d5f39f2824f88c1488bcca5668854b42, type: 3}
+        chainAnchor: {x: -0.34375, y: 1.6875}
+        chargeGrip: {x: 0.818032, y: 0.089563966}
+      - sprite: {fileID: 1505137584, guid: d5f39f2824f88c1488bcca5668854b42, type: 3}
+        chainAnchor: {x: 1.96875, y: -0.578125}
+        chargeGrip: {x: 1.84675, y: -0.23852003}
+      - sprite: {fileID: 275338855, guid: d5f39f2824f88c1488bcca5668854b42, type: 3}
+        chainAnchor: {x: 1.53125, y: -0.9375}
+        chargeGrip: {x: 1.5995193, y: -0.024846196}
+      framesPerSecond: 16.666668
+      loop: 0
+  - ground:
+      frames:
+      - sprite: {fileID: 1457011614, guid: 15e7dab91484d32409b2204a9fded4ac, type: 3}
+        chainAnchor: {x: -0.375, y: 1.6875}
+        chargeGrip: {x: 0.9266101, y: -0.6984824}
+      - sprite: {fileID: 35821274, guid: 15e7dab91484d32409b2204a9fded4ac, type: 3}
+        chainAnchor: {x: 0.28125, y: -1.96875}
+        chargeGrip: {x: 0.96275, y: -0.032833397}
+      - sprite: {fileID: 1072577361, guid: 15e7dab91484d32409b2204a9fded4ac, type: 3}
+        chainAnchor: {x: -0.21875, y: -1.96875}
+        chargeGrip: {x: 1.0231134, y: 0.14904538}
+      framesPerSecond: 16.666668
+      loop: 0
+    air:
+      frames:
+      - sprite: {fileID: -1847170053, guid: 15e7dab91484d32409b2204a9fded4ac, type: 3}
+        chainAnchor: {x: -0.34375, y: 1.6875}
+        chargeGrip: {x: 0.8462383, y: -0.72774565}
+      - sprite: {fileID: -96588591, guid: 15e7dab91484d32409b2204a9fded4ac, type: 3}
+        chainAnchor: {x: 0.296875, y: -1.5625}
+        chargeGrip: {x: 1.06275, y: -0.27078003}
+      - sprite: {fileID: 573548425, guid: 15e7dab91484d32409b2204a9fded4ac, type: 3}
+        chainAnchor: {x: -0.15625, y: -1.59375}
+        chargeGrip: {x: 1.1307501, y: -0.35286003}
+      framesPerSecond: 16.666668
+      loop: 0
+  chargeOrbitRadius: 1.25
+  chargeEntryTime: 0.12
+  chargeSlackDepth: 0.9

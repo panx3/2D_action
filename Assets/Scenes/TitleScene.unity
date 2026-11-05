@@ -1017,7 +1017,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655fced51b7393b4e89ae12def31cdba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
-  stageSceneName: Stage1
+  stageSceneName: StageSelectScene
   backgroundGroup: {fileID: 826879352}
   logoGroup: {fileID: 1743430529}
   characterGroup: {fileID: 0}
@@ -1107,6 +1107,8 @@ MonoBehaviour:
   stageVolume: 0.15
   goalVolume: 0.15
   switchFadeDuration: 0.5
+  goalApproachVolumeMultiplier: 0.3
+  goalApproachSmoothTime: 0.7
   pauseCutoffFrequency: 2200
   pauseToneFadeDuration: 0.18
 --- !u!1 &126128162

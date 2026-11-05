@@ -1,0 +1,1 @@
+frame=481 paused=True angle=3.015928 ball=(-4.86, 3.60) grip=(-6.10, 3.45) sprite=Charge_03 radius=1.25

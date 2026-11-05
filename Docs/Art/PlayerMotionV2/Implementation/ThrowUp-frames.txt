@@ -1,0 +1,6 @@
+ThrowUp_0 bounds=124,50,409,488 rootX=283.7974 chain=(-1.44, 2.42) grip=(0.99, -0.53) skull=32 head=(103.00, 73.00) bodyY=0.9266939
+ThrowUp_1 bounds=620,31,898,488 rootX=786.6626 chain=(-0.74, 2.61) grip=(0.93, -0.40) skull=32 head=(103.00, 73.00) bodyY=0.9266939
+ThrowUp_2 bounds=1128,32,1420,488 rootX=1304.246 chain=(-0.72, 2.64) grip=(0.90, -0.17) skull=32 head=(103.00, 73.00) bodyY=0.9354362
+ThrowUp_3 bounds=128,532,448,973 rootX=305.3773 chain=(-1.78, 2.29) grip=(1.02, -0.63) skull=32 head=(103.00, 73.00) bodyY=1
+ThrowUp_4 bounds=592,525,922,972 rootX=783.4752 chain=(-1.02, 2.41) grip=(0.99, -0.57) skull=32 head=(103.00, 73.00) bodyY=1
+ThrowUp_5 bounds=1114,525,1459,977 rootX=1322.376 chain=(-0.99, 2.41) grip=(1.09, -0.66) skull=32 head=(103.00, 73.00) bodyY=1

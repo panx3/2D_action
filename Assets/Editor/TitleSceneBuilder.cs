@@ -66,7 +66,8 @@ public static class TitleSceneBuilder
             }
 
             SceneManager.SetActiveScene(titleScene);
-            CreateTitleScene(Path.GetFileNameWithoutExtension(StageScenePath));
+            CreateTitleScene(AssetDatabase.LoadAssetAtPath<SceneAsset>(StageSelectSceneBuilder.ScenePath) != null
+                ? "StageSelectScene" : Path.GetFileNameWithoutExtension(StageScenePath));
             TitleAtmosphereSetup.Apply(titleScene);
 
             if (!EditorSceneManager.SaveScene(titleScene, TitleScenePath))

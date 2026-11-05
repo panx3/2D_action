@@ -1,0 +1,45 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+
+public static class PlayerHurtSpriteInstaller
+{
+    public static string Run()
+    {
+        const string path = "Assets/Art/Player/MotionV2/Hurt.png";
+        const string source = "Docs/Art/PlayerHitFeedback/Preview/HurtPreview.png";
+        var set = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>(PlayerMotionV2Setup.MotionAssetPath);
+        if (EditorApplication.isPlaying || EditorApplication.isCompiling || set == null || EditorUtility.IsDirty(set))
+            throw new InvalidOperationException("Cannot safely update the motion asset in the current editor state.");
+        if (File.Exists(path) || File.Exists(path + ".meta")) throw new InvalidOperationException("Hurt sprite already exists.");
+        var previousGround = set.hurtGround; var previousAir = set.hurtAir;
+        try
+        {
+            File.Copy(source, path);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            typeof(PlayerMotionV2Setup).GetMethod("ImportSprites", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { path, 6, 4 });
+            Sprite[] sprites = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>()
+                .OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
+            if (sprites.Length != 6 || sprites.Any(s => s.pixelsPerUnit != 32f)) throw new InvalidOperationException("Wrong imported sprites.");
+            Vector2[] pixels = { new Vector2(74, 134.5f), new Vector2(67, 153.5f), new Vector2(52, 139.5f),
+                new Vector2(74, 121.5f), new Vector2(67, 119.5f) };
+            var frames = pixels.Select((p, i) => new PlayerMotionSet.Frame {
+                sprite = sprites[i], chainAnchor = new Vector2((p.x - 96f) / 32f, (96f - p.y) / 32f)
+            }).ToArray();
+            set.hurtGround = new PlayerMotionSet.Sequence { frames = new[] { frames[0], frames[1], frames[1], frames[2] }, framesPerSecond = 4f / 0.6f, loop = false };
+            set.hurtAir = new PlayerMotionSet.Sequence { frames = new[] { frames[3], frames[4], frames[4] }, framesPerSecond = 3f / 0.6f, loop = false };
+            set.RebuildLookup(); EditorUtility.SetDirty(set); AssetDatabase.SaveAssetIfDirty(set);
+            return "Installed five hurt frames with 32 PPU and per-frame visual chain anchors. No scene or prefab was saved.";
+        }
+        catch
+        {
+            set.hurtGround = previousGround; set.hurtAir = previousAir; set.RebuildLookup();
+            if (File.Exists(path) || File.Exists(path + ".meta")) AssetDatabase.DeleteAsset(path);
+            throw;
+        }
+    }
+}

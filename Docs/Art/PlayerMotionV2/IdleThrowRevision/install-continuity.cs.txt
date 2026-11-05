@@ -1,0 +1,103 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class IdleThrowContinuityInstaller
+{
+    const string Root = "Docs/Art/PlayerMotionV2/IdleThrowRevision/";
+    const string SpriteRoot = "Assets/Art/Player/MotionV2/";
+    const string SetPath = "Assets/Resources/PlayerMotion/PlayerMotionV2.asset";
+    public static string Run()
+    {
+        var scene = SceneManager.GetActiveScene();
+        var launcher = UnityEngine.Object.FindFirstObjectByType<MorningStarLauncher>();
+        var set = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>(SetPath);
+        if (!EditorApplication.isPlaying || EditorApplication.isCompiling || Time.timeScale != 0f || scene.name != "Stage1"
+            || scene.isDirty || launcher == null || !ReferenceEquals(set, launcher.MotionSet) || EditorUtility.IsDirty(set))
+            throw new InvalidOperationException("Paused session or asset state changed; no installation was attempted.");
+        if (!File.ReadAllBytes(SetPath).SequenceEqual(File.ReadAllBytes(Root + "Before/first-install-PlayerMotionV2.asset")))
+            throw new InvalidOperationException("Motion set changed since the continuity preview.");
+        string[] names = { "ThrowUp", "ThrowDownRightRefined" };
+        string[] sources = { "ThrowUpContinuity", "ThrowDownRightContinuity" };
+        var ids = names.ToDictionary(x => x, SpriteIds);
+        foreach (string name in names)
+            if (!File.ReadAllBytes(SpriteRoot + name + ".png").SequenceEqual(File.ReadAllBytes(Root + "Before/first-install-" + name + ".png")))
+                throw new InvalidOperationException(name + " changed since the continuity preview.");
+        var anchors = ReadAnchors();
+        var sequences = new[] { set.throws[2].ground, set.throws[2].air, set.throws[3].ground, set.throws[3].air };
+        var oldFrames = sequences.Select(x => x.frames).ToArray();
+        var changed = new List<string>();
+        Vector3 position = launcher.transform.position;
+        bool motionModified = false;
+        try
+        {
+            for (int i = 0; i < names.Length; i++)
+            {
+                string path = SpriteRoot + names[i] + ".png";
+                File.Copy(Root + "Preview/" + sources[i] + ".png", path, true);
+                changed.Add(names[i]);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+                if (!ids[names[i]].SequenceEqual(SpriteIds(names[i]))) throw new InvalidOperationException("Sprite IDs changed: " + names[i]);
+            }
+            motionModified = true;
+            Replace(sequences[0], Sprites(names[0]), 0, anchors["throwUp"], 0);
+            Replace(sequences[1], Sprites(names[0]), 3, anchors["throwUp"], 3);
+            Replace(sequences[2], Sprites(names[1]), 0, anchors["throwDownRight"], 0);
+            Replace(sequences[3], Sprites(names[1]), 3, anchors["throwDownRight"], 3);
+            set.RebuildLookup();
+            if (!EditorApplication.isPlaying || Time.timeScale != 0f || scene.isDirty || launcher.transform.position != position)
+                throw new InvalidOperationException("Paused session changed unexpectedly.");
+            EditorUtility.SetDirty(set); AssetDatabase.SaveAssetIfDirty(set);
+            return "Aligned upward and diagonal-down windups with their existing motions; sprite IDs, timing, charge and paused session preserved.";
+        }
+        catch
+        {
+            foreach (string name in changed)
+            {
+                string path = SpriteRoot + name + ".png";
+                File.Copy(Root + "Before/first-install-" + name + ".png", path, true);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            }
+            if (motionModified)
+            {
+                for (int i = 0; i < sequences.Length; i++)
+                {
+                    var sprites = Sprites(names[i / 2]); int start = i % 2 * 3;
+                    sequences[i].frames = oldFrames[i].Select((f, j) => new PlayerMotionSet.Frame {
+                        sprite = sprites[start + j], chainAnchor = f.chainAnchor, chargeGrip = f.chargeGrip }).ToArray();
+                }
+                set.RebuildLookup(); EditorUtility.SetDirty(set); AssetDatabase.SaveAssetIfDirty(set);
+            }
+            throw;
+        }
+    }
+    static void Replace(PlayerMotionSet.Sequence sequence, Sprite[] sprites, int spriteStart, Vector2[] anchors, int anchorStart)
+    {
+        if (sequence.frames.Length != 3 || sprites.Length != 6 || anchors.Length != 6) throw new Exception("Unexpected frame count.");
+        sequence.frames = sequence.frames.Select((f, i) => new PlayerMotionSet.Frame {
+            sprite = sprites[spriteStart + i], chainAnchor = anchors[anchorStart + i], chargeGrip = f.chargeGrip }).ToArray();
+    }
+    static Sprite[] Sprites(string name) => AssetDatabase.LoadAllAssetsAtPath(SpriteRoot + name + ".png")
+        .OfType<Sprite>().OrderBy(x => x.name, StringComparer.Ordinal).ToArray();
+    static string[] SpriteIds(string name) => Sprites(name).Select(x => {
+        if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(x, out string guid, out long id)) throw new Exception("Missing sprite ID.");
+        return x.name + ":" + guid + ":" + id;
+    }).ToArray();
+    static Dictionary<string, Vector2[]> ReadAnchors()
+    {
+        var result = new Dictionary<string, List<Vector2>>();
+        foreach (string line in File.ReadAllLines(Root + "anchors.csv"))
+        {
+            string[] data = line.Split(',');
+            if (!result.ContainsKey(data[0])) result[data[0]] = new List<Vector2>();
+            float x = float.Parse(data[2], CultureInfo.InvariantCulture), y = float.Parse(data[3], CultureInfo.InvariantCulture);
+            result[data[0]].Add(new Vector2((x - 96f) / 32f, (96f - y) / 32f));
+        }
+        return result.ToDictionary(x => x.Key, x => x.Value.ToArray());
+    }
+}

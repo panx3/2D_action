@@ -1,0 +1,17 @@
+project=D:/卒業制作２D/2D_action/Assets
+playing=False compiling=False
+scene=Assets/Scenes/Stage2.unity dirty=False
+player=Player scale=(1.00, 1.00, 1.00) animator=True
+maxRopeLength=5
+tensionStartRatio=0.82
+tensionStrength=42
+tensionDamping=5
+maxTensionForce=65
+throwSpeed=30
+spinRadius=1
+spinAngularSpeed=720
+maxChargeTime=1.2
+groundLaunchPoseHoldDuration=0.5
+launchPoseMaxHoldTime=0.4
+hand=(-1.06, -1.31, 0.00) ball=morningstar ballSprite=(x:0.00, y:2.00, width:79.00, height:76.00)
+playerData={"MonoBehaviour":{"m_Enabled":true,"m_EditorHideFlags":0,"m_Name":"","m_EditorClassIdentifier":"Assembly-CSharp::Player","_groundMoveForce":70.0,"_groundLinearDragX":8.0,"_chargeMoveSpeedMultiplier":0.6499999761581421,"_airMoveFactor":0.10000000149011612,"_airLinearDragX":1.5,"_jumpSpeed":8.0,"_coyoteTime":0.10000000149011612,"_jumpBufferTime":0.15000000596046449,"_fallGravityMultiplier":4.0,"_jumpCutMultiplier":2.0,"_maxFallSpeed":-50.0,"_groundCheckCollider":{"instanceID":0},"_groundLayers":{"serializedVersion":"2","m_Bits":65},"_groundCheckWidthRatio":0.7200000286102295,"_groundCheckHeight":0.11999999731779099,"_groundCheckVerticalOverlap":0.019999999552965165,"_groundedGraceTime":0.05000000074505806,"_bodySprite":{"instanceID":0},"_airLaunchBlinkOpacity":0.4000000059604645,"_visualRoot":{"instanceID":0},"_airLaunchBlinkDuration":0.2199999988079071,"_airLaunchBlinkInterval":0.05000000074505806,"_sfxAudioSource":{"instanceID":0},"_footstepAudioSource":{"instanceID":0},"_jumpClip":{"fileID":8300000,"guid":"499b1cae543efbc43b6731b035b28d98","type":3},"_footstepGrassClip":{"fileID":8300000,"guid":"4a3e59c3087c4e547a86c144df07cac0","type":3},"_jumpVoiceClips":[{"fileID":8300000,"guid":"c07dfa93b3c2da0498665cd9135216c3","type":3},{"fileID":8300000,"guid":"00e25a538dbe7324993b81babebbbaa0","type":3},{"fileID":8300000,"guid":"f0e753d50595cdd4b8c4145a505fab72","type":3},{"fileID":8300000,"guid":"d019a55ddebbd974788ae12a2adaddd0","type":3}],"_landingClip":{"fileID":8300000,"guid":"4ac3ad05768088949b054e3260d5299d","type":3},"_jumpVolume":1.0,"_footstepVolume":0.38999998569488528,"_jumpVoiceVolume":1.0,"_landingVolume":0.550000011920929,"_footstepMinHorizontalSpeed":0.10000000149011612,"_playerHealth":{"instanceID":0}}}

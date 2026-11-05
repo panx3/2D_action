@@ -1,0 +1,6 @@
+ThrowDownRefined_0 bounds=59,39,464,471 rootX=267.7033 chain=(-1.86, 1.47) grip=(0.93, -0.70) skull=32 head=(103.00, 78.00) bodyY=1.045049
+ThrowDownRefined_1 bounds=591,48,952,484 rootX=770.2463 chain=(0.88, -1.93) grip=(0.96, -0.03) skull=32 head=(103.00, 78.00) bodyY=1.072917
+ThrowDownRefined_2 bounds=1090,45,1471,484 rootX=1276.67 chain=(0.85, -1.93) grip=(1.02, 0.15) skull=32 head=(103.00, 78.00) bodyY=1.051879
+ThrowDownRefined_3 bounds=54,522,474,934 rootX=261.3013 chain=(-2.01, 1.21) grip=(0.85, -0.73) skull=32 head=(103.00, 78.00) bodyY=1.08
+ThrowDownRefined_4 bounds=599,525,964,968 rootX=753.1879 chain=(0.79, -1.99) grip=(1.06, -0.27) skull=32 head=(103.00, 78.00) bodyY=1.08
+ThrowDownRefined_5 bounds=1104,525,1498,986 rootX=1273.304 chain=(0.79, -2.14) grip=(1.13, -0.35) skull=32 head=(103.00, 78.00) bodyY=1.08

@@ -1,0 +1,25 @@
+using System;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class IdleThrowLiveInspection
+{
+    public static string Run()
+    {
+        var set = AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Resources/PlayerMotion/PlayerMotionV2.asset");
+        var launcher = UnityEngine.Object.FindFirstObjectByType<MorningStarLauncher>();
+        var scene = SceneManager.GetActiveScene();
+        string charge = string.Join(" | ", set.charge.frames.Select((f, i) => i + ":" + f.sprite.name
+            + " tip=" + f.chainAnchor.ToString("F4") + " grip=" + f.chargeGrip.ToString("F4")));
+        string directions = string.Join("\n", set.throws.Select((d, i) => i + " ground="
+            + string.Join(",", d.ground.frames.Select(f => f.sprite.name)) + " air="
+            + string.Join(",", d.air.frames.Select(f => f.sprite.name))));
+        return "playing=" + EditorApplication.isPlaying + " paused=" + EditorApplication.isPaused
+            + " timescale=" + Time.timeScale + " scene=" + scene.name + " dirty=" + scene.isDirty
+            + " launcher=" + (launcher ? launcher.transform.position.ToString("F3") : "none")
+            + " setInstance=" + set.GetInstanceID() + " runtimeSharesAsset="
+            + (launcher != null && ReferenceEquals(set, launcher.MotionSet)) + "\n" + charge + "\n" + directions;
+    }
+}

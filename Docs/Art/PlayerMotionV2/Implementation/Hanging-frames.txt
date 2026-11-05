@@ -1,0 +1,2 @@
+Hanging_0 bounds=376,100,762,781 rootX=560.6586 chain=(-0.02, 2.49) grip=(1.05, 0.65)
+Hanging_1 bounds=1101,100,1490,782 rootX=1285.845 chain=(-0.41, 2.50) grip=(1.01, 0.66)

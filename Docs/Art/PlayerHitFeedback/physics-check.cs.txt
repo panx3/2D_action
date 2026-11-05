@@ -1,0 +1,47 @@
+using System;
+using UnityEditor;
+using UnityEngine;
+
+public static class PlayerHitPhysicsCheck
+{
+    const string Key = "PlayerHitPhysicsCheck.Result";
+    static GameObject fixture;
+    static Rigidbody2D body;
+    static Player player;
+    static float previousScale, began;
+    static bool previousBackground;
+
+    public static string Start()
+    {
+        if (!EditorApplication.isPlaying) throw new Exception("Play Mode required.");
+        previousScale = Time.timeScale; previousBackground = Application.runInBackground;
+        fixture = new GameObject("temporary enemy hit physics fixture");
+        fixture.transform.position = new Vector3(10000f, 10000f, 0f);
+        body = fixture.AddComponent<Rigidbody2D>(); body.gravityScale = 0f; body.mass = 2f; body.linearDamping = 0f;
+        fixture.AddComponent<BoxCollider2D>();
+        player = fixture.AddComponent<Player>();
+        var health = fixture.AddComponent<PlayerHealth>();
+        if (!health.TakeEnemyDamage(1, new Vector2(4f, 0f)) || !player.IsEnemyHitStunned)
+            throw new Exception("Fixture hit was not accepted.");
+        Time.timeScale = 1f; Application.runInBackground = true; began = Time.time;
+        SessionState.SetString(Key, "Running"); EditorApplication.update += Tick;
+        return "Running a real 2D physics knockback check.";
+    }
+    static void Tick()
+    {
+        if (!EditorApplication.isPlaying || fixture == null) { Finish("FAIL fixture disappeared"); return; }
+        if (Time.time - began < .08f) return;
+        float speed = body.linearVelocity.x;
+        // The editor may advance more than 0.25s in one slow frame; the initial lock was checked in Start.
+        Finish(speed > .5f
+            ? "PASS: the accepted enemy hit locked input and applied a real 2D impulse; vx=" + speed.ToString("F2")
+            : "FAIL: Player knockback vx=" + speed.ToString("F2"));
+    }
+    static void Finish(string result)
+    {
+        EditorApplication.update -= Tick; Time.timeScale = previousScale; Application.runInBackground = previousBackground;
+        if (fixture != null) UnityEngine.Object.DestroyImmediate(fixture);
+        SessionState.SetString(Key, result);
+    }
+    public static string Result() => SessionState.GetString(Key, "Not started");
+}

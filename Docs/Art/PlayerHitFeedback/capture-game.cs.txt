@@ -1,0 +1,50 @@
+using System;
+using System.IO;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class PlayerHitGameCapture
+{
+    public static string Run()
+    {
+        if (!EditorApplication.isPlaying) throw new Exception("Play Mode required.");
+        var p = UnityEngine.Object.FindFirstObjectByType<Player>();
+        var health = p.GetComponent<PlayerHealth>();
+        var launcher = p.GetComponent<MorningStarLauncher>();
+        var camera = Camera.main;
+        if (p == null || health == null || launcher == null || camera == null) throw new Exception("Scene reference missing.");
+        var gameOver = UnityEngine.Object.FindFirstObjectByType<GameOverMenuController>();
+        if (gameOver != null && gameOver.IsGameOver)
+        {
+            var overlay = (Component)typeof(GameOverMenuController).GetField("overlay", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(gameOver);
+            gameOver.gameObject.SetActive(false);
+            if (overlay != null) overlay.gameObject.SetActive(false);
+        }
+        Time.timeScale = 0f;
+        health.EndRespawnProtection(); health.ResetToFullHp(); p.CancelEnemyHitReaction(); p.SetInputEnabled(true);
+        const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        typeof(Player).GetField("_isGrounded", flags).SetValue(p, true);
+        if (!health.TakeEnemyDamage(1, new Vector2(-1f, 0.2f))) throw new Exception("Hit not accepted.");
+        typeof(Player).GetField("enemyHitStartedAt", flags).SetValue(p, Time.time - .09f);
+        typeof(MorningStarLauncher).GetMethod("UpdateUnifiedMotionVisual", flags).Invoke(launcher, null);
+        if (p.BodySprite.sprite == null || p.BodySprite.sprite.name != "Hurt_01") throw new Exception("Wrong reaction frame.");
+        var previous = camera.targetTexture; var active = RenderTexture.active;
+        var rt = RenderTexture.GetTemporary(1600, 900, 24);
+        var image = new Texture2D(1600, 900, TextureFormat.RGB24, false);
+        try
+        {
+            camera.targetTexture = rt; camera.Render(); RenderTexture.active = rt;
+            image.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0); image.Apply();
+            string path = "Docs/Art/PlayerHitFeedback/Preview/" + SceneManager.GetActiveScene().name + "-hit.png";
+            Directory.CreateDirectory(Path.GetDirectoryName(path)); File.WriteAllBytes(path, image.EncodeToPNG());
+            return "Captured " + path + " with " + p.BodySprite.sprite.name + ".";
+        }
+        finally
+        {
+            camera.targetTexture = previous; RenderTexture.active = active;
+            RenderTexture.ReleaseTemporary(rt); UnityEngine.Object.DestroyImmediate(image);
+        }
+    }
+}

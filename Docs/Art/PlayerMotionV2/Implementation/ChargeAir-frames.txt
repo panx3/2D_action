@@ -1,0 +1,8 @@
+ChargeAir_0 bounds=24,96,369,496 rootX=180.2905 chain=(-1.67, -0.86) grip=(0.95, 0.20) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_1 bounds=406,83,752,496 rootX=562.9572 chain=(-1.61, -0.88) grip=(0.97, 0.17) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_2 bounds=789,81,1135,496 rootX=948.0401 chain=(-1.80, -0.76) grip=(0.96, 0.16) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_3 bounds=1173,94,1520,496 rootX=1330.969 chain=(-1.81, -0.77) grip=(0.98, 0.18) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_4 bounds=23,560,370,968 rootX=181.1173 chain=(-1.65, -0.81) grip=(0.96, 0.20) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_5 bounds=406,560,752,971 rootX=565.4717 chain=(-1.63, -0.81) grip=(0.97, 0.21) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_6 bounds=789,564,1136,971 rootX=945.636 chain=(-1.83, -0.80) grip=(0.96, 0.21) skull=32 head=(103.00, 74.00) bodyY=1
+ChargeAir_7 bounds=1171,558,1520,971 rootX=1329.371 chain=(-1.81, -0.76) grip=(0.97, 0.19) skull=32 head=(103.00, 74.00) bodyY=1

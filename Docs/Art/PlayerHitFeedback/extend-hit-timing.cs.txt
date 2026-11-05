@@ -1,0 +1,32 @@
+using System;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+public static class HitTimingUpdate {
+ public static string Run() {
+  if(EditorApplication.isPlaying || EditorApplication.isCompiling) throw new InvalidOperationException("Editor must be idle.");
+  var set=AssetDatabase.LoadAssetAtPath<PlayerMotionSet>("Assets/Resources/PlayerMotion/PlayerMotionV2.asset");
+  if(EditorUtility.IsDirty(set)) throw new InvalidOperationException("Motion asset has unsaved edits.");
+  var g=set.hurtGround.frames; var a=set.hurtAir.frames;
+  if(g.Length!=3 || a.Length!=2) throw new InvalidOperationException("Unexpected hurt frame layout.");
+  set.hurtGround.frames=new[]{g[0],g[1],g[1],g[2]};
+  set.hurtGround.framesPerSecond=4f/0.6f;
+  set.hurtAir.frames=new[]{a[0],a[1],a[1]};
+  set.hurtAir.framesPerSecond=3f/0.6f;
+  set.RebuildLookup(); EditorUtility.SetDirty(set); AssetDatabase.SaveAssetIfDirty(set);
+  var field=typeof(Player).GetField("enemyHitControlLockDuration",BindingFlags.Instance|BindingFlags.NonPublic);
+  string result="Ground: impact 0.15s, fall 0.30s, recovery 0.15s; Air: impact 0.20s, recoil 0.40s. ";
+  for(int i=0;i<UnityEngine.SceneManagement.SceneManager.sceneCount;i++) {
+   var s=UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+   foreach(var root in s.GetRootGameObjects()) foreach(var p in root.GetComponentsInChildren<Player>(true)) {
+    // This field is not serialized in existing scene files. Update the hot-reloaded default without saving the scene.
+    float before=(float)field.GetValue(p);
+    if(Mathf.Approximately(before,0.25f)) field.SetValue(p,0.6f);
+    result+=p.name+" lock="+field.GetValue(p)+"; ";
+   }
+   result+=s.name+" dirty="+s.isDirty+"; ";
+  }
+  if(set.hurtGround.Sample(0.2f).sprite!=g[1].sprite || set.hurtGround.Sample(0.4f).sprite!=g[1].sprite || set.hurtGround.Sample(0.5f).sprite!=g[2].sprite) throw new InvalidOperationException("Ground timing mismatch.");
+  return result+"Timing assertions passed. No Scene or Prefab saved.";
+ }
+}

@@ -326,7 +326,7 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         PlayerHealth hp = target.GetComponentInParent<PlayerHealth>();
         if (hp == null || hp.IsDead || hp.IsRespawning || hp.IsInvincible) return;
         int before = hp.CurrentHp;
-        hp.TakeDamage(amount, new Vector2(direction, 0.2f).normalized * knockback);
+        hp.TakeEnemyDamage(amount, new Vector2(direction, 0.2f).normalized * knockback);
         if (hp.CurrentHp < before) nextDamage = Time.time + Mathf.Max(0.02f, damageInterval);
     }
 

@@ -1,0 +1,1 @@
+PASS: 78 frame slots; original 6-frame running rhythm; non-looping descent; 8-direction ground/air throws; 32 PPU Point/uncompressed/no mipmaps; shared references valid.

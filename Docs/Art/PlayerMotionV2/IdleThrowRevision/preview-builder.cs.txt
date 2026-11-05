@@ -1,0 +1,207 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Globalization;
+using UnityEngine;
+
+// Read source images and write diagnostic previews to Docs only. No AssetDatabase or scene writes.
+public static class IdleThrowPreviewBuilder
+{
+    [Serializable] public class Config { public Sheet[] sheets; }
+    [Serializable] public class Sheet
+    {
+        public string name, source, detectorName;
+        public int sourceColumns, sourceRows, columns, rows;
+        public Pose[] poses;
+    }
+    [Serializable] public class Pose
+    {
+        public int sourceIndex;
+        public float headX, headY, skullHeight, targetX, targetY, targetSkull, bodyStretch;
+        public bool grounded;
+    }
+    [Serializable] public class FrameResult
+    {
+        public int index, sourceIndex;
+        public float chainX, chainY, gripX, gripY, bodyStretch;
+        public bool touchesOutputEdge;
+    }
+    [Serializable] public class Result { public string name; public FrameResult[] frames; }
+    delegate HashSet<int> Find(Color32[] pixels, int width, int height, int left, int top, int right, int bottom);
+    delegate int Foot(Color32[] pixels, int width, int height, HashSet<int> character, int top, int bottom);
+    delegate Vector2 Tip(Color32[] pixels, int width, int height, int left, int top, int right, int bottom,
+        float rootX, int minY, int maxY, string name, int index);
+    delegate Vector2 Grip(Color32[] pixels, int width, int height, int minX, int maxX, int minY, int maxY);
+    static readonly BindingFlags Flags = BindingFlags.Static | BindingFlags.NonPublic;
+    const int Cell = 192;
+    const string Root = "Docs/Art/PlayerMotionV2/IdleThrowRevision/";
+
+    public static string Diagnose()
+    {
+        var config = ReadConfig(typeof(PlayerMotionV2Setup));
+        if (config == null) return "config=null";
+        if (config.sheets == null) return "sheets=null";
+        var parts = new List<string>();
+        foreach (var sheet in config.sheets)
+            parts.Add(sheet == null ? "null sheet" : sheet.name + ":poses=" + (sheet.poses == null ? "null" : sheet.poses.Length.ToString()));
+        return string.Join(", ", parts);
+    }
+
+    public static string Run()
+    {
+        var owner = typeof(PlayerMotionV2Setup);
+        var find = (Find)Delegate.CreateDelegate(typeof(Find), owner.GetMethod("FindCharacter", Flags));
+        var foot = (Foot)Delegate.CreateDelegate(typeof(Foot), owner.GetMethod("DetectFootY", Flags));
+        var tip = (Tip)Delegate.CreateDelegate(typeof(Tip), owner.GetMethod("DetectWeaponTip", Flags));
+        var grip = (Grip)Delegate.CreateDelegate(typeof(Grip), owner.GetMethod("DetectGrip", Flags));
+        var palette = (Color32[])owner.GetMethod("ReadPalette", Flags).Invoke(null, null);
+        var colors = new Dictionary<int, Color32>();
+        var config = ReadConfig(owner);
+        Directory.CreateDirectory(Root + "Preview");
+        int total = 0, clipped = 0;
+        foreach (var sheet in config.sheets)
+        {
+            var input = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!input.LoadImage(File.ReadAllBytes(sheet.source), false)) throw new Exception("Cannot load " + sheet.source);
+            Color32[] pixels = input.GetPixels32();
+            int width = input.width, height = input.height, count = sheet.poses.Length;
+            int outputColumns = Mathf.Min(4, count), outputRows = Mathf.CeilToInt(count / (float)outputColumns);
+            var output = new Texture2D(outputColumns * Cell, outputRows * Cell, TextureFormat.RGBA32, false);
+            var resultPixels = new Color32[output.width * output.height];
+            var result = new Result { name = sheet.name, frames = new FrameResult[count] };
+            for (int i = 0; i < count; i++)
+            {
+                Pose p = sheet.poses[i]; int index = p.sourceIndex;
+                int originX = index % sheet.sourceColumns * width / sheet.sourceColumns;
+                int originY = index / sheet.sourceColumns * height / sheet.sourceRows;
+                int cellRight = (index % sheet.sourceColumns + 1) * width / sheet.sourceColumns;
+                int cellBottom = (index / sheet.sourceColumns + 1) * height / sheet.sourceRows;
+                int left = Mathf.Max(0, originX - 64), right = Mathf.Min(width, cellRight + 64);
+                int top = Mathf.Max(0, originY - 45), bottom = Mathf.Min(height, cellBottom + 45);
+                HashSet<int> character = find(pixels, width, height, left, top, right, bottom);
+                int minX = right, maxX = left, minY = bottom, maxY = top;
+                foreach (int pixel in character)
+                {
+                    int x = pixel % width, y = pixel / width;
+                    minX = Mathf.Min(minX, x); maxX = Mathf.Max(maxX, x);
+                    minY = Mathf.Min(minY, y); maxY = Mathf.Max(maxY, y);
+                }
+                if (maxX <= minX || maxY <= minY) throw new Exception(sheet.name + " empty frame " + i);
+                float rootX = 0f, weight = 0f;
+                int skirtTop = Mathf.RoundToInt(Mathf.Lerp(minY, maxY, .57f));
+                int skirtBottom = Mathf.RoundToInt(Mathf.Lerp(minY, maxY, .78f));
+                for (int y = skirtTop; y <= skirtBottom; y++) for (int x = minX; x <= maxX; x++)
+                {
+                    Color32 c = Pixel(pixels, width, height, x, y);
+                    if (c.a >= 220 && c.r >= 20 && c.r < 95 && c.g < 80 && Mathf.Abs(c.r - c.g) < 32)
+                    { rootX += x; weight++; }
+                }
+                rootX = weight > 40 ? rootX / weight : (minX + maxX) * .5f;
+                int detectorIndex = sheet.name == "ThrowForwardAirIdle" ? i + 3 : i;
+                Vector2 weapon = tip(pixels, width, height, left, top, right, bottom, rootX, minY, maxY, sheet.detectorName, detectorIndex);
+                Vector2 hand = grip(pixels, width, height, minX, maxX, minY, maxY);
+                float sourceHeadX = originX + p.headX, sourceHeadY = originY + p.headY;
+                float scale = p.targetSkull / p.skullHeight, stretch = p.bodyStretch;
+                float neck = p.targetSkull * .6f;
+                if (p.grounded)
+                {
+                    int bootBottom = foot(pixels, width, height, character, minY, maxY);
+                    float sourceSpan = (bootBottom - sourceHeadY) * scale - neck;
+                    stretch = (159f - p.targetY - neck) / Mathf.Max(1f, sourceSpan);
+                    if (stretch < .65f || stretch > 1.5f) throw new Exception(sheet.name + " frame " + i + " stretch " + stretch);
+                }
+                int outputX = i % outputColumns * Cell, outputY = i / outputColumns * Cell;
+                bool touchesEdge = false;
+                for (int y = 0; y < Cell; y++) for (int x = 0; x < Cell; x++)
+                {
+                    float delta = y - p.targetY;
+                    if (delta > neck) delta = neck + (delta - neck) / stretch;
+                    int sourceX = Mathf.RoundToInt(sourceHeadX + (x - p.targetX) / scale);
+                    int sourceY = Mathf.RoundToInt(sourceHeadY + delta / scale);
+                    if (sourceX < left || sourceX >= right || sourceY < top || sourceY >= bottom
+                        || !character.Contains(sourceY * width + sourceX)) continue;
+                    Color32 color = Color(Pixel(pixels, width, height, sourceX, sourceY), palette, colors);
+                    resultPixels[(output.height - 1 - outputY - y) * output.width + outputX + x] = color;
+                    if (color.a > 0 && (x == 0 || y == 0 || x == Cell - 1 || y == Cell - 1)) touchesEdge = true;
+                }
+                Vector2 weaponLocal = WorldLocal(weapon, sourceHeadX, sourceHeadY, p, scale, stretch, neck);
+                Vector2 gripLocal = WorldLocal(hand, sourceHeadX, sourceHeadY, p, scale, stretch, neck);
+                result.frames[i] = new FrameResult { index = i, sourceIndex = index, chainX = weaponLocal.x, chainY = weaponLocal.y,
+                    gripX = gripLocal.x, gripY = gripLocal.y, bodyStretch = stretch, touchesOutputEdge = touchesEdge };
+                total++; if (touchesEdge) clipped++;
+            }
+            output.SetPixels32(resultPixels); output.Apply();
+            File.WriteAllBytes(Root + "Preview/" + sheet.name + ".png", output.EncodeToPNG());
+            var report = new StringBuilder("index,sourceIndex,chainX,chainY,gripX,gripY,bodyStretch,touchesOutputEdge\n");
+            foreach (var frame in result.frames)
+                report.AppendLine(frame.index + "," + frame.sourceIndex + "," + F(frame.chainX) + "," + F(frame.chainY)
+                    + "," + F(frame.gripX) + "," + F(frame.gripY) + "," + F(frame.bodyStretch) + "," + frame.touchesOutputEdge);
+            File.WriteAllText(Root + "Preview/" + sheet.name + ".csv", report.ToString());
+            UnityEngine.Object.DestroyImmediate(input); UnityEngine.Object.DestroyImmediate(output);
+        }
+        return "Built " + total + " diagnostic frames under Docs; output-edge contacts=" + clipped + ". No scene or AssetDatabase edits.";
+    }
+
+    static Vector2 WorldLocal(Vector2 source, float headX, float headY, Pose p, float scale, float stretch, float neck)
+    {
+        float delta = (source.y - headY) * scale;
+        if (delta > neck) delta = neck + (delta - neck) * stretch;
+        return new Vector2(p.targetX + (source.x - headX) * scale - Cell * .5f, Cell * .5f - p.targetY - delta) / 32f;
+    }
+    static Color32 Pixel(Color32[] pixels, int width, int height, int x, int y)
+        => x < 0 || x >= width || y < 0 || y >= height ? default : pixels[(height - 1 - y) * width + x];
+    static string F(float value) => value.ToString("R", CultureInfo.InvariantCulture);
+
+    static Config ReadConfig(Type owner)
+    {
+        // JsonUtility can deserialize the project's compiled calibration types, whereas the
+        // transient Roslyn assembly used for this preview is not registered with Unity serialization.
+        Type configType = owner.GetNestedType("CalmCalibration", BindingFlags.NonPublic);
+        object raw = JsonUtility.FromJson(File.ReadAllText(Root + "calibration.json"), configType);
+        var rawSheets = (Array)configType.GetField("sheets").GetValue(raw);
+        var config = new Config { sheets = new Sheet[rawSheets.Length] };
+        for (int i = 0; i < rawSheets.Length; i++)
+        {
+            object inputSheet = rawSheets.GetValue(i); Type sheetType = inputSheet.GetType();
+            var item = new Sheet { name = (string)sheetType.GetField("name").GetValue(inputSheet),
+                source = (string)sheetType.GetField("source").GetValue(inputSheet),
+                sourceColumns = (int)sheetType.GetField("sourceColumns").GetValue(inputSheet),
+                sourceRows = (int)sheetType.GetField("sourceRows").GetValue(inputSheet) };
+            item.detectorName = item.name.StartsWith("ThrowDownRight") ? "ThrowDownRight"
+                : item.name.StartsWith("ThrowDown") ? "ThrowDown"
+                : item.name.StartsWith("ThrowUpRight") ? "ThrowUpRight"
+                : item.name.StartsWith("ThrowUp") ? "ThrowUp"
+                : item.name.StartsWith("ThrowForward") ? "ThrowForward" : "Charge";
+            var inputPoses = (Array)sheetType.GetField("poses").GetValue(inputSheet);
+            item.poses = new Pose[inputPoses.Length];
+            for (int j = 0; j < inputPoses.Length; j++)
+            {
+                object rawPose = inputPoses.GetValue(j); Type type = rawPose.GetType();
+                item.poses[j] = new Pose { sourceIndex = (int)type.GetField("sourceIndex").GetValue(rawPose),
+                    headX = (float)type.GetField("headX").GetValue(rawPose), headY = (float)type.GetField("headY").GetValue(rawPose),
+                    skullHeight = (float)type.GetField("skullHeight").GetValue(rawPose), targetX = (float)type.GetField("targetX").GetValue(rawPose),
+                    targetY = (float)type.GetField("targetY").GetValue(rawPose), targetSkull = (float)type.GetField("targetSkull").GetValue(rawPose),
+                    bodyStretch = (float)type.GetField("bodyStretch").GetValue(rawPose), grounded = (bool)type.GetField("grounded").GetValue(rawPose) };
+            }
+            config.sheets[i] = item;
+        }
+        return config;
+    }
+    static Color32 Color(Color32 c, Color32[] palette, Dictionary<int, Color32> cache)
+    {
+        if (c.a < 192) return default;
+        int key = (c.r << 16) | (c.g << 8) | c.b;
+        if (cache.TryGetValue(key, out Color32 result)) return result;
+        int best = int.MaxValue; result = palette[0];
+        foreach (Color32 candidate in palette)
+        {
+            int dr = c.r - candidate.r, dg = c.g - candidate.g, db = c.b - candidate.b;
+            int error = dr * dr * 2 + dg * dg * 3 + db * db * 2;
+            if (error < best) { best = error; result = candidate; }
+        }
+        cache[key] = result;
+        return result;
+    }
+}

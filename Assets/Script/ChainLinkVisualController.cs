@@ -4,6 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 見た目専用の鎖リンク表示。物理は ChainConstraint2D / MorningStarLauncher 側を維持する。
 /// </summary>
+[DefaultExecutionOrder(100)]
 public class ChainLinkVisualController : MonoBehaviour
 {
     [Header("Chain Points")]
@@ -46,6 +47,7 @@ public class ChainLinkVisualController : MonoBehaviour
 
     private readonly List<SpriteRenderer> _links = new List<SpriteRenderer>();
     private readonly List<Vector3> _pathPoints = new List<Vector3>(20);
+    private float _chargeHandleVisualLength;
     private bool _loggedInit;
     private bool _loggedLauncherResolve;
     private int _lastActiveLinkCount;
@@ -171,6 +173,15 @@ public class ChainLinkVisualController : MonoBehaviour
     private void UpdatePathPoints()
     {
         _pathPoints.Clear();
+        if (launcher != null && launcher.TryGetChargeVisualPath(_pathPoints))
+        {
+            ResolveGroundCollision();
+            _chargeHandleVisualLength = 0f;
+            // 最後の1区間が「回転軸の手→鉄球」。衝突補正後の経路で境界を測る。
+            for (int i = 1; i < _pathPoints.Count - 1; i++)
+                _chargeHandleVisualLength += Vector3.Distance(_pathPoints[i - 1], _pathPoints[i]);
+            return;
+        }
 
         Vector3 start = launcher != null ? (Vector3)launcher.VisualRopeAnchorWorld : startPoint.position;
         Vector3 end = endPoint.position;
@@ -279,12 +290,24 @@ public class ChainLinkVisualController : MonoBehaviour
                 angle += 90f;
 
             Transform linkTransform = link.transform;
+            bool charging = launcher != null && launcher.UsesChargeGrip;
+            bool handleSide = charging && distance < _chargeHandleVisualLength;
+            if (charging && !handleSide)
+                pos.z = launcher.ChargeRearWorldZ;
             linkTransform.position = pos;
             linkTransform.rotation = Quaternion.Euler(0f, 0f, angle);
             linkTransform.localScale = Vector3.one * segmentScale;
             link.sprite = chainLinkSprite;
-            link.sortingLayerName = sortingLayerName;
-            link.sortingOrder = sortingOrder;
+            if (charging)
+            {
+                link.sortingLayerID = launcher.MotionPlayerSortingLayerID;
+                link.sortingOrder = launcher.MotionPlayerSortingOrder + (handleSide ? 1 : 0);
+            }
+            else
+            {
+                link.sortingLayerName = sortingLayerName;
+                link.sortingOrder = sortingOrder;
+            }
             link.color = linkColor;
         }
 

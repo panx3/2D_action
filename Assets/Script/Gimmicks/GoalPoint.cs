@@ -289,6 +289,7 @@ public sealed class GoalPoint : MonoBehaviour, IMorningStarHitReceiver
             return;
 
         _isCleared = true;
+        StageSelectProgress.RecordClear(gameObject.scene.name);
         if (showDebugLog)
             Debug.Log("[GoalPoint] Crystal broken. Stage Clear!", this);
 

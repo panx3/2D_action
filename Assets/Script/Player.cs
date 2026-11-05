@@ -14,7 +14,7 @@ using UnityEngine.Serialization;
 
 /// </summary>
 
-public class Player : MonoBehaviour
+public partial class Player : MonoBehaviour
 
 {
 
@@ -213,6 +213,7 @@ public class Player : MonoBehaviour
     /// <summary>入力だけを禁止する。演出中の物理所有権はSetStartIntroControlで切り替える。</summary>
     public void SetInputEnabled(bool enabled)
     {
+        if (!enabled) { EndElectricStun(); CancelEnemyHitReaction(); }
         InputEnabled = enabled;
         _actionMoveInput = Vector2.zero;
         _moveInput = Vector2.zero;
@@ -256,6 +257,7 @@ public class Player : MonoBehaviour
         if (_morningStarLauncher == null) _morningStarLauncher = GetComponent<MorningStarLauncher>();
         if (_morningStarLauncher != null) _morningStarLauncher.SetGimmickInputBlocked(blocked);
         if (!blocked) return;
+        CancelEnemyHitReaction();
         _moveInput = _actionMoveInput = Vector2.zero;
         _jumpBufferTimer = 0f;
         _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
@@ -274,6 +276,7 @@ public class Player : MonoBehaviour
             _morningStarLauncher.SetGoalInputBlocked(blocked);
         if (!blocked)
             return;
+        CancelEnemyHitReaction();
         _moveInput = Vector2.zero;
         _actionMoveInput = Vector2.zero;
         _jumpBufferTimer = 0f;
@@ -383,6 +386,8 @@ public class Player : MonoBehaviour
     private void OnDisable()
 
     {
+        EndElectricStun();
+        CancelEnemyHitReaction();
         _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
         if (_airLaunchBlinkRoutine != null)
         {
@@ -493,7 +498,7 @@ public class Player : MonoBehaviour
 
     {
 
-        if (_startIntroControlled)
+        if (_startIntroControlled || IsElectricStunned)
             return;
 
         RefreshGroundedState();
@@ -528,7 +533,7 @@ public class Player : MonoBehaviour
     private void PollMovementInput()
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned)
         {
             _moveInput = Vector2.zero;
             return;
@@ -815,6 +820,8 @@ public class Player : MonoBehaviour
     private void HandlePlayerDead()
 
     {
+        EndElectricStun();
+        CancelEnemyHitReaction();
         _trampolineJumpUntil = _lastJumpPressedAt = float.NegativeInfinity;
 
         StopFootstepAudio();
@@ -1055,7 +1062,7 @@ public class Player : MonoBehaviour
     public void _OnMove(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned)
             return;
 
         if (!InputEnabled)
@@ -1072,7 +1079,7 @@ public class Player : MonoBehaviour
     public void _OnJump(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned)
             return;
 
         if (!InputEnabled)
@@ -1127,7 +1134,7 @@ public class Player : MonoBehaviour
     /// <summary>トランポリン接触の前後だけ追加ジャンプを受け付ける。速度の適用はPlayerが所有する。</summary>
     public void BeginTrampolineJumpInput(float window)
     {
-        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled) return;
+        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled || IsElectricStunned || IsEnemyHitStunned) return;
         _trampolineJumpUntil = Time.time + Mathf.Max(0f, window);
         if (Time.time - _lastJumpPressedAt <= window)
             _jumpBufferTimer = Mathf.Max(_jumpBufferTimer, Time.fixedDeltaTime * 2f);
@@ -1139,7 +1146,7 @@ public class Player : MonoBehaviour
 
     {
 
-        if (_rigid == null) return;
+        if (_rigid == null || IsElectricStunned) return;
 
         _rigid.AddForce(worldImpulse, mode);
 
@@ -1151,7 +1158,7 @@ public class Player : MonoBehaviour
 
     {
 
-        if (_rigid == null) return;
+        if (_rigid == null || IsElectricStunned) return;
 
         _rigid.AddForce(Vector2.up * upwardImpulse, ForceMode2D.Impulse);
 

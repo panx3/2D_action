@@ -1,0 +1,8 @@
+Air_0 bounds=63,127,405,458 rootX=240.6103 chain=(-1.75, -0.88) grip=(0.89, 0.39) skull=33.68421 head=(103.37, 71.79) bodyY=1.08
+Air_1 bounds=498,47,824,446 rootX=658.691 chain=(-1.60, -0.93) grip=(0.84, 0.26) skull=32 head=(103.00, 73.00) bodyY=1.08
+Air_2 bounds=942,17,1270,401 rootX=1107.801 chain=(-1.40, -1.01) grip=(0.90, 0.32) skull=32 head=(103.00, 73.00) bodyY=1.08
+Air_3 bounds=1387,69,1714,445 rootX=1554.287 chain=(-1.35, -0.97) grip=(0.92, 0.32) skull=32 head=(103.00, 73.00) bodyY=1.08
+Air_4 bounds=89,496,417,864 rootX=253.9645 chain=(-1.82, -0.52) grip=(0.90, 0.31) skull=32 head=(103.00, 73.00) bodyY=1.08
+Air_5 bounds=942,497,1267,869 rootX=1106.908 chain=(-1.54, -1.11) grip=(0.83, 0.17) skull=32 head=(103.00, 75.00) bodyY=1.166384
+Air_6 bounds=942,497,1267,869 rootX=1106.908 chain=(-1.54, -1.10) grip=(0.83, 0.20) skull=32 head=(103.00, 74.00) bodyY=1.184384
+Air_7 bounds=1402,479,1682,867 rootX=1552.149 chain=(-1.51, -0.74) grip=(0.84, 0.13) skull=32 head=(103.00, 73.00) bodyY=1.062224

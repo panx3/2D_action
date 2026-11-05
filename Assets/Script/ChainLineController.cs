@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -5,6 +6,7 @@ using UnityEngine;
 /// 物理制約とは分離し、既存の連続チェーンテクスチャを Tile 表示する。
 /// </summary>
 [RequireComponent(typeof(LineRenderer))]
+[DefaultExecutionOrder(110)]
 public class ChainLineController : MonoBehaviour
 {
     [Header("Chain Points")]
@@ -56,6 +58,7 @@ public class ChainLineController : MonoBehaviour
     [SerializeField, Min(0f)] private float collisionSkin = 0.01f;
 
     private LineRenderer _line;
+    private LineRenderer _chargeBallLine;
     private Color _defaultStartColor;
     private Color _defaultEndColor;
     private float _defaultStartWidth;
@@ -69,6 +72,7 @@ public class ChainLineController : MonoBehaviour
     private readonly RaycastHit2D[] _collisionHits = new RaycastHit2D[8];
     private Vector3[] _visualPoints = new Vector3[16];
     private ContactFilter2D _groundFilter;
+    private readonly List<Vector3> chargeVisualPoints = new List<Vector3>(16);
 
     public int SagSegments => Mathf.Max(2, sagSegments);
     public float SagStrength => useSag ? sagStrength : 0f;
@@ -158,19 +162,82 @@ public class ChainLineController : MonoBehaviour
 
         _line.enabled = showLine;
         if (!showLine)
+        {
+            if (_chargeBallLine != null) _chargeBallLine.enabled = false;
             return;
+        }
 
         if (launcher != null)
             maxRopeLength = launcher.MaxRopeLength;
 
         ApplyHookedLineVisual();
 
-        if (!useSag)
-            DrawStraightChain();
+        if (launcher != null && launcher.TryGetChargeVisualPath(chargeVisualPoints))
+        {
+            if (avoidGroundPenetration)
+                ChainVisualCollision2D.Resolve(chargeVisualPoints, chainCollisionRadius, collisionSkin, _groundFilter, _collisionHits);
+            int gripIndex = chargeVisualPoints.Count - 2;
+            _line.sortingLayerID = launcher.MotionPlayerSortingLayerID;
+            _line.sortingOrder = launcher.MotionPlayerSortingOrder + 1;
+            _line.positionCount = gripIndex + 1;
+            for (int i = 0; i <= gripIndex; i++)
+                _line.SetPosition(i, chargeVisualPoints[i]);
+
+            EnsureChargeBallLine();
+            _chargeBallLine.enabled = true;
+            _chargeBallLine.sortingLayerID = launcher.MotionPlayerSortingLayerID;
+            _chargeBallLine.sortingOrder = launcher.MotionPlayerSortingOrder;
+            _chargeBallLine.positionCount = 2;
+            Vector3 grip = chargeVisualPoints[gripIndex];
+            Vector3 ball = chargeVisualPoints[gripIndex + 1];
+            grip.z = ball.z = launcher.ChargeRearWorldZ;
+            _chargeBallLine.SetPosition(0, grip);
+            _chargeBallLine.SetPosition(1, ball);
+        }
         else
-            DrawSagChain();
+        {
+            if (_chargeBallLine != null) _chargeBallLine.enabled = false;
+            _line.sortingLayerName = sortingLayerName;
+            _line.sortingOrder = sortingOrder;
+            if (!useSag)
+                DrawStraightChain();
+            else
+                DrawSagChain();
+        }
 
         UpdateChainTextureTiling();
+        if (_chargeBallLine != null && _chargeBallLine.enabled)
+            SyncChargeBallLine();
+    }
+
+    private void EnsureChargeBallLine()
+    {
+        if (_chargeBallLine != null) return;
+        var lineObject = new GameObject("Charge Ball Chain Line");
+        lineObject.layer = gameObject.layer;
+        lineObject.transform.SetParent(transform, false);
+        _chargeBallLine = lineObject.AddComponent<LineRenderer>();
+        _chargeBallLine.useWorldSpace = true;
+        _chargeBallLine.enabled = false;
+    }
+
+    private void SyncChargeBallLine()
+    {
+        _chargeBallLine.sharedMaterial = _line.sharedMaterial;
+        _chargeBallLine.alignment = _line.alignment;
+        _chargeBallLine.textureMode = _line.textureMode;
+        _chargeBallLine.textureScale = _line.textureScale;
+        _chargeBallLine.numCapVertices = _line.numCapVertices;
+        _chargeBallLine.numCornerVertices = _line.numCornerVertices;
+        _chargeBallLine.startWidth = _line.startWidth;
+        _chargeBallLine.endWidth = _line.endWidth;
+        _chargeBallLine.startColor = _line.startColor;
+        _chargeBallLine.endColor = _line.endColor;
+    }
+
+    private void OnDisable()
+    {
+        if (_chargeBallLine != null) _chargeBallLine.enabled = false;
     }
 
     private void UpdateChainTextureTiling()

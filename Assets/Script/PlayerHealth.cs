@@ -104,14 +104,23 @@ public class PlayerHealth : MonoBehaviour
     /// ダメージを受ける。無敵中・死亡中は無視。ノックバックは knockbackImpulse で指定。
     /// </summary>
     public void TakeDamage(int amount, Vector2 knockbackImpulse = default)
+        => ApplyDamage(amount, knockbackImpulse, false);
+
+    /// <summary>敵からの確定被弾にのみリアクションと入力硬直を付ける。</summary>
+    public bool TakeEnemyDamage(int amount, Vector2 knockbackImpulse)
+        => ApplyDamage(amount, knockbackImpulse, true);
+
+    private bool ApplyDamage(int amount, Vector2 knockbackImpulse, bool enemyAttack)
     {
-        if (IsDead || IsInvincible || IsRespawning) return;
-        if (amount <= 0) return;
+        if (IsDead || IsInvincible || IsRespawning || amount <= 0) return false;
 
         CurrentHp = Mathf.Max(0, CurrentHp - amount);
 
         if (_player != null && knockbackImpulse != Vector2.zero)
             _player.ApplyExternalImpulse(knockbackImpulse, ForceMode2D.Impulse);
+
+        if (enemyAttack && CurrentHp > 0 && _player != null)
+            _player.BeginEnemyHitReaction(knockbackImpulse);
 
         if (_damageAudioSource != null && _damageClip != null)
         {
@@ -125,10 +134,11 @@ public class PlayerHealth : MonoBehaviour
         if (CurrentHp <= 0)
         {
             Die();
-            return;
+            return true;
         }
 
-        StartInvincible();
+        StartInvincible(enemyAttack);
+        return true;
     }
 
     /// <summary>
@@ -218,16 +228,17 @@ public class PlayerHealth : MonoBehaviour
         OnDead?.Invoke();
     }
 
-    private void StartInvincible()
+    private void StartInvincible(bool delayFirstBlink = false)
     {
         if (_invincibleDuration <= 0f) return;
         if (_invincibleRoutine != null) StopCoroutine(_invincibleRoutine);
-        _invincibleRoutine = StartCoroutine(InvincibleRoutine());
+        _invincibleRoutine = StartCoroutine(InvincibleRoutine(delayFirstBlink));
     }
 
     public void BeginRespawnProtection()
     {
         IsRespawning = true;
+        if (_player != null) _player.CancelEnemyHitReaction();
         StopInvincible();
     }
 
@@ -263,13 +274,21 @@ public class PlayerHealth : MonoBehaviour
         _spriteRenderer.enabled = true;
     }
 
-    private IEnumerator InvincibleRoutine()
+    private IEnumerator InvincibleRoutine(bool delayFirstBlink)
     {
         IsInvincible = true;
         float elapsed = 0f;
         float interval = Mathf.Max(0.01f, _blinkInterval);
         WaitForSeconds wait = new WaitForSeconds(interval);
         bool dimmed = false;
+
+        // 敵被弾の最初のポーズを一瞬見せる。無敵自体は即時に開始する。
+        if (delayFirstBlink)
+        {
+            SetBlinkDimmed(false);
+            yield return wait;
+            elapsed += interval;
+        }
 
         while (elapsed < _invincibleDuration)
         {

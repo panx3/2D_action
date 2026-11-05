@@ -1,0 +1,218 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "stage": "representative-review",
+  "referencePolicy": "Idle is authoritative for identity/style; user sketch is orbital-axis reference only.",
+  "generations": [
+    {
+      "key": "run",
+      "name": "引きずり走り",
+      "prompt": "Use case: identity-preserve / game pixel sprite reference.\nAsset type: one transparent pixel-art key pose, approval draft for the Unity game 鉄球少女.\nInput image 1 (512x128 idle sheet) is the ONLY authority for the character identity, exact face, colors, proportions, outfit, pixel scale, outline and shading. Use the LEFTMOST 128x128 idle frame as the model. Input image 2 (running sheet) is ONLY a pose/action reference; its larger head, extra detail and finer pixel density must NOT be copied.\nRedraw this exact pink-haired twin-tail girl in ONE running-to-the-right key pose: modest forward lean, right foot extended forward, left leg folded back, hair swept back, right hand holding the pink-and-black launcher baton behind her hip, angled back/down toward the lower left. She drags an offscreen heavy morning star. Keep the existing running pose's energy and silhouette. Her free arm stays near the body. Match the idle girl's face size and facial features, torso and leg proportions, cardigan, bow, black pleated skirt, socks and brown shoes. No redesign. She must look drawn by the idle sprite's artist.\nCRITICAL PIXEL RULES: intentional crisp hand-placed pixel clusters; exactly the idle's coarse native pixel granularity, restrained pink/cream/charcoal/brown palette and dark colored one-logical-pixel outlines. Do not make smoother, higher-resolution anime art. No antialiasing, gradients, soft shadow, rim glow, blur or glossy extra rendering. Clothing details must be as simple as the idle.\nCanvas specification: 1024x1024 output representing a 256x256 logical pixel transparent canvas at exactly 4x nearest-neighbor enlargement. ALL pixel edges follow a common 4 output-pixel grid. Character body dimensions equal the 128x128 idle character, NOT enlarged to fill the canvas. Place the character root at logical (128,128). A foot on the floor touches logical y=190. An upright neutral version would be about 112 logical pixels high. Leave ample transparent space around the whole figure and weapon. Full body, no cropping.\nOnly one character, one pose, transparent background. Do not include the idle reference, grid, text, labels, border, iron ball, chain or scenery in the output.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/run_test_run3-export.png"
+      ],
+      "status": "superseded-color-refinement",
+      "output": "run.png"
+    },
+    {
+      "key": "jump",
+      "name": "ジャンプ上昇",
+      "prompt": "Use case: identity-preserve / Unity game pixel sprite approval draft.\nInput image 1 is the existing Idle sprite sheet: use its LEFTMOST frame as the EXACT model for face, head size, body proportions, pink hair colors, clothing colors, compact silhouette, outline and pixel-art cluster size. This girl has rose-pink twin tails with dark hair ties, cream cardigan, pink bow, dark pleated skirt, socks, brown shoes, and a slender pink-and-black launcher baton. Redraw her faithfully. No redesign or bigger head.\nCRITICAL: match the Idle's low-resolution hand-placed pixel art. Crisp coarse clusters and dark colored one-pixel outlines, simple restrained shading. Do not make more detailed or smoother anime art. No antialiasing, blur, glow, soft shadow, gradients, text, labels, border, backdrop or scenery. Genuine transparent background. Full body and weapon, no cropping. Leave clear transparent margins. Keep all frames at the same character scale.\nInput image 2 is ONLY an action reference and must NOT influence face, head size, palette or pixel density.\nDraw exactly ONE key pose of the girl rising in a jump, facing right in the same three-quarter view as Idle. Both feet are off the floor, knees comfortably bent at different heights, body lightly stretched upward. Keep the hand holding her baton back/down on the left behind her hip, matching the existing running/jumping weapon hand. Her free arm balances at her side. Twin tails and cardigan hem lag downward/back from the upward movement. Expression alert but the same small Idle face. An anatomically readable active ascending pose, not a squat or a front-facing standing pose. No chain or ball. Square canvas, character about 60% of canvas height, centered with ample transparent margins.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/jump_test_jump.png"
+      ],
+      "status": "superseded-color-refinement",
+      "output": "jump.png"
+    },
+    {
+      "key": "throw_up_right",
+      "name": "斜め上発射",
+      "prompt": "Use case: identity-preserve / Unity game pixel sprite approval draft.\nInput image 1 is the existing Idle sprite sheet: use its LEFTMOST frame as the EXACT model for face, head size, body proportions, pink hair colors, clothing colors, compact silhouette, outline and pixel-art cluster size. This girl has rose-pink twin tails with dark hair ties, cream cardigan, pink bow, dark pleated skirt, socks, brown shoes, and a slender pink-and-black launcher baton. Redraw her faithfully. No redesign or bigger head.\nCRITICAL: match the Idle's low-resolution hand-placed pixel art. Crisp coarse clusters and dark colored one-pixel outlines, simple restrained shading. Do not make more detailed or smoother anime art. No antialiasing, blur, glow, soft shadow, gradients, text, labels, border, backdrop or scenery. Genuine transparent background. Full body and weapon, no cropping. Leave clear transparent margins. Keep all frames at the same character scale.\nInput image 2 is ONLY an action and weapon reference; its palette, pixel density and proportions are not authoritative.\nDraw exactly ONE key pose of the girl launching toward the upper right at 45 degrees. Facing right in three-quarter view, feet planted apart, knees slightly bent, torso follows the throw. Extend the weapon-holding arm and slim pink-and-black baton along a very clear straight 45-degree up-right diagonal, with the baton tip above and to the right of her head. Keep wrist, elbow and shoulder anatomical and readable. The other arm is behind/lower as counterbalance. Her eyes look up-right, hair trails slightly back. This is a decisive throw follow-through, not merely holding a gun at shoulder height. Preserve the baton design from the reference. No chain, ball, motion swoosh or effects. Square canvas, the girl keeps the same scale as the Idle character, generous transparent room for raised weapon.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/ランチャーポーズAni.png"
+      ],
+      "status": "superseded-color-refinement",
+      "output": "throw_up_right.png"
+    },
+    {
+      "key": "throw_down_right",
+      "name": "斜め下発射",
+      "prompt": "Use case: identity-preserve / Unity game pixel sprite approval draft.\nInput image 1 is the existing Idle sprite sheet: use its LEFTMOST frame as the EXACT model for face, head size, body proportions, pink hair colors, clothing colors, compact silhouette, outline and pixel-art cluster size. This girl has rose-pink twin tails with dark hair ties, cream cardigan, pink bow, dark pleated skirt, socks, brown shoes, and a slender pink-and-black launcher baton. Redraw her faithfully. No redesign or bigger head.\nCRITICAL: match the Idle's low-resolution hand-placed pixel art. Crisp coarse clusters and dark colored one-pixel outlines, simple restrained shading. Do not make more detailed or smoother anime art. No antialiasing, blur, glow, soft shadow, gradients, text, labels, border, backdrop or scenery. Genuine transparent background. Full body and weapon, no cropping. Leave clear transparent margins. Keep all frames at the same character scale.\nInput image 2 is ONLY an action and weapon reference; its palette, pixel density and proportions are not authoritative.\nDraw exactly ONE key pose of the girl launching toward the lower right at 45 degrees. Facing right in three-quarter view, legs apart in a stable stance, knees lightly bent and torso tilting forward/down. Extend the weapon-holding arm and the slim pink-and-black baton toward the lower right along a clear 45-degree diagonal. The baton tip is in front of the girl near knee height, well clear of her body. Keep wrist, elbow and shoulder anatomical and readable. The other arm reaches slightly back as counterbalance. Her eyes follow the lower-right target. This is an active throw follow-through, not the neutral Idle pose with a lowered weapon. Preserve the baton design from the reference. No chain, ball, motion swoosh or effects. Square canvas, same character scale as Idle, ample transparent margins.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/ランチャーポーズAni.png"
+      ],
+      "status": "superseded-color-refinement",
+      "output": "throw_down_right.png"
+    },
+    {
+      "key": "charge",
+      "name": "縦回しチャージ4ポーズ",
+      "prompt": "Use case: identity-preserve / Unity game pixel sprite approval draft.\nInput image 1 is the existing Idle sprite sheet: use its LEFTMOST frame as the EXACT model for face, head size, body proportions, pink hair colors, clothing colors, compact silhouette, outline and pixel-art cluster size. This girl has rose-pink twin tails with dark hair ties, cream cardigan, pink bow, dark pleated skirt, socks, brown shoes, and a slender pink-and-black launcher baton. Redraw her faithfully. No redesign or bigger head.\nCRITICAL: match the Idle's low-resolution hand-placed pixel art. Crisp coarse clusters and dark colored one-pixel outlines, simple restrained shading. Do not make more detailed or smoother anime art. No antialiasing, blur, glow, soft shadow, gradients, text, labels, border, backdrop or scenery. Genuine transparent background. Full body and weapon, no cropping. Leave clear transparent margins. Keep all frames at the same character scale.\nCreate ONE animation key-pose strip with EXACTLY FOUR equally spaced full-body poses in a single horizontal row on a wide transparent canvas. Same girl, same size and baseline in all four cells, all facing right in the same three-quarter view. No idle pose included.\nAction: anime-style emphatic morning-star windup, rotating the real heavy spiked iron ball in a vertical circle NEXT TO her body, not overhead like a helicopter. The four poses are quarter-turn snapshots of ONE full counterclockwise rotation: 1 ball in front/right of the grip, 2 ball above the grip, 3 ball behind/left of the grip, 4 ball below the grip. The chain runs from the pink-and-black baton TIP to the ball in each cell. Use the spiked black iron ball and simple linked chain from supporting input images 2 and 3. They are weapon design references only.\nA clear circular swing, with shoulders and waist twisting to drive it, elbows and wrists changing naturally through the four phases, springy bent knees and hair following the momentum. Keep her launcher grip and chain attachment in approximately the same place near her waist, and keep both feet planted; the four body silhouettes MUST visibly differ. Her expression shows effort but stays the same Idle girl. The body must actively participate, not four identical standing girls with the ball moved around them. The ball is separate from the hand and connected by a readable taut chain. Keep the ball about 1/4 of the girl's standing height, chain radius about 1/3 of her height, and enough space between cells to avoid any overlap. One ball per cell, one chain per cell. Do not draw orbit guides, translucent duplicate balls, swooshes, captions or effects. Keep the same coarse native pixel density as Idle throughout the girl, ball and chain.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/鉄球.png",
+        "Assets/image_/鎖.png"
+      ],
+      "status": "superseded",
+      "output": null
+    },
+    {
+      "key": "fall",
+      "name": "髪と服が大きく広がる降下",
+      "prompt": "Use case: identity-preserve / pixel-art game animation key poses for 鉄球少女.\nReference image 1 is the ORIGINAL Idle sprite sheet. Match its LEFTMOST 128x128 sprite's EXACT face, head size, body proportions, clothing design, pink hair colors, cream cardigan, dark skirt, socks and brown shoes. Same character, same colored one-pixel outlines and coarse hand-placed pixel clusters. No finer-resolution anime rendering. No extra coat buttons, new patterns, chains as hair accessories or outfit redesign. True transparent background, no text, border, scenery, glow, blur, gradients or motion effects. Full body, ample clear margins.\nReference image 2 is ONLY a continuity/pose reference for the previous ascending-jump draft.\nCreate exactly ONE NEW mid-air FALLING / DESCENDING key pose. She is facing right in the same three-quarter view as the Idle, dropping fast after the jump apex. Visibly EXAGGERATE the delayed secondary animation: BOTH twin tails fan sharply upward and outward into a large lively silhouette, loose cardigan sleeves and open cardigan hem flap upward with broad crisp pixel folds. Hair should clearly say \"falling fast\" rather than merely blowing sideways. Keep the lengths of the hair and coat the same as Idle; the apparent spread comes from motion, not longer hair or new clothing. Her torso leans slightly forward, knees comfortably bent at different heights preparing for a future landing, free arm out for balance, weapon-holding hand still grips the original pink-black baton behind/down near her hip. Both feet clearly off the ground; no crouching on a floor. Head/face/body proportions stay exactly the Idle's, not bigger chibi head. This is a strong readable gameplay animation pose, with snappy exaggerated cloth and hair, not a static standing sprite. Do not draw a ball or chain. Square transparent canvas.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/jump.png"
+      ],
+      "status": "superseded-color-refinement",
+      "output": "fall.png"
+    },
+    {
+      "key": "charge_character",
+      "name": "片手・定位置のチャージ4ポーズ",
+      "prompt": "Use case: identity-preserve / pixel-art game animation key poses for 鉄球少女.\nReference image 1 is the ORIGINAL Idle sprite sheet. Match its LEFTMOST 128x128 sprite's EXACT face, head size, body proportions, clothing design, pink hair colors, cream cardigan, dark skirt, socks and brown shoes. Same character, same colored one-pixel outlines and coarse hand-placed pixel clusters. No finer-resolution anime rendering. No extra coat buttons, new patterns, chains as hair accessories or outfit redesign. True transparent background, no text, border, scenery, glow, blur, gradients or motion effects. Full body, ample clear margins.\nReference image 2 is ONLY the previous action draft that MUST BE CORRECTED. Its two-hand/raised-hand handling, iron balls and chains must NOT be retained.\nCreate ONE wide horizontal strip with EXACTLY FOUR full-body key poses of the SAME girl, equally spaced in four cells. Same scale, foot baseline and character origin in every cell. All face right in three-quarter view.\nAction: stand in place and energetically whirl a morning star with ONE HAND ONLY in a vertical circle beside the body. THE MORNING STAR BALL AND CHAIN ARE SEPARATE EXISTING GAME OBJECTS, SO DO NOT DRAW ANY BALL OR CHAIN IN THIS IMAGE. Only draw the girl and the original slender pink-and-black handle/baton.\nCRITICAL GRIP LOCK: the weapon hand stays at EXACTLY THE SAME COORDINATE IN ALL FOUR CELLS, beside the rear/left waist, slightly away from the body. It grips the root/grip area of the baton with a single hand. The baton tip/chain attachment also stays at the same coordinate across all four cells, so the existing moving chain can attach to it. No raising the hand above the head, no moving the hand across the body, no transfer to the other hand, NO TWO-HANDED GRIP. Wrist/forearm articulation and elbow bend, shoulder and waist twist communicate the circular motion AROUND THIS FIXED GRIP POINT. The free hand stays separate, counterbalancing rather than touching the weapon.\nFour visibly DIFFERENT phases of one rotation: 1 shoulder drives forward, 2 shoulder rises and torso twists, 3 shoulder pulls back with opposite waist twist, 4 knees flex to absorb downward weight and return to phase 1. Both feet stay planted at the same coordinates. Do not walk, jump or change the girl's body size. Exaggerate the twin tails and loose cardigan flaring with delayed circular momentum. The face, head size and exact costume must match Idle. The four poses should read as an anime-style energetic one-handed windup, not four copies of a standing sprite. Keep the baton design and length consistent with Idle. No iron balls, no chain segments, no orbit guides, no arrows, no duplicate limbs, no captions.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/charge.png"
+      ],
+      "status": "superseded",
+      "output": null
+    },
+    {
+      "key": "charge_axis",
+      "name": "前へ出した片手を軸にするチャージ",
+      "prompt": "Use case: identity-preserve / character-only pixel-art charge animation for the Unity game 鉄球少女.\nReference image 1: ORIGINAL Idle sprite sheet. The leftmost 128x128 sprite is the sole authority for exact character identity, face, head-to-body ratio, proportions, costume, colors and native pixel-art detail. Pink twin tails, cream cardigan, pink bow, black skirt, white socks, brown shoes. Keep this exact girl; do not enlarge her head, add buttons or redesign the outfit.\nReference image 2: user-supplied monochrome sketch. Use ONLY THE ROTATION AXIS / HAND MECHANISM. Do not copy its character, anatomy, outfit, camera angle, text, heavy stance, ball or chain drawing.\nDeliver ONE wide transparent sprite strip, EXACTLY FOUR equally spaced full-body poses, all facing right in a feminine three-quarter stance consistent with Idle, all the same body scale and foot baseline.\nMost important pose requirement, from the sketch: ONE FOREARM IS EXTENDED FORWARD at roughly lower-chest height. The hand forms a firm SINGLE-HANDED GRIP in front of and away from the torso. This fist / chain-root attachment is the FIXED HUB of a vertical rotating wheel. The existing iron ball will orbit this hand in the game.\nIn EVERY FRAME the weapon hand must stay at EXACTLY THE SAME FORWARD POSITION, around 35 logical pixels in front of the body's center and 60 logical pixels above the floor for a girl 113 logical pixels tall. Elbow bent slightly, arm away from body. DO NOT HOLD THE WEAPON BEHIND THE HIP. DO NOT RAISE THE HAND ABOVE HER HEAD. DO NOT SWEEP THE WHOLE ARM AROUND. The rotation is around her forward stationary fist.\nShe grips the original slim pink-and-black baton close to its chain-attachment/root end with that one hand; let the rest of the baton hang down from the fist. The chain-attachment tip sits very close to the fist. Keep this fist and tip at the same pixel coordinate relative to the body origin across all four cells.\nThe other hand is FREE, held near her hip or out for balance, never touching the weapon. Both feet stay planted; slightly bent knees, weight on one leg and an appealing nimble posture. Four quarter-cycle snapshots: 1 firm forward drive, 2 shoulder lifts, 3 waist turns back, 4 knees absorb weight. Show effort with torso twist, subtle shoulder/elbow articulation around the fixed fist, and LARGE delayed hair/cardigan flares to make the cycle lively. Character must visibly animate while the hand hub stays fixed.\nDraw ONLY the girl and the small existing-design handle. ABSOLUTELY NO iron ball, NO chain, NO orbit line, NO effects, NO arrows, NO text, NO diagram. We will overlay the game's actual existing ball and chain separately.\nPixel art must have Idle's coarse crisp hand-placed clusters, dark colored one-logical-pixel outlines and restrained palette. Not smooth high-resolution anime art. No antialiasing, gradients, blur, glow, background, border or cast shadow. Full body, all limbs and baton visible. Generous transparent margins and no overlap between the four cells.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/charge-axis-reference.jpg"
+      ],
+      "status": "superseded-color-refinement",
+      "output": "charge.png"
+    },
+    {
+      "key": "run_color_v2",
+      "name": "走りの髪色調整",
+      "references": [
+        "Docs/Art/PlayerMotionV2/run.png",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit image 1 (the running-pose approval draft). Image 2 is the exact hair-color authority: the original Idle sheet's leftmost frame. Change ONLY the pink hair's colors so it matches that Idle sprite. Use the Idle's exact rose-pink hair family: dominant midtone #E08398, mid shadows #BD637E and #B35D78, deep colored outline/shadow #551E31 and #4A1728. Avoid a cooler magenta/purple shift, desaturated mauve, peach/orange highlights, or extra violet shadows. Preserve the existing character, exact pose, face, outfit, hair shape, pixel layout, body proportions, composition, canvas dimensions and transparent background. Do not redraw the outfit or change body size. Keep crisp pixel edges. Remove any stray red/magenta fringe immediately outside the hair silhouette as part of this hair-color cleanup. This is a small palette correction, not a new design.",
+      "status": "selected",
+      "output": "run.png"
+    },
+    {
+      "key": "hanging_v2",
+      "name": "ぶら下がり2ポーズ",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/上投げモーション.png"
+      ],
+      "prompt": "Use case: identity-preserve / pixel sprite animation key poses for the game 鉄球少女.\nThe ORIGINAL Idle sheet is the sole authority for face, head size, proportions, outfit and native pixel art. Match its leftmost 128x128 frame exactly: the same girl, twin-tail silhouette, short cream cardigan, pink bow, dark pleated skirt, white socks and brown shoes. No redesign, no enlarged head, no extra coat buttons, no new outfit details. Use the Idle's exact rose-pink hair family: dominant midtone #E08398, mid shadows #BD637E and #B35D78, deep colored outline/shadow #551E31 and #4A1728. Avoid a cooler magenta/purple shift, desaturated mauve, peach/orange highlights, or extra violet shadows.\nCrisp coarse hand-placed pixel clusters at Idle's native granularity. Dark colored one-pixel outlines and restrained shading. No smooth high-resolution anime rendering, antialiasing, blur, glow, gradients, soft shadows, text, labels, borders or backdrop. True transparent background. Full figure and ample clear margins. Hair and loose cardigan fabric have clear delayed follow-through that is slightly exaggerated for readable game animation. Do not draw any iron ball or chain; the game uses existing moving objects for these.\nInput image 1 is ORIGINAL Idle, the only style/color/identity authority. Image 2 is ONLY the previous overhead-arm position reference and must not influence its glow, colors or proportions.\nCreate ONE horizontal strip with EXACTLY TWO equally sized full-body HANGING key poses, evenly spaced. The girl is suspended from an offscreen support, facing right in the Idle's three-quarter view, with ONE arm reaching upward and holding the existing pink-black baton near its chain/root end. The baton tip is the overhead attachment point. Her body weight hangs below that hand; shoulder extended, torso gently lengthened through posture without changing anatomy. Both feet are off the ground, one knee relaxed and a little bent. The free arm hangs out slightly for balance. It must read as hanging by her weight, not a standing girl pointing upward.\nFrame 1: a gentle sway left; Frame 2: the soft sway right with hair and cardigan lagging. The raised grip/attachment tip MUST remain at the same coordinates relative to each cell; the body swings subtly around it. No dramatic body stretching, no taller character, no changed head size. Hair falls mostly down and spreads slightly from the sway; loose sleeves and coat hem lag behind. Cute, readable relaxed effort, not a tense muscular pose. Same exact baton design and length as Idle. No ground, ball, chain, rope, effects or captions. The two poses should loop naturally.",
+      "status": "selected",
+      "output": "hanging.png"
+    },
+    {
+      "key": "climb_v2",
+      "name": "よじ登り4ポーズ",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Assets/image_/上り娘ドット絵.png"
+      ],
+      "prompt": "Use case: identity-preserve / pixel sprite animation key poses for the game 鉄球少女.\nThe ORIGINAL Idle sheet is the sole authority for face, head size, proportions, outfit and native pixel art. Match its leftmost 128x128 frame exactly: the same girl, twin-tail silhouette, short cream cardigan, pink bow, dark pleated skirt, white socks and brown shoes. No redesign, no enlarged head, no extra coat buttons, no new outfit details. Use the Idle's exact rose-pink hair family: dominant midtone #E08398, mid shadows #BD637E and #B35D78, deep colored outline/shadow #551E31 and #4A1728. Avoid a cooler magenta/purple shift, desaturated mauve, peach/orange highlights, or extra violet shadows.\nCrisp coarse hand-placed pixel clusters at Idle's native granularity. Dark colored one-pixel outlines and restrained shading. No smooth high-resolution anime rendering, antialiasing, blur, glow, gradients, soft shadows, text, labels, borders or backdrop. True transparent background. Full figure and ample clear margins. Hair and loose cardigan fabric have clear delayed follow-through that is slightly exaggerated for readable game animation. Do not draw any iron ball or chain; the game uses existing moving objects for these.\nInput image 1 is ORIGINAL Idle, the only style/color/identity authority. Input image 2 is ONLY the old climbing action / rear-view reference and must not influence palette, proportions or pixel density.\nCreate ONE horizontal strip with EXACTLY FOUR evenly spaced full-body frames of a continuous CLIMBING-UP cycle, seen from the BACK with a slight right three-quarter angle. This is the SAME pink twin-tail girl as Idle. Keep the same head size, hair length, cardigan/skirt design, socks and shoes, now seen from behind.\nShe climbs an existing vertical chain that will be rendered separately. Both hands reach along an invisible center line in front of her body: one higher, the other near head/chest height. Alternate the hands and knees in an anatomically coherent four-phase cycle.\n1: right hand high, left knee raised. 2: pull upward, left hand reaches above, right leg extends. 3: left hand high, right knee raised. 4: pull upward, right hand reaches above and left leg extends, returning naturally to frame 1.\nThe highest grip point and body scale remain consistent across all cells, with only a small vertical bob so the actual in-game climbing motion supplies travel. Bent elbows pull body weight, boots push and tuck, shoulders alternate. Hair and loose cardigan bounce and lag with the pull, in large enough clear pixel shapes to read during gameplay. Do NOT make four copies of the same pose or merely swap boots. No face drawn on the back of the head. No ball, chain, rope, scenery, ground, motion effects or captions. Four complete separate figures, no overlaps, transparent background.",
+      "status": "superseded-hand-placement",
+      "output": null
+    },
+    {
+      "key": "jump_color_v2",
+      "output": "jump.png",
+      "name": "ジャンプ上昇の髪色調整",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/jump.png",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit image 1, the approved ジャンプ上昇 pixel-sprite draft. Image 2 is the original Idle sheet; its LEFTMOST 128x128 frame is the exact HAIR COLOR authority.\nMake a small hair-palette correction ONLY: match the original Idle's warm rose pink. Use main midtone #E08398, secondary midtones #D67B92/#BD637E, shadows #B35D78/#934860, deepest colored outline #551E31/#4A1728. Remove the extra purple/mauve/magenta cast. Keep the existing light/shadow regions, but recolor those regions to the Idle palette. The hair must look like the same material and lighting as Idle.\nPreserve the precise existing pose(s), frame count, composition, character scale, silhouette, facial features, accessories, outfit, all non-hair colors and pixel clusters. Preserve canvas width/height and the transparent background. Do not add new objects or effects. Do not change the motion, hand positions, facial expression, or redraw the clothing. Remove isolated red fringe immediately outside the hair as part of the color cleanup. Still coarse crisp pixel art, no blur or extra detail.",
+      "status": "selected"
+    },
+    {
+      "key": "fall_color_v2",
+      "output": "fall.png",
+      "name": "ジャンプ降下の髪色調整",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/fall.png",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit image 1, the approved ジャンプ降下 pixel-sprite draft. Image 2 is the original Idle sheet; its LEFTMOST 128x128 frame is the exact HAIR COLOR authority.\nMake a small hair-palette correction ONLY: match the original Idle's warm rose pink. Use main midtone #E08398, secondary midtones #D67B92/#BD637E, shadows #B35D78/#934860, deepest colored outline #551E31/#4A1728. Remove the extra purple/mauve/magenta cast. Keep the existing light/shadow regions, but recolor those regions to the Idle palette. The hair must look like the same material and lighting as Idle.\nPreserve the precise existing pose(s), frame count, composition, character scale, silhouette, facial features, accessories, outfit, all non-hair colors and pixel clusters. Preserve canvas width/height and the transparent background. Do not add new objects or effects. Do not change the motion, hand positions, facial expression, or redraw the clothing. Remove isolated red fringe immediately outside the hair as part of the color cleanup. Still coarse crisp pixel art, no blur or extra detail.",
+      "status": "selected"
+    },
+    {
+      "key": "throw_up_right_color_v2",
+      "output": "throw_up_right.png",
+      "name": "斜め上発射の髪色調整",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/throw_up_right.png",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit image 1, the approved 斜め上発射 pixel-sprite draft. Image 2 is the original Idle sheet; its LEFTMOST 128x128 frame is the exact HAIR COLOR authority.\nMake a small hair-palette correction ONLY: match the original Idle's warm rose pink. Use main midtone #E08398, secondary midtones #D67B92/#BD637E, shadows #B35D78/#934860, deepest colored outline #551E31/#4A1728. Remove the extra purple/mauve/magenta cast. Keep the existing light/shadow regions, but recolor those regions to the Idle palette. The hair must look like the same material and lighting as Idle.\nPreserve the precise existing pose(s), frame count, composition, character scale, silhouette, facial features, accessories, outfit, all non-hair colors and pixel clusters. Preserve canvas width/height and the transparent background. Do not add new objects or effects. Do not change the motion, hand positions, facial expression, or redraw the clothing. Remove isolated red fringe immediately outside the hair as part of the color cleanup. Still coarse crisp pixel art, no blur or extra detail.",
+      "status": "selected"
+    },
+    {
+      "key": "throw_down_right_color_v2",
+      "output": "throw_down_right.png",
+      "name": "斜め下発射の髪色調整",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/throw_down_right.png",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit image 1, the approved 斜め下発射 pixel-sprite draft. Image 2 is the original Idle sheet; its LEFTMOST 128x128 frame is the exact HAIR COLOR authority.\nMake a small hair-palette correction ONLY: match the original Idle's warm rose pink. Use main midtone #E08398, secondary midtones #D67B92/#BD637E, shadows #B35D78/#934860, deepest colored outline #551E31/#4A1728. Remove the extra purple/mauve/magenta cast. Keep the existing light/shadow regions, but recolor those regions to the Idle palette. The hair must look like the same material and lighting as Idle.\nPreserve the precise existing pose(s), frame count, composition, character scale, silhouette, facial features, accessories, outfit, all non-hair colors and pixel clusters. Preserve canvas width/height and the transparent background. Do not add new objects or effects. Do not change the motion, hand positions, facial expression, or redraw the clothing. Remove isolated red fringe immediately outside the hair as part of the color cleanup. Still coarse crisp pixel art, no blur or extra detail.",
+      "status": "selected"
+    },
+    {
+      "key": "charge_color_v2",
+      "output": "charge.png",
+      "name": "片手チャージの髪色調整",
+      "refs": [
+        "Docs/Art/PlayerMotionV2/charge.png",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit image 1, the approved 片手チャージ pixel-sprite draft. Image 2 is the original Idle sheet; its LEFTMOST 128x128 frame is the exact HAIR COLOR authority.\nMake a small hair-palette correction ONLY: match the original Idle's warm rose pink. Use main midtone #E08398, secondary midtones #D67B92/#BD637E, shadows #B35D78/#934860, deepest colored outline #551E31/#4A1728. Remove the extra purple/mauve/magenta cast. Keep the existing light/shadow regions, but recolor those regions to the Idle palette. The hair must look like the same material and lighting as Idle.\nPreserve the precise existing pose(s), frame count, composition, character scale, silhouette, facial features, accessories, outfit, all non-hair colors and pixel clusters. Preserve canvas width/height and the transparent background. Do not add new objects or effects. Do not change the motion, hand positions, facial expression, or redraw the clothing. Remove isolated red fringe immediately outside the hair as part of the color cleanup. Still coarse crisp pixel art, no blur or extra detail.",
+      "status": "superseded-charge-grip-correction"
+    },
+    {
+      "key": "climb_center_v3",
+      "name": "中央の鎖を登る手位置修正",
+      "references": [
+        "generated climb_v2",
+        "Assets/image_/立ち絵(sprite).png"
+      ],
+      "prompt": "Edit the climbing animation strip in image 1. Image 2 is the original Idle character and is the sole color / identity reference.\nCorrect ONLY the climbing grip geometry and the body motion needed to make it work. Preserve the same exact girl, rear view, outfit, four separate cells, coarse pixel-art style, transparent background and frame scale.\nCRITICAL USER CORRECTION: She climbs ONE VERTICAL CHAIN RUNNING THROUGH THE MIDDLE OF HER BODY. The chain is an imaginary straight vertical line through the CENTER of her head and spine, extending above her head. BOTH HANDS must grip that SAME CENTERLINE, one above the other. PALMS MUST NOT BE AT THE LEFT OR RIGHT EDGE OF THE HEAD. The upper fist must be directly ABOVE THE CROWN/CENTER OF THE HEAD, not above a shoulder. The lower fist must be directly below the upper fist on the SAME X COORDINATE. Elbows can open outward; hands cannot separate sideways. There is ONE central chain, not two parallel ropes.\nDo not pose her as hanging from an overhead side handle. Do not put a fist over the right shoulder. Draw real hand-over-hand climbing on a centered rope: right hand high at the center, left hand below at the center; pull the chest toward that centerline, switch which hand reaches high. Four readable phases: 1 right-hand high/left knee tucked, 2 left hand reaches straight up the SAME CENTERLINE and body pulls up, 3 left-hand high/right knee tucked, 4 right hand reaches straight up that SAME CENTERLINE returning to frame 1. Body remains centered under the high grip in all four cells. Show natural bent elbows, fingers wrapping a narrow vertical chain, alternating knees and a small vertical bob. Hair and cardigan lag behind the pull. Where the lower grip is hidden by the head/torso in rear view, let it be occluded naturally; do not move it off to the side just to show the hand.\nOnly draw the girl: DO NOT DRAW the chain, ball or any separate weapon/handle. The existing in-game central chain will be rendered separately, passing through the center between her hands. No captions, guides, arrows or effects.\nMatch the original Idle's warm rose-pink hair base #E08398, shadows #BD637E/#B35D78, deep outline #551E31, avoid purple/magenta shift. Transparent background and crisp low-resolution pixel clusters. Exactly FOUR frames in one horizontal row, whole figure visible in every frame.",
+      "status": "selected",
+      "output": "climb.png"
+    },
+    {
+      "key": "charge_two_grip_v4",
+      "status": "selected",
+      "output": "charge.png",
+      "prompt": "Use case: identity-preserve / four charge-animation key poses for 鉄球少女.\nImage 1 is the original Idle sheet. Match the LEFTMOST sprite's exact girl, face, proportions, outfit and coarse pixel-art style. Image 2 is the user's reference for the MORNING STAR ROTATION AXIS ONLY, not the character/outfit/angle.\nCreate ONE transparent horizontal strip with EXACTLY FOUR equally sized full-body poses, all facing right in Idle's three-quarter view. Cute nimble girl, same stance and body scale, both feet planted with knees soft. Pink twin tails, cream cardigan, pink bow, black skirt, white socks, brown shoes.\nCRITICAL CORRECTED ACTION: BOTH HANDS HAVE DIFFERENT ROLES.\nHAND A: her usual weapon-holding hand, on the REAR/LEFT side of the picture, holds the existing slim pink-and-black HANDLE/BATON NORMALLY, down beside/behind the hip like Idle. This hand DOES NOT form the spinning hub. It keeps holding the handle throughout all four frames.\nHAND B: her OTHER hand, on the FRONT/RIGHT side of the picture, is extended away from her torso at lower-chest height. This EMPTY HAND grasps THE CHAIN VERY NEAR THE IRON BALL'S CONNECTION, NOT THE HANDLE. The fist of HAND B is the spinning hub. The ball will whirl around this second hand in a vertical circle. This second hand holds only a short section of chain near the BALL END. It must NOT hold a baton or weapon handle.\nThe real chain will run from the handle in HAND A, slack toward HAND B, then from HAND B a short distance out to the rotating ball. We will render that chain and existing ball separately in the game.\nDraw ONLY the girl and the ONE pink-black baton in the rear hand A. Do NOT draw a ball or chain. Keep front hand B's fingers clearly curled in a gripping shape with a narrow gap where the existing chain passes. Its palm/fist must remain at the SAME position in front of the chest across all four cells, approximately 35 logical pixels forward of body center. The rear hand A remains in its natural handle-holding pose. Hands are clearly SEPARATED. Never put the baton in hand B, never have both hands hold the same baton, never drop the handle, never leave the handle hand empty.\nFour energetic phases of rotation around HAND B: 1 forward drive, 2 shoulder rises slightly, 3 waist twists back, 4 knees absorb the downward weight. Keep the second hand hub fixed; show the action through wrist/forearm articulation, shoulders, waist and delayed LARGE hair/cardigan motion. The rear handle hand continues holding the same baton throughout. No walking, no jumping, no changing body size.\nMatch Idle's warm rose-pink hair base #E08398, mid shadows #BD637E/#B35D78, deep #551E31/#4A1728; no violet/magenta shift. Exact original outfit, no extra buttons or new decoration. Crisp coarse pixel clusters and colored one-pixel outlines, no smooth high-resolution rendering, antialiasing, glow, blur, gradients, soft shadows, text, arrows, diagram or background. True transparency, full figure and baton visible in each separate cell.",
+      "references": [
+        "Assets/image_/立ち絵(sprite).png",
+        "Docs/Art/PlayerMotionV2/charge-axis-reference.jpg"
+      ]
+    }
+  ],
+  "canonicalHairPalette": {
+    "source": "Assets/image_/立ち絵(sprite).png, first 128x128 frame",
+    "main": "#E08398",
+    "midShadows": [
+      "#BD637E",
+      "#B35D78"
+    ],
+    "deep": [
+      "#551E31",
+      "#4A1728"
+    ],
+    "policy": "Measured reference colors supplied to image_gen. Generated pixels are a visual refinement, not an assertion of exact palette equality."
+  }
+}

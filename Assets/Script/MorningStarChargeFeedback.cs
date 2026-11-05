@@ -215,6 +215,23 @@ public sealed class MorningStarChargeFeedback : MonoBehaviour
         burstTime = duration;
     }
 
+    public void SetChargeDepth(int sortingLayer, int ballOrder, bool behindPlayer)
+    {
+        if (whiteOverlay != null)
+        {
+            whiteOverlay.sortingLayerID = sortingLayer;
+            whiteOverlay.sortingOrder = ballOrder + (behindPlayer ? 0 : 1);
+            Vector3 position = whiteOverlay.transform.localPosition;
+            position.z = behindPlayer ? -0.005f : 0f;
+            whiteOverlay.transform.localPosition = position;
+        }
+        if (halo != null)
+        {
+            halo.sortingLayerID = sortingLayer;
+            halo.sortingOrder = ballOrder - 1;
+        }
+    }
+
     private void LateUpdate()
     {
         if (effectRoot == null || source == null)

@@ -275,7 +275,7 @@ public sealed class HachidrillController : MonoBehaviour
         if (player == null || player.IsDead || player.IsRespawning || player.IsInvincible) return;
         float away = other.bounds.center.x >= bodyCollider.bounds.center.x ? 1f : -1f;
         int before = player.CurrentHp;
-        player.TakeDamage(contactDamage, new Vector2(away, 0.2f).normalized * contactKnockback);
+        player.TakeEnemyDamage(contactDamage, new Vector2(away, 0.2f).normalized * contactKnockback);
         if (player.CurrentHp < before) nextContact = Time.time + Mathf.Max(0.02f, contactCooldown);
     }
 
