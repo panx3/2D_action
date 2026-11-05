@@ -237,9 +237,15 @@ public partial class MorningStarLauncher
         if (finishingThrowThisFrame) CancelMotionLaunchVisual();
         bool returnToLocomotion = _launchPoseActive && !motionLaunchVisualActive;
         // 操作・物理用の保持時間はそのままに、投げ絵の終了後はBase Layerへ戻す。
-        SetMotionLaunchLayerSuppressed(returnToLocomotion && !_isChainClimbing && !upperHanging);
+        bool hurt = player != null && player.IsEnemyHitStunned && !_isChainClimbing && !upperHanging;
+        SetMotionLaunchLayerSuppressed(hurt || (returnToLocomotion && !_isChainClimbing && !upperHanging));
 
-        if (_isChainClimbing)
+        if (hurt)
+        {
+            var sequence = player.EnemyHitGrounded ? playerMotionSet.hurtGround : playerMotionSet.hurtAir;
+            selected = sequence != null ? sequence.Sample(player.EnemyHitElapsed) : null;
+        }
+        else if (_isChainClimbing)
         {
             if (_chainClimbMovedThisFixedStep) _chainClimbAnimationTime += Time.deltaTime;
             selected = playerMotionSet.climbing.Sample(_chainClimbAnimationTime);

@@ -282,7 +282,7 @@ public sealed class SpringFrog : MonoBehaviour
             return;
         Vector2 direction = (Vector2)other.bounds.center - (Vector2)_collider.bounds.center;
         direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
-        playerHealth.TakeDamage(_contactDamage, direction * _contactKnockback);
+        playerHealth.TakeEnemyDamage(_contactDamage, direction * _contactKnockback);
         _lastContactTime = Time.time;
     }
 }

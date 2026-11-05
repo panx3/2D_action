@@ -354,7 +354,7 @@ public class Enemy : MonoBehaviour
         Vector2 direction = (Vector2)other.bounds.center - (Vector2)_bodyCollider.bounds.center;
         direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right * _attackDirection;
         int hp = health.CurrentHp;
-        health.TakeDamage(_contactDamage, direction * _contactKnockback);
+        health.TakeEnemyDamage(_contactDamage, direction * _contactKnockback);
         if (health.CurrentHp >= hp) return;
         _lastContactDamageTime = Time.time;
         _dashHit = true;

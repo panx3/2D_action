@@ -1,0 +1,21 @@
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public static class PlayerHitSceneInspection
+{
+    public static string Run()
+    {
+        var scene = SceneManager.GetActiveScene();
+        var players = Object.FindObjectsByType<Player>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        return "scene=" + scene.name + " dirty=" + scene.isDirty + " play=" + EditorApplication.isPlaying
+            + " time=" + Time.timeScale + " players=" + string.Join(" | ", players.Select(p => p.name + " path=" + Path(p.transform)
+                + " active=" + p.gameObject.activeInHierarchy + " enabled=" + p.enabled + " input=" + p.InputEnabled
+                + " hp=" + p.GetComponent<PlayerHealth>().CurrentHp + " inv=" + p.GetComponent<PlayerHealth>().IsInvincible
+                + " dead=" + p.GetComponent<PlayerHealth>().IsDead + " respawn=" + p.GetComponent<PlayerHealth>().IsRespawning
+                + " position=" + p.transform.position + " launcher=" + (p.GetComponent<MorningStarLauncher>() != null)))
+            + " camera=" + (Camera.main != null ? Camera.main.transform.position.ToString() : "none");
+    }
+    static string Path(Transform t) => t.parent == null ? t.name : Path(t.parent) + "/" + t.name;
+}

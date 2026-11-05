@@ -1,0 +1,135 @@
+using System;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+
+public static class PlayerHitRuntimeChecks
+{
+    const string Key = "PlayerHitRuntimeChecks.Result";
+    static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+    static Player player;
+    static PlayerHealth health;
+    static MorningStarLauncher launcher;
+    static float previousTimeScale;
+    static bool previousBackground;
+    static double phaseStarted;
+    static int phase;
+    static string sceneName;
+
+    static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+    static void Set(object target, string field, object value) => target.GetType().GetField(field, Private).SetValue(target, value);
+    static object Call(object target, string method, params object[] args) => target.GetType().GetMethod(method, Private).Invoke(target, args);
+    static string Signature(Rigidbody2D body) => body.bodyType + "|" + body.mass + "|" + body.gravityScale + "|"
+        + body.linearDamping + "|" + body.constraints + "|" + body.interpolation + "|" + body.collisionDetectionMode;
+    static void Reset()
+    {
+        player.CancelEnemyHitReaction(); health.EndRespawnProtection(); health.ResetToFullHp();
+        launcher.EndRespawnPresentation(); launcher.ResetForRespawn();
+        player.SetGoalInputBlocked(false); player.SetGimmickInputBlocked(false); player.SetInputEnabled(true);
+        Set(player, "_isGrounded", true); Set(launcher, "_nextLaunchTime", 0f); Set(launcher, "_airThrowsUsed", 0);
+    }
+
+    public static string Start()
+    {
+        if (!EditorApplication.isPlaying) throw new InvalidOperationException("Play Mode required.");
+        player = UnityEngine.Object.FindFirstObjectByType<Player>();
+        Require(player != null, "Player missing");
+        health = player.GetComponent<PlayerHealth>(); launcher = player.GetComponent<MorningStarLauncher>();
+        Require(health != null && launcher != null && launcher.MotionSet != null, "Player components missing");
+        var intro = player.GetComponent<PlayerStartIntro>();
+        if (intro != null) intro.enabled = false;
+        var respawn = UnityEngine.Object.FindFirstObjectByType<DeathRespawnManager>();
+        if (respawn != null) respawn.enabled = false;
+        player.SetStartIntroControl(false);
+        previousTimeScale = Time.timeScale; previousBackground = Application.runInBackground;
+        Time.timeScale = 1f; Application.runInBackground = true;
+        sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        try
+        {
+            Reset();
+            int events = 0; Action handler = () => events++;
+            health.OnDamaged += handler;
+            int full = health.CurrentHp;
+            health.TakeDamage(1, Vector2.zero);
+            Require(health.CurrentHp == full - 1 && !player.IsEnemyHitStunned, "Non-enemy damage changed");
+            Reset();
+            string rest = Signature(launcher.BallBody);
+            Call(launcher, "BeginSpinCharging");
+            Require(launcher.State == MorningStarLauncher.MorningStarState.SpinCharging, "Charge did not start");
+            Require(health.TakeEnemyDamage(1, new Vector2(3f, 1f)), "Enemy damage not accepted");
+            Require(player.IsEnemyHitStunned && launcher.State == MorningStarLauncher.MorningStarState.Dragging,
+                "Charge was not interrupted by enemy damage");
+            Require(Signature(launcher.BallBody) == rest, "Charge leaked ball physics into Rest");
+            Call(launcher, "UpdateUnifiedMotionVisual");
+            Require(player.BodySprite.sprite != null && player.BodySprite.sprite.name == "Hurt_00", "Ground hurt sprite not selected");
+            int afterFirst = health.CurrentHp, beforeEvents = events;
+            Require(!health.TakeEnemyDamage(1, Vector2.right) && health.CurrentHp == afterFirst && events == beforeEvents,
+                "Invincible hit incorrectly produced another reaction");
+            launcher.ApplyRecallThenLaunch(Vector2.right);
+            launcher.RequestReturn();
+            Require(launcher.State == MorningStarLauncher.MorningStarState.Dragging, "Input was accepted while stunned");
+            Reset();
+            Set(player, "_isGrounded", false);
+            Require(health.TakeEnemyDamage(1, Vector2.right), "Air hit rejected");
+            Call(launcher, "UpdateUnifiedMotionVisual");
+            Require(player.BodySprite.sprite != null && player.BodySprite.sprite.name == "Hurt_03", "Air hurt sprite not selected");
+            Reset();
+            Call(launcher, "TransitionToState", MorningStarLauncher.MorningStarState.Thrown);
+            Require(health.TakeEnemyDamage(1, Vector2.right), "Thrown-state hit rejected");
+            Require(launcher.State == MorningStarLauncher.MorningStarState.Thrown, "Flying ball was interrupted");
+            Reset();
+            var magnetObject = new GameObject("temporary hit check magnet");
+            var magnet = magnetObject.AddComponent<MagnetPoint>();
+            Set(player, "_isGrounded", false);
+            Set(launcher, "_isHooked", true); Set(launcher, "_attachedMagnet", magnet);
+            Set(launcher, "_hookPoint", (Vector2)player.transform.position + Vector2.up * 4f);
+            Call(launcher, "TransitionToState", MorningStarLauncher.MorningStarState.Hooked);
+            Set(launcher, "_isChainClimbing", true); Set(launcher, "_chainClimbDistance", 3f);
+            Require(health.TakeEnemyDamage(1, Vector2.right), "Hanging hit rejected");
+            Call(launcher, "UpdateChainClimb", Time.fixedDeltaTime);
+            Require(launcher.State == MorningStarLauncher.MorningStarState.Hooked && launcher.IsChainClimbing,
+                "Hanging / climbing attachment lost");
+            UnityEngine.Object.Destroy(magnetObject);
+            Reset();
+            var owner = new GameObject("temporary electric check owner");
+            Require(player.TryBeginElectricStun(owner), "Electric state could not start");
+            Require(health.TakeEnemyDamage(1, Vector2.right), "Electric-state damage rejected");
+            Require(player.IsElectricStunned && !player.IsEnemyHitStunned, "Enemy reaction displaced electric stun");
+            player.EndElectricStun(owner); UnityEngine.Object.Destroy(owner);
+            Reset();
+            health.OnDamaged -= handler;
+            Require(health.TakeEnemyDamage(1, Vector2.right), "Timed hit rejected");
+            phase = 0; phaseStarted = EditorApplication.timeSinceStartup; Time.timeScale = 0f;
+            SessionState.SetString(Key, "Running " + sceneName);
+            EditorApplication.update -= Tick; EditorApplication.update += Tick;
+            return "Running paused-time and 0.25s recovery checks in " + sceneName;
+        }
+        catch { Time.timeScale = previousTimeScale; Application.runInBackground = previousBackground; throw; }
+    }
+
+    static void Tick()
+    {
+        try
+        {
+            if (!EditorApplication.isPlaying || player == null) throw new InvalidOperationException("Play Mode ended unexpectedly");
+            if (phase == 0 && EditorApplication.timeSinceStartup - phaseStarted > .3)
+            {
+                Require(player.IsEnemyHitStunned, "Pause consumed the hit timer");
+                Time.timeScale = 1f; phaseStarted = Time.time; phase = 1;
+            }
+            else if (phase == 1 && Time.time - (float)phaseStarted > .35f)
+            {
+                Require(!player.IsEnemyHitStunned, "Hit timer did not end");
+                Finish("PASS " + sceneName + ": enemy-only damage, charge cancellation, Rest physics, ground/air sprite, invincibility, blocked actions, flying ball, hanging, electric priority, pause and timed recovery.");
+            }
+        }
+        catch (Exception ex) { Finish("FAIL " + sceneName + ": " + ex); }
+    }
+    static void Finish(string result)
+    {
+        EditorApplication.update -= Tick;
+        Time.timeScale = previousTimeScale; Application.runInBackground = previousBackground;
+        SessionState.SetString(Key, result);
+    }
+    public static string Result() => SessionState.GetString(Key, "Not started");
+}

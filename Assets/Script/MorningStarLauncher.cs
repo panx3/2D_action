@@ -834,7 +834,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsEnemyHitStunned))
         {
             UpdateFallbackLineRenderer();
             return;
@@ -1602,6 +1602,19 @@ public partial class MorningStarLauncher : MonoBehaviour
         _gamepadFirePressedThisFrame = false;
         _rightStickReady = false;
         EnterDraggingState(false);
+    }
+
+    /// <summary>入力とチャージだけを中断し、発射済み・接続中の鉄球物理は継続する。</summary>
+    public void BeginEnemyHitReaction()
+    {
+        if (_state == MorningStarState.SpinCharging) CancelShoulderCharge();
+        _fireBufferTimer = 0f;
+        _gamepadFirePressedThisFrame = false;
+        _rightStickReady = false;
+        _isFireHolding = _shoulderChargeInput = _hookClickHolding = false;
+        _fireHoldTime = -1f;
+        electricInputNeedsNeutral = true;
+        CancelMotionLaunchVisual();
     }
 
     private void BeginSpinCharging()
@@ -3347,7 +3360,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsEnemyHitStunned) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3359,7 +3372,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || _respawnPresentation)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsEnemyHitStunned) || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
@@ -3445,6 +3458,12 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_attachedMagnet == null || !IsExplicitUpperHangingSupport())
         {
             ResetChainClimbState(false);
+            return;
+        }
+
+        if (player != null && player.IsEnemyHitStunned)
+        {
+            _chainClimbMovedThisFixedStep = false;
             return;
         }
 

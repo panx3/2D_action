@@ -17,6 +17,7 @@ public partial class Player
             || (_playerHealth != null && (_playerHealth.IsDead || _playerHealth.IsRespawning))) return false;
         if (_morningStarLauncher != null && !_morningStarLauncher.CanBeginElectricStun) return false;
 
+        CancelEnemyHitReaction();
         electricStunOwner = owner;
         electricStunActive = true;
         constraintsBeforeElectricStun = _rigid.constraints;

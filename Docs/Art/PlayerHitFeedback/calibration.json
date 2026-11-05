@@ -1,0 +1,84 @@
+{
+  "sheets": [
+    {
+      "name": "HurtPreview",
+      "source": "Docs/Art/PlayerHitFeedback/HitRecoilSource.png",
+      "sourceColumns": 3,
+      "sourceRows": 2,
+      "poses": [
+        {
+          "sourceIndex": 0,
+          "headX": 253,
+          "headY": 150,
+          "skullHeight": 126,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 1,
+          "headX": 231,
+          "headY": 233.5,
+          "skullHeight": 126,
+          "targetX": 103,
+          "targetY": 96,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 2,
+          "headX": 305,
+          "headY": 224,
+          "skullHeight": 138,
+          "targetX": 103,
+          "targetY": 100,
+          "targetSkull": 31,
+          "grounded": true,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 3,
+          "headX": 234,
+          "headY": 132.5,
+          "skullHeight": 128,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 4,
+          "headX": 223.5,
+          "headY": 150,
+          "skullHeight": 130,
+          "targetX": 103,
+          "targetY": 76,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        },
+        {
+          "sourceIndex": 5,
+          "headX": 291.5,
+          "headY": 150.5,
+          "skullHeight": 126,
+          "targetX": 103,
+          "targetY": 73,
+          "targetSkull": 31,
+          "grounded": false,
+          "bodyStretch": 1,
+          "importScaleCompensation": 1
+        }
+      ]
+    }
+  ]
+}

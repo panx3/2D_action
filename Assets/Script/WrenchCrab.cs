@@ -261,7 +261,7 @@ public sealed class WrenchCrab : MonoBehaviour
         if (playerHealth == null || playerHealth.IsDead || playerHealth.IsInvincible || playerHealth.IsRespawning
             || !HasClearPath(other.ClosestPoint(Eye))) return;
         int before = playerHealth.CurrentHp;
-        playerHealth.TakeDamage(_contactDamage, new Vector2(_direction, 0.2f).normalized * _contactKnockback);
+        playerHealth.TakeEnemyDamage(_contactDamage, new Vector2(_direction, 0.2f).normalized * _contactKnockback);
         if (playerHealth.CurrentHp >= before) return;
         _attackHit = true;
         _lastContactDamageTime = Time.time;
