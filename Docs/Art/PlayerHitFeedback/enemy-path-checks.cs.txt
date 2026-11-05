@@ -1,0 +1,71 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+
+public static class PlayerHitEnemyPathChecks
+{
+    static readonly BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
+    static void Set(object obj, string name, object value) => obj.GetType().GetField(name, Private).SetValue(obj, value);
+    static void Call(object obj, string name, params object[] args) => obj.GetType().GetMethod(name, Private).Invoke(obj, args);
+    static void Require(bool ok, string message) { if (!ok) throw new Exception(message); }
+
+    public static string Run()
+    {
+        Require(EditorApplication.isPlaying && Time.timeScale == 0f, "A paused Play session is required.");
+        var player = UnityEngine.Object.FindFirstObjectByType<Player>();
+        var hp = player.GetComponent<PlayerHealth>(); var collider = player.GetComponent<Collider2D>();
+        Require(collider != null && PlayerColliderUtility.IsPlayerBody(collider), "Player collider missing.");
+        var original = player.transform.position; var bodyPosition = player.Rigidbody2D.position;
+        var spawned = new List<GameObject>(); var passed = new List<string>();
+        try
+        {
+            player.transform.position = new Vector3(10000f, 100f, 0f); player.Rigidbody2D.position = player.transform.position;
+            player.SetStartIntroControl(false); player.SetGoalInputBlocked(false); player.SetGimmickInputBlocked(false); player.SetInputEnabled(true);
+            Physics2D.SyncTransforms();
+            GameObject Make(string name, Vector3 position)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemies/" + name + ".prefab");
+                Require(prefab != null, "Missing prefab " + name);
+                var instance = UnityEngine.Object.Instantiate(prefab, position, Quaternion.identity); spawned.Add(instance);
+                Physics2D.SyncTransforms(); return instance;
+            }
+            void Reset() { player.CancelEnemyHitReaction(); hp.EndRespawnProtection(); hp.ResetToFullHp(); }
+            void Check(string name, Action damage)
+            {
+                Reset(); int before = hp.CurrentHp; damage();
+                Require(hp.CurrentHp < before && player.IsEnemyHitStunned, name + " did not apply enemy hit reaction");
+                passed.Add(name);
+            }
+            var rat = Make("TekkyuEnemy", new Vector3(9999f, 100f, 0f)).GetComponent<Enemy>();
+            Call(rat, "SetState", Enemy.ActionState.Dash);
+            Check("rat dash", () => Call(rat, "TryContactDamage", collider));
+            var frog = Make("SpringFrog", new Vector3(9999f, 100f, 0f)).GetComponent<SpringFrog>();
+            Set(frog, "_lastContactTime", float.NegativeInfinity);
+            Check("frog contact", () => Call(frog, "TryContactDamage", collider));
+            var drillObject = Make("Hachidrill", new Vector3(9999.5f, 100f, 0f));
+            var drill = drillObject.GetComponent<HachidrillController>();
+            Set(drill, "enableContactDamage", true); Set(drill, "nextContact", 0f);
+            Check("drill contact", () => Call(drill, "TryContactDamage", collider));
+            var dive = drillObject.GetComponent<HachidrillAttackController>();
+            Set(dive, "obstacleLayers", (LayerMask)0);
+            Check("drill dive", () => Call(dive, "TryDamage", collider));
+            var crab = Make("WrenchCrab", new Vector3(9998.9f, 100f, 0f)).GetComponent<WrenchCrab>();
+            Set(crab, "_direction", 1); Set(crab, "_attackReach", 4f); Set(crab, "_attackHeight", 4f);
+            Set(crab, "_terrainLayers", (LayerMask)0);
+            Call(crab, "SetState", WrenchCrab.ActionState.Slam);
+            Check("crab slam", () => Call(crab, "TryContactDamage", collider));
+            var scorpion = Make("BeamScorpion", new Vector3(9999f, 100f, 0f)).GetComponent<BeamScorpionController>();
+            Set(scorpion, "nextDamage", 0f);
+            Check("scorpion beam", () => Call(scorpion, "DamagePlayer", collider, 1));
+            return "PASS actual enemy damage paths: " + string.Join(", ", passed);
+        }
+        finally
+        {
+            foreach (var go in spawned) if (go != null) UnityEngine.Object.DestroyImmediate(go);
+            player.CancelEnemyHitReaction(); hp.EndRespawnProtection(); hp.ResetToFullHp();
+            player.transform.position = original; player.Rigidbody2D.position = bodyPosition; Physics2D.SyncTransforms();
+        }
+    }
+}

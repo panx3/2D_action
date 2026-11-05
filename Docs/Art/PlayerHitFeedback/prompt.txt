@@ -1,0 +1,3 @@
+Built-in image generation; references: Idle-reference-6x.png and HitSource.png.
+
+Create a pixel-art sprite sheet for the same existing game character. Match the exact pink twin tails, black bead hair ties, cream cardigan, dark skirt, pink accessory, boots and baton, proportions, palette and pixel texture of Idle. Six separate sprites in a 3x2 grid on transparent background, with clear gutters. An impact from the right makes her recoil left, lose balance and show a cute pained grimace with squeezed eyes and a tense mouth. Ground: backward recoil, fall onto her bottom, push herself up. Air: backward recoil, off-balance tumble, recovery. Preserve restrained hair motion and consistent head size. Hold the baton; omit the chain and ball, text, boxes, and baked effects.

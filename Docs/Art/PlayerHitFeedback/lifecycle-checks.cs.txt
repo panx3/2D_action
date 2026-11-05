@@ -1,0 +1,24 @@
+using System;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+public static class PlayerHitLifecycleCheck
+{
+    public static string Run()
+    {
+        if (!EditorApplication.isPlaying || Time.timeScale != 0f) throw new Exception("Paused Play required");
+        var p = UnityEngine.Object.FindFirstObjectByType<Player>();
+        var hp = p.GetComponent<PlayerHealth>(); var launcher = p.GetComponent<MorningStarLauncher>();
+        void Reset() { p.CancelEnemyHitReaction(); hp.EndRespawnProtection(); hp.ResetToFullHp(); p.SetInputEnabled(true); launcher.ResetForRespawn(); }
+        Reset();
+        typeof(MorningStarLauncher).GetMethod("TransitionToState", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(launcher, new object[] { MorningStarLauncher.MorningStarState.Returning });
+        if (!hp.TakeEnemyDamage(1, Vector2.right) || launcher.State != MorningStarLauncher.MorningStarState.Returning) throw new Exception("Recall changed");
+        hp.BeginRespawnProtection();
+        if (p.IsEnemyHitStunned || hp.TakeEnemyDamage(1, Vector2.right)) throw new Exception("Respawn did not clear/reject hit");
+        Reset();
+        if (!hp.TakeEnemyDamage(hp.MaxHp, Vector2.right) || !hp.IsDead || p.IsEnemyHitStunned) throw new Exception("Lethal state retained hit stun");
+        Reset();
+        return "PASS recall continues; respawn clears/rejects hit; lethal hit leaves no stun.";
+    }
+}

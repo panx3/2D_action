@@ -230,7 +230,7 @@ public sealed class HachidrillAttackController : MonoBehaviour
         if (hp == null || hitThisDive.Contains(hp) || hp.IsDead || hp.IsRespawning || hp.IsInvincible
             || !ClearSight(other.bounds.center)) return;
         int before = hp.CurrentHp;
-        hp.TakeDamage(attackDamage, new Vector2(diveDirection.x, -0.35f).normalized * attackKnockback);
+        hp.TakeEnemyDamage(attackDamage, new Vector2(diveDirection.x, -0.35f).normalized * attackKnockback);
         if (hp.CurrentHp < before) { hitThisDive.Add(hp); flight.BlockContactAfterAttack(); }
     }
 
