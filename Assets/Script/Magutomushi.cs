@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>地上を巡回し、一定時間だけ鉄球へ磁力を作用させる。</summary>
+/// <summary>地上を巡回し、プレイヤーが範囲外へ逃げるまで鉄球を吸引する。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
 public sealed class Magutomushi : MonoBehaviour
@@ -22,8 +22,10 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField, Min(0f), Tooltip("この距離まで鉄球が近づくと、磁石と同じ方法で吸着します。")]
     private float attachDistance = 0.8f;
     [SerializeField, Min(0f)] private float chargeDuration = 0.7f;
-    [SerializeField, Min(0f)] private float attractionDuration = 1.5f;
+    [SerializeField, HideInInspector] private float attractionDuration = 1.5f; // 旧Prefabの値を保持。
     [SerializeField, Min(0f)] private float attackCooldown = 2f;
+    [SerializeField, Min(0f), Tooltip("脱出時に鉄球へ与えるプレイヤー方向の速度変化。")]
+    private float escapeReboundSpeed = 3f;
     [Header("References")]
     [SerializeField] private Transform attractionPoint;
     [SerializeField] private Transform visualRoot;
@@ -47,6 +49,9 @@ public sealed class Magutomushi : MonoBehaviour
     private MagnetPoint magnet;
     private MaterialPropertyBlock colorProperties;
     private Texture lastVisualTexture;
+    private ParticleSystem magnetEffect;
+    private Material magnetEffectMaterial;
+    private float nextMagnetEffectTime;
     private static readonly int Walk = Animator.StringToHash("Walk");
     private static readonly int Charge = Animator.StringToHash("Charge");
     private static readonly int PaletteGain = Shader.PropertyToID("_PaletteGain");
@@ -66,6 +71,7 @@ public sealed class Magutomushi : MonoBehaviour
         }
         if (visualRenderer == null && visualRoot != null) visualRenderer = visualRoot.GetComponent<SpriteRenderer>();
         colorProperties = new MaterialPropertyBlock();
+        if (Application.isPlaying) CreateMagnetEffect();
         health.HitConfirmed += OnHitConfirmed;
         FindPlayer();
     }
@@ -80,10 +86,15 @@ public sealed class Magutomushi : MonoBehaviour
     private void OnDisable()
     {
         StopMagnet();
+        if (magnetEffect != null) magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         lastVisualTexture = null;
         if (visualAnimator != null) visualAnimator.speed = 0f;
     }
-    private void OnDestroy() { if (health != null) health.HitConfirmed -= OnHitConfirmed; }
+    private void OnDestroy()
+    {
+        if (health != null) health.HitConfirmed -= OnHitConfirmed;
+        if (magnetEffectMaterial != null) Destroy(magnetEffectMaterial);
+    }
 
     private void FindPlayer()
     {
@@ -127,8 +138,14 @@ public sealed class Magutomushi : MonoBehaviour
                 else if (stateElapsed >= chargeDuration) SetState(ActionState.Attract);
                 break;
             case ActionState.Attract:
-                if (!TargetAvailable || stateElapsed >= attractionDuration) SetState(ActionState.Cooldown);
-                else PullBall();
+                if (!TargetAvailable) SetState(ActionState.Cooldown);
+                else if (attractionPoint != null && Vector2.Distance(player.position, attractionPoint.position) > attractionRadius)
+                {
+                    if (launcher != null && magnet != null)
+                        launcher.ReleaseEnemyMagnetOnEscape(magnet, escapeReboundSpeed);
+                    SetState(ActionState.Cooldown);
+                }
+                else { PullBall(); EmitMagnetEffect(); }
                 break;
             case ActionState.Cooldown:
                 if (stateElapsed >= attackCooldown) SetState(ActionState.Patrol);
@@ -176,11 +193,56 @@ public sealed class Magutomushi : MonoBehaviour
             magnet.StopControlledAttraction(launcher, launcher != null ? launcher.BallBody : null);
     }
 
+    private void CreateMagnetEffect()
+    {
+        var shader = Shader.Find("Sprites/Default");
+        if (shader == null) return;
+        var effectObject = new GameObject("MagnetEffect");
+        effectObject.transform.SetParent(transform, false);
+        magnetEffect = effectObject.AddComponent<ParticleSystem>();
+        var main = magnetEffect.main;
+        main.playOnAwake = false;
+        main.loop = true;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.startLifetime = 0.35f;
+        main.startSize = 0.09f;
+        main.startColor = new Color(0.2f, 0.9f, 1f, 0.8f);
+        main.maxParticles = 24;
+        var emission = magnetEffect.emission; emission.enabled = false;
+        var shape = magnetEffect.shape; shape.enabled = false;
+        var renderer = magnetEffect.GetComponent<ParticleSystemRenderer>();
+        magnetEffectMaterial = new Material(shader);
+        renderer.sharedMaterial = magnetEffectMaterial;
+        renderer.sortingOrder = 6;
+        magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+    }
+
+    private void EmitMagnetEffect()
+    {
+        if (magnetEffect == null || magnet == null || !BallAvailable()
+            || !launcher.IsEnemyMagnetPullingFrom(magnet) || Time.time < nextMagnetEffectTime) return;
+        Vector2 start = launcher.BallBody.position;
+        Vector2 delta = (Vector2)attractionPoint.position - start;
+        if (delta.sqrMagnitude < 0.01f) return;
+        var particle = new ParticleSystem.EmitParams
+        {
+            position = Vector2.Lerp(start, attractionPoint.position, 0.35f),
+            velocity = delta.normalized * 2f
+        };
+        magnetEffect.Emit(particle, 1);
+        nextMagnetEffectTime = Time.time + 0.12f;
+    }
+
     private void SetState(ActionState next)
     {
-        if (state == ActionState.Attract && next != ActionState.Attract) StopMagnet();
+        if (state == ActionState.Attract && next != ActionState.Attract)
+        {
+            StopMagnet();
+            if (magnetEffect != null) magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
         state = next;
         stateElapsed = 0f;
+        if (next == ActionState.Attract && magnetEffect != null) magnetEffect.Play();
         if (visualAnimator == null) return;
         if (next == ActionState.Charge)
         {

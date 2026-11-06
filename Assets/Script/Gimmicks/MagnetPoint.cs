@@ -7,6 +7,7 @@ using UnityEngine;
 /// </summary>
 public class MagnetPoint : MonoBehaviour
 {
+    public float ControlledEscapeRadius { get; private set; }
     [Header("References")]
     [SerializeField] private MorningStarLauncher morningStarLauncher;
 
@@ -165,6 +166,7 @@ public class MagnetPoint : MonoBehaviour
         float radius, float force, float maxSpeed, float attachDistance)
     {
         if (rb == null || launcher == null || rb != launcher.BallBody) return;
+        ControlledEscapeRadius = Mathf.Max(0f, radius);
         morningStarLauncher = launcher;
 
         if (attachedBodies.Contains(rb))
@@ -210,6 +212,7 @@ public class MagnetPoint : MonoBehaviour
         attachedBodies.Clear();
         suppressedUntilExitBodies.Clear();
         escapeThrowGrantedBodies.Clear();
+        ControlledEscapeRadius = 0f;
     }
 
     private void Attract(Rigidbody2D rb, float force, float maxSpeed, float attachDistance)

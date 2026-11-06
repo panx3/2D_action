@@ -350,6 +350,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private bool _gimmickInputBlocked;
     private readonly HashSet<MagnetPoint> _enemyMagnetPulls = new HashSet<MagnetPoint>();
     public bool IsEnemyMagnetPulling => _enemyMagnetPulls.Count > 0;
+    public bool IsEnemyMagnetPullingFrom(MagnetPoint source) => source != null && _enemyMagnetPulls.Contains(source);
 
     // 複数の敵に引かれても、最後の磁力が終わるまで入力・重力を戻さない。
     public bool SetEnemyMagnetPull(MagnetPoint source, bool active)
@@ -1989,6 +1990,27 @@ public partial class MorningStarLauncher : MonoBehaviour
         return IsAttachedToMagnet(source, targetBody) && ReleaseHookAndBeginReturn(false);
     }
 
+    public bool ReleaseEnemyMagnetOnEscape(MagnetPoint source, float reboundSpeed)
+    {
+        if (source == null || !_enemyMagnetPulls.Contains(source) || morningStarRb == null) return false;
+        bool attached = IsAttachedToMagnet(source, morningStarRb);
+        SetEnemyMagnetPull(source, false);
+        if (attached)
+        {
+            SetHookRopeJointActive(false);
+            _fireBufferTimer = 0f;
+            EnterDraggingState(false);
+        }
+        if (IsEnemyMagnetPulling || !morningStarRb.simulated || morningStarRb.bodyType != RigidbodyType2D.Dynamic)
+            return false;
+        Vector2 direction = (Vector2)transform.position - morningStarRb.position;
+        if (direction.sqrMagnitude < 0.0001f || reboundSpeed <= 0f) return false;
+        morningStarRb.AddForce(direction.normalized * (morningStarRb.mass * reboundSpeed), ForceMode2D.Impulse);
+        var sparks = morningStarRb.GetComponent<MorningStarImpactSparks>();
+        if (sparks != null) sparks.PlayPressImpact(morningStarRb.position, 8);
+        return true;
+    }
+
     private bool ReleaseHookAndBeginReturn(bool applyReleaseBoost)
     {
         if ((_state != MorningStarState.Hooked && _state != MorningStarState.Swinging) || !_isHooked)
@@ -3144,6 +3166,15 @@ public partial class MorningStarLauncher : MonoBehaviour
             : GetHandWorld();
 
         hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
+
+        // 敵の磁石だけ、Playerが吸引範囲の外まで歩ける余地を確保する。
+        if (_attachedMagnet != null && _enemyMagnetPulls.Contains(_attachedMagnet))
+        {
+            hookRopeJoint.maxDistanceOnly = true;
+            float anchorOffset = Vector2.Distance(anchorWorld, _playerRb.position);
+            hookRopeJoint.distance = Mathf.Max(GetEffectiveRopeLength(), _attachedMagnet.ControlledEscapeRadius + anchorOffset + 0.5f);
+            return;
+        }
 
         if (_isChainClimbing && upperHanging)
         {
