@@ -169,34 +169,44 @@ public class MagnetPoint : MonoBehaviour
 
         if (attachedBodies.Contains(rb))
         {
-            if (launcher.IsAttachedToMagnet(this, rb)) return;
+            if (launcher.IsAttachedToMagnet(this, rb))
+            {
+                launcher.SetEnemyMagnetPull(this, true);
+                return;
+            }
             attachedBodies.Remove(rb);
             suppressedUntilExitBodies.Add(rb);
         }
 
         if (Vector2.Distance(transform.position, rb.position) > Mathf.Max(0f, radius))
         {
+            launcher.SetEnemyMagnetPull(this, false);
             suppressedUntilExitBodies.Remove(rb);
             escapeThrowGrantedBodies.Remove(rb);
             return;
         }
-        if (suppressedUntilExitBodies.Contains(rb) || !rb.simulated || rb.bodyType != RigidbodyType2D.Dynamic)
-            return;
-        if (force <= 0f || radius <= 0f) return;
-
         var state = launcher.State;
-        if (state != MorningStarLauncher.MorningStarState.Dragging
+        if (suppressedUntilExitBodies.Contains(rb) || !rb.simulated || rb.bodyType != RigidbodyType2D.Dynamic
+            || force <= 0f || radius <= 0f || (state != MorningStarLauncher.MorningStarState.Dragging
             && state != MorningStarLauncher.MorningStarState.Dropping
-            && state != MorningStarLauncher.MorningStarState.Thrown) return;
+            && state != MorningStarLauncher.MorningStarState.Thrown))
+        {
+            launcher.SetEnemyMagnetPull(this, false);
+            return;
+        }
 
+        if (!launcher.SetEnemyMagnetPull(this, true)) return;
         Attract(rb, Mathf.Max(0f, force), Mathf.Max(0f, maxSpeed), Mathf.Max(0f, attachDistance));
     }
 
     public void StopControlledAttraction(MorningStarLauncher launcher, Rigidbody2D rb)
     {
         // 別の磁石・壁に移った鉄球は解除しない。
-        if (launcher != null && rb != null && launcher.IsAttachedToMagnet(this, rb))
-            launcher.TryReleaseMagnetForJump();
+        if (launcher != null)
+        {
+            launcher.SetEnemyMagnetPull(this, false);
+            if (rb != null) launcher.ReleaseControlledMagnet(this, rb);
+        }
         attachedBodies.Clear();
         suppressedUntilExitBodies.Clear();
         escapeThrowGrantedBodies.Clear();

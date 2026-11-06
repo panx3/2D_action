@@ -166,6 +166,8 @@ public sealed class Magutomushi : MonoBehaviour
         if (BallAvailable() && magnet != null)
             magnet.AttractControlledBall(launcher.BallBody, launcher, attractionRadius,
                 pullStrength, maxPullSpeed, attachDistance);
+        else
+            StopMagnet();
     }
 
     private void StopMagnet()

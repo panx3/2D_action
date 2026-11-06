@@ -348,6 +348,41 @@ public partial class MorningStarLauncher : MonoBehaviour
     private double _hitStopEndsAt;
     private bool _goalInputBlocked;
     private bool _gimmickInputBlocked;
+    private readonly HashSet<MagnetPoint> _enemyMagnetPulls = new HashSet<MagnetPoint>();
+    public bool IsEnemyMagnetPulling => _enemyMagnetPulls.Count > 0;
+
+    // 複数の敵に引かれても、最後の磁力が終わるまで入力・重力を戻さない。
+    public bool SetEnemyMagnetPull(MagnetPoint source, bool active)
+    {
+        if (source == null) return false;
+        if (active)
+        {
+            if (!isActiveAndEnabled || morningStarRb == null || _respawnPresentation
+                || _state == MorningStarState.StartIntro || _state == MorningStarState.Respawning)
+                return false;
+            bool first = _enemyMagnetPulls.Count == 0;
+            if (!_enemyMagnetPulls.Add(source)) return true;
+            if (first)
+            {
+                _fireBufferTimer = 0f;
+                _gamepadFirePressedThisFrame = false;
+                _rightStickReady = false;
+                _isFireHolding = _shoulderChargeInput = _hookClickHolding = false;
+                _fireHoldTime = -1f;
+                electricInputNeedsNeutral = true;
+            }
+        }
+        else if (!_enemyMagnetPulls.Remove(source)) return false;
+        ApplyBallGravityForState(_state);
+        return true;
+    }
+
+    private void ClearEnemyMagnetPulls()
+    {
+        if (_enemyMagnetPulls.Count == 0) return;
+        _enemyMagnetPulls.Clear();
+        ApplyBallGravityForState(_state);
+    }
 
     public bool IsHitStopping => _hitStopRoutine != null;
 
@@ -440,6 +475,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     public void BeginRespawnPresentation()
     {
         if (_respawnPresentation) return;
+        ClearEnemyMagnetPulls();
         CancelHitStop();
         _respawnPresentation = true;
         _simulatedBeforeRespawn = morningStarRb != null && morningStarRb.simulated;
@@ -557,6 +593,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        ClearEnemyMagnetPulls();
         EndTrampolineJump();
         CancelHitStop();
         CancelMotionLaunchVisual();
@@ -801,6 +838,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearEnemyMagnetPulls();
         CancelMotionLaunchVisual();
         RestoreUnifiedMotionSprite();
         RestoreChainClimbVisual();
@@ -834,7 +872,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
+        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
         {
             UpdateFallbackLineRenderer();
             return;
@@ -1071,7 +1109,6 @@ public partial class MorningStarLauncher : MonoBehaviour
         morningStarRb.constraints = _restBallConstraints;
         morningStarRb.collisionDetectionMode = _restBallCollisionDetectionMode;
         morningStarRb.interpolation = _restBallInterpolation;
-        morningStarRb.gravityScale = normalBallGravityScale;
         morningStarRb.linearDamping = ballGroundLinearDamping;
 
         switch (state)
@@ -1084,33 +1121,49 @@ public partial class MorningStarLauncher : MonoBehaviour
                 break;
 
             case MorningStarState.SpinCharging:
-                morningStarRb.gravityScale = spinChargeBallGravityScale;
                 morningStarRb.linearDamping = 0f;
                 break;
 
             case MorningStarState.RecallBeforeThrow:
             case MorningStarState.Returning:
-                morningStarRb.gravityScale = 0f;
                 morningStarRb.linearDamping = 0f;
                 break;
 
             case MorningStarState.Thrown:
-                morningStarRb.gravityScale = thrownBallGravityScale;
                 morningStarRb.linearDamping = ballFlyingLinearDamping;
                 break;
 
             case MorningStarState.Dropping:
                 // 旧Scene/外部コードとの互換用。物理はRestと完全に同じ。
-                morningStarRb.gravityScale = normalBallGravityScale;
                 morningStarRb.linearDamping = ballGroundLinearDamping;
                 break;
 
             case MorningStarState.Hooked:
             case MorningStarState.Swinging:
-                morningStarRb.gravityScale = hookedBallGravityScale;
                 morningStarRb.linearDamping = 0f;
                 break;
         }
+        ApplyBallGravityForState(state);
+    }
+
+    // 状態別の重力を一箇所に集約し、一時的な磁力終了後も現在の状態へ戻す。
+    private void ApplyBallGravityForState(MorningStarState state)
+    {
+        if (morningStarRb == null) return;
+        float gravity = normalBallGravityScale;
+        switch (state)
+        {
+            case MorningStarState.SpinCharging: gravity = spinChargeBallGravityScale; break;
+            case MorningStarState.RecallBeforeThrow:
+            case MorningStarState.Returning: gravity = 0f; break;
+            case MorningStarState.Thrown: gravity = thrownBallGravityScale; break;
+            case MorningStarState.Hooked:
+            case MorningStarState.Swinging: gravity = hookedBallGravityScale; break;
+        }
+        if (IsEnemyMagnetPulling && (state == MorningStarState.Dragging || state == MorningStarState.Dropping
+            || state == MorningStarState.Thrown || state == MorningStarState.Hooked || state == MorningStarState.Swinging))
+            gravity = 0f;
+        morningStarRb.gravityScale = gravity;
     }
 
     /// <summary>トランポリンから着地までPlayerへの牽引を止め、張った鎖で鉄球側を追従させる。</summary>
@@ -1924,10 +1977,16 @@ public partial class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public bool TryReleaseMagnetForJump()
     {
-        if (_attachedMagnet == null)
+        if (_attachedMagnet == null || IsEnemyMagnetPulling)
             return false;
 
         return ReleaseHookAndBeginReturn(false);
+    }
+
+    // 敵による終了時だけ、対象を確認したうえで入力ロック中も解除できる。
+    public bool ReleaseControlledMagnet(MagnetPoint source, Rigidbody2D targetBody)
+    {
+        return IsAttachedToMagnet(source, targetBody) && ReleaseHookAndBeginReturn(false);
     }
 
     private bool ReleaseHookAndBeginReturn(bool applyReleaseBoost)
@@ -3373,7 +3432,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3385,7 +3444,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
