@@ -180,9 +180,11 @@ public static class FallingPressSetup
             var head = press.transform.Find("MovingHead");
             head.GetComponent<Rigidbody2D>().useFullKinematicContacts = true;
             var solid = head.GetComponent<BoxCollider2D>();
-            int layers = (1 << 2) | (1 << 3) | (1 << 7);
+            int layers = (1 << 0) | (1 << 2) | (1 << 3) | (1 << 6) | (1 << 7);
             solid.includeLayers = layers; solid.excludeLayers = ~layers;
             ConfigurePlayerTopSurface(press);
+            ConfigurePressImpact(press);
+            ConfigurePressAppearance(press);
             PrefabUtility.SaveAsPrefabAsset(press, PressPath);
         }
         finally { PrefabUtility.UnloadPrefabContents(press); }
@@ -200,6 +202,30 @@ public static class FallingPressSetup
         var controller = press.GetComponent<FallingPressController>();
         Set(controller, "playerTopSurface", surface);
         controller.ApplyGeometry();
+    }
+
+    private static void ConfigurePressImpact(GameObject press)
+    {
+        var vfx = press.transform.Find("VFXRoot_ImpactSparks");
+        var effect = vfx.GetComponent<MorningStarImpactSparks>();
+        if (effect == null) effect = vfx.gameObject.AddComponent<MorningStarImpactSparks>();
+        const string materials = "Assets/Generated/AtmosphereEffects/";
+        Set(effect, "sparkMaterial", AssetDatabase.LoadAssetAtPath<Material>(materials + "ImpactSparks.mat"));
+        Set(effect, "emberMaterial", AssetDatabase.LoadAssetAtPath<Material>(materials + "MetalEmbers.mat"));
+        Set(effect, "sparkTrailMaterial", AssetDatabase.LoadAssetAtPath<Material>(materials + "MetalSparkTrail.mat"));
+        Set(effect, "dustMaterial", AssetDatabase.LoadAssetAtPath<Material>(materials + "GroundDust.mat"));
+        Set(effect, "impactFlashMaterial", AssetDatabase.LoadAssetAtPath<Material>(materials + "ImpactFlash.mat"));
+        Set(effect, "ballRenderer", press.transform.Find("MovingHead/VisualRoot/PressBody").GetComponent<SpriteRenderer>());
+        Set(press.GetComponent<FallingPressController>(), "impactSparks", effect);
+    }
+
+    private static void ConfigurePressAppearance(GameObject press)
+    {
+        // 鉄球マークや警告灯はそのまま、鋼板とシリンダーをStage2の緑青に寄せる。
+        var steel = new Color(0.68f, 0.82f, 0.75f, 1f);
+        press.transform.Find("MovingHead/VisualRoot/PressBody").GetComponent<SpriteRenderer>().color = steel;
+        var supports = press.transform.Find("VisualRoot_FixedSupports");
+        foreach (var sr in supports.GetComponentsInChildren<SpriteRenderer>(true)) sr.color = steel;
     }
 
     private static GameObject BuildPress()
@@ -224,7 +250,7 @@ public static class FallingPressSetup
         var light = Sprite("WarningLight", "LightPixel", visual.transform, 4);
         light.transform.localPosition = new Vector3(0f, 1.35f, 0f);
         var collider = moving.AddComponent<BoxCollider2D>();
-        int pressLayers = (1 << 2) | (1 << 3) | (1 << 7);
+        int pressLayers = (1 << 0) | (1 << 2) | (1 << 3) | (1 << 6) | (1 << 7);
         collider.includeLayers = pressLayers; collider.excludeLayers = ~pressLayers; collider.layerOverridePriority = 30;
         var detector = Child("DamageDetector", moving.transform); detector.layer = 2;
         var trigger = detector.AddComponent<BoxCollider2D>(); trigger.isTrigger = true;
@@ -251,7 +277,7 @@ public static class FallingPressSetup
         Set(controller, "sparks", particles);
         var so = new SerializedObject(controller); var array = so.FindProperty("pistons"); array.arraySize = rods.Length;
         for (int i = 0; i < rods.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = rods[i];
-        so.ApplyModifiedPropertiesWithoutUndo(); ConfigurePlayerTopSurface(root);
+        so.ApplyModifiedPropertiesWithoutUndo(); ConfigurePlayerTopSurface(root); ConfigurePressImpact(root); ConfigurePressAppearance(root);
         return root;
     }
 
@@ -264,6 +290,9 @@ public static class FallingPressSetup
         var controller = press.GetComponent<FallingPressController>();
         if (controller == null || controller.BallStand != null || press.GetComponentInChildren<PressBallStandController>(true) != null)
             throw new Exception("Press prefab must be independent; assign the stand on the scene instance.");
+        var impactEffect = new SerializedObject(controller).FindProperty("impactSparks").objectReferenceValue;
+        if (impactEffect == null || new SerializedObject(impactEffect).FindProperty("sparkMaterial").objectReferenceValue == null)
+            throw new Exception("Missing shared iron-ball impact effect or material.");
         if (stand.GetComponent<PressBallStandController>() == null) throw new Exception("Missing stand controller.");
         foreach (var c in press.GetComponentsInChildren<Collider2D>())
         {

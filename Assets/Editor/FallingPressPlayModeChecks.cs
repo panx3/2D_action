@@ -19,6 +19,7 @@ public static class FallingPressPlayModeChecks
     private static double deadline;
     private static int phase, errors, initialHp;
     private static bool warningSeen, bottomSeen, differentSeen, standSeen, occupiedSeen, wasBackground, launchSeen, launchRequested;
+    private static string firstSyncDifference;
     private static RigidbodyConstraints2D constraints;
     private static readonly List<string> passed = new List<string>();
 
@@ -40,6 +41,7 @@ public static class FallingPressPlayModeChecks
             wasBackground = Application.runInBackground; Application.runInBackground = true;
             began = phaseTime = Time.time; phase = errors = 0; passed.Clear();
             warningSeen = bottomSeen = differentSeen = standSeen = occupiedSeen = launchSeen = launchRequested = false;
+            firstSyncDifference = null;
             deadline = EditorApplication.timeSinceStartup + 150d;
             Application.logMessageReceived += Log; EditorApplication.update += Tick;
         }
@@ -67,10 +69,14 @@ public static class FallingPressPlayModeChecks
                 case 1:
                     warningSeen |= press.State == FallingPressController.CycleState.Warning;
                     bottomSeen |= press.State == FallingPressController.CycleState.BottomWait && press.CurrentClearance < 0.1f;
-                    differentSeen |= second.State != press.State;
-                    if (!bottomSeen || press.State != FallingPressController.CycleState.TopWait) return;
-                    Require(warningSeen && differentSeen, "warning or independent timing missing");
-                    Pass("no obstacle: full cycle/warning/ascent; two independent presses");
+                    if (second.State != press.State || Mathf.Abs(second.CurrentClearance - press.CurrentClearance) > 0.06f)
+                    {
+                        differentSeen = true;
+                        if (firstSyncDifference == null) firstSyncDifference = press.State + "/" + press.CurrentClearance + " vs " + second.State + "/" + second.CurrentClearance;
+                    }
+                    if (!bottomSeen || !warningSeen || press.State != FallingPressController.CycleState.TopWait) return;
+                    Require(warningSeen && !differentSeen, "warning=" + warningSeen + "; first difference=" + firstSyncDifference);
+                    Pass("no obstacle: full cycle/warning/ascent; presses synchronized");
                     press.BallStand.gameObject.SetActive(true); Next(); break;
                 case 2:
                     if (press.IsStandBlocked)
@@ -82,6 +88,8 @@ public static class FallingPressPlayModeChecks
                     }
                     if (!standSeen || press.State != FallingPressController.CycleState.Rising || press.CurrentClearance < 4.5f)
                     { Require(t < 8f, "press did not hit standalone stand and rise"); return; }
+                    Require(second.State == FallingPressController.CycleState.Rising, "blocked press did not rise with the other press");
+                    SetSync(press, false); SetSync(second, false);
                     PlaceBall(true); Next(); break;
                 case 3:
                     occupiedSeen |= press.BallStand.IsOccupied && press.BallStand.StoneColor.b > press.BallStand.StoneColor.r;
@@ -166,6 +174,21 @@ public static class FallingPressPlayModeChecks
                     Require(ball.position.x < 995.8f, "ball passed through solid press side: " + ball.position);
                     if (t < 0.3f) return;
                     Pass("real solid side collision blocks moving ball"); CheckRest();
+                    var raisedFloor = new GameObject("__RaisedPressFloor");
+                    raisedFloor.transform.position = new Vector2(1040f, 2f);
+                    raisedFloor.AddComponent<BoxCollider2D>().size = new Vector2(10f, 4f);
+                    press = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FallingPressSetup.PressPath), new Vector3(1040f, 0f), Quaternion.identity).GetComponent<FallingPressController>();
+                    SetSync(press, false); Set(press, "topWait", 0.1f); Set(press, "warningTime", 0.1f); Set(press, "bottomWait", 2f);
+                    Physics2D.SyncTransforms(); Next(); break;
+                case 12:
+                    if (!press.IsFloorBlocked) { Require(t < 3f, "raised floor did not stop press: " + press.State + "/" + press.CurrentClearance); return; }
+                    Require(Mathf.Abs(press.CurrentClearance - 4.04f) < 0.08f && !press.HasSafeClearance,
+                        "raised floor stop height or clearance warning incorrect: " + press.CurrentClearance);
+                    var headCollider = press.transform.Find("MovingHead").GetComponent<Collider2D>();
+                    var floorCollider = GameObject.Find("__RaisedPressFloor").GetComponent<Collider2D>();
+                    Require(!Physics2D.GetIgnoreCollision(headCollider, floorCollider) && (headCollider.includeLayers.value & 1) != 0,
+                        "floor physical collision is disabled");
+                    Pass("raised physical floor stops press above its configured bottom");
                     Require(errors == 0, "new runtime errors=" + errors);
                     Finish("PASS: " + string.Join("; ", passed) + "; runtime errors=0"); break;
             }
@@ -179,9 +202,19 @@ public static class FallingPressPlayModeChecks
         foreach (var p in UnityEngine.Object.FindObjectsByType<FallingPressController>(FindObjectsSortMode.None)) p.gameObject.SetActive(false);
         var floor = new GameObject("__PressCheckFloor"); floor.transform.position = new Vector2(1005f, -0.5f);
         floor.AddComponent<BoxCollider2D>().size = new Vector2(50f, 1f);
-        press = Fixture(1000f); second = Fixture(1020f); Set(second, "topWait", 1.1f);
+        press = Fixture(1000f); second = Fixture(1020f);
+        var effect = press.GetComponentInChildren<MorningStarImpactSparks>();
+        Require(effect != null, "shared iron-ball impact effect missing");
+        effect.PlayPressImpact(new Vector2(1000f, 1f), 7);
+        var sparks = effect.transform.Find("Impact Sparks").GetComponent<ParticleSystem>();
+        Require(sparks.particleCount == 7, "adjustable spark count was not applied: " + sparks.particleCount);
+        int bursts = effect.BurstCount;
+        effect.PlayPressImpact(new Vector2(1000f, 1f), 0);
+        Require(effect.BurstCount == bursts, "zero spark count did not disable impact effect");
+        Pass("iron-ball impact effect reused; spark count and zero setting work");
         Require(press.BallStand != second.BallStand, "pairs share stand reference");
         press.BallStand.gameObject.SetActive(false);
+        second.BallStand.gameObject.SetActive(false);
         launcher.ResetForRespawn(); hp.ResetToFullHp();
         playerBody.position = new Vector2(990f, 2.06f); playerBody.linearVelocity = Vector2.zero;
         ball.position = new Vector2(989f, 0.85f); ball.linearVelocity = Vector2.zero;
@@ -213,6 +246,10 @@ public static class FallingPressPlayModeChecks
     private static void Set(UnityEngine.Object target, string name, float value)
     {
         var so = new SerializedObject(target); so.FindProperty(name).floatValue = value; so.ApplyModifiedPropertiesWithoutUndo();
+    }
+    private static void SetSync(FallingPressController target, bool value)
+    {
+        var so = new SerializedObject(target); so.FindProperty("synchronize").boolValue = value; so.ApplyModifiedPropertiesWithoutUndo();
     }
     private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
     private static void OnLaunch(float charge) { launchSeen = true; }

@@ -5,7 +5,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FallingPressController : MonoBehaviour
 {
-    public enum CycleState { TopWait, Warning, Descending, BottomWait, Rising, BallBlocked, StandBlocked, PlayerBlocked }
+    public enum CycleState { TopWait, Warning, Descending, BottomWait, Rising, BallBlocked, StandBlocked, PlayerBlocked, FloorBlocked }
     [Header("Pair / geometry (root = floor, head pivot = underside)")]
     [SerializeField, Tooltip("配置確認用の任意参照。停止判定はこの参照に依存せず、接触した台座・鉄球を使います。")]
     private PressBallStandController ballStand;
@@ -27,10 +27,14 @@ public sealed class FallingPressController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float warningTime = 0.7f;
     [SerializeField, Range(0f, 1f), Tooltip("通常サイクルの開始位置。複数台の時差用")]
     private float startPhase;
+    [SerializeField, Tooltip("同じ周期・開始位相のプレスを共通時間で同期します")]
+    private bool synchronize = true;
     [Header("Physical support")]
     [SerializeField, Min(0.1f), Tooltip("床からプレス下面までに必要な高さ。Player実寸3.3 + 余裕")]
     private float requiredPlayerClearance = 3.5f;
     [SerializeField, Min(0f)] private float contactSkin = 0.04f;
+    [SerializeField, Tooltip("プレスを止める床・地形のレイヤー")]
+    private LayerMask floorLayers = (1 << 0) | (1 << 6);
     [Header("Damage / feedback")]
     [SerializeField, Min(1)] private int damage = 1;
     [SerializeField] private Vector2 knockback = new Vector2(7f, 0f);
@@ -41,7 +45,10 @@ public sealed class FallingPressController : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip floorImpact;
     [SerializeField] private AudioClip ballImpact;
-    [SerializeField] private ParticleSystem sparks;
+    [SerializeField, HideInInspector] private ParticleSystem sparks; // 旧Prefab参照を維持する。
+    [SerializeField] private MorningStarImpactSparks impactSparks;
+    [SerializeField, Range(0, 256), Tooltip("プレスの衝突時に発生する鉄球と同じ火花の本数。0で無効")]
+    private int impactSparkCount = 24;
     private readonly List<RaycastHit2D> supportHits = new List<RaycastHit2D>(16);
     private readonly List<Collider2D> damageHits = new List<Collider2D>(8);
     private readonly List<RaycastHit2D> groundHits = new List<RaycastHit2D>(16);
@@ -61,15 +68,22 @@ public sealed class FallingPressController : MonoBehaviour
     public bool IsBallBlocked => State == CycleState.BallBlocked;
     public bool IsStandBlocked => State == CycleState.StandBlocked;
     public bool IsPlayerBlocked => State == CycleState.PlayerBlocked;
-    public bool IsBlocked => IsBallBlocked || IsStandBlocked;
+    public bool IsFloorBlocked => State == CycleState.FloorBlocked;
+    public bool IsBlocked => IsBallBlocked || IsStandBlocked || IsFloorBlocked;
     public float UndersideY => head != null ? head.position.y : transform.position.y;
     public float CurrentClearance => UndersideY - transform.position.y;
-    public bool HasSafeClearance => IsBlocked && CurrentClearance >= requiredPlayerClearance;
+    public bool HasSafeClearance => (IsBallBlocked || IsStandBlocked) && CurrentClearance >= requiredPlayerClearance;
     public PressBallStandController BallStand => ballStand;
 
     private void Awake()
     {
         ApplyGeometry();
+        if (pressCollider != null)
+        {
+            // Inspectorで追加した床レイヤーにも実Colliderが接触するようにする。
+            pressCollider.includeLayers = pressCollider.includeLayers.value | floorLayers.value;
+            pressCollider.excludeLayers = pressCollider.excludeLayers.value & ~floorLayers.value;
+        }
         damageFilter = new ContactFilter2D { useTriggers = false };
         launcher = FindAnyObjectByType<MorningStarLauncher>();
         cameraShake = Camera.main != null ? Camera.main.GetComponent<CameraShake2D>() : null;
@@ -107,28 +121,30 @@ public sealed class FallingPressController : MonoBehaviour
         float top = transform.position.y + contactSkin + travelDistance;
         head.position = new Vector2(transform.position.x, top);
         float target = transform.position.y + contactSkin + y;
-        if (LimitDescent(top - target, out float allowed, out bool onBall, out _))
-        { target = top - allowed; Enter(onBall ? CycleState.BallBlocked : CycleState.StandBlocked); }
+        if (LimitDescent(top - target, out float allowed, out bool onBall, out bool onFloor, out _))
+        { target = top - allowed; Enter(onBall ? CycleState.BallBlocked : onFloor ? CycleState.FloorBlocked : CycleState.StandBlocked); }
         head.position = new Vector2(transform.position.x, target);
     }
 
-    private bool LimitDescent(float distance, out float allowed, out bool onBall, out Vector2 point)
+    private bool LimitDescent(float distance, out float allowed, out bool onBall, out bool onFloor, out Vector2 point)
     {
-        allowed = distance; onBall = false; point = default;
+        allowed = distance; onBall = onFloor = false; point = default;
         if (pressCollider == null) return false;
-        // 実際に当たった鉄球または台座を支点とし、Playerでは停止しない。
+        // 実際に当たった鉄球・台座・床を支点とし、Playerでは停止しない。
         pressCollider.Cast(Vector2.down, damageFilter, supportHits, distance + contactSkin, true);
         bool found = false;
         float nearest = float.PositiveInfinity;
         foreach (var hit in supportHits)
         {
             Collider2D c = hit.collider;
-            if (c == null || hit.normal.y <= 0.001f || c.bounds.max.y > UndersideY + contactSkin) continue;
+            if (c == null || hit.normal.y <= 0.001f) continue;
             bool ball = launcher != null && c.attachedRigidbody == launcher.BallBody;
             bool stand = c.GetComponentInParent<PressBallStandController>() != null;
-            if (!ball && !stand) continue;
+            bool floor = !ball && !stand && (floorLayers.value & (1 << c.gameObject.layer)) != 0 &&
+                c.GetComponentInParent<Player>() == null && c.GetComponentInParent<FallingPressController>() == null;
+            if ((!ball && !stand && !floor) || (floor ? hit.point.y : c.bounds.max.y) > UndersideY + contactSkin) continue;
             if (hit.distance >= nearest) continue;
-            found = true; nearest = hit.distance; point = hit.point; onBall = ball;
+            found = true; nearest = hit.distance; point = hit.point; onBall = ball; onFloor = floor;
         }
         if (found) allowed = Mathf.Clamp(nearest - contactSkin, 0f, distance);
         return found;
@@ -142,6 +158,11 @@ public sealed class FallingPressController : MonoBehaviour
         float y = head.position.y, next = y;
         RestoreContacts(false);
         elapsed += dt;
+        if (synchronize)
+        {
+            UpdateSynchronized(y, bottom, top, dt);
+            return;
+        }
         switch (State)
         {
             case CycleState.TopWait: if (elapsed >= topWait) Enter(CycleState.Warning); break;
@@ -149,11 +170,12 @@ public sealed class FallingPressController : MonoBehaviour
             case CycleState.Descending:
             case CycleState.BallBlocked:
             case CycleState.StandBlocked:
+            case CycleState.FloorBlocked:
                 next = Mathf.MoveTowards(y, bottom, descentSpeed * dt);
-                if (LimitDescent(y - next, out float allowed, out bool onBall, out Vector2 point))
+                if (LimitDescent(y - next, out float allowed, out bool onBall, out bool onFloor, out Vector2 point))
                 {
                     next = y - allowed;
-                    CycleState blocked = onBall ? CycleState.BallBlocked : CycleState.StandBlocked;
+                    CycleState blocked = onBall ? CycleState.BallBlocked : onFloor ? (next <= bottom + Physics2D.defaultContactOffset ? CycleState.BottomWait : CycleState.FloorBlocked) : CycleState.StandBlocked;
                     if (State != blocked) { Enter(blocked); Impact(onBall, point); }
                     if (elapsed >= bottomWait) Enter(CycleState.Rising);
                 }
@@ -174,6 +196,45 @@ public sealed class FallingPressController : MonoBehaviour
     }
 
     private void Enter(CycleState state) { State = state; elapsed = 0f; }
+
+    private void UpdateSynchronized(float y, float bottom, float top, float dt)
+    {
+        float downTime = travelDistance / descentSpeed, upTime = travelDistance / ascentSpeed;
+        float cycle = topWait + warningTime + downTime + bottomWait + upTime;
+        float time = Mathf.Repeat(Time.fixedTime + startPhase * cycle, cycle);
+        float warningStart = topWait, downStart = warningStart + warningTime;
+        float downEnd = downStart + downTime, upStart = downEnd + bottomWait;
+        float next = y;
+        if (time < downStart)
+        {
+            CycleState phase = time < warningStart ? CycleState.TopWait : CycleState.Warning;
+            if (State != phase) Enter(phase);
+            next = Mathf.MoveTowards(y, top, ascentSpeed * dt);
+        }
+        else if (time < upStart)
+        {
+            float scheduled = time < downEnd ? Mathf.Max(bottom, top - descentSpeed * (time - downStart)) : bottom;
+            next = Mathf.MoveTowards(y, scheduled, descentSpeed * dt);
+            if (LimitDescent(y - next, out float allowed, out bool onBall, out bool onFloor, out Vector2 point))
+            {
+                next = y - allowed;
+                CycleState blocked = onBall ? CycleState.BallBlocked : onFloor ? (next <= bottom + Physics2D.defaultContactOffset ? CycleState.BottomWait : CycleState.FloorBlocked) : CycleState.StandBlocked;
+                if (State != blocked) { Enter(blocked); Impact(onBall, point); }
+            }
+            else if (next <= bottom)
+            {
+                if (State != CycleState.BottomWait) { Enter(CycleState.BottomWait); Impact(false, new Vector2(head.position.x, bottom)); }
+            }
+            else if (State != CycleState.Descending) Enter(CycleState.Descending);
+        }
+        else
+        {
+            if (State != CycleState.Rising) Enter(CycleState.Rising);
+            next = Mathf.MoveTowards(y, top, ascentSpeed * dt);
+        }
+        ApplyCrushDamage(y, next);
+        head.MovePosition(new Vector2(transform.position.x, next));
+    }
 
     private float PlayerDownSpace(Collider2D c, float requested)
     {
@@ -303,7 +364,9 @@ public sealed class FallingPressController : MonoBehaviour
     {
         AudioClip clip = onBall ? ballImpact : floorImpact;
         if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
-        if (sparks != null) { sparks.transform.position = point; sparks.Emit(onBall ? 16 : 24); }
+        var ballSparks = impactSparks != null ? impactSparks : launcher != null && launcher.BallBody != null
+            ? launcher.BallBody.GetComponent<MorningStarImpactSparks>() : null;
+        if (ballSparks != null) ballSparks.PlayPressImpact(point, impactSparkCount);
         if (cameraShake != null && Camera.main != null &&
             Mathf.Abs(Camera.main.transform.position.x - point.x) < 18f)
             cameraShake.Shake(0.12f, onBall ? 0.05f : 0.09f);

@@ -115,6 +115,7 @@ public static class FallingPressCrushChecks
         var go = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(FallingPressSetup.PressPath), pressRoot.transform, false);
         go.transform.localPosition = new Vector2(1000f, testCase == 6 ? 3.2f : 0f); press = go.GetComponent<FallingPressController>();
         var settings = new SerializedObject(press);
+        settings.FindProperty("synchronize").boolValue = false;
         settings.FindProperty("topWait").floatValue = testCase == 0 || testCase == 2 ? 10f : 0.4f;
         settings.FindProperty("warningTime").floatValue = 0.2f;
         settings.FindProperty("bottomWait").floatValue = 5f; settings.FindProperty("ascentSpeed").floatValue = 6f;
