@@ -512,6 +512,13 @@ public partial class Player : MonoBehaviour
 
         bool grounded = IsGrounded;
 
+        if (_morningStarLauncher != null && _morningStarLauncher.IsEnemyMagnetPulling)
+        {
+            _moveInput = Vector2.zero;
+            _jumpBufferTimer = 0f;
+            _jumpHeld = false;
+        }
+
         bool canJump = grounded || _coyoteTimer > 0f;
 
 
@@ -540,7 +547,8 @@ public partial class Player : MonoBehaviour
     private void PollMovementInput()
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking
+            || (_morningStarLauncher != null && _morningStarLauncher.IsEnemyMagnetPulling))
         {
             _moveInput = Vector2.zero;
             return;
@@ -1087,7 +1095,8 @@ public partial class Player : MonoBehaviour
     public void _OnJump(InputAction.CallbackContext context)
 
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking
+            || (_morningStarLauncher != null && _morningStarLauncher.IsEnemyMagnetPulling))
             return;
 
         if (!InputEnabled)
