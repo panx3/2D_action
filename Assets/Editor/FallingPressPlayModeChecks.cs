@@ -73,15 +73,15 @@ public static class FallingPressPlayModeChecks
                     Pass("no obstacle: full cycle/warning/ascent; two independent presses");
                     press.BallStand.gameObject.SetActive(true); Next(); break;
                 case 2:
-                    if (press.State == FallingPressController.CycleState.BottomWait)
+                    if (press.IsStandBlocked)
                     {
-                        Require(press.CurrentClearance < 0.08f && !press.IsBlocked,
-                            "empty stand stopped press before bottom: " + press.CurrentClearance);
-                        if (!standSeen) Pass("empty stand does not stop press; full descent to bottom");
+                        Require(press.CurrentClearance >= 1.88f && press.CurrentClearance < 2.05f,
+                            "stand contact height incorrect: " + press.CurrentClearance);
+                        if (!standSeen) Pass("empty stand physically stops press");
                         standSeen = true;
                     }
                     if (!standSeen || press.State != FallingPressController.CycleState.Rising || press.CurrentClearance < 4.5f)
-                    { Require(t < 8f, "press did not descend past empty stand and rise"); return; }
+                    { Require(t < 8f, "press did not hit standalone stand and rise"); return; }
                     PlaceBall(true); Next(); break;
                 case 3:
                     occupiedSeen |= press.BallStand.IsOccupied && press.BallStand.StoneColor.b > press.BallStand.StoneColor.r;
@@ -103,10 +103,9 @@ public static class FallingPressPlayModeChecks
                     playerBody.position = new Vector2(1004f, 2.06f); playerBody.linearVelocity = Vector2.zero;
                     Next(); break;
                 case 5:
-                    if (press.State != FallingPressController.CycleState.BottomWait) { Require(t < 2f, "removing ball did not resume descent to bottom"); return; }
-                    Require(press.CurrentClearance < 0.08f, "press stopped above empty stand");
+                    if (!press.IsStandBlocked) { Require(t < 2f, "removing ball did not resume descent onto stand"); return; }
                     Require(!press.BallStand.IsOccupied && press.BallStand.StoneColor.r > press.BallStand.StoneColor.b, "ready feedback did not clear");
-                    Pass("ball removal clears feedback and press descends to bottom");
+                    Pass("ball removal clears feedback and press descends onto stand");
                     Next(); break;
                 case 6:
                     // 閉じた本体へPlayerをワープさせず、開いてから入り、次の下降を待つ。
@@ -155,13 +154,13 @@ public static class FallingPressPlayModeChecks
                     if (press.CurrentClearance < 4.5f) { Require(t < 8f, "press did not rise for floor-ball check"); return; }
                     PlaceBall(false); Next(); break;
                 case 10:
-                    if (press.State != FallingPressController.CycleState.BottomWait) { Require(t < 8f, "unplaced ball blocked full descent; head=" + press.State + "/" + press.CurrentClearance); return; }
-                    Require(press.CurrentClearance < 0.08f && !press.IsBlocked, "unplaced ball incorrectly supports press");
+                    if (!press.IsBallBlocked) { Require(t < 8f, "floor ball did not stop press; head=" + press.State + "/" + press.CurrentClearance); return; }
+                    Require(press.CurrentClearance > 1.6f && press.CurrentClearance < 1.9f && !press.HasSafeClearance, "floor ball stop height incorrect");
                     Require(ball.GetComponent<Collider2D>().bounds.min.y > -0.12f, "floor ball crushed");
-                    CheckRest(); Pass("ball without stand does not stop press and remains above floor");
+                    CheckRest(); Pass("ball without stand stops press and remains above floor");
                     press.enabled = false;
                     launcher.ResetForRespawn(); playerBody.position = new Vector2(994f, 2.06f); playerBody.linearVelocity = Vector2.zero;
-                    ball.position = new Vector2(995f, 1f); ball.linearVelocity = new Vector2(20f, 0f);
+                    ball.position = new Vector2(995f, 2.6f); ball.linearVelocity = new Vector2(20f, 0f);
                     Physics2D.SyncTransforms(); Next(); break;
                 case 11:
                     Require(ball.position.x < 995.8f, "ball passed through solid press side: " + ball.position);

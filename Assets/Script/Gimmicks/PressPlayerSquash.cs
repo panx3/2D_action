@@ -24,15 +24,17 @@ public sealed class PressPlayerSquash : MonoBehaviour
         if (health != null) health.OnDead += ResetEffect;
     }
 
-    public void Contact(float underside, float minimumHeight, float width, float hold, float recoveryTime, int pressOrder)
+    public void Contact(float underside, float minimumHeight, float width, float hold, float recoveryTime, int pressOrder, float ballHeight = 0f)
     {
         if (!enabled || body == null || body.sprite == null || health == null || health.IsDead || health.IsRespawning) return;
         Bounds sprite = body.sprite.bounds;
         Vector3 foot = new Vector3(sprite.center.x, body.flipY ? -sprite.max.y : sprite.min.y, 0f);
         float footY = body.transform.TransformPoint(foot).y;
         float height = sprite.size.y * Mathf.Abs(body.transform.lossyScale.y);
-        // 実体が頭上で止まっていても、被挟み時の描画は高さ30%まで潰して見せる。
-        float target = Mathf.Clamp((underside - footY) / Mathf.Max(0.01f, height), minimumHeight, Mathf.Max(minimumHeight, 0.3f));
+        // 鉄球の実寸を描画高さの基準にする。鉄球が取得できない場合は従来の30%を使う。
+        float target = ballHeight > 0f
+            ? Mathf.Clamp(ballHeight / Mathf.Max(0.01f, height), minimumHeight, 1f)
+            : Mathf.Clamp((underside - footY) / Mathf.Max(0.01f, height), minimumHeight, Mathf.Max(minimumHeight, 0.3f));
         if (lastFixed != Time.fixedTime) { requested = 1f; lastFixed = Time.fixedTime; }
         requested = Mathf.Min(requested, target);
         maximumWidth = width; recovery = Mathf.Max(0.01f, recoveryTime);

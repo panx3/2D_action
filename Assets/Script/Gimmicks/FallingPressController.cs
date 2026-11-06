@@ -46,7 +46,6 @@ public sealed class FallingPressController : MonoBehaviour
     private readonly List<Collider2D> damageHits = new List<Collider2D>(8);
     private readonly List<RaycastHit2D> groundHits = new List<RaycastHit2D>(16);
     private readonly List<IgnoredContact> ignoredContacts = new List<IgnoredContact>(4);
-    private readonly ContactPoint2D[] ballSupportContacts = new ContactPoint2D[16];
     private sealed class IgnoredContact
     {
         public Collider2D collider;
@@ -62,7 +61,7 @@ public sealed class FallingPressController : MonoBehaviour
     public bool IsBallBlocked => State == CycleState.BallBlocked;
     public bool IsStandBlocked => State == CycleState.StandBlocked;
     public bool IsPlayerBlocked => State == CycleState.PlayerBlocked;
-    public bool IsBlocked => IsBallBlocked;
+    public bool IsBlocked => IsBallBlocked || IsStandBlocked;
     public float UndersideY => head != null ? head.position.y : transform.position.y;
     public float CurrentClearance => UndersideY - transform.position.y;
     public bool HasSafeClearance => IsBlocked && CurrentClearance >= requiredPlayerClearance;
@@ -108,49 +107,31 @@ public sealed class FallingPressController : MonoBehaviour
         float top = transform.position.y + contactSkin + travelDistance;
         head.position = new Vector2(transform.position.x, top);
         float target = transform.position.y + contactSkin + y;
-        if (LimitDescent(top - target, out float allowed, out _))
-        { target = top - allowed; Enter(CycleState.BallBlocked); }
+        if (LimitDescent(top - target, out float allowed, out bool onBall, out _))
+        { target = top - allowed; Enter(onBall ? CycleState.BallBlocked : CycleState.StandBlocked); }
         head.position = new Vector2(transform.position.x, target);
     }
 
-    private bool LimitDescent(float distance, out float allowed, out Vector2 point)
+    private bool LimitDescent(float distance, out float allowed, out bool onBall, out Vector2 point)
     {
-        allowed = distance; point = default;
+        allowed = distance; onBall = false; point = default;
         if (pressCollider == null) return false;
-        // 移動制限は、台座の上面に実接触している鉄球だけ。Player・空の台座は支点にしない。
+        // 実際に当たった鉄球または台座を支点とし、Playerでは停止しない。
         pressCollider.Cast(Vector2.down, damageFilter, supportHits, distance + contactSkin, true);
-        bool supported = IsBallOnStand(), found = false;
+        bool found = false;
         float nearest = float.PositiveInfinity;
         foreach (var hit in supportHits)
         {
             Collider2D c = hit.collider;
-            if (c == null || hit.normal.y <= 0.001f || launcher == null ||
-                c.attachedRigidbody != launcher.BallBody || c.bounds.max.y > UndersideY + contactSkin) continue;
-            if (!supported)
-            {
-                // 未セットの鉄球は支えにしないが、プレスで床へ押し潰すこともしない。
-                IgnoreContact(c); continue;
-            }
+            if (c == null || hit.normal.y <= 0.001f || c.bounds.max.y > UndersideY + contactSkin) continue;
+            bool ball = launcher != null && c.attachedRigidbody == launcher.BallBody;
+            bool stand = c.GetComponentInParent<PressBallStandController>() != null;
+            if (!ball && !stand) continue;
             if (hit.distance >= nearest) continue;
-            found = true; nearest = hit.distance; point = hit.point;
+            found = true; nearest = hit.distance; point = hit.point; onBall = ball;
         }
         if (found) allowed = Mathf.Clamp(nearest - contactSkin, 0f, distance);
         return found;
-    }
-
-    private bool IsBallOnStand()
-    {
-        if (launcher == null || launcher.BallBody == null) return false;
-        int count = launcher.BallBody.GetContacts(ballSupportContacts);
-        for (int i = 0; i < count; i++)
-        {
-            var contact = ballSupportContacts[i];
-            var stand = contact.collider != null ? contact.collider.GetComponentInParent<PressBallStandController>() : null;
-            if (stand == null && contact.otherCollider != null)
-                stand = contact.otherCollider.GetComponentInParent<PressBallStandController>();
-            if (stand != null && stand.TryGetSupport(out _)) return true;
-        }
-        return false;
     }
 
     private void FixedUpdate()
@@ -167,11 +148,13 @@ public sealed class FallingPressController : MonoBehaviour
             case CycleState.Warning: if (elapsed >= warningTime) Enter(CycleState.Descending); break;
             case CycleState.Descending:
             case CycleState.BallBlocked:
+            case CycleState.StandBlocked:
                 next = Mathf.MoveTowards(y, bottom, descentSpeed * dt);
-                if (LimitDescent(y - next, out float allowed, out Vector2 point))
+                if (LimitDescent(y - next, out float allowed, out bool onBall, out Vector2 point))
                 {
                     next = y - allowed;
-                    if (!IsBallBlocked) { Enter(CycleState.BallBlocked); Impact(true, point); }
+                    CycleState blocked = onBall ? CycleState.BallBlocked : CycleState.StandBlocked;
+                    if (State != blocked) { Enter(blocked); Impact(onBall, point); }
                     if (elapsed >= bottomWait) Enter(CycleState.Rising);
                 }
                 else
@@ -242,8 +225,11 @@ public sealed class FallingPressController : MonoBehaviour
             if (Time.fixedTime >= contact.feedbackUntil) continue;
             var squash = hp.GetComponent<PressPlayerSquash>();
             if (squash == null) squash = hp.gameObject.AddComponent<PressPlayerSquash>();
+            Collider2D ballCollider = launcher != null && launcher.BallBody != null
+                ? launcher.BallBody.GetComponent<Collider2D>() : null;
+            float ballHeight = ballCollider != null ? ballCollider.bounds.size.y : 0f;
             squash.Contact(contact.visualUnderside, minimumSquashHeight, maximumSquashWidth,
-                squashHoldTime, squashRecoveryTime, body != null ? body.sortingOrder : 3);
+                squashHoldTime, squashRecoveryTime, body != null ? body.sortingOrder : 3, ballHeight);
             float side = player.center.x < head.position.x ? -1f : 1f;
             hp.TakeDamage(damage, new Vector2(knockback.x * side, knockback.y));
         }

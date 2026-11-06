@@ -10,7 +10,7 @@ using UnityEngine.InputSystem.LowLevel;
 public static class FallingPressCrushChecks
 {
     private const string Key = "FallingPressCrushChecks";
-    private static readonly string[] Names = { "upper underside collision", "closed gap side collision", "press top grounding", "floor pinch", "stand pinch", "unplaced ball does not stop press", "almost tall enough gap" };
+    private static readonly string[] Names = { "upper underside collision", "closed gap side collision", "press top grounding", "floor pinch", "stand pinch", "floor ball stops press", "almost tall enough gap" };
     private static readonly List<string> passed = new List<string>();
     private static MorningStarLauncher launcher;
     private static Player player;
@@ -84,12 +84,14 @@ public static class FallingPressCrushChecks
             {
                 Require(health.CurrentHp == hpBefore - 1 && health.IsInvincible && squashSeen, "no protected crush damage/squash; state=" + press.State + " head=" + press.UndersideY + " player=" + playerBody.position);
                 Require(minimumFeet > (testCase == 4 ? 1.82f : -0.08f), "Player embedded in support");
-                Require(press.State == FallingPressController.CycleState.BottomWait && press.CurrentClearance < 0.08f,
+                Require(testCase == 4 ? press.IsStandBlocked && press.CurrentClearance < 2.05f : press.State == FallingPressController.CycleState.BottomWait && press.CurrentClearance < 0.08f,
                     "Player stopped press before bottom: " + press.State + "/" + press.CurrentClearance);
-                Require(squash != null && Mathf.Abs(squash.VerticalScale - 0.3f) < 0.01f,
-                    "existing 30% squash changed: " + (squash != null ? squash.VerticalScale : 1f));
+                float spriteHeight = player.BodySprite.sprite.bounds.size.y * Mathf.Abs(player.BodySprite.transform.lossyScale.y);
+                float ballHeight = ball.GetComponent<Collider2D>().bounds.size.y;
+                Require(squash != null && Mathf.Abs(squash.VerticalScale * spriteHeight - ballHeight) < 0.08f,
+                    "squash height does not match ball diameter");
             }
-            if (testCase == 5) Require(!press.IsBlocked && press.CurrentClearance < 0.08f && ball.GetComponent<Collider2D>().bounds.min.y > -0.1f, "unplaced ball stopped press or embedded in floor");
+            if (testCase == 5) Require(press.IsBallBlocked && press.CurrentClearance > 1.6f && press.CurrentClearance < 1.9f && ball.GetComponent<Collider2D>().bounds.min.y > -0.1f, "floor ball did not stop press or embedded in floor");
             passed.Add(Names[testCase] + ": PASS");
             if (++testCase == Names.Length)
             {
