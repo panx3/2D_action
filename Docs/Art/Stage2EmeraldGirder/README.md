@@ -21,7 +21,7 @@
 ## Art provenance
 
 Built-in image_gen 使用。`GenerationPrompt.txt` と `TransparencyPrompt.txt` を参照。
-`LayoutReference.png` は既存タイルを切り出した寸法用テンプレート、`StructureSource.png` は承認された鉄骨案、`GeneratedSource.png` は裏板を抜いた最終生成原画。最終原画を技術的に切り出し・縮小し、既存の接地ラインに合わせて38pxのAtlasへ格納した。穴はalpha=0、鉄骨はalpha=255。質感は緑の本体と暖色のボルトを残す。
+`LayoutReference.png` は既存タイルを切り出した寸法用テンプレート、`StructureSource.png` は承認された鉄骨案、`GeneratedSource.png` は裏板を抜いた最終生成原画。初回原画を技術的に切り出し・縮小し、既存の接地ラインに合わせて38pxのAtlasへ格納した。穴はalpha=0、鉄骨はalpha=255。質感は緑の本体と暖色のボルトを残す。
 
 ## Validation
 
@@ -33,3 +33,9 @@ Built-in image_gen 使用。`GenerationPrompt.txt` と `TransparencyPrompt.txt` 
 - 通し攻略、実機入力と最終的な見え方・操作感の評価は未実施。mainへはマージしない。
 
 最終再検証: 保存済みSceneのPlay Mode往復後も全地形データが一致。修正・組み込み後の直近3分のConsole Error / Exceptionは0件。制作中の一時的なMCP実行コードの型名エラーは修正済みで、プロジェクトのコンパイル失敗・ランタイムエラーはない。
+
+## Top-deck depth / brightness revision
+
+上段の踏み板を既存地形に近い奥行きへ拡張し、緑の中間色を少し明るくした。最新原画は `DepthRefinementSource.png`、Built-in image_gen の編集指示は `DepthRefinementPrompt.txt`。上段の取り込み高さは27px→32pxへ補正し、上面の見える帯も原画で拡幅。38pxの枠、PPU、ピボット、Sprite ID、物理形状、Tile設定と配置は変更しない。
+
+今回の変更はAtlas画像と制作記録のみ。Scene・Palette・見本Prefab・全Tile/.meta・ユーザーの別作業の変更はファイルハッシュで不変を確認。11枚の設定・物理形状再確認、接続見本レンダー、コンパイル・関連Console確認を実施。最新の幅と色の確認画像は `TileSamples.png`。`Stage2-Start-GameView.png` は初回組み込み時の画像で今回の色・上面修正前。今回のPlay Mode再テストは省略（当たり判定変更なし）、最終的な見え方はユーザー確認。
