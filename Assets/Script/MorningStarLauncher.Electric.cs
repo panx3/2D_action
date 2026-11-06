@@ -13,6 +13,9 @@ public partial class MorningStarLauncher
         && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping || _state == MorningStarState.Thrown);
 
     public void ClearElectricStunInput()
+        => ClearPresentationInput();
+
+    private void ClearPresentationInput()
     {
         _fireBufferTimer = 0f;
         _gamepadFirePressedThisFrame = false;

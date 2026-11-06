@@ -12,7 +12,7 @@ public partial class Player
     public bool TryBeginElectricStun(Object owner)
     {
         if (owner == null || electricStunActive || !isActiveAndEnabled || !InputEnabled
-            || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled
+            || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled || IsItemDrinking
             || _rigid == null || !_rigid.simulated
             || (_playerHealth != null && (_playerHealth.IsDead || _playerHealth.IsRespawning))) return false;
         if (_morningStarLauncher != null && !_morningStarLauncher.CanBeginElectricStun) return false;

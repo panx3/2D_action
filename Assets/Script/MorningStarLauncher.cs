@@ -834,7 +834,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsEnemyHitStunned))
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
         {
             UpdateFallbackLineRenderer();
             return;
@@ -1117,7 +1117,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     public void BeginTrampolineJump()
     {
         if (!isActiveAndEnabled || _playerRb == null || morningStarRb == null
-            || _respawnPresentation || _state == MorningStarState.StartIntro)
+            || _respawnPresentation || _state == MorningStarState.StartIntro || (player != null && player.IsItemDrinking))
             return;
 
         // 跳躍を既存のHook/Jointで止めない。移動や発射の入力は引き続き受け付ける。
@@ -1602,6 +1602,19 @@ public partial class MorningStarLauncher : MonoBehaviour
         _gamepadFirePressedThisFrame = false;
         _rightStickReady = false;
         EnterDraggingState(false);
+    }
+
+    public bool CanBeginItemDrink => isActiveAndEnabled && !_respawnPresentation
+        && !_goalInputBlocked && !_gimmickInputBlocked && !_trampolineJumpActive && !_isChainClimbing
+        && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping
+            || _state == MorningStarState.Thrown || _state == MorningStarState.Returning
+            || _state == MorningStarState.SpinCharging);
+
+    public void BeginItemDrink()
+    {
+        if (_state == MorningStarState.SpinCharging) CancelShoulderCharge();
+        ClearPresentationInput();
+        CancelMotionLaunchVisual();
     }
 
     /// <summary>入力とチャージだけを中断し、発射済み・接続中の鉄球物理は継続する。</summary>
@@ -2279,7 +2292,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void PlayCombatHitStop(float duration)
     {
-        if (!isActiveAndEnabled || _goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || _respawnPresentation || duration <= 0f
+        if (!isActiveAndEnabled || _goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsItemDrinking) || _respawnPresentation || duration <= 0f
             || (_playerHealth != null && _playerHealth.IsDead))
             return;
 
@@ -3360,7 +3373,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsEnemyHitStunned) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3372,7 +3385,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && player.IsEnemyHitStunned) || _respawnPresentation)
+        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
@@ -3461,7 +3474,7 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
         }
 
-        if (player != null && player.IsEnemyHitStunned)
+        if (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking))
         {
             _chainClimbMovedThisFixedStep = false;
             return;

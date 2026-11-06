@@ -238,9 +238,16 @@ public partial class MorningStarLauncher
         bool returnToLocomotion = _launchPoseActive && !motionLaunchVisualActive;
         // 操作・物理用の保持時間はそのままに、投げ絵の終了後はBase Layerへ戻す。
         bool hurt = player != null && player.IsEnemyHitStunned && !_isChainClimbing && !upperHanging;
-        SetMotionLaunchLayerSuppressed(hurt || (returnToLocomotion && !_isChainClimbing && !upperHanging));
+        bool drinking = player != null && player.IsItemDrinking;
+        SetMotionLaunchLayerSuppressed(drinking || hurt || (returnToLocomotion && !_isChainClimbing && !upperHanging));
 
-        if (hurt)
+        if (drinking && playerMotionSet.drink.IsValid)
+        {
+            int index = Mathf.Min(playerMotionSet.drink.frames.Length - 1,
+                Mathf.FloorToInt(player.ItemDrinkProgress * playerMotionSet.drink.frames.Length));
+            selected = playerMotionSet.drink.frames[index];
+        }
+        else if (hurt)
         {
             var sequence = player.EnemyHitGrounded ? playerMotionSet.hurtGround : playerMotionSet.hurtAir;
             selected = sequence != null ? sequence.Sample(player.EnemyHitElapsed) : null;
