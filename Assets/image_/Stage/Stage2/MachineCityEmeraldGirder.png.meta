@@ -1,0 +1,460 @@
+fileFormatVersion: 2
+guid: f843d6bb18f345246b4e0a2da3da1a15
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2279903148646834151
+    second: MachineCityEmeraldGirder_0
+  - first:
+      213: 8819795296647599387
+    second: MachineCityEmeraldGirder_1
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 38
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_TopLeft
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 114
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 5}
+        - {x: -19, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee628598741f9884da5b0bd27bf49501
+      internalID: -1370048569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_Top
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 114
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 5}
+        - {x: -19, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36552749734a8c54f8df06a7abbd2ddf
+      internalID: 394745929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_TopRight
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 114
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 5}
+        - {x: -19, y: 5}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c832115640cf084a8c5b3bff2b55ab8
+      internalID: 261943899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_Left
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 76
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14986a4bac4ca4a4da0d9f8eb2cb26d6
+      internalID: -442412587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_Fill
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 76
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7954d9cca7aa3f04690ef724dc95d2e1
+      internalID: 268954306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_Right
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 76
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e1b3ca0c3c2a2845a05525bd55e1b2d
+      internalID: -2128464659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_BottomLeft
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 38
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: 19}
+        - {x: -19, y: -18}
+        - {x: 19, y: -18}
+        - {x: 19, y: 19}
+        - {x: 19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 74fe5cfe52b34894bb8eb12576d6b84f
+      internalID: -838060002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_Bottom
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 38
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -18}
+        - {x: 19, y: -18}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65dddc6fd405a8447b3653ad8a7743d2
+      internalID: 687656552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_BottomRight
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 38
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -18}
+        - {x: 19, y: -18}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6212a08adb043ff4d8b1663233274ea1
+      internalID: 1039387585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_FillCross
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05361b0a6089aed4ca46c93e4127994f
+      internalID: 321668894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MachineCityEmeraldGirder_FillJoint
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 0
+        width: 38
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape:
+      - - {x: -19, y: -19}
+        - {x: 19, y: -19}
+        - {x: 19, y: 19}
+        - {x: -19, y: 19}
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17ac2eabe1455184ab7fd897f84273d4
+      internalID: -900412202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: d892537a403c8214c8840a8abeaf82cf
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MachineCityEmeraldGirder_Bottom: 687656552
+      MachineCityEmeraldGirder_BottomLeft: -838060002
+      MachineCityEmeraldGirder_BottomRight: 1039387585
+      MachineCityEmeraldGirder_Fill: 268954306
+      MachineCityEmeraldGirder_FillCross: 321668894
+      MachineCityEmeraldGirder_FillJoint: -900412202
+      MachineCityEmeraldGirder_Left: -442412587
+      MachineCityEmeraldGirder_Right: -2128464659
+      MachineCityEmeraldGirder_Top: 394745929
+      MachineCityEmeraldGirder_TopLeft: -1370048569
+      MachineCityEmeraldGirder_TopRight: 261943899
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,2 @@
+PASS 521 occupied cells preserved; exactly 110 target cells changed; matrices/colors/flags and CompositeCollider2D paths match baseline within 0.00001 world units.
+PASS: all terrain data identical after saved-scene round trip through Play Mode. Final compileFailed=False / dirty=False / Play=False / Pause=False / Time.timeScale=1. Final 3-minute Console Error=0, Exception=0.
