@@ -13,11 +13,14 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField, Min(0.01f)] private float groundDetectionDepth = 0.15f;
     [Header("Magnet Attack")]
     [SerializeField, Min(0f)] private float detectionRange = 5f;
-    [SerializeField, Min(0f)] private float attractionRadius = 6f;
-    [SerializeField, Min(0f), Tooltip("鉄球に加える加速度。質量の影響を受けません。")]
+    [SerializeField, Min(0f), Tooltip("Attraction Pointを中心とした吸引範囲。")]
+    private float attractionRadius = 6f;
+    [SerializeField, Min(0f), Tooltip("既存マグネットと同じ吸引力。0なら吸引しません。")]
     private float pullStrength = 15f;
-    [SerializeField, Min(0f), Tooltip("吸引方向に磁力が加速する上限。他の方向の速度は制限しません。")]
+    [SerializeField, Min(0f), Tooltip("ギミックのマグネットと同じ鉄球の最高速度。")]
     private float maxPullSpeed = 6f;
+    [SerializeField, Min(0f), Tooltip("この距離まで鉄球が近づくと、磁石と同じ方法で吸着します。")]
+    private float attachDistance = 0.8f;
     [SerializeField, Min(0f)] private float chargeDuration = 0.7f;
     [SerializeField, Min(0f)] private float attractionDuration = 1.5f;
     [SerializeField, Min(0f)] private float attackCooldown = 2f;
@@ -25,6 +28,8 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField] private Transform attractionPoint;
     [SerializeField] private Transform visualRoot;
     [SerializeField] private Animator visualAnimator;
+    [SerializeField] private SpriteRenderer visualRenderer;
+    [SerializeField] private Texture2D attackTexture;
     [SerializeField, Min(0.01f)] private float chargeAnimationLength = 0.4f;
 
     private readonly RaycastHit2D[] hits = new RaycastHit2D[24];
@@ -39,8 +44,13 @@ public sealed class Magutomushi : MonoBehaviour
     private float stateElapsed;
     private int direction;
     private Vector3 attractionOffset;
+    private MagnetPoint magnet;
+    private MaterialPropertyBlock colorProperties;
+    private Texture lastVisualTexture;
     private static readonly int Walk = Animator.StringToHash("Walk");
     private static readonly int Charge = Animator.StringToHash("Charge");
+    private static readonly int PaletteGain = Shader.PropertyToID("_PaletteGain");
+    private static readonly Vector4 AttackPaletteGain = new Vector4(1.28f, 1.50f, 1.75f, 1f);
 
     private void Awake()
     {
@@ -49,7 +59,13 @@ public sealed class Magutomushi : MonoBehaviour
         health = GetComponent<EnemyHealth>();
         terrainFilter = new ContactFilter2D { useTriggers = false };
         terrainFilter.SetLayerMask(terrainLayers);
-        if (attractionPoint != null) attractionOffset = attractionPoint.localPosition;
+        if (attractionPoint != null)
+        {
+            attractionOffset = attractionPoint.localPosition;
+            magnet = attractionPoint.GetComponent<MagnetPoint>();
+        }
+        if (visualRenderer == null && visualRoot != null) visualRenderer = visualRoot.GetComponent<SpriteRenderer>();
+        colorProperties = new MaterialPropertyBlock();
         health.HitConfirmed += OnHitConfirmed;
         FindPlayer();
     }
@@ -61,7 +77,12 @@ public sealed class Magutomushi : MonoBehaviour
         Face();
     }
 
-    private void OnDisable() { if (visualAnimator != null) visualAnimator.speed = 0f; }
+    private void OnDisable()
+    {
+        StopMagnet();
+        lastVisualTexture = null;
+        if (visualAnimator != null) visualAnimator.speed = 0f;
+    }
     private void OnDestroy() { if (health != null) health.HitConfirmed -= OnHitConfirmed; }
 
     private void FindPlayer()
@@ -121,6 +142,17 @@ public sealed class Magutomushi : MonoBehaviour
     private bool BallAvailable() => launcher != null && launcher.isActiveAndEnabled && launcher.BallBody != null
         && launcher.BallBody.gameObject.activeInHierarchy;
 
+    private void LateUpdate()
+    {
+        if (visualRenderer == null || visualRenderer.sprite == null) return;
+        Texture current = visualRenderer.sprite.texture;
+        if (current == lastVisualTexture) return;
+        lastVisualTexture = current;
+        visualRenderer.GetPropertyBlock(colorProperties);
+        colorProperties.SetVector(PaletteGain, current == attackTexture ? AttackPaletteGain : Vector4.one);
+        visualRenderer.SetPropertyBlock(colorProperties);
+    }
+
     private bool TargetInRange()
     {
         float rangeSquared = detectionRange * detectionRange;
@@ -131,25 +163,20 @@ public sealed class Magutomushi : MonoBehaviour
 
     private void PullBall()
     {
-        if (!BallAvailable() || attractionPoint == null) return;
-        var ball = launcher.BallBody;
-        var ballState = launcher.State;
-        // Never compete with scripted recall, charging, hook/swing, intro, or respawn ownership.
-        if (!ball.simulated || ball.bodyType != RigidbodyType2D.Dynamic
-            || (ballState != MorningStarLauncher.MorningStarState.Dragging
-                && ballState != MorningStarLauncher.MorningStarState.Dropping
-                && ballState != MorningStarLauncher.MorningStarState.Thrown)) return;
-        Vector2 delta = (Vector2)attractionPoint.position - ball.position;
-        float distance = delta.magnitude;
-        if (distance <= 0.001f || distance > attractionRadius) return;
-        Vector2 toward = delta / distance;
-        float along = Vector2.Dot(ball.linearVelocity, toward);
-        float acceleration = Mathf.Min(pullStrength, Mathf.Max(0f, (maxPullSpeed - along) / Time.fixedDeltaTime));
-        ball.AddForce(toward * (acceleration * ball.mass), ForceMode2D.Force);
+        if (BallAvailable() && magnet != null)
+            magnet.AttractControlledBall(launcher.BallBody, launcher, attractionRadius,
+                pullStrength, maxPullSpeed, attachDistance);
+    }
+
+    private void StopMagnet()
+    {
+        if (magnet != null)
+            magnet.StopControlledAttraction(launcher, launcher != null ? launcher.BallBody : null);
     }
 
     private void SetState(ActionState next)
     {
+        if (state == ActionState.Attract && next != ActionState.Attract) StopMagnet();
         state = next;
         stateElapsed = 0f;
         if (visualAnimator == null) return;

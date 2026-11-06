@@ -4,6 +4,7 @@ Shader "IronBallGirl/Magutomushi Pixel Sprite"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
+        [PerRendererData] _PaletteGain ("Palette Gain", Vector) = (1,1,1,1)
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [HideInInspector] _Flip ("Flip", Vector) = (1,1,1,1)
@@ -25,6 +26,7 @@ Shader "IronBallGirl/Magutomushi Pixel Sprite"
             #pragma multi_compile _ ETC1_EXTERNAL_ALPHA
             #include "UnitySprites.cginc"
             float4 _MainTex_TexelSize;
+            float4 _PaletteGain;
             fixed4 PixelFrag(v2f input) : SV_Target
             {
                 // The supplied art uses roughly four source pixels per game pixel.
@@ -32,7 +34,7 @@ Shader "IronBallGirl/Magutomushi Pixel Sprite"
                 float2 uv = (floor(input.texcoord * size / 4.0) * 4.0 + 2.0) / size;
                 fixed4 texel = SampleSpriteTexture(uv);
                 clip(texel.a - 0.5);
-                fixed4 result = fixed4(texel.rgb * input.color.rgb, input.color.a);
+                fixed4 result = fixed4(texel.rgb * input.color.rgb * _PaletteGain.rgb, input.color.a);
                 result.rgb *= result.a;
                 return result;
             }

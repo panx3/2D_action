@@ -157,6 +157,53 @@ public class MagnetPoint : MonoBehaviour
 
     private void Attract(Rigidbody2D rb)
     {
+        Attract(rb, attractionForce, maxAttractSpeed, snapDistance);
+    }
+
+    // 敵専用のMagnetPointから呼ぶ。既存ギミックのTrigger処理は変更しない。
+    public void AttractControlledBall(Rigidbody2D rb, MorningStarLauncher launcher,
+        float radius, float force, float maxSpeed, float attachDistance)
+    {
+        if (rb == null || launcher == null || rb != launcher.BallBody) return;
+        morningStarLauncher = launcher;
+
+        if (attachedBodies.Contains(rb))
+        {
+            if (launcher.IsAttachedToMagnet(this, rb)) return;
+            attachedBodies.Remove(rb);
+            suppressedUntilExitBodies.Add(rb);
+        }
+
+        if (Vector2.Distance(transform.position, rb.position) > Mathf.Max(0f, radius))
+        {
+            suppressedUntilExitBodies.Remove(rb);
+            escapeThrowGrantedBodies.Remove(rb);
+            return;
+        }
+        if (suppressedUntilExitBodies.Contains(rb) || !rb.simulated || rb.bodyType != RigidbodyType2D.Dynamic)
+            return;
+        if (force <= 0f || radius <= 0f) return;
+
+        var state = launcher.State;
+        if (state != MorningStarLauncher.MorningStarState.Dragging
+            && state != MorningStarLauncher.MorningStarState.Dropping
+            && state != MorningStarLauncher.MorningStarState.Thrown) return;
+
+        Attract(rb, Mathf.Max(0f, force), Mathf.Max(0f, maxSpeed), Mathf.Max(0f, attachDistance));
+    }
+
+    public void StopControlledAttraction(MorningStarLauncher launcher, Rigidbody2D rb)
+    {
+        // 別の磁石・壁に移った鉄球は解除しない。
+        if (launcher != null && rb != null && launcher.IsAttachedToMagnet(this, rb))
+            launcher.TryReleaseMagnetForJump();
+        attachedBodies.Clear();
+        suppressedUntilExitBodies.Clear();
+        escapeThrowGrantedBodies.Clear();
+    }
+
+    private void Attract(Rigidbody2D rb, float force, float maxSpeed, float attachDistance)
+    {
         Vector2 magnetPosition = transform.position;
         Vector2 targetPosition = rb.position;
         Vector2 direction = magnetPosition - targetPosition;
@@ -172,11 +219,11 @@ public class MagnetPoint : MonoBehaviour
 
         Vector2 forceDirection = direction.normalized;
 
-        if (slowNearCenter && distance <= snapDistance)
+        if (slowNearCenter && distance <= attachDistance)
         {
             rb.linearVelocity *= 0.85f;
             rb.AddForce(
-                forceDirection * attractionForce * 0.3f,
+                forceDirection * force * 0.3f,
                 ForceMode2D.Force
             );
 
@@ -188,14 +235,14 @@ public class MagnetPoint : MonoBehaviour
         else
         {
             rb.AddForce(
-                forceDirection * attractionForce * rb.mass,
+                forceDirection * force * rb.mass,
                 ForceMode2D.Force
             );
         }
 
         rb.linearVelocity = Vector2.ClampMagnitude(
             rb.linearVelocity,
-            maxAttractSpeed
+            maxSpeed
         );
     }
 
