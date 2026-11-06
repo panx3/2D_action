@@ -1,0 +1,124 @@
+2026-11-06 — Unity 6000.4.2f1 / Stage2
+
+Dynamic Editor probes only; no production test runner or temporary fixture saved into the Scene.
+Player/ball were held in deterministic runtime positions and enemy AI/colliders temporarily disabled for conduction checks. These fixtures were destroyed when leaving Play Mode.
+
+The initial death/respawn clock assertion was corrected after tracing DeathRespawnManager: its dissolve uses scaled time, and only the later Game Over menu owns timeScale0. A focused real fall-respawn probe reproduced the stalled-clock failure before the fix. ElectricStunEnded now returns the gate's controls synchronously before respawn takes them; both fall recovery and death-to-Game-Over were then tested.
+
+Not performed: full stage playthrough, full build, physical controller feel, subjective audio/visual acceptance, full CompletScene playthrough. Shared legacy door was tested from its original prefab and CompletScene's asset hash was preserved.
+
+Integration probe:
+PASS Grand gate starts closed
+PASS Closed barrier blocks a crossing ray
+Started real conduction / cinematic / lifecycle checks
+PASS Short contact has not activated the gate
+Phase 1
+PASS Interrupted conduction clears charge and electric stun
+Phase 2
+PASS Power acquires exactly one camera/door owner and freezes game time
+Phase 3
+PASS Camera focus holds the locked slabs still
+PASS Unlocking retains the passage collider
+PASS Moving slabs still block passage
+PASS Drive audio runs throughout slab movement
+PASS Steam effect is attached to the grand gate
+PASS Collider is disabled only after complete opening
+PASS Drive audio stops exactly at full opening
+PASS Full opening restores game time, input constraints and camera ownership once
+PASS Original camera lens restored
+PASS Camera returns smoothly to its original framing
+PASS Pause block restored
+PASS Gameplay timer resumed
+PASS All presentation stages observed
+Phase 4
+PASS Latched gate stays open after conduction ends and ignores Close
+PASS Shared legacy door remains in its original mode
+PASS Legacy opening still completes in 0.5 seconds
+PASS Legacy door will not close on Player
+PASS Legacy door will not close on Morning Star
+PASS Legacy door closes once both actors clear the passage
+Phase 5
+PASS Disabling the reveal releases camera, clock, player and door control
+PASS Disable path restores Pause
+Phase 6
+PASS Committed opening continues normally after presentation cancellation
+PASS Foreign camera owner acquired for fallback check
+Phase 7
+PASS Gate opens and releases stun without a camera reveal
+Phase 8
+PASS Death interruption invoked through PlayerHealth
+PASS Death releases all reveal-owned control
+PASS Death dissolve receives running game time
+PASS Death path does not leak external Pause block
+Phase 9
+PASS Game Over menu owns the stopped clock after death dissolve
+PASS Game Over retains no gate presentation owner
+PASS All integration checks passed
+
+Real fall respawn:
+PASS Grand gate starts closed
+PASS Closed barrier blocks a crossing ray
+Started real conduction / cinematic / lifecycle checks
+PASS Real fall respawn interrupts the reveal
+Phase 1
+PASS Respawn releases gate and camera ownership
+PASS Respawn receives running game time
+Phase 2
+PASS Real fall respawn completes without leaked control
+PASS Respawn restores the normal player sprite
+PASS Respawn returns to the normal camera lens
+PASS Respawn lifecycle passed
+
+Asset and save checks:
+PASS Edit Mode; no project compilation failure
+PASS Stage2 remains active
+PASS No missing scene scripts
+PASS Gate base/scale preserved
+PASS Closed collider size6x12 offset0,6
+PASS No decorative frame colliders block the open passage
+PASS Scene gate keeps receiver reference and persistent opt-in
+PASS Travel3.25 over1.8s
+PASS Sequence references grand gate and main camera
+PASS Three charge lamps and two steam vents configured
+PASS Display references existing receiver
+PASS Storage mask assigned
+PASS Only obstructing crab moved toX16
+PASS Existing0.8s charge retained
+PASS Stage2 prefab is a true variant
+PASS No missing prefab scripts
+PASS Native texture settings GrandGateAperture.png
+PASS 32PPU GrandGateAperture.png
+PASS Native texture settings GrandGateBoltLeft.png
+PASS 32PPU GrandGateBoltLeft.png
+PASS Native texture settings GrandGateBoltLeft_Power.png
+PASS Native texture settings GrandGateBoltRight.png
+PASS 32PPU GrandGateBoltRight.png
+PASS Native texture settings GrandGateBoltRight_Power.png
+PASS Native texture settings GrandGateChargePlate.png
+PASS 32PPU GrandGateChargePlate.png
+PASS Native texture settings GrandGateChargePlate_Power.png
+PASS Native texture settings GrandGateFrame.png
+PASS 32PPU GrandGateFrame.png
+PASS Native texture settings GrandGateFrame_Power.png
+PASS Native texture settings GrandGateLeafLeft.png
+PASS 32PPU GrandGateLeafLeft.png
+PASS Native texture settings GrandGateLeafLeft_Power.png
+PASS Native texture settings GrandGateLeafRight.png
+PASS 32PPU GrandGateLeafRight.png
+PASS Native texture settings GrandGateLeafRight_Power.png
+PASS Native texture settings GrandGatePixel.png
+PASS 32PPU GrandGatePixel.png
+PASS Native texture settings GrandGateRotor.png
+PASS 32PPU GrandGateRotor.png
+PASS Native texture settings GrandGateRotor_Power.png
+PASS All gate texture imports inspected
+PASS Power shader supported without compiler errors
+PASS Stage2 saved after final prefab propagation
+PASS Stage2 is clean
+
+Preserved unrelated assets:
+CompletScene.unity: baseline SHA256 preserved=True
+ElectricDoor.prefab: baseline SHA256 preserved=True
+ElectricReceiverCable.prefab: baseline SHA256 preserved=True
+StageSelectJapanese.asset: baseline SHA256 preserved=True
+Final Console check: no Error or Exception entries in the recent 5-minute window covering the successful final integration run and asset verification. EditorUtility.scriptCompilationFailed=False. Play Mode exited; timeScale=1; Stage2 saved and not dirty.

@@ -7,6 +7,7 @@ public partial class Player
     private RigidbodyConstraints2D constraintsBeforeElectricStun;
 
     public bool IsElectricStunned => electricStunActive;
+    public event System.Action ElectricStunEnded;
 
     /// <summary>感電中のPlayer物理はPlayer自身が所有する。他の入力ロックは変更しない。</summary>
     public bool TryBeginElectricStun(Object owner)
@@ -43,6 +44,7 @@ public partial class Player
         }
         ClearElectricStunInput();
         if (_morningStarLauncher != null) _morningStarLauncher.ClearElectricStunInput();
+        ElectricStunEnded?.Invoke();
     }
 
     private void ClearElectricStunInput()

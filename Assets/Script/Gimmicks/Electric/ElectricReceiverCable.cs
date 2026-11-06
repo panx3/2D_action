@@ -34,6 +34,7 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     public event System.Action PowerEnded;
     public bool IsConducting => conducting;
     public bool IsPowered => powered;
+    public float ChargeProgress => powered ? 1f : activationDelay <= 0f ? (conducting ? 1f : 0f) : Mathf.Clamp01(heldTime / activationDelay);
     public MorningStarLauncher Launcher => launcher;
     public Vector2 TipWorld => transform.TransformPoint(tip);
 

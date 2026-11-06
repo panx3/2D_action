@@ -15,15 +15,29 @@ public sealed class ElectricDoor : MonoBehaviour
     [SerializeField] private AudioClip openSound;
     [SerializeField] private AudioClip closeSound;
     [SerializeField, Min(0f)] private float activationEffectIntensity = 1f;
+    [Header("Grand gate (opt-in)")]
+    [SerializeField] private bool heavyOpening;
+    [SerializeField, Min(0f)] private float unlockDuration = 0.55f;
+    private Object presentationOwner;
+    private float unlockElapsed;
+    private bool driveStarted;
+    private GrandElectricDoorVisuals grandVisuals;
     private Vector3 leftClosed, rightClosed;
     private bool requestedOpen, openedOnce, subscribed;
     private float progress, effectRemaining;
     private ElectricArcEffect activationArc, activationArcRight;
     public bool IsFullyOpen => progress >= 0.9999f;
+    public bool IsGrandGate => heavyOpening;
+    public bool IsPresentationControlled => presentationOwner != null;
+    public float OpeningProgress => progress;
+    public float UnlockProgress => !heavyOpening || unlockDuration <= 0f ? (requestedOpen ? 1f : 0f) : Mathf.Clamp01(unlockElapsed / unlockDuration);
+    public float ChargeProgress => receiver != null ? receiver.ChargeProgress : openedOnce ? 1f : 0f;
+    public Bounds RevealBounds => grandVisuals != null ? grandVisuals.ArtworkBounds : passageCollider != null ? passageCollider.bounds : new Bounds(transform.position, Vector3.one);
     public event System.Action FullyOpened;
 
     private void Awake()
     {
+        grandVisuals = GetComponent<GrandElectricDoorVisuals>();
         if (leftPanel != null) leftClosed = leftPanel.localPosition;
         if (rightPanel != null) rightClosed = rightPanel.localPosition;
         activationArc = gameObject.AddComponent<ElectricArcEffect>();
@@ -37,6 +51,9 @@ public sealed class ElectricDoor : MonoBehaviour
     }
     private void OnDisable()
     {
+        presentationOwner = null;
+        if (heavyOpening && audioSource != null) audioSource.Stop();
+        if (!IsFullyOpen) driveStarted = false;
         if (receiver != null && subscribed) { receiver.PowerStarted -= Open; receiver.PowerEnded -= Close; }
         subscribed = false;
         if (activationArc != null) activationArc.Hide();
@@ -46,7 +63,7 @@ public sealed class ElectricDoor : MonoBehaviour
     {
         if (requestedOpen) return;
         requestedOpen = true; openedOnce = true; effectRemaining = 0.35f;
-        if (audioSource != null && openSound != null) audioSource.PlayOneShot(openSound);
+        if (!heavyOpening && audioSource != null && openSound != null) audioSource.PlayOneShot(openSound);
     }
     public void Close()
     {
@@ -56,19 +73,63 @@ public sealed class ElectricDoor : MonoBehaviour
     }
     private void Update()
     {
+        if (presentationOwner != null) return;
+        Advance(Time.deltaTime);
+    }
+    public bool BeginPresentation(Object owner)
+    {
+        if (!heavyOpening || owner == null || !isActiveAndEnabled || IsFullyOpen
+            || (presentationOwner != null && presentationOwner != owner)) return false;
+        presentationOwner = owner;
+        return true;
+    }
+    public void AdvancePresentation(Object owner, float deltaTime)
+    {
+        if (owner != null && presentationOwner == owner && isActiveAndEnabled)
+            Advance(Mathf.Max(0f, deltaTime));
+    }
+    public void EndPresentation(Object owner)
+    {
+        if (presentationOwner == owner) presentationOwner = null;
+    }
+    private void Advance(float deltaTime)
+    {
         if (leftPanel == null || rightPanel == null || passageCollider == null) return;
         bool wasFullyOpen = IsFullyOpen;
         bool occupied = !requestedOpen && (progress > 0.0001f || !passageCollider.enabled) && PassageOccupied();
         float target = requestedOpen || occupied ? 1f : 0f;
-        progress = Mathf.MoveTowards(progress, target, speed * Time.deltaTime / Mathf.Max(0.01f, openDistance));
+        float step = Mathf.Max(0f, deltaTime);
+        if (heavyOpening && target > progress && unlockElapsed < unlockDuration)
+        {
+            float spent = Mathf.Min(step, unlockDuration - unlockElapsed);
+            unlockElapsed += spent;
+            step -= spent;
+        }
+        if (heavyOpening && target > progress && step > 0f && !driveStarted)
+        {
+            driveStarted = true;
+            if (audioSource != null && openSound != null)
+            {
+                audioSource.clip = openSound;
+                audioSource.loop = true;
+                audioSource.Play();
+            }
+        }
+        progress = Mathf.MoveTowards(progress, target, speed * step / Mathf.Max(0.01f, openDistance));
         Vector2 direction = openDirection.sqrMagnitude > 0.0001f ? openDirection.normalized : Vector2.right;
-        float eased = progress * progress * (3f - 2f * progress);
+        float eased = heavyOpening ? progress * progress * progress * (progress * (progress * 6f - 15f) + 10f)
+            : progress * progress * (3f - 2f * progress);
         leftPanel.localPosition = leftClosed - (Vector3)(direction * (openDistance * eased));
         rightPanel.localPosition = rightClosed + (Vector3)(direction * (openDistance * eased));
         // Do not enable a collider while either actor overlaps the passage, including during reversal.
         passageCollider.enabled = progress < 0.9999f && (passageCollider.enabled || (progress <= 0f && !occupied));
-        effectRemaining = Mathf.Max(0f, effectRemaining - Time.deltaTime);
-        if (!wasFullyOpen && IsFullyOpen) FullyOpened?.Invoke();
+        effectRemaining = Mathf.Max(0f, effectRemaining - deltaTime);
+        if (!wasFullyOpen && IsFullyOpen)
+        {
+            if (heavyOpening && audioSource != null) audioSource.Stop();
+            if (grandVisuals != null) grandVisuals.PlayStopImpact();
+            FullyOpened?.Invoke();
+        }
     }
     private bool PassageOccupied()
     {

@@ -733,6 +733,25 @@ public class CameraFollow : MonoBehaviour
 
     public bool IsEventControlledBy(Object owner) => _eventControlled && _eventOwner == owner;
 
+    /// <summary>イベント所有者だけが位置とレンズを一緒に更新する。通常追従の設定は変更しない。</summary>
+    public bool SetEventFraming(Object owner, Vector3 position, float orthographicSize)
+    {
+        if (!isActiveAndEnabled || !IsEventControlledBy(owner) || _camera == null
+            || !float.IsFinite(orthographicSize) || orthographicSize <= 0f) return false;
+        if (_pixelPerfect != null && _pixelPerfect.isActiveAndEnabled)
+        {
+            if (_pixelPerfect.upscaleRT)
+            {
+                _restoreUpscaleRT = true;
+                _pixelPerfect.upscaleRT = false;
+            }
+            _pixelPerfect.CorrectCinemachineOrthoSize(orthographicSize);
+        }
+        _currentOrthographicSize = orthographicSize;
+        _camera.orthographicSize = orthographicSize;
+        return SetEventPosition(owner, position);
+    }
+
     /// <summary>演出所有者だけがカメラ位置を更新する。通常の物理時間に依存しない。</summary>
     public bool SetEventPosition(Object owner, Vector3 position)
     {
