@@ -25,6 +25,8 @@ public sealed class Magutomushi : MonoBehaviour
     private float dragEscapeDistance = 1.5f;
     [SerializeField, Min(0.01f), Tooltip("外れる距離の倍率。Drag Escape Distanceに掛けて調整します。")]
     private float dragEscapeDistanceMultiplier = 0.67f;
+    [SerializeField, Min(0f), Tooltip("脱出距離で離れる方向に入力し続ける時間。")]
+    private float escapeHoldDuration = 1f;
     [SerializeField, HideInInspector] // 旧Prefabの値を保持。
     private float magnetWeightMultiplier = 100f;
     [SerializeField, Min(0f), Tooltip("吸着後にプレイヤーを引き寄せる目標速度。")]
@@ -68,6 +70,7 @@ public sealed class Magutomushi : MonoBehaviour
     private Material magnetEffectMaterial;
     private float nextMagnetEffectTime;
     private bool ballCaptured;
+    private float escapeHoldElapsed;
     private RigidbodyConstraints2D constraintsBeforeAttraction;
     private bool attractionPositionLocked;
     private static readonly int Walk = Animator.StringToHash("Walk");
@@ -159,7 +162,7 @@ public sealed class Magutomushi : MonoBehaviour
                 break;
             case ActionState.Attract:
                 if (!TargetAvailable) SetState(ActionState.Cooldown);
-                else if ((ballCaptured && HasPulledChainFarEnough())
+                else if ((ballCaptured && HasHeldEscapePullLongEnough())
                     || (!ballCaptured && magnet != null && Vector2.Distance(player.position, magnet.ControlledPosition)
                     > Mathf.Min(Mathf.Max(0.1f, escapeDistance), Mathf.Max(0f, attractionRadius))))
                 {
@@ -191,6 +194,17 @@ public sealed class Magutomushi : MonoBehaviour
             >= launcher.BaseMaxRopeLength + EscapeStretchDistance - 0.02f;
     }
 
+    private bool HasHeldEscapePullLongEnough()
+    {
+        if (!HasPulledChainFarEnough())
+        {
+            escapeHoldElapsed = 0f;
+            return false;
+        }
+        escapeHoldElapsed += Time.fixedDeltaTime;
+        return escapeHoldElapsed + 0.0001f >= Mathf.Max(0f, escapeHoldDuration);
+    }
+
     private void LateUpdate()
     {
         if (visualRenderer == null || visualRenderer.sprite == null) return;
@@ -220,12 +234,16 @@ public sealed class Magutomushi : MonoBehaviour
             if (!ballCaptured && launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
             {
                 ballCaptured = true;
+                escapeHoldElapsed = 0f;
                 var sparks = launcher.BallBody.GetComponent<MorningStarImpactSparks>();
                 if (sparks != null) sparks.PlayMagnetRelease(launcher.BallBody.position,
                     incoming.sqrMagnitude > 0.0001f ? incoming : Vector2.up);
             }
             else if (ballCaptured && !launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
+            {
                 ballCaptured = false;
+                escapeHoldElapsed = 0f;
+            }
         }
         else
             StopMagnet();
@@ -234,6 +252,7 @@ public sealed class Magutomushi : MonoBehaviour
     private void StopMagnet()
     {
         ballCaptured = false;
+        escapeHoldElapsed = 0f;
         if (magnet != null)
             magnet.StopControlledAttraction(launcher, launcher != null ? launcher.BallBody : null);
     }
