@@ -317,6 +317,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 _hookPoint;
     private bool _isHooked;
     private MagnetPoint _attachedMagnet;
+    private float _enemyMagnetRopeLength;
     private float _rehookLockoutTimer;
     private float _fireBufferTimer;
     private Vector2 _bufferedAimDirection;
@@ -672,6 +673,8 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         BeginHook(anchorPosition);
         _attachedMagnet = magnet;
+        if (_enemyMagnetPulls.Contains(magnet))
+            _enemyMagnetRopeLength = Mathf.Min(GetEffectiveRopeLength(), Vector2.Distance(GetHandWorld(), anchorPosition));
         BeginSwinging();
         GrantMagnetEscapeThrow();
         if (_isHooked && _state == MorningStarState.Swinging)
@@ -2610,6 +2613,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Hooked || !_isHooked)
             return;
 
+        UpdateEnemyMagnetAnchor(dt);
         UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
@@ -2626,6 +2630,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Swinging || !_isHooked)
             return;
 
+        UpdateEnemyMagnetAnchor(dt);
         UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
@@ -2638,6 +2643,15 @@ public partial class MorningStarLauncher : MonoBehaviour
         morningStarRb.position = _hookPoint;
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
+    }
+
+    private void UpdateEnemyMagnetAnchor(float dt)
+    {
+        if (_attachedMagnet == null || !_enemyMagnetPulls.Contains(_attachedMagnet)) return;
+        _hookPoint = _attachedMagnet.transform.position;
+        var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
+        if (enemy != null)
+            _enemyMagnetRopeLength = Mathf.MoveTowards(_enemyMagnetRopeLength, 0.1f, enemy.RopePullSpeed * dt);
     }
 
     private void ApplySwingPullToPlayer()
@@ -2658,6 +2672,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         if (_attachedMagnet != null)
         {
+            if (_enemyMagnetPulls.Contains(_attachedMagnet)) return;
             // 最大距離とRadial方向の解決はDistanceJoint2Dへ任せる。
             // ここでは鎖が張った時だけ、入力を接線方向へ変換して補助する。
             if (!ropeIsTaut)
@@ -3178,12 +3193,17 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
 
-        // 敵の磁石だけ、Playerが吸引範囲の外まで歩ける余地を確保する。
+        // 敵の磁石では鎖を敵本体につなぎ、両者へ物理的な反作用を伝える。
         if (_attachedMagnet != null && _enemyMagnetPulls.Contains(_attachedMagnet))
         {
+            Rigidbody2D magnetBody = _attachedMagnet.GetComponentInParent<Rigidbody2D>();
+            if (magnetBody != null)
+            {
+                hookRopeJoint.connectedBody = magnetBody;
+                hookRopeJoint.connectedAnchor = magnetBody.transform.InverseTransformPoint(_attachedMagnet.transform.position);
+            }
             hookRopeJoint.maxDistanceOnly = true;
-            float anchorOffset = Vector2.Distance(anchorWorld, _playerRb.position);
-            hookRopeJoint.distance = Mathf.Max(GetEffectiveRopeLength(), _attachedMagnet.ControlledEscapeRadius + anchorOffset + 0.5f);
+            hookRopeJoint.distance = Mathf.Max(0.1f, _enemyMagnetRopeLength);
             return;
         }
 
