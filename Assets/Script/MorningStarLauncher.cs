@@ -317,7 +317,6 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 _hookPoint;
     private bool _isHooked;
     private MagnetPoint _attachedMagnet;
-    private float _enemyMagnetRopeLength;
     private float _rehookLockoutTimer;
     private float _fireBufferTimer;
     private Vector2 _bufferedAimDirection;
@@ -673,8 +672,6 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         BeginHook(anchorPosition);
         _attachedMagnet = magnet;
-        if (_enemyMagnetPulls.Contains(magnet))
-            _enemyMagnetRopeLength = Mathf.Min(GetEffectiveRopeLength(), Vector2.Distance(GetHandWorld(), anchorPosition));
         BeginSwinging();
         GrantMagnetEscapeThrow();
         if (_isHooked && _state == MorningStarState.Swinging)
@@ -2613,7 +2610,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Hooked || !_isHooked)
             return;
 
-        UpdateEnemyMagnetAnchor(dt);
+        UpdateEnemyMagnetAnchor();
         UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
@@ -2630,7 +2627,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Swinging || !_isHooked)
             return;
 
-        UpdateEnemyMagnetAnchor(dt);
+        UpdateEnemyMagnetAnchor();
         UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
@@ -2645,13 +2642,18 @@ public partial class MorningStarLauncher : MonoBehaviour
         morningStarRb.angularVelocity = 0f;
     }
 
-    private void UpdateEnemyMagnetAnchor(float dt)
+    private void UpdateEnemyMagnetAnchor()
     {
         if (_attachedMagnet == null || !_enemyMagnetPulls.Contains(_attachedMagnet)) return;
         _hookPoint = _attachedMagnet.transform.position;
         var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
-        if (enemy != null)
-            _enemyMagnetRopeLength = Mathf.MoveTowards(_enemyMagnetRopeLength, 0.1f, enemy.RopePullSpeed * dt);
+        if (enemy == null || _playerRb == null) return;
+        Vector2 toMagnet = _hookPoint - GetHandWorld();
+        if (toMagnet.sqrMagnitude < 0.0001f) return;
+        Vector2 direction = toMagnet.normalized;
+        float speedTowardMagnet = Vector2.Dot(_playerRb.linearVelocity, direction);
+        float pull = Mathf.Max(0f, enemy.RopePullSpeed - speedTowardMagnet);
+        _playerRb.AddForce(direction * (pull * _playerRb.mass), ForceMode2D.Force);
     }
 
     private void ApplySwingPullToPlayer()
@@ -3203,7 +3205,7 @@ public partial class MorningStarLauncher : MonoBehaviour
                 hookRopeJoint.connectedAnchor = magnetBody.transform.InverseTransformPoint(_attachedMagnet.transform.position);
             }
             hookRopeJoint.maxDistanceOnly = true;
-            hookRopeJoint.distance = Mathf.Max(0.1f, _enemyMagnetRopeLength);
+            hookRopeJoint.distance = GetEffectiveRopeLength();
             return;
         }
 

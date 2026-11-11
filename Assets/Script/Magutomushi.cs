@@ -23,7 +23,7 @@ public sealed class Magutomushi : MonoBehaviour
     private float pullStrengthMultiplier = 1.5f;
     [SerializeField, Min(0.1f), Tooltip("鉄球の吸着後、マグトムシが引きずられると吸着が外れる距離。")]
     private float dragEscapeDistance = 1.5f;
-    [SerializeField, Min(0f), Tooltip("吸着後に鎖が引き寄せられる速度。")]
+    [SerializeField, Min(0f), Tooltip("吸着後にプレイヤーを引き寄せる目標速度。")]
     private float ropePullSpeed = 1.5f;
     public float RopePullSpeed => Mathf.Max(0f, ropePullSpeed);
     [SerializeField, Min(0f), Tooltip("ギミックのマグネットと同じ鉄球の最高速度。")]
