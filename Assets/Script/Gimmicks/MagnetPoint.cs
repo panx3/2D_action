@@ -8,6 +8,17 @@ using UnityEngine;
 public class MagnetPoint : MonoBehaviour
 {
     public float ControlledEscapeRadius { get; private set; }
+    // Rigidbody2Dの物理位置を基準にし、補間中のTransformの古い位置を使わない。
+    public Vector2 ControlledPosition
+    {
+        get
+        {
+            var body = GetComponentInParent<Rigidbody2D>();
+            return body != null
+                ? body.position + (Vector2)(transform.position - body.transform.position)
+                : (Vector2)transform.position;
+        }
+    }
     [Header("References")]
     [SerializeField] private MorningStarLauncher morningStarLauncher;
 
@@ -158,7 +169,7 @@ public class MagnetPoint : MonoBehaviour
 
     private void Attract(Rigidbody2D rb)
     {
-        Attract(rb, attractionForce, maxAttractSpeed, snapDistance);
+        Attract(rb, attractionForce, maxAttractSpeed, snapDistance, transform.position);
     }
 
     // 敵専用のMagnetPointから呼ぶ。既存ギミックのTrigger処理は変更しない。
@@ -180,7 +191,8 @@ public class MagnetPoint : MonoBehaviour
             suppressedUntilExitBodies.Add(rb);
         }
 
-        if (Vector2.Distance(transform.position, rb.position) > Mathf.Max(0f, radius))
+        Vector2 magnetPosition = ControlledPosition;
+        if (Vector2.Distance(magnetPosition, rb.position) > Mathf.Max(0f, radius))
         {
             launcher.SetEnemyMagnetPull(this, false);
             suppressedUntilExitBodies.Remove(rb);
@@ -198,7 +210,7 @@ public class MagnetPoint : MonoBehaviour
         }
 
         if (!launcher.SetEnemyMagnetPull(this, true)) return;
-        Attract(rb, Mathf.Max(0f, force), Mathf.Max(0f, maxSpeed), Mathf.Max(0f, attachDistance));
+        Attract(rb, Mathf.Max(0f, force), Mathf.Max(0f, maxSpeed), Mathf.Max(0f, attachDistance), magnetPosition);
     }
 
     public void StopControlledAttraction(MorningStarLauncher launcher, Rigidbody2D rb)
@@ -215,9 +227,8 @@ public class MagnetPoint : MonoBehaviour
         ControlledEscapeRadius = 0f;
     }
 
-    private void Attract(Rigidbody2D rb, float force, float maxSpeed, float attachDistance)
+    private void Attract(Rigidbody2D rb, float force, float maxSpeed, float attachDistance, Vector2 magnetPosition)
     {
-        Vector2 magnetPosition = transform.position;
         Vector2 targetPosition = rb.position;
         Vector2 direction = magnetPosition - targetPosition;
 
@@ -226,7 +237,7 @@ public class MagnetPoint : MonoBehaviour
         if (distance <= 0.01f)
         {
             TryGrantMagnetEscapeThrow(rb);
-            TryAttach(rb);
+            TryAttach(rb, magnetPosition);
             return;
         }
 
@@ -243,7 +254,7 @@ public class MagnetPoint : MonoBehaviour
             // 鉄球が磁石につかまった時だけ、
             // 脱出用の空中射出を1回回復する
             TryGrantMagnetEscapeThrow(rb);
-            TryAttach(rb);
+            TryAttach(rb, magnetPosition);
         }
         else
         {
@@ -259,16 +270,16 @@ public class MagnetPoint : MonoBehaviour
         );
     }
 
-    private void TryAttach(Rigidbody2D rb)
+    private void TryAttach(Rigidbody2D rb, Vector2 magnetPosition)
     {
         if (morningStarLauncher == null || attachedBodies.Contains(rb))
             return;
 
-        if (!morningStarLauncher.TryAttachToMagnet(this, rb, transform.position))
+        if (!morningStarLauncher.TryAttachToMagnet(this, rb, magnetPosition))
             return;
 
         attachedBodies.Add(rb);
-        rb.position = transform.position;
+        rb.position = magnetPosition;
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
         Debug.Log("MagnetPoint Attach");

@@ -2645,7 +2645,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private void UpdateEnemyMagnetAnchor()
     {
         if (_attachedMagnet == null || !_enemyMagnetPulls.Contains(_attachedMagnet)) return;
-        _hookPoint = _attachedMagnet.transform.position;
+        _hookPoint = _attachedMagnet.ControlledPosition;
         var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
         if (enemy == null || _playerRb == null) return;
         Vector2 toMagnet = _hookPoint - GetHandWorld();

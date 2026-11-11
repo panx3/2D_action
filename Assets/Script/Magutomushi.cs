@@ -23,6 +23,8 @@ public sealed class Magutomushi : MonoBehaviour
     private float pullStrengthMultiplier = 1.5f;
     [SerializeField, Min(0.1f), Tooltip("鉄球の吸着後、マグトムシが引きずられると吸着が外れる距離。")]
     private float dragEscapeDistance = 1.5f;
+    [SerializeField, Min(0.01f), Tooltip("外れる距離の倍率。Drag Escape Distanceに掛けて調整します。")]
+    private float dragEscapeDistanceMultiplier = 0.67f;
     [SerializeField, Min(1f), Tooltip("鉄球を吸着している間の重さの倍率。1なら通常の重さ。")]
     private float magnetWeightMultiplier = 100f;
     [SerializeField, Min(0f), Tooltip("吸着後にプレイヤーを引き寄せる目標速度。")]
@@ -157,7 +159,7 @@ public sealed class Magutomushi : MonoBehaviour
             case ActionState.Attract:
                 if (!TargetAvailable) SetState(ActionState.Cooldown);
                 else if ((ballCaptured && HasDraggedEnemyFarEnough())
-                    || (!ballCaptured && attractionPoint != null && Vector2.Distance(player.position, attractionPoint.position)
+                    || (!ballCaptured && magnet != null && Vector2.Distance(player.position, magnet.ControlledPosition)
                     > Mathf.Min(Mathf.Max(0.1f, escapeDistance), Mathf.Max(0f, attractionRadius))))
                 {
                     if (launcher != null && magnet != null)
@@ -188,7 +190,8 @@ public sealed class Magutomushi : MonoBehaviour
             captureBodyPosition = body.position;
             return false;
         }
-        return (body.position.x - captureBodyPosition.x) * away >= Mathf.Max(0.1f, dragEscapeDistance);
+        return (body.position.x - captureBodyPosition.x) * away
+            >= Mathf.Max(0.1f, dragEscapeDistance * dragEscapeDistanceMultiplier);
     }
 
     private void LateUpdate()
@@ -214,7 +217,7 @@ public sealed class Magutomushi : MonoBehaviour
     {
         if (BallAvailable() && magnet != null)
         {
-            Vector2 incoming = (Vector2)attractionPoint.position - launcher.BallBody.position;
+            Vector2 incoming = magnet.ControlledPosition - launcher.BallBody.position;
             magnet.AttractControlledBall(launcher.BallBody, launcher, attractionRadius,
                 pullStrength * pullStrengthMultiplier, maxPullSpeed, attachDistance);
             if (!ballCaptured && launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
@@ -282,11 +285,11 @@ public sealed class Magutomushi : MonoBehaviour
         if (magnetEffect == null || magnet == null || !BallAvailable()
             || !launcher.IsEnemyMagnetPullingFrom(magnet) || Time.time < nextMagnetEffectTime) return;
         Vector2 start = launcher.BallBody.position;
-        Vector2 delta = (Vector2)attractionPoint.position - start;
+        Vector2 delta = magnet.ControlledPosition - start;
         if (delta.sqrMagnitude < 0.01f) return;
         var particle = new ParticleSystem.EmitParams
         {
-            position = Vector2.Lerp(start, attractionPoint.position, 0.35f),
+            position = Vector2.Lerp(start, magnet.ControlledPosition, 0.35f),
             velocity = delta.normalized * 2f
         };
         magnetEffect.Emit(particle, 1);
