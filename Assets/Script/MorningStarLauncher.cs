@@ -371,6 +371,7 @@ public partial class MorningStarLauncher : MonoBehaviour
                 _isFireHolding = _shoulderChargeInput = _hookClickHolding = false;
                 _fireHoldTime = -1f;
                 electricInputNeedsNeutral = true;
+                if (player != null) player.ClearAimFacing();
             }
         }
         else if (!_enemyMagnetPulls.Remove(source)) return false;
@@ -2007,7 +2008,13 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (direction.sqrMagnitude < 0.0001f || reboundSpeed <= 0f) return false;
         morningStarRb.AddForce(direction.normalized * (morningStarRb.mass * reboundSpeed), ForceMode2D.Impulse);
         var sparks = morningStarRb.GetComponent<MorningStarImpactSparks>();
-        if (sparks != null) sparks.PlayPressImpact(morningStarRb.position, 8);
+        if (sparks != null) sparks.PlayMagnetRelease(morningStarRb.position, direction.normalized);
+        if (Application.isPlaying)
+        {
+            OneShotAudioUtility.Play2D(sfxAudioSource, chainFullStretchClip, chainFullStretchVolume, morningStarRb.position);
+            if (cameraShake != null) cameraShake.Shake(0.10f, 0.12f);
+            PlayCombatHitStop(0.035f);
+        }
         return true;
     }
 
