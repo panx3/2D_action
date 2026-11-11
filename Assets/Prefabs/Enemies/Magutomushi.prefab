@@ -140,7 +140,7 @@ Transform:
   m_GameObject: {fileID: 4797117706067943533}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.43, y: 0.85, z: 0}
+  m_LocalPosition: {x: -0.553, y: 0.85, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -339,13 +339,15 @@ MonoBehaviour:
     m_Bits: 65
   groundDetectionDepth: 0.15
   detectionRange: 5
-  attractionRadius: 6
-  pullStrength: 15
-  maxPullSpeed: 6
+  attractionRadius: 10
+  escapeDistance: 7
+  pullStrength: 30
+  maxPullSpeed: 30
   attachDistance: 0.8
   chargeDuration: 0.7
-  attractionDuration: 1.5
+  attractionDuration: 2
   attackCooldown: 2
+  escapeReboundSpeed: 12
   attractionPoint: {fileID: 4486557583769010312}
   visualRoot: {fileID: 3655387869426174986}
   visualAnimator: {fileID: 4194383575293194739}
