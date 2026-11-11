@@ -3198,6 +3198,8 @@ public partial class MorningStarLauncher : MonoBehaviour
         // 敵の磁石では、通常の鎖長から脱出距離だけ引くと外れる。
         if (_attachedMagnet != null && _enemyMagnetPulls.Contains(_attachedMagnet))
         {
+            // 敵とPlayerの接触ダメージを、Joint接続中も有効にする。
+            if (!hookRopeJoint.enableCollision) hookRopeJoint.enableCollision = true;
             Rigidbody2D magnetBody = _attachedMagnet.GetComponentInParent<Rigidbody2D>();
             if (magnetBody != null)
             {
@@ -3209,6 +3211,8 @@ public partial class MorningStarLauncher : MonoBehaviour
             hookRopeJoint.distance = GetEffectiveRopeLength() + (enemy != null ? enemy.EscapeStretchDistance : 0f);
             return;
         }
+
+        if (hookRopeJoint.enableCollision) hookRopeJoint.enableCollision = false;
 
         if (_isChainClimbing && upperHanging)
         {
