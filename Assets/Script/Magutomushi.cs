@@ -15,6 +15,8 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField, Min(0f)] private float detectionRange = 5f;
     [SerializeField, Min(0f), Tooltip("Attraction Pointを中心とした吸引範囲。")]
     private float attractionRadius = 6f;
+    [SerializeField, Min(0.1f), Tooltip("プレイヤーがこの距離まで離れると吸着を解除。吸引範囲以下に制限されます。")]
+    private float escapeDistance = 7f;
     [SerializeField, Min(0f), Tooltip("既存マグネットと同じ吸引力。0なら吸引しません。")]
     private float pullStrength = 15f;
     [SerializeField, Min(0f), Tooltip("ギミックのマグネットと同じ鉄球の最高速度。")]
@@ -24,8 +26,8 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField, Min(0f)] private float chargeDuration = 0.7f;
     [SerializeField, HideInInspector] private float attractionDuration = 1.5f; // 旧Prefabの値を保持。
     [SerializeField, Min(0f)] private float attackCooldown = 2f;
-    [SerializeField, Min(0f), Tooltip("脱出時に鉄球へ与えるプレイヤー方向の速度変化。")]
-    private float escapeReboundSpeed = 3f;
+    [SerializeField, Min(0f), Tooltip("脱出時に確保するプレイヤー方向の最低速度。")]
+    private float escapeReboundSpeed = 12f;
     [Header("References")]
     [SerializeField] private Transform attractionPoint;
     [SerializeField] private Transform visualRoot;
@@ -139,7 +141,8 @@ public sealed class Magutomushi : MonoBehaviour
                 break;
             case ActionState.Attract:
                 if (!TargetAvailable) SetState(ActionState.Cooldown);
-                else if (attractionPoint != null && Vector2.Distance(player.position, attractionPoint.position) > attractionRadius)
+                else if (attractionPoint != null && Vector2.Distance(player.position, attractionPoint.position)
+                    > Mathf.Min(Mathf.Max(0.1f, escapeDistance), Mathf.Max(0f, attractionRadius)))
                 {
                     if (launcher != null && magnet != null)
                         launcher.ReleaseEnemyMagnetOnEscape(magnet, escapeReboundSpeed);

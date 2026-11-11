@@ -2006,7 +2006,11 @@ public partial class MorningStarLauncher : MonoBehaviour
             return false;
         Vector2 direction = (Vector2)transform.position - morningStarRb.position;
         if (direction.sqrMagnitude < 0.0001f || reboundSpeed <= 0f) return false;
-        morningStarRb.AddForce(direction.normalized * (morningStarRb.mass * reboundSpeed), ForceMode2D.Impulse);
+        Vector2 reboundDirection = direction.normalized;
+        float currentSpeed = Vector2.Dot(morningStarRb.linearVelocity, reboundDirection);
+        float neededSpeed = Mathf.Max(0f, reboundSpeed - currentSpeed);
+        if (neededSpeed > 0f)
+            morningStarRb.AddForce(reboundDirection * (morningStarRb.mass * neededSpeed), ForceMode2D.Impulse);
         var sparks = morningStarRb.GetComponent<MorningStarImpactSparks>();
         if (sparks != null) sparks.PlayMagnetRelease(morningStarRb.position, direction.normalized);
         if (Application.isPlaying)
