@@ -42,6 +42,10 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField, Min(0f)] private float attackCooldown = 2f;
     [SerializeField, Min(0f), Tooltip("脱出時に確保するプレイヤー方向の最低速度。")]
     private float escapeReboundSpeed = 12f;
+    [Header("Body contact")]
+    [SerializeField, Min(0)] private int contactDamage = 1;
+    [SerializeField, Min(0f)] private float contactKnockback = 5f;
+    [SerializeField, Min(0.02f)] private float contactCooldown = 0.7f;
     [Header("References")]
     [SerializeField] private Transform attractionPoint;
     [SerializeField] private Transform visualRoot;
@@ -69,6 +73,7 @@ public sealed class Magutomushi : MonoBehaviour
     private ParticleSystem magnetEffect;
     private Material magnetEffectMaterial;
     private float nextMagnetEffectTime;
+    private float nextContactTime;
     private bool ballCaptured;
     private float escapeHoldElapsed;
     private RigidbodyConstraints2D constraintsBeforeAttraction;
@@ -345,6 +350,21 @@ public sealed class Magutomushi : MonoBehaviour
         if (!isActiveAndEnabled) return;
         if (state == ActionState.Patrol) body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
         SetState(ActionState.Cooldown);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision) => TryContactDamage(collision.collider);
+    private void OnCollisionStay2D(Collision2D collision) => TryContactDamage(collision.collider);
+
+    private void TryContactDamage(Collider2D other)
+    {
+        if (!isActiveAndEnabled || health == null || health.CurrentHp <= 0 || health.IsDeathHandled
+            || health.IsHitStunned || contactDamage <= 0 || Time.time < nextContactTime
+            || !PlayerColliderUtility.IsPlayerBody(other)) return;
+        var target = other.GetComponentInParent<PlayerHealth>();
+        if (target == null || target.IsDead || target.IsRespawning || target.IsInvincible) return;
+        float away = other.bounds.center.x >= bodyCollider.bounds.center.x ? 1f : -1f;
+        if (target.TakeEnemyDamage(contactDamage, new Vector2(away, 0.2f).normalized * contactKnockback))
+            nextContactTime = Time.time + Mathf.Max(0.02f, contactCooldown);
     }
 
     private void Face()
