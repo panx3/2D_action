@@ -3195,7 +3195,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
 
-        // 敵の磁石では鎖を敵本体につなぎ、両者へ物理的な反作用を伝える。
+        // 敵の磁石では、通常の鎖長から脱出距離だけ引くと外れる。
         if (_attachedMagnet != null && _enemyMagnetPulls.Contains(_attachedMagnet))
         {
             Rigidbody2D magnetBody = _attachedMagnet.GetComponentInParent<Rigidbody2D>();
@@ -3205,7 +3205,8 @@ public partial class MorningStarLauncher : MonoBehaviour
                 hookRopeJoint.connectedAnchor = magnetBody.transform.InverseTransformPoint(_attachedMagnet.transform.position);
             }
             hookRopeJoint.maxDistanceOnly = true;
-            hookRopeJoint.distance = GetEffectiveRopeLength();
+            var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
+            hookRopeJoint.distance = GetEffectiveRopeLength() + (enemy != null ? enemy.EscapeStretchDistance : 0f);
             return;
         }
 

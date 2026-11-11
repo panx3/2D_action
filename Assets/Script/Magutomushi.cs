@@ -21,15 +21,16 @@ public sealed class Magutomushi : MonoBehaviour
     private float pullStrength = 15f;
     [SerializeField, Min(0f), Tooltip("吸引力の倍率。Pull Strengthの設定を維持したまま強さを調整します。")]
     private float pullStrengthMultiplier = 1.5f;
-    [SerializeField, Min(0.1f), Tooltip("鉄球の吸着後、マグトムシが引きずられると吸着が外れる距離。")]
+    [SerializeField, Min(0.1f), Tooltip("吸着後、鎖の通常最大長からさらに引くと外れる距離。")]
     private float dragEscapeDistance = 1.5f;
     [SerializeField, Min(0.01f), Tooltip("外れる距離の倍率。Drag Escape Distanceに掛けて調整します。")]
     private float dragEscapeDistanceMultiplier = 0.67f;
-    [SerializeField, Min(1f), Tooltip("鉄球を吸着している間の重さの倍率。1なら通常の重さ。")]
+    [SerializeField, HideInInspector] // 旧Prefabの値を保持。
     private float magnetWeightMultiplier = 100f;
     [SerializeField, Min(0f), Tooltip("吸着後にプレイヤーを引き寄せる目標速度。")]
     private float ropePullSpeed = 1.5f;
     public float RopePullSpeed => Mathf.Max(0f, ropePullSpeed);
+    public float EscapeStretchDistance => Mathf.Max(0.1f, dragEscapeDistance * dragEscapeDistanceMultiplier);
     [SerializeField, Min(0f), Tooltip("ギミックのマグネットと同じ鉄球の最高速度。")]
     private float maxPullSpeed = 6f;
     [SerializeField, Min(0f), Tooltip("この距離まで鉄球が近づくと、磁石と同じ方法で吸着します。")]
@@ -67,9 +68,8 @@ public sealed class Magutomushi : MonoBehaviour
     private Material magnetEffectMaterial;
     private float nextMagnetEffectTime;
     private bool ballCaptured;
-    private Vector2 captureBodyPosition;
-    private float massBeforeCapture;
-    private bool capturedMassApplied;
+    private RigidbodyConstraints2D constraintsBeforeAttraction;
+    private bool attractionPositionLocked;
     private static readonly int Walk = Animator.StringToHash("Walk");
     private static readonly int Charge = Animator.StringToHash("Charge");
     private static readonly int PaletteGain = Shader.PropertyToID("_PaletteGain");
@@ -104,6 +104,7 @@ public sealed class Magutomushi : MonoBehaviour
     private void OnDisable()
     {
         StopMagnet();
+        UnlockAttractionPosition();
         if (magnetEffect != null) magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         lastVisualTexture = null;
         if (visualAnimator != null) visualAnimator.speed = 0f;
@@ -158,7 +159,7 @@ public sealed class Magutomushi : MonoBehaviour
                 break;
             case ActionState.Attract:
                 if (!TargetAvailable) SetState(ActionState.Cooldown);
-                else if ((ballCaptured && HasDraggedEnemyFarEnough())
+                else if ((ballCaptured && HasPulledChainFarEnough())
                     || (!ballCaptured && magnet != null && Vector2.Distance(player.position, magnet.ControlledPosition)
                     > Mathf.Min(Mathf.Max(0.1f, escapeDistance), Mathf.Max(0f, attractionRadius))))
                 {
@@ -172,7 +173,6 @@ public sealed class Magutomushi : MonoBehaviour
                 if (stateElapsed >= attackCooldown) SetState(ActionState.Patrol);
                 break;
         }
-        // 吸着中はJointからの反作用を消さず、敵もプレイヤーに引きずられる。
         if (state != ActionState.Attract)
             body.linearVelocity = new Vector2(speed, body.linearVelocity.y);
         if (state == ActionState.Patrol && visualAnimator != null)
@@ -182,16 +182,13 @@ public sealed class Magutomushi : MonoBehaviour
     private bool BallAvailable() => launcher != null && launcher.isActiveAndEnabled && launcher.BallBody != null
         && launcher.BallBody.gameObject.activeInHierarchy;
 
-    private bool HasDraggedEnemyFarEnough()
+    private bool HasPulledChainFarEnough()
     {
         float away = Mathf.Sign(player.position.x - body.position.x);
-        if (playerController == null || playerController.MoveInputX * away <= 0.1f)
-        {
-            captureBodyPosition = body.position;
-            return false;
-        }
-        return (body.position.x - captureBodyPosition.x) * away
-            >= Mathf.Max(0.1f, dragEscapeDistance * dragEscapeDistanceMultiplier);
+        if (playerController == null || launcher == null || magnet == null
+            || playerController.MoveInputX * away <= 0.1f) return false;
+        return Vector2.Distance(launcher.RopeAnchorWorld, magnet.ControlledPosition)
+            >= launcher.BaseMaxRopeLength + EscapeStretchDistance - 0.02f;
     }
 
     private void LateUpdate()
@@ -223,19 +220,12 @@ public sealed class Magutomushi : MonoBehaviour
             if (!ballCaptured && launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
             {
                 ballCaptured = true;
-                captureBodyPosition = body.position;
-                massBeforeCapture = body.mass;
-                body.mass = massBeforeCapture * Mathf.Max(1f, magnetWeightMultiplier);
-                capturedMassApplied = true;
                 var sparks = launcher.BallBody.GetComponent<MorningStarImpactSparks>();
                 if (sparks != null) sparks.PlayMagnetRelease(launcher.BallBody.position,
                     incoming.sqrMagnitude > 0.0001f ? incoming : Vector2.up);
             }
             else if (ballCaptured && !launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
-            {
                 ballCaptured = false;
-                RestoreCapturedMass();
-            }
         }
         else
             StopMagnet();
@@ -244,16 +234,15 @@ public sealed class Magutomushi : MonoBehaviour
     private void StopMagnet()
     {
         ballCaptured = false;
-        RestoreCapturedMass();
         if (magnet != null)
             magnet.StopControlledAttraction(launcher, launcher != null ? launcher.BallBody : null);
     }
 
-    private void RestoreCapturedMass()
+    private void UnlockAttractionPosition()
     {
-        if (!capturedMassApplied) return;
-        if (body != null) body.mass = massBeforeCapture;
-        capturedMassApplied = false;
+        if (!attractionPositionLocked) return;
+        if (body != null) body.constraints = constraintsBeforeAttraction;
+        attractionPositionLocked = false;
     }
 
     private void CreateMagnetEffect()
@@ -301,7 +290,15 @@ public sealed class Magutomushi : MonoBehaviour
         if (state == ActionState.Attract && next != ActionState.Attract)
         {
             StopMagnet();
+            UnlockAttractionPosition();
             if (magnetEffect != null) magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+        if (next == ActionState.Attract && state != ActionState.Attract && body != null)
+        {
+            constraintsBeforeAttraction = body.constraints;
+            body.linearVelocity = Vector2.zero;
+            body.constraints |= RigidbodyConstraints2D.FreezePosition;
+            attractionPositionLocked = true;
         }
         state = next;
         stateElapsed = 0f;
