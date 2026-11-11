@@ -23,6 +23,8 @@ public sealed class Magutomushi : MonoBehaviour
     private float pullStrengthMultiplier = 1.5f;
     [SerializeField, Min(0.1f), Tooltip("鉄球の吸着後、マグトムシが引きずられると吸着が外れる距離。")]
     private float dragEscapeDistance = 1.5f;
+    [SerializeField, Min(1f), Tooltip("鉄球を吸着している間の重さの倍率。1なら通常の重さ。")]
+    private float magnetWeightMultiplier = 100f;
     [SerializeField, Min(0f), Tooltip("吸着後にプレイヤーを引き寄せる目標速度。")]
     private float ropePullSpeed = 1.5f;
     public float RopePullSpeed => Mathf.Max(0f, ropePullSpeed);
@@ -64,6 +66,8 @@ public sealed class Magutomushi : MonoBehaviour
     private float nextMagnetEffectTime;
     private bool ballCaptured;
     private Vector2 captureBodyPosition;
+    private float massBeforeCapture;
+    private bool capturedMassApplied;
     private static readonly int Walk = Animator.StringToHash("Walk");
     private static readonly int Charge = Animator.StringToHash("Charge");
     private static readonly int PaletteGain = Shader.PropertyToID("_PaletteGain");
@@ -217,12 +221,18 @@ public sealed class Magutomushi : MonoBehaviour
             {
                 ballCaptured = true;
                 captureBodyPosition = body.position;
+                massBeforeCapture = body.mass;
+                body.mass = massBeforeCapture * Mathf.Max(1f, magnetWeightMultiplier);
+                capturedMassApplied = true;
                 var sparks = launcher.BallBody.GetComponent<MorningStarImpactSparks>();
                 if (sparks != null) sparks.PlayMagnetRelease(launcher.BallBody.position,
                     incoming.sqrMagnitude > 0.0001f ? incoming : Vector2.up);
             }
             else if (ballCaptured && !launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
+            {
                 ballCaptured = false;
+                RestoreCapturedMass();
+            }
         }
         else
             StopMagnet();
@@ -231,8 +241,16 @@ public sealed class Magutomushi : MonoBehaviour
     private void StopMagnet()
     {
         ballCaptured = false;
+        RestoreCapturedMass();
         if (magnet != null)
             magnet.StopControlledAttraction(launcher, launcher != null ? launcher.BallBody : null);
+    }
+
+    private void RestoreCapturedMass()
+    {
+        if (!capturedMassApplied) return;
+        if (body != null) body.mass = massBeforeCapture;
+        capturedMassApplied = false;
     }
 
     private void CreateMagnetEffect()
