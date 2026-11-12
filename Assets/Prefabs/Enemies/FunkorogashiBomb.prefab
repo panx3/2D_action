@@ -122,8 +122,7 @@ MonoBehaviour:
   groundArmDelay: 0.12
   maxFlightTime: 15
   visualRoot: {fileID: 8335712290191620773}
-  explosionEffectPrefab: {fileID: 0}
-  explosionFragmentPrefab: {fileID: 3995165092266263535, guid: 1e71fb6d4622d2b4dba1d6e194e211f7, type: 3}
+  explosionEffectPrefab: {fileID: 3497979597425276456, guid: 1bd54f51213b98342af40de30ea7c406, type: 3}
 --- !u!1 &9098190999012308103
 GameObject:
   m_ObjectHideFlags: 0
