@@ -200,10 +200,24 @@ public sealed class MorningStarImpactSparks : MonoBehaviour
         nextImpactTime = Time.time + cooldown;
     }
 
-    private void EmitImpact(Vector2 point, Vector2 normal, float strength, Vector2 incomingVelocity, bool hitTerrain)
+    public void PlayPressImpact(Vector2 point, int sparkCount)
+    {
+        if (!isActiveAndEnabled || sparks == null || sparkCount <= 0) return;
+        EmitImpact(point, Vector2.up, 0.5f, Vector2.down, false, sparkCount);
+    }
+
+    public void PlayMagnetRelease(Vector2 point, Vector2 direction)
+    {
+        if (!isActiveAndEnabled || sparks == null || direction.sqrMagnitude < 0.0001f) return;
+        Vector2 normal = direction.normalized;
+        EmitImpact(point, normal, 1f, -normal, false, 24);
+    }
+
+    private void EmitImpact(Vector2 point, Vector2 normal, float strength, Vector2 incomingVelocity, bool hitTerrain, int requestedCount = -1)
     {
         int lowerCount = Mathf.Clamp(minimumSparks, 1, maximumSparks);
         int count = Mathf.Clamp(Mathf.RoundToInt(Mathf.Lerp(lowerCount, maximumSparks, strength) * Range(0.85f, 1.15f)), lowerCount, maximumSparks);
+        if (requestedCount >= 0) count = Mathf.Clamp(requestedCount, 0, 256);
         float baseAngle = Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg;
         Vector2 tangent = new Vector2(-normal.y, normal.x);
         float shear = Mathf.Clamp(Vector2.Dot(incomingVelocity, tangent) * 0.8f, -20f, 20f);
@@ -233,6 +247,7 @@ public sealed class MorningStarImpactSparks : MonoBehaviour
         }
         // 長い光の筋とは別に、小さな火種が弧を描いて落ち、床や壁で跳ねて冷える。
         int emberCount = visualRandom.Next(7, 14) + Mathf.RoundToInt(strength * 3f);
+        if (requestedCount >= 0) emberCount = Mathf.RoundToInt(emberCount * (count / 24f));
         for (int i = 0; i < emberCount; i++)
         {
             float angle = Range(-82f, 82f) * Mathf.Deg2Rad;

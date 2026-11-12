@@ -290,6 +290,7 @@ public partial class Player : MonoBehaviour
     }
 
     public Rigidbody2D Rigidbody2D => _rigid;
+    public LayerMask GroundLayers => _groundLayers;
 
     public bool IsGrounded => _startIntroControlled ? _introGrounded : _isGrounded;
 
@@ -1267,9 +1268,9 @@ public partial class Player : MonoBehaviour
 
     {
 
-        // Hook/Swing中またはLaunch Pose中にHandAnchorを左右へ瞬間移動させると、
-        // 物理ロープ支点や発射Animationの向きが崩れるため、完了まで向きを固定する。
+        // 通常のHook/SwingとLaunch Poseでは向きを保持。敵磁力中は移動方向へ向き直れる。
         if (_morningStarLauncher != null
+            && !_morningStarLauncher.IsEnemyMagnetPulling
             && (_morningStarLauncher.IsHookedState || _morningStarLauncher.IsLaunchPoseActive))
         {
             ApplyMovementFacingVisual();
