@@ -56,6 +56,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     private Coroutine _hitFlashRoutine;
     private bool _rendererWasEnabled;
     private IEnemyDeathGuard _deathGuard;
+    private IEnemyMorningStarDamageModifier _morningStarDamageModifier;
     private MorningStarHitContext _pendingDeathHit;
     public bool IsDeathPending { get; private set; }
 
@@ -74,6 +75,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         _currentHp = maxHp;
         _rigidbody2D = GetComponent<Rigidbody2D>();
         _deathGuard = GetComponent<IEnemyDeathGuard>();
+        _morningStarDamageModifier = GetComponent<IEnemyMorningStarDamageModifier>();
         if (hitFlashRenderer == null && hitFlashDuration > 0f)
             hitFlashRenderer = GetComponentInChildren<SpriteRenderer>();
         if (hitAudioSource == null)
@@ -125,6 +127,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         _lastDamageTime = Time.time;
         int damage = crushing ? _currentHp
             : maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
+        if (!crushing && _morningStarDamageModifier != null)
+            damage = Mathf.Max(0, _morningStarDamageModifier.ModifyMorningStarDamage(context, damage, _currentHp));
         _currentHp = Mathf.Max(0, _currentHp - damage);
         IsDeathPending = _currentHp == 0 && guardDeath;
         if (IsDeathPending) _pendingDeathHit = context;
@@ -335,4 +339,10 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 public interface IEnemyDeathGuard
 {
     bool DeferDeath { get; }
+}
+
+/// <summary>Changes damage only after EnemyHealth accepts a Morning Star hit.</summary>
+public interface IEnemyMorningStarDamageModifier
+{
+    int ModifyMorningStarDamage(MorningStarHitContext context, int damage, int currentHp);
 }
