@@ -99,6 +99,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
     public void OnMorningStarHit(MorningStarHitContext context)
     {
+        // 敵磁力に支配されている鉄球はマグトムシ自身への攻撃にならない。
+        if (context.Source != null && context.Source.IsEnemyMagnetPulling
+            && GetComponent<Magutomushi>() != null) return;
         ApplyHit(context, false);
     }
 
