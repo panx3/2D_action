@@ -37,6 +37,7 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     private State state;
     private float stateElapsed;
     private int facing;
+    private int moveDirection;
     private int throwDirection;
     private Vector3 visualBasePosition;
 
@@ -55,6 +56,7 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     private void OnEnable()
     {
         facing = startFacingRight ? 1 : -1;
+        moveDirection = -facing;
         state = State.Patrol;
         stateElapsed = 0f;
         Face();
@@ -112,11 +114,12 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
                     if (targetAvailable && distance <= detectionRange && distance > attackRange)
                     {
                         int toward = player.position.x >= body.position.x ? 1 : -1;
-                        if (CanWalk(toward)) facing = toward;
+                        if (CanWalk(toward)) moveDirection = toward;
                     }
-                    else if (!CanWalk(facing) && CanWalk(-facing)) facing = -facing;
+                    else if (!CanWalk(moveDirection) && CanWalk(-moveDirection)) moveDirection = -moveDirection;
+                    facing = -moveDirection; // Walk backwards, pushing the bomb with the rear legs.
                     Face();
-                    if (CanWalk(facing)) speed = facing * moveSpeed;
+                    if (CanWalk(moveDirection)) speed = moveDirection * moveSpeed;
                 }
                 break;
             case State.Windup:

@@ -15,7 +15,6 @@ public sealed class FunkorogashiBomb : MonoBehaviour
     [SerializeField, Min(0f)] private float maxFlightTime = 15f;
     [SerializeField] private Transform visualRoot;
     [SerializeField] private GameObject explosionEffectPrefab;
-    [SerializeField] private GameObject explosionFragmentPrefab;
 
     private Rigidbody2D body;
     private CircleCollider2D bombCollider;
@@ -94,7 +93,6 @@ public sealed class FunkorogashiBomb : MonoBehaviour
             health.TakeEnemyDamage(explosionDamage, direction.normalized * explosionKnockback);
         }
         if (explosionEffectPrefab != null) Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
-        FragmentBurst2D.Spawn(explosionFragmentPrefab, transform.position, Vector2.up, 8, 0.15f, 1.5f, 3f, 1.5f, 2f);
         Destroy(gameObject);
     }
 
