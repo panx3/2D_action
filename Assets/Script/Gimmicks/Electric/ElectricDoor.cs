@@ -145,6 +145,24 @@ public sealed class ElectricDoor : MonoBehaviour
         }
         return false;
     }
+
+    internal Vector2 KeepOnApproachSide(Collider2D hit, Vector2 approach, Vector2 target, float clearance)
+    {
+        if (hit != passageCollider || !passageCollider.enabled)
+            return target;
+
+        Transform blocker = passageCollider.transform;
+        Vector2 center = blocker.TransformPoint(passageCollider.offset);
+        Vector2 normal = blocker.right;
+        if (Vector2.Dot(approach - center, normal) < 0f)
+            normal = -normal;
+
+        float halfWidth = (passageCollider.size.x * 0.5f + passageCollider.edgeRadius)
+            * Mathf.Abs(blocker.lossyScale.x);
+        float distance = Vector2.Dot(target - center, normal);
+        return target + normal * Mathf.Max(0f, halfWidth + clearance - distance);
+    }
+
     private void LateUpdate()
     {
         float intensity = effectRemaining > 0f ? activationEffectIntensity : 0f;

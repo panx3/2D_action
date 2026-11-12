@@ -327,7 +327,33 @@ public class ChainConstraint2D : MonoBehaviour
         }
 
         // Player本体の移動は即時反映し、Animation/Facing由来の局所Anchor差分だけを補間する。
-        return playerTransform.TransformPoint(_smoothedAnchorLocalPosition);
+        return KeepOnPlayerSideOfClosedDoor(playerTransform.TransformPoint(_smoothedAnchorLocalPosition));
+    }
+
+    internal Vector2 KeepOnPlayerSideOfClosedDoor(Vector2 target)
+        => KeepOnPlayerSideOfClosedDoor(target, _ropeCollisionRadius);
+
+    internal Vector2 KeepOnPlayerSideOfClosedDoor(Vector2 target, float radius)
+    {
+        if (playerRb == null)
+            return target;
+
+        // An animated hand or recall target can cross a closed gate while the body is blocked.
+        Vector2 approach = playerRb.position;
+        Vector2 movement = target - approach;
+        float distance = movement.magnitude;
+        float clearance = radius + _collisionSkin;
+        int hitCount = Physics2D.CircleCast(approach, clearance,
+            distance > MinPathSegmentLength ? movement / distance : Vector2.right,
+            _terrainFilter, _ropeCastHits, distance);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider2D hit = _ropeCastHits[i].collider;
+            if (hit != null && hit.TryGetComponent(out ElectricDoor door))
+                target = door.KeepOnApproachSide(hit, approach, target, clearance);
+        }
+
+        return target;
     }
 
     private void ApplyPlayerClimbMotion(Vector2 anchor)

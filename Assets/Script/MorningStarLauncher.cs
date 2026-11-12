@@ -1889,6 +1889,17 @@ public partial class MorningStarLauncher : MonoBehaviour
         return origin != null ? (Vector2)origin.position : GetHandWorld();
     }
 
+    private Vector2 KeepThrowPositionOnPlayerSide(Vector2 position)
+    {
+        if (chainConstraint == null || !morningStarRb.TryGetComponent(out CircleCollider2D shape))
+            return position;
+
+        Vector3 scale = shape.transform.lossyScale;
+        float radius = shape.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+        Vector2 offset = shape.transform.TransformVector(shape.offset);
+        return chainConstraint.KeepOnPlayerSideOfClosedDoor(position + offset, radius) - offset;
+    }
+
     private void TryConsumeBufferedFire()
     {
         if (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
@@ -2773,7 +2784,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         }
 
         _recallStartPosition = morningStarRb.position;
-        _recallTargetPosition = GetThrowOriginPosition();
+        _recallTargetPosition = KeepThrowPositionOnPlayerSide(GetThrowOriginPosition());
         _recallTimer = 0f;
         _recallHoldTimer = 0f;
         _recallDelayTimer = recallStartDelay;
@@ -2828,7 +2839,8 @@ public partial class MorningStarLauncher : MonoBehaviour
         bool launchedInAir = !IsPlayerGrounded();
         Vector2 d = _pendingLaunchDir.sqrMagnitude > 1e-12f ? _pendingLaunchDir.normalized : Vector2.right;
         FacePlayerForLaunch(d);
-        Vector2 origin = GetThrowOriginPosition();
+        float offset = Mathf.Max(0f, launchStartOffset);
+        Vector2 origin = KeepThrowPositionOnPlayerSide(GetThrowOriginPosition() + d * offset);
 
         morningStarRb.position = origin;
         morningStarRb.linearVelocity = Vector2.zero;
@@ -2844,8 +2856,6 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (speedLimit > 0f)
             speed = Mathf.Min(speed, speedLimit);
 
-        float offset = Mathf.Max(0f, launchStartOffset);
-        morningStarRb.position = origin + d * offset;
         Vector2 launchVelocity = d * speed;
         if (postThrowDownwardBias > 0f)
             launchVelocity += Vector2.down * postThrowDownwardBias;
@@ -3223,7 +3233,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 GetVisualRopeAnchorWorld()
     {
         if (TryGetMotionVisualAnchor(out Vector2 motionAnchor))
-            return motionAnchor;
+            return KeepVisualRopeAnchorOnPlayerSide(motionAnchor);
         Vector2 targetWorld = ShouldUseUpwardPose()
             ? GetUpwardPoseChainAnchorWorld()
             : GetPlayerRopeAnchorWorld();
@@ -3249,8 +3259,13 @@ public partial class MorningStarLauncher : MonoBehaviour
         }
 
         _visualRopeAnchorUpdatedFrame = Time.frameCount;
-        return playerTransform.TransformPoint(_visualRopeAnchorLocal);
+        return KeepVisualRopeAnchorOnPlayerSide(playerTransform.TransformPoint(_visualRopeAnchorLocal));
     }
+
+    private Vector2 KeepVisualRopeAnchorOnPlayerSide(Vector2 anchor)
+        => chainConstraint != null && chainConstraint.isActiveAndEnabled
+            ? chainConstraint.KeepOnPlayerSideOfClosedDoor(anchor)
+            : anchor;
 
     private void UpdateFallbackLineRenderer()
     {

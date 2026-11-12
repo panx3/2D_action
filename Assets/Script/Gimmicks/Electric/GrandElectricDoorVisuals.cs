@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>大型門の表示だけを所有する。通電判定・扉板・通路Colliderは変更しない。</summary>
@@ -5,6 +6,7 @@ using UnityEngine;
 public sealed class GrandElectricDoorVisuals : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer frameBack;
+    [SerializeField] private SpriteRenderer frameFront;
     [SerializeField] private SpriteRenderer[] powerRenderers;
     [SerializeField] private Transform[] lockBolts;
     [SerializeField] private Vector3[] boltRetractions;
@@ -12,6 +14,8 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
     [SerializeField] private SpriteRenderer[] chargeSegments;
     [SerializeField] private Transform vibrationRoot;
     [SerializeField] private ElectricReceiverCable receiver;
+    [SerializeField] private Sprite receiverClampSprite;
+    [SerializeField] private Material receiverClampMaterial;
     [SerializeField] private Vector3[] powerRoute;
     [SerializeField] private Material wireMaterial;
     [SerializeField] private AudioSource mechanismAudio;
@@ -23,7 +27,14 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
     private Vector3[] boltClosed;
     private Quaternion[] rotorClosed;
     private Vector3 vibrationRest;
-    private LineRenderer cable, pulse;
+    private LineRenderer cable;
+    private MeshRenderer pulse;
+    private Mesh pulseMesh;
+    private const float CurrentPixelSize = 2f / 32f;
+    private readonly List<Vector3> pulseVertices = new List<Vector3>(512);
+    private readonly List<Color32> pulseColors = new List<Color32>(512);
+    private readonly List<int> pulseTriangles = new List<int>(768);
+    private float pulseClock;
     private ParticleSystem steam;
     private Vector3[] routeWorld;
     private float clock, impactRemaining;
@@ -45,10 +56,16 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
         if (powerRoute != null && powerRoute.Length >= 2 && wireMaterial != null)
         {
             cable = MakeLine("GrandGatePowerCable", 0.055f);
-            pulse = MakeLine("GrandGateCurrentPulse", 0.065f);
+            MakePixelPulse();
             routeWorld = new Vector3[powerRoute.Length + 1];
             MakeSteam();
         }
+    }
+
+    private void Start()
+    {
+        if (receiver != null)
+            receiver.ApplyClampAppearance(receiverClampSprite, receiverClampMaterial);
     }
 
     private void MakeSteam()
@@ -81,8 +98,7 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
         growth.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 2.5f));
         var renderer = steam.GetComponent<ParticleSystemRenderer>();
         renderer.sharedMaterial = wireMaterial;
-        renderer.sortingLayerID = frameBack != null ? frameBack.sortingLayerID : 0;
-        renderer.sortingOrder = 6;
+        SetMechanismEffectSorting(renderer);
     }
 
     private void EmitSteam(int count)
@@ -113,9 +129,33 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
         line.widthMultiplier = width;
         line.numCapVertices = 0;
         line.numCornerVertices = 0;
-        line.sortingLayerID = frameBack != null ? frameBack.sortingLayerID : 0;
-        line.sortingOrder = 6;
+        SetMechanismEffectSorting(line);
         return line;
+    }
+
+    private void MakePixelPulse()
+    {
+        var go = new GameObject("GrandGateCurrentPulse", typeof(MeshFilter), typeof(MeshRenderer))
+        {
+            hideFlags = HideFlags.DontSave,
+            layer = gameObject.layer
+        };
+        go.transform.SetParent(transform, false);
+        pulseMesh = new Mesh { name = "Grand Gate Current Pixels", hideFlags = HideFlags.DontSave };
+        pulseMesh.MarkDynamic();
+        go.GetComponent<MeshFilter>().sharedMesh = pulseMesh;
+        pulse = go.GetComponent<MeshRenderer>();
+        pulse.sharedMaterial = wireMaterial;
+        pulse.enabled = false;
+        SetMechanismEffectSorting(pulse);
+    }
+
+    private void SetMechanismEffectSorting(Renderer renderer)
+    {
+        // Draw the gate's surface effects over its metalwork and behind the player.
+        SpriteRenderer frame = frameFront != null ? frameFront : frameBack;
+        renderer.sortingLayerID = frame != null ? frame.sortingLayerID : 0;
+        renderer.sortingOrder = frameFront != null ? frameFront.sortingOrder + 1 : 6;
     }
 
     private void LateUpdate()
@@ -170,10 +210,10 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
             float stop = Mathf.Sin((0.22f - impactRemaining) * 68f) * impactRemaining * 0.22f;
             vibrationRoot.localPosition = vibrationRest + Vector3.right * (motor + stop);
         }
-        DrawPowerRoute(power);
+        DrawPowerRoute(power, dt);
     }
 
-    private void DrawPowerRoute(float power)
+    private void DrawPowerRoute(float power, float deltaTime)
     {
         if (cable == null || pulse == null || routeWorld == null) return;
         routeWorld[0] = receiver != null ? (Vector3)receiver.TipWorld : transform.TransformPoint(powerRoute[0]);
@@ -182,25 +222,107 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
         cable.SetPositions(routeWorld);
         Color color = new Color(0.24f, 0.16f, 0.08f, 0.4f);
         cable.startColor = cable.endColor = color;
-        pulse.enabled = power > 0.01f && !door.IsFullyOpen;
-        if (!pulse.enabled) return;
+        bool waitForPower = receiver != null && receiver.UsesConnectionLeadIn;
+        pulse.enabled = power > 0.01f && !door.IsFullyOpen && (!waitForPower || receiver.IsPowered);
+        if (!pulse.enabled)
+        {
+            pulseClock = 0f;
+            return;
+        }
+
+        pulseClock += deltaTime;
         float length = 0f;
         for (int i = 1; i < routeWorld.Length; i++) length += Vector3.Distance(routeWorld[i - 1], routeWorld[i]);
-        float head = Mathf.Repeat(clock * 0.9f, 1.12f);
-        float tail = Mathf.Max(0f, head - 0.14f);
-        var points = new System.Collections.Generic.List<Vector3>();
-        points.Add(RoutePoint(Mathf.Clamp01(tail) * length));
-        float distance = 0f;
-        for (int i = 1; i < routeWorld.Length; i++)
+
+        // Step the pulse on the same grid as the gate art, in blocks of two source pixels.
+        int frame = Mathf.FloorToInt(pulseClock * 30f);
+        float head = Mathf.Repeat(frame * (0.9f / 30f), 1.12f) * length;
+        if (waitForPower && frame == 0)
+            head = Mathf.Min(length, 4f * CurrentPixelSize);
+        float trailLength = Mathf.Min(length * 0.14f, 3.75f);
+        float tail = Mathf.Max(0f, head - trailLength);
+        DrawCurrentPixels(tail, Mathf.Min(head, length), head, trailLength, power, frame);
+    }
+
+    private void DrawCurrentPixels(float tail, float end, float head, float trailLength, float power, int frame)
+    {
+        pulseVertices.Clear();
+        pulseColors.Clear();
+        pulseTriangles.Clear();
+        pulseMesh.Clear();
+        if (trailLength <= 0f || end <= tail) return;
+
+        byte alpha = (byte)Mathf.RoundToInt(Mathf.Lerp(96f, 255f, power));
+        var amber = new Color32(244, 118, 26, alpha);
+        var gold = new Color32(255, 198, 55, alpha);
+        var core = new Color32(255, 250, 194, alpha);
+        int steps = Mathf.CeilToInt((end - tail) / CurrentPixelSize);
+        Vector2Int? previous = null;
+        for (int i = 0; i <= steps; i++)
         {
-            distance += Vector3.Distance(routeWorld[i - 1], routeWorld[i]);
-            if (distance > tail * length && distance < head * length) points.Add(routeWorld[i]);
+            float distance = Mathf.Min(tail + i * CurrentPixelSize, end);
+            float brightness = 1f - (head - distance) / trailLength;
+            Vector3 point = RoutePoint(distance);
+            Vector3 tangent = point - RoutePoint(Mathf.Max(0f, distance - CurrentPixelSize));
+            Vector2Int side = Mathf.Abs(tangent.x) >= Mathf.Abs(tangent.y) ? Vector2Int.up : Vector2Int.right;
+            int bend = ((i + frame) / 3) % 4;
+            var pixel = new Vector2Int(
+                Mathf.FloorToInt(point.x / CurrentPixelSize),
+                Mathf.FloorToInt(point.y / CurrentPixelSize))
+                + side * (bend == 1 ? 1 : bend == 3 ? -1 : 0);
+            if (previous == pixel) continue;
+            if (brightness < 0.28f && i % 4 >= 2)
+            {
+                previous = null;
+                continue;
+            }
+
+            Color32 color = brightness > 0.72f ? core : brightness > 0.28f ? gold : amber;
+            if (previous.HasValue)
+            {
+                Vector2Int bridge = previous.Value;
+                while (bridge != pixel)
+                {
+                    if (bridge.x != pixel.x) bridge.x += bridge.x < pixel.x ? 1 : -1;
+                    else bridge.y += bridge.y < pixel.y ? 1 : -1;
+                    if (bridge != pixel) AddCurrentPixel(bridge, point.z, color);
+                }
+
+                if (brightness > 0.4f && (i + frame) % 7 < 2)
+                {
+                    if (((i + frame) / 7 & 1) != 0) side = -side;
+                    AddCurrentPixel(pixel + side, point.z, gold);
+                    if ((i + frame) % 14 == 0)
+                        AddCurrentPixel(pixel + side * 3, point.z, amber);
+                }
+            }
+            AddCurrentPixel(pixel, point.z, color);
+            previous = pixel;
         }
-        points.Add(RoutePoint(Mathf.Clamp01(head) * length));
-        pulse.positionCount = points.Count;
-        pulse.SetPositions(points.ToArray());
-        pulse.startColor = new Color(1f, 0.66f, 0.08f, power * 0.65f);
-        pulse.endColor = new Color(1f, 0.98f, 0.72f, power);
+
+        pulseMesh.SetVertices(pulseVertices);
+        pulseMesh.SetColors(pulseColors);
+        pulseMesh.SetTriangles(pulseTriangles, 0);
+    }
+
+    private void AddCurrentPixel(Vector2Int pixel, float z, Color32 color)
+    {
+        Vector3 corner = new Vector3(pixel.x * CurrentPixelSize, pixel.y * CurrentPixelSize, z);
+        Vector3 right = Vector3.right * CurrentPixelSize;
+        Vector3 up = Vector3.up * CurrentPixelSize;
+        int vertex = pulseVertices.Count;
+        Transform space = pulse.transform;
+        pulseVertices.Add(space.InverseTransformPoint(corner));
+        pulseVertices.Add(space.InverseTransformPoint(corner + up));
+        pulseVertices.Add(space.InverseTransformPoint(corner + up + right));
+        pulseVertices.Add(space.InverseTransformPoint(corner + right));
+        for (int i = 0; i < 4; i++) pulseColors.Add(color);
+        pulseTriangles.Add(vertex);
+        pulseTriangles.Add(vertex + 1);
+        pulseTriangles.Add(vertex + 2);
+        pulseTriangles.Add(vertex);
+        pulseTriangles.Add(vertex + 2);
+        pulseTriangles.Add(vertex + 3);
     }
 
     private Vector3 RoutePoint(float distance)
@@ -225,8 +347,10 @@ public sealed class GrandElectricDoorVisuals : MonoBehaviour
     {
         if (cable != null) cable.enabled = false;
         if (pulse != null) pulse.enabled = false;
+        pulseClock = 0f;
         if (steam != null) steam.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         if (vibrationRoot != null) vibrationRoot.localPosition = vibrationRest;
     }
     private void OnEnable() { if (cable != null) cable.enabled = true; }
+    private void OnDestroy() { if (pulseMesh != null) Destroy(pulseMesh); }
 }

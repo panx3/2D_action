@@ -5,6 +5,11 @@ using UnityEngine.Events;
 [DefaultExecutionOrder(75)]
 public sealed class ElectricReceiverCable : MonoBehaviour
 {
+    internal const float ChainArrivalProgress = 0.5f;
+    private const float TerminalArrivalProgress = 0.8f;
+    private const float PowerFlashDuration = 0.25f;
+    private static readonly int PowerId = Shader.PropertyToID("_GatePower");
+    private static readonly int PulseId = Shader.PropertyToID("_GatePulse");
     [SerializeField] private TeslaCoil source;
     [SerializeField] private MorningStarLauncher launcher;
     [SerializeField] private Vector2 tip = new Vector2(-1.35f, 0.3f);
@@ -28,6 +33,7 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     private Player actor;
     private ElectricActivationSequence sequence;
     private SpriteRenderer ballVisual;
+    private MaterialPropertyBlock clampLight;
     public event System.Action ConductionStarted;
     public event System.Action ConductionEnded;
     public event System.Action PowerStarted;
@@ -35,8 +41,25 @@ public sealed class ElectricReceiverCable : MonoBehaviour
     public bool IsConducting => conducting;
     public bool IsPowered => powered;
     public float ChargeProgress => powered ? 1f : activationDelay <= 0f ? (conducting ? 1f : 0f) : Mathf.Clamp01(heldTime / activationDelay);
+    internal bool UsesConnectionLeadIn => sequence != null && sequence.UsesConnectionLeadIn;
     public MorningStarLauncher Launcher => launcher;
     public Vector2 TipWorld => transform.TransformPoint(tip);
+
+    internal void ApplyClampAppearance(Sprite sprite, Material material)
+    {
+        if (!UsesConnectionLeadIn || body == null || sprite == null || material == null)
+            return;
+
+        body.sprite = sprite;
+        body.sharedMaterial = material;
+        body.color = Color.white;
+        SpriteRenderer playerSprite = actor != null ? actor.BodySprite : null;
+        if (playerSprite != null && body.sortingLayerID == playerSprite.sortingLayerID)
+            body.sortingOrder = Mathf.Min(body.sortingOrder, playerSprite.sortingOrder - 1);
+
+        clampLight ??= new MaterialPropertyBlock();
+        UpdateClampLight(ballContact, conducting ? ChargeProgress : 0f);
+    }
 
     private void Awake()
     {
@@ -85,7 +108,7 @@ public sealed class ElectricReceiverCable : MonoBehaviour
             heldTime += Time.deltaTime;
             if (!powered && heldTime >= activationDelay)
             {
-                powered = true; flashRemaining = 0.25f;
+                powered = true; flashRemaining = PowerFlashDuration;
                 if (audioSource != null && activationSound != null) audioSource.PlayOneShot(activationSound);
                 onPowerStarted.Invoke();
                 PowerStarted?.Invoke();
@@ -122,18 +145,87 @@ public sealed class ElectricReceiverCable : MonoBehaviour
         if (chainArc != null) chainArc.Hide();
         if (contactArc != null) contactArc.Hide();
         if (powered && !latchAfterActivation) EndPower();
+        UpdateClampLight(false, 0f);
     }
     private void LateUpdate()
     {
-        flashRemaining = Mathf.Max(0f, flashRemaining - Time.deltaTime);
-        if (body != null) body.color = flashRemaining > 0f ? new Color(1f, 1f, 0.7f) : conducting ? new Color(1f, 0.84f, 0.48f) : Color.white;
-        tipArc.DrawOutline(body, conducting ? effectIntensity * 1.8f : 0f, TipWorld, null, 0.55f);
-        bool charged = ballContact && launcher != null;
+        bool useLeadIn = UsesConnectionLeadIn;
+        float deltaTime = useLeadIn && sequence.IsRevealingDoor ? Time.unscaledDeltaTime : Time.deltaTime;
+        flashRemaining = Mathf.Max(0f, flashRemaining - deltaTime);
+        bool actorsAvailable = !useLeadIn || (actor != null && actor.isActiveAndEnabled
+            && launcher != null && launcher.isActiveAndEnabled && launcher.BallBody != null
+            && launcher.BallBody.simulated && (playerHealth == null || (!playerHealth.IsDead && !playerHealth.IsRespawning)));
+        bool charged = actorsAvailable && ballContact && launcher != null;
+        float charge = actorsAvailable && conducting ? ChargeProgress : 0f;
+        UpdateClampLight(charged, charge);
         ballArc.DrawOutline(ballVisual, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
+
+        if (useLeadIn && (!powered || !actorsAvailable))
+        {
+            DrawConnectionLeadIn(charge, charged);
+            return;
+        }
+
+        if (body != null && clampLight == null)
+            body.color = flashRemaining > 0f ? new Color(1f, 1f, 0.7f) : conducting ? new Color(1f, 0.84f, 0.48f) : Color.white;
+        if (useLeadIn && flashRemaining > 0f)
+            tipArc.DrawTerminalCharge(TipWorld, effectIntensity * flashRemaining / PowerFlashDuration);
+        else
+            tipArc.DrawOutline(body, conducting ? effectIntensity * 1.8f : 0f, TipWorld, null, 0.55f);
         SpriteRenderer playerVisual = sequence != null ? sequence.EffectSprite : actor != null ? actor.BodySprite : null;
         playerArc.DrawOutline(playerVisual, charged ? effectIntensity : 0f);
         contactArc.DrawBetweenOutlines(playerVisual, body, conducting ? effectIntensity : 0f);
         chainArc.DrawChain(charged ? launcher : null, charged ? effectIntensity * (conducting ? 1.4f : 1f) : 0f);
+    }
+
+    private void UpdateClampLight(bool charged, float progress)
+    {
+        if (clampLight == null || body == null)
+            return;
+
+        float light = 0f;
+        if (powered)
+            light = 1f;
+        else if (charged || progress > 0f)
+            light = Mathf.Lerp(0.30f, 0.70f, progress);
+        float flash = 0.22f * (flashRemaining / PowerFlashDuration);
+        body.GetPropertyBlock(clampLight);
+        clampLight.SetFloat(PowerId, light);
+        clampLight.SetFloat(PulseId, flash);
+        body.SetPropertyBlock(clampLight);
+    }
+
+    private void DrawConnectionLeadIn(float progress, bool charged)
+    {
+        float terminalCharge = Mathf.InverseLerp(TerminalArrivalProgress, 1f, progress);
+        if (body != null && clampLight == null)
+            body.color = Color.Lerp(Color.white, new Color(1f, 0.84f, 0.48f), terminalCharge);
+        playerArc.Hide();
+
+        if (progress > 0f && progress < ChainArrivalProgress)
+            chainArc.DrawChainPulse(launcher, progress / ChainArrivalProgress, effectIntensity);
+        else
+            chainArc.Hide();
+
+        if (progress >= ChainArrivalProgress)
+        {
+            float travel = Mathf.InverseLerp(ChainArrivalProgress, TerminalArrivalProgress, progress);
+            float strength = Mathf.Lerp(1f, 0.5f, terminalCharge);
+            contactArc.DrawConnectionPulse(launcher.VisualRopeAnchorWorld, TipWorld, travel, strength * effectIntensity);
+        }
+        else
+            contactArc.Hide();
+
+        if (terminalCharge > 0f)
+            tipArc.DrawTerminalCharge(TipWorld, Mathf.Lerp(0.4f, 1f, terminalCharge) * effectIntensity);
+        else if (clampLight != null && charged && progress <= 0f)
+        {
+            // Point out the still-open receiver when the coil has picked up the ball.
+            float strength = (Mathf.FloorToInt(Time.time * 6f) & 1) == 0 ? 0.4f : 0.7f;
+            tipArc.DrawTerminalCharge(TipWorld, strength * effectIntensity);
+        }
+        else
+            tipArc.Hide();
     }
     private void OnDrawGizmosSelected() { Gizmos.color = Color.yellow; Gizmos.matrix = transform.localToWorldMatrix; Gizmos.DrawWireSphere(tip, radius); }
 }

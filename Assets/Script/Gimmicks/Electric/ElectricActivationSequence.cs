@@ -32,7 +32,11 @@ public sealed class ElectricActivationSequence : MonoBehaviour
     private float elapsed;
     public bool IsPresenting => active;
     public bool IsRevealingDoor => revealing;
+    internal bool UsesConnectionLeadIn => showDoorReveal && door != null && door.IsGrandGate;
     public SpriteRenderer EffectSprite => skeleton != null && skeleton.enabled ? skeleton : player != null ? player.BodySprite : null;
+
+    private bool CanShowSkeleton => !UsesConnectionLeadIn
+        || (receiver != null && receiver.ChargeProgress >= ElectricReceiverCable.ChainArrivalProgress);
 
     private void OnEnable()
     {
@@ -85,7 +89,8 @@ public sealed class ElectricActivationSequence : MonoBehaviour
         if (player == null || !player.IsElectricStunned || !player.isActiveAndEnabled || receiver == null || !receiver.isActiveAndEnabled
             || door == null || !door.isActiveAndEnabled || (health != null && (health.IsDead || health.IsRespawning)))
         { Finish(); return; }
-        elapsed += revealing ? Time.unscaledDeltaTime : Time.deltaTime;
+        if (CanShowSkeleton)
+            elapsed += revealing ? Time.unscaledDeltaTime : Time.deltaTime;
         if (revealing)
         {
             if (revealCamera == null || !revealCamera.isActiveAndEnabled || !revealCamera.IsEventControlledBy(this)
@@ -100,7 +105,7 @@ public sealed class ElectricActivationSequence : MonoBehaviour
     private void LateUpdate()
     {
         if (!active || body == null || skeleton == null) return;
-        bool showBones = ((int)(elapsed / blinkInterval) & 1) == 0;
+        bool showBones = CanShowSkeleton && ((int)(elapsed / blinkInterval) & 1) == 0;
         body.forceRenderingOff = previousForceRenderingOff || showBones;
         skeleton.enabled = showBones && !previousForceRenderingOff;
         skeleton.flipX = body.flipX;

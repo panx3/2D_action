@@ -79,7 +79,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1748868931, guid: 3f2b50d4f7eefb1478bdc31947b8323c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -261,7 +261,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 22
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 2635b943180ca67428017117e87a6520, type: 3}
   m_Color: {r: 0.07, g: 0.045, b: 0.015, a: 1}
@@ -390,7 +390,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 1
   m_MaskInteraction: 1
   m_Sprite: {fileID: 21300000, guid: 6098806566145cb44857662e3d66e723, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -428,7 +428,7 @@ Transform:
   m_GameObject: {fileID: 6129866369045397271}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.0625, y: 5.25, z: 0}
+  m_LocalPosition: {x: 4.5, y: 5.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -481,7 +481,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1183354158, guid: 3f2b50d4f7eefb1478bdc31947b8323c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -575,7 +575,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 21
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: ddb7d1441058db849920f26d891f0065, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -757,7 +757,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 22
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 2635b943180ca67428017117e87a6520, type: 3}
   m_Color: {r: 0.07, g: 0.045, b: 0.015, a: 1}
@@ -848,7 +848,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 22
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 2635b943180ca67428017117e87a6520, type: 3}
   m_Color: {r: 0.07, g: 0.045, b: 0.015, a: 1}
@@ -939,7 +939,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 1
   m_MaskInteraction: 1
   m_Sprite: {fileID: 21300000, guid: fa2cd6f72f145584b8f4573b04d2eb10, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1094,11 +1094,11 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: bfa00fa576e51e6419af68c20a9b9c86, type: 3}
     - target: {fileID: 893755243740172114, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: m_BackSortingOrder
-      value: 1
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 893755243740172114, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: m_FrontSortingOrder
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1177988515598816319, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: m_Pitch
@@ -1152,6 +1152,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 5a56772af2776594398c82dcd20b8871, type: 3}
+    - target: {fileID: 3444097554894305490, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
+      propertyPath: m_SortingOrder
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3444097554894305490, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -1209,6 +1213,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: d31db3ecc1572bd4bb5f2790d25e0eeb, type: 3}
     - target: {fileID: 4567958476412233264, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
+      propertyPath: m_SortingOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4567958476412233264, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: ab14e01d813736d44a4d23b18dfd9d07, type: 2}
@@ -1222,7 +1230,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8133027340474497556, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: m_Size.x
-      value: 6
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 8133027340474497556, guid: 54aaa8c84f365964784d20d954e48940, type: 3}
       propertyPath: m_Size.y
@@ -1274,6 +1282,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrandElectricDoorVisuals
   frameBack: {fileID: 8573527535871450010}
+  frameFront: {fileID: 7178106404350292509}
   powerRenderers:
   - {fileID: 8573527535871450010}
   - {fileID: 3586036039889267328}
@@ -1297,6 +1306,8 @@ MonoBehaviour:
   - {fileID: 533739367389793102}
   vibrationRoot: {fileID: 6875916288766846969}
   receiver: {fileID: 0}
+  receiverClampSprite: {fileID: 21300000, guid: 602eea404ee79024f86d5678ee491d92, type: 3}
+  receiverClampMaterial: {fileID: 2100000, guid: c759bade8c24b12479457f8c8e1e6d2a, type: 2}
   powerRoute:
   - {x: -4, y: 0.7, z: 0}
   - {x: -4.8, y: 5, z: 0}
