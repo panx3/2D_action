@@ -1,0 +1,306 @@
+fileFormatVersion: 2
+guid: 1a3401964d416c74fb7170efeb235377
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1057540783966725240
+    second: BombFuseSheet_0
+  - first:
+      213: 8485195449135510761
+    second: BombFuseSheet_1
+  - first:
+      213: -1696440056667438105
+    second: BombFuseSheet_2
+  - first:
+      213: 4451093861721568211
+    second: BombFuseSheet_3
+  - first:
+      213: 6390297042631493588
+    second: BombFuseSheet_4
+  - first:
+      213: -1242607729987301641
+    second: BombFuseSheet_5
+  - first:
+      213: 6419165458672471947
+    second: BombFuseSheet_6
+  - first:
+      213: -2223469504786056442
+    second: BombFuseSheet_7
+  - first:
+      213: -5540606043266260837
+    second: BombFuseSheet_8
+  - first:
+      213: 1870658912609555598
+    second: BombFuseSheet_9
+  - first:
+      213: -2531727977541735744
+    second: BombFuseSheet_10
+  - first:
+      213: -4852252165555543015
+    second: BombFuseSheet_11
+  - first:
+      213: 554769535451196934
+    second: BombFuseSheet_12
+  - first:
+      213: 4656762057156693456
+    second: BombFuseSheet_13
+  - first:
+      213: 8750223264696939139
+    second: BombFuseSheet_14
+  - first:
+      213: 4034171799596238056
+    second: BombFuseSheet_15
+  - first:
+      213: -6508816222910442347
+    second: BombFuseSheet_16
+  - first:
+      213: 5876785225401937199
+    second: BombFuseSheet_17
+  - first:
+      213: 352040467750807868
+    second: BombFuseSheet_18
+  - first:
+      213: -767979404816539510
+    second: BombFuseSheet_19
+  - first:
+      213: 2718903840960432629
+    second: BombFuseSheet_20
+  - first:
+      213: -6745426720354038562
+    second: BombFuseSheet_21
+  - first:
+      213: 8022438143100528369
+    second: BombFuseSheet_22
+  - first:
+      213: -1921557651736632183
+    second: BombFuseSheet_23
+  - first:
+      213: -4252782581959547209
+    second: BombFuseSheet_24
+  - first:
+      213: 8703349888596223094
+    second: BombFuseSheet_25
+  - first:
+      213: 1696695769600690581
+    second: BombFuseSheet_26
+  - first:
+      213: 9043328750710119502
+    second: BombFuseSheet_27
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 420
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BombFuse_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 543
+        height: 724
+      alignment: 9
+      pivot: {x: 0.5267035, y: 0.47928175}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f43c62cd9a1a56948856468b1da1875b
+      internalID: -257523341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombFuse_1
+      rect:
+        serializedVersion: 2
+        x: 543
+        y: 0
+        width: 543
+        height: 724
+      alignment: 9
+      pivot: {x: 0.50460404, y: 0.47928175}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: debedf9f341e8914c8b2f39d00031cae
+      internalID: -903746954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombFuse_2
+      rect:
+        serializedVersion: 2
+        x: 1086
+        y: 0
+        width: 543
+        height: 724
+      alignment: 9
+      pivot: {x: 0.46040517, y: 0.47928175}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e1d5b5eb854948c4b8acc5f9e36b02bd
+      internalID: -436868905
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BombFuse_3
+      rect:
+        serializedVersion: 2
+        x: 1629
+        y: 0
+        width: 543
+        height: 724
+      alignment: 9
+      pivot: {x: 0.4364641, y: 0.47928175}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f9fa31ba6cbb92d46aba0e3303de01fb
+      internalID: -363136069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 16ee60ed58a6bbb449f0452967a07604
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      BombFuse_0: -257523341
+      BombFuse_1: -903746954
+      BombFuse_2: -436868905
+      BombFuse_3: -363136069
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

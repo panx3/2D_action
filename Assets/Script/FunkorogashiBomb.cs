@@ -18,12 +18,16 @@ public sealed class FunkorogashiBomb : MonoBehaviour
     [SerializeField, HideInInspector] private float maxFlightTime = 15f; // Preserve existing prefab data.
     [SerializeField] private Transform visualRoot;
     [SerializeField] private GameObject explosionEffectPrefab;
+    [SerializeField, HideInInspector] private SpriteRenderer bombSpriteRenderer; // Preserve existing prefab data.
+    [SerializeField, HideInInspector] private Sprite[] fuseSprites; // Preserve existing prefab data.
+    [SerializeField, Min(0f), Tooltip("鉄球との衝突速度に対する上向き速度の割合。")]
+    private float ballImpactLiftRatio = 0.35f;
+    [SerializeField, Min(0f)] private float maxBallImpactLift = 6f;
 
     private Rigidbody2D body;
     private CircleCollider2D bombCollider;
     private BombState state;
     private float launchedAt;
-    private float spinSpeed;
     private Vector3 fuseInitialScale;
     private Vector3 flameInitialPosition;
     private Vector3 flameInitialScale;
@@ -61,11 +65,23 @@ public sealed class FunkorogashiBomb : MonoBehaviour
         state = BombState.Launched;
         launchedAt = Time.time;
         if (fuseFlame != null) fuseFlame.gameObject.SetActive(true);
-        spinSpeed = -Mathf.Sign(velocity.x) * rotationSpeed;
         body.simulated = true;
         bombCollider.enabled = true;
         if (ownerCollider != null) Physics2D.IgnoreCollision(bombCollider, ownerCollider, true);
         body.linearVelocity = velocity;
+    }
+
+    private void Update()
+    {
+        if (exploded || state != BombState.Launched) return;
+        float remaining = Mathf.Clamp01(1f - (Time.time - launchedAt) / Mathf.Max(0.1f, fuseDuration));
+        if (fuseRoot != null)
+            fuseRoot.localScale = new Vector3(fuseInitialScale.x, fuseInitialScale.y * remaining, fuseInitialScale.z);
+        if (fuseFlame != null)
+        {
+            fuseFlame.localPosition = new Vector3(flameInitialPosition.x, flameInitialPosition.y * remaining, flameInitialPosition.z);
+            fuseFlame.localScale = flameInitialScale * (0.9f + 0.1f * Mathf.Sin(Time.time * 24f));
+        }
     }
 
     private void FixedUpdate()
@@ -73,15 +89,13 @@ public sealed class FunkorogashiBomb : MonoBehaviour
         if (exploded) return;
         if (state == BombState.Held) { TryReleaseFromMorningStar(); return; }
         if (state != BombState.Launched) return;
-        float remaining = Mathf.Clamp01(1f - (Time.time - launchedAt) / Mathf.Max(0.1f, fuseDuration));
-        if (fuseRoot != null) fuseRoot.localScale = new Vector3(fuseInitialScale.x, fuseInitialScale.y * remaining, fuseInitialScale.z);
-        if (fuseFlame != null)
+        if (Time.time - launchedAt >= Mathf.Max(0.1f, fuseDuration)) { Explode(); return; }
+        if (visualRoot != null)
         {
-            fuseFlame.localPosition = new Vector3(flameInitialPosition.x, flameInitialPosition.y * remaining, flameInitialPosition.z);
-            fuseFlame.localScale = flameInitialScale * (0.9f + 0.1f * Mathf.Sin(Time.time * 24f));
+            float radius = bombCollider.radius * Mathf.Abs(transform.lossyScale.x);
+            float rollSpeed = radius > 0.001f ? -body.linearVelocity.x / radius * Mathf.Rad2Deg : 0f;
+            visualRoot.Rotate(0f, 0f, rollSpeed * Time.fixedDeltaTime);
         }
-        if (remaining <= 0f) { Explode(); return; }
-        if (visualRoot != null) visualRoot.Rotate(0f, 0f, spinSpeed * Time.fixedDeltaTime);
     }
 
     private void TryReleaseFromMorningStar()
@@ -97,10 +111,24 @@ public sealed class FunkorogashiBomb : MonoBehaviour
             var owner = GetComponentInParent<Funkorogashi>();
             Collider2D ownerCollider = owner != null ? owner.GetComponent<Collider2D>() : null;
             if (owner != null) owner.OnHeldBombReleased(this);
-            Launch(ball != null ? ball.linearVelocity : Vector2.zero,
-                owner != null ? owner.BombRotationSpeed : 240f, ownerCollider);
+            Vector2 hitVelocity = ball != null ? ball.linearVelocity : Vector2.zero;
+            if (hitVelocity.sqrMagnitude > 0.25f)
+                hitVelocity.y = Mathf.Max(hitVelocity.y, Mathf.Min(maxBallImpactLift, hitVelocity.magnitude * ballImpactLiftRatio));
+            Launch(hitVelocity, owner != null ? owner.BombRotationSpeed : 240f, ownerCollider);
             return;
         }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (state != BombState.Launched || exploded || collision.collider == null) return;
+        Rigidbody2D ball = collision.collider.attachedRigidbody;
+        if (!collision.collider.CompareTag("morningstar") && (ball == null || ball.GetComponent<MorningStarCollisionReporter>() == null)) return;
+        float impactSpeed = collision.relativeVelocity.magnitude;
+        if (impactSpeed < 0.5f) return;
+        Vector2 velocity = body.linearVelocity;
+        velocity.y = Mathf.Max(velocity.y, Mathf.Min(maxBallImpactLift, impactSpeed * ballImpactLiftRatio));
+        body.linearVelocity = velocity;
     }
 
     public void Explode()
