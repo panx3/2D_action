@@ -334,31 +334,9 @@ public sealed class ElectricArcEffect : MonoBehaviour
 
     public void DrawChain(MorningStarLauncher launcher, float intensity)
     {
-        if (!Begin(launcher != null ? intensity : 0f)) return;
-        path.Clear();
-        path.Add(launcher.VisualRopeAnchorWorld);
-        Transform root = launcher.ChainVisualRoot;
-        var links = root != null ? root.GetComponent<ChainLinkVisualController>() : null;
-        var line = root != null ? root.GetComponent<LineRenderer>() : null;
-        if (links != null && links.IsDisplaying)
-        {
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform child = root.GetChild(i);
-                if (child.gameObject.activeSelf && child.name.StartsWith("ChainLink_")) path.Add(child.position);
-            }
-        }
-        else if (line != null && line.enabled && line.positionCount >= 2)
-        {
-            for (int i = 0; i < line.positionCount; i++)
-            {
-                Vector3 p = line.GetPosition(i);
-                path.Add(line.useWorldSpace ? p : line.transform.TransformPoint(p));
-            }
-        }
-        path.Add(launcher.BallBody.position);
-        float length = 0f, now = Time.time;
-        for (int i = 1; i < path.Count; i++) length += Vector2.Distance(path[i - 1], path[i]);
+        if (!Begin(launcher != null && launcher.BallBody != null ? intensity : 0f)) return;
+        float length = BuildChainPath(launcher);
+        float now = Time.time;
         if (nextFlow < 0f) nextFlow = now + Range(0.03f, 0.17f);
         if (now >= nextFlow)
         {
@@ -389,6 +367,70 @@ public sealed class ElectricArcEffect : MonoBehaviour
             }
         }
         End();
+    }
+
+    internal void DrawChainPulse(MorningStarLauncher launcher, float progress, float intensity)
+    {
+        if (!Begin(launcher != null && launcher.BallBody != null ? intensity : 0f)) return;
+        float length = BuildChainPath(launcher);
+        // The path is ordered from the player's hand to the ball, so travel backward.
+        float head = length * (1f - Mathf.Clamp01(progress));
+        float tail = Mathf.Min(length, head + 0.9f);
+        const float strokeLength = 0.3f;
+        int frame = Mathf.FloorToInt(progress * 12f);
+        for (float distance = head; distance < tail; distance += strokeLength)
+        {
+            opacity = distance - head < strokeLength ? 1f : 0.8f;
+            Stroke(PathPoint(Mathf.Min(distance + strokeLength, tail)), PathPoint(distance), frame, 0.85f);
+        }
+        End();
+    }
+
+    internal void DrawConnectionPulse(Vector2 hand, Vector2 tip, float progress, float intensity)
+    {
+        if (!Begin(intensity)) return;
+        opacity = Mathf.Clamp01(intensity);
+        Stroke(hand, Vector2.Lerp(hand, tip, progress), Mathf.FloorToInt(progress * 9f), 0.8f);
+        End();
+    }
+
+    internal void DrawTerminalCharge(Vector2 tip, float strength)
+    {
+        if (!Begin(strength)) return;
+        opacity = Mathf.Clamp01(strength);
+        float reach = Mathf.Lerp(0.18f, 0.38f, opacity);
+        Stroke(tip, tip + new Vector2(-reach, reach), 3, 0.5f);
+        Stroke(tip, tip + new Vector2(reach, reach * 0.6f), 7, 0.5f);
+        End();
+    }
+
+    private float BuildChainPath(MorningStarLauncher launcher)
+    {
+        path.Clear();
+        path.Add(launcher.VisualRopeAnchorWorld);
+        Transform root = launcher.ChainVisualRoot;
+        var links = root != null ? root.GetComponent<ChainLinkVisualController>() : null;
+        var line = root != null ? root.GetComponent<LineRenderer>() : null;
+        if (links != null && links.IsDisplaying)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.gameObject.activeSelf && child.name.StartsWith("ChainLink_")) path.Add(child.position);
+            }
+        }
+        else if (line != null && line.enabled && line.positionCount >= 2)
+        {
+            for (int i = 0; i < line.positionCount; i++)
+            {
+                Vector3 point = line.GetPosition(i);
+                path.Add(line.useWorldSpace ? point : line.transform.TransformPoint(point));
+            }
+        }
+        path.Add(launcher.BallBody.position);
+        float length = 0f;
+        for (int i = 1; i < path.Count; i++) length += Vector2.Distance(path[i - 1], path[i]);
+        return length;
     }
 
     private Vector2 PathPoint(float distance)
