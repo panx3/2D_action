@@ -2,7 +2,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
-public sealed class Funkorogashi : MonoBehaviour
+public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifier
 {
     private enum State { Patrol, Windup, Cooldown, Dead }
     [Header("Movement")]
@@ -204,6 +204,15 @@ public sealed class Funkorogashi : MonoBehaviour
     {
         SetState(lethal ? State.Dead : State.Cooldown);
         SetVisual(0f);
+    }
+
+    public int ModifyMorningStarDamage(MorningStarHitContext context, int damage, int currentHp)
+    {
+        if (heldBomb == null || !heldBomb.IsHeld) return damage;
+        var bomb = heldBomb;
+        heldBomb = null;
+        bomb.Explode();
+        return currentHp;
     }
 
     private void OnBombExploded(FunkorogashiBomb bomb)
