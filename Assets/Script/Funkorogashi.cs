@@ -2,12 +2,12 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
-public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifier
+public sealed class Funkorogashi : MonoBehaviour
 {
     private enum State { Patrol, Windup, Cooldown, Dead }
     [Header("Movement")]
     [SerializeField, Min(0f)] private float moveSpeed = 1.2f;
-    [SerializeField, Min(0f)] private float detectionRange = 6f;
+    [SerializeField, HideInInspector] private float detectionRange = 6f; // Preserve existing serialized values; pursuit is unlimited.
     [SerializeField, Min(0f)] private float attackRange = 4f;
     [SerializeField] private bool startFacingRight;
     [SerializeField] private LayerMask terrainLayers = (1 << 0) | (1 << 6);
@@ -15,7 +15,7 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     [Header("Attack")]
     [SerializeField, Min(0f)] private float windupDuration = 0.6f;
     [SerializeField, Min(0f)] private float attackCooldown = 2f;
-    [SerializeField, Min(0f)] private float bombRespawnDelay = 1.5f;
+    [SerializeField, Min(0f), Tooltip("前の爆弾が爆発してから次を用意するまでの秒数。")] private float bombRespawnDelay = 1.5f;
     [SerializeField] private Vector2 bombHoldOffset = new Vector2(0.85f, 0.35f);
     [SerializeField, Min(0f)] private float bombLaunchSpeedX = 7f;
     [SerializeField, Min(0f)] private float bombLaunchSpeedY = 4f;
@@ -26,6 +26,8 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     [SerializeField] private Animator visualAnimator;
     [SerializeField, Min(0f)] private float walkAnimationSpeed = 1f;
 
+    public float BombRotationSpeed => bombRotationSpeed;
+
     private readonly RaycastHit2D[] hits = new RaycastHit2D[16];
     private Rigidbody2D body;
     private BoxCollider2D bodyCollider;
@@ -34,6 +36,8 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     private Transform player;
     private PlayerHealth playerHealth;
     private FunkorogashiBomb heldBomb;
+    private FunkorogashiBomb outstandingBomb;
+    private float nextBombReadyTime = float.NegativeInfinity;
     private State state;
     private float stateElapsed;
     private int facing;
@@ -57,7 +61,8 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     {
         facing = startFacingRight ? 1 : -1;
         moveDirection = -facing;
-        state = State.Patrol;
+        state = heldBomb == null && (outstandingBomb != null || Time.time < nextBombReadyTime)
+            ? State.Cooldown : State.Patrol;
         stateElapsed = 0f;
         Face();
     }
@@ -66,17 +71,33 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
     private void OnDestroy()
     {
         if (health != null) { health.HitConfirmed -= OnHitConfirmed; health.HealthReset -= OnHealthReset; }
+        if (outstandingBomb != null) outstandingBomb.Exploded -= OnBombExploded;
     }
     private void OnDisable()
     {
-        if (heldBomb != null) Destroy(heldBomb.gameObject);
-        heldBomb = null;
+        if (heldBomb != null)
+        {
+            var bomb = heldBomb;
+            heldBomb = null;
+            if (health != null && health.CurrentHp <= 0 && bomb.IsHeld)
+                bomb.Launch(body != null ? body.linearVelocity : Vector2.zero, bombRotationSpeed, bodyCollider);
+            else
+            {
+                if (outstandingBomb == bomb)
+                {
+                    bomb.Exploded -= OnBombExploded;
+                    outstandingBomb = null;
+                }
+                Destroy(bomb.gameObject);
+            }
+        }
         if (visualAnimator != null) visualAnimator.speed = 0f;
     }
 
     private void OnHealthReset()
     {
-        state = State.Patrol;
+        state = heldBomb == null && (outstandingBomb != null || Time.time < nextBombReadyTime)
+            ? State.Cooldown : State.Patrol;
         stateElapsed = 0f;
         if (heldBomb == null) PrepareBomb();
     }
@@ -102,7 +123,7 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
         switch (state)
         {
             case State.Patrol:
-                if (heldBomb != null && targetAvailable && distance <= detectionRange && distance <= attackRange && IsGrounded())
+                if (heldBomb != null && targetAvailable && distance <= attackRange && IsGrounded())
                 {
                     throwDirection = player.position.x >= body.position.x ? 1 : -1;
                     facing = -throwDirection; // The rear legs and held bomb face the target.
@@ -111,10 +132,10 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
                 }
                 else if (IsGrounded())
                 {
-                    if (targetAvailable && distance <= detectionRange && distance > attackRange)
+                    if (targetAvailable && distance > attackRange)
                     {
                         int toward = player.position.x >= body.position.x ? 1 : -1;
-                        if (CanWalk(toward)) moveDirection = toward;
+                        moveDirection = toward;
                     }
                     else if (!CanWalk(moveDirection) && CanWalk(-moveDirection)) moveDirection = -moveDirection;
                     facing = -moveDirection; // Walk backwards, pushing the bomb with the rear legs.
@@ -135,7 +156,7 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
                 }
                 break;
             case State.Cooldown:
-                if (heldBomb == null && stateElapsed >= bombRespawnDelay) PrepareBomb();
+                if (heldBomb == null && outstandingBomb == null && Time.time >= nextBombReadyTime) PrepareBomb();
                 if (heldBomb != null && stateElapsed >= attackCooldown) SetState(State.Patrol);
                 break;
         }
@@ -146,8 +167,11 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
 
     private void PrepareBomb()
     {
-        if (heldBomb != null || bombPrefab == null || health.CurrentHp <= 0) return;
-        heldBomb = Instantiate(bombPrefab, transform);
+        if (heldBomb != null || outstandingBomb != null || Time.time < nextBombReadyTime || bombPrefab == null || health.CurrentHp <= 0) return;
+        heldBomb = Instantiate(bombPrefab, transform.position, Quaternion.identity);
+        outstandingBomb = heldBomb;
+        outstandingBomb.Exploded += OnBombExploded;
+        heldBomb.transform.SetParent(transform, true);
         heldBomb.Hold();
         PositionBomb();
     }
@@ -182,13 +206,21 @@ public sealed class Funkorogashi : MonoBehaviour, IEnemyMorningStarDamageModifie
         SetVisual(0f);
     }
 
-    public int ModifyMorningStarDamage(MorningStarHitContext context, int damage, int currentHp)
+    private void OnBombExploded(FunkorogashiBomb bomb)
     {
-        if (heldBomb == null || !heldBomb.IsHeld) return damage;
-        var bomb = heldBomb;
+        if (outstandingBomb != bomb) return;
+        bomb.Exploded -= OnBombExploded;
+        outstandingBomb = null;
+        nextBombReadyTime = Time.time + Mathf.Max(0f, bombRespawnDelay);
+        if (heldBomb == null && state != State.Cooldown && health != null && health.CurrentHp > 0 && !health.IsDeathHandled)
+            SetState(State.Cooldown);
+    }
+
+    public void OnHeldBombReleased(FunkorogashiBomb bomb)
+    {
+        if (heldBomb != bomb) return;
         heldBomb = null;
-        bomb.Explode();
-        return currentHp;
+        if (health.CurrentHp > 0 && !health.IsDeathHandled) SetState(State.Cooldown);
     }
 
     private bool IsGrounded()

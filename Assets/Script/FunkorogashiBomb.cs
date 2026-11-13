@@ -9,10 +9,13 @@ public sealed class FunkorogashiBomb : MonoBehaviour
     [SerializeField, Min(0f)] private float explosionRadius = 1.5f;
     [SerializeField, Min(0)] private int explosionDamage = 1;
     [SerializeField, Min(0f)] private float explosionKnockback = 5f;
-    [SerializeField] private LayerMask playerLayers = 1 << 3;
-    [SerializeField] private LayerMask groundLayers = (1 << 0) | (1 << 6);
-    [SerializeField, Min(0f)] private float groundArmDelay = 0.12f;
-    [SerializeField, Min(0f)] private float maxFlightTime = 15f;
+    [SerializeField, HideInInspector] private LayerMask playerLayers = 1 << 3; // Preserve existing prefab data.
+    [SerializeField, HideInInspector] private LayerMask groundLayers = (1 << 0) | (1 << 6); // Preserve existing prefab data.
+    [SerializeField, HideInInspector] private float groundArmDelay = 0.12f; // Preserve existing prefab data.
+    [SerializeField, Min(0.1f), Tooltip("射出・切り離しから爆発までの秒数。保持中は点火しません。")] private float fuseDuration = 3f;
+    [SerializeField] private Transform fuseRoot;
+    [SerializeField] private Transform fuseFlame;
+    [SerializeField, HideInInspector] private float maxFlightTime = 15f; // Preserve existing prefab data.
     [SerializeField] private Transform visualRoot;
     [SerializeField] private GameObject explosionEffectPrefab;
 
@@ -21,13 +24,19 @@ public sealed class FunkorogashiBomb : MonoBehaviour
     private BombState state;
     private float launchedAt;
     private float spinSpeed;
+    private Vector3 fuseInitialScale;
+    private Vector3 flameInitialPosition;
+    private Vector3 flameInitialScale;
     private bool exploded;
     public bool IsHeld => state == BombState.Held && !exploded;
+    public event System.Action<FunkorogashiBomb> Exploded;
 
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
         bombCollider = GetComponent<CircleCollider2D>();
+        if (fuseRoot != null) fuseInitialScale = fuseRoot.localScale;
+        if (fuseFlame != null) { flameInitialPosition = fuseFlame.localPosition; flameInitialScale = fuseFlame.localScale; }
         Hold();
     }
 
@@ -36,6 +45,7 @@ public sealed class FunkorogashiBomb : MonoBehaviour
         state = BombState.Held;
         body.simulated = false;
         bombCollider.enabled = false;
+        if (fuseFlame != null) fuseFlame.gameObject.SetActive(false);
     }
 
     public void Roll(float velocityX, float degreesPerSecond, float deltaTime)
@@ -50,6 +60,7 @@ public sealed class FunkorogashiBomb : MonoBehaviour
         transform.SetParent(null, true);
         state = BombState.Launched;
         launchedAt = Time.time;
+        if (fuseFlame != null) fuseFlame.gameObject.SetActive(true);
         spinSpeed = -Mathf.Sign(velocity.x) * rotationSpeed;
         body.simulated = true;
         bombCollider.enabled = true;
@@ -59,46 +70,82 @@ public sealed class FunkorogashiBomb : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (state != BombState.Launched || exploded) return;
+        if (exploded) return;
+        if (state == BombState.Held) { TryReleaseFromMorningStar(); return; }
+        if (state != BombState.Launched) return;
+        float remaining = Mathf.Clamp01(1f - (Time.time - launchedAt) / Mathf.Max(0.1f, fuseDuration));
+        if (fuseRoot != null) fuseRoot.localScale = new Vector3(fuseInitialScale.x, fuseInitialScale.y * remaining, fuseInitialScale.z);
+        if (fuseFlame != null)
+        {
+            fuseFlame.localPosition = new Vector3(flameInitialPosition.x, flameInitialPosition.y * remaining, flameInitialPosition.z);
+            fuseFlame.localScale = flameInitialScale * (0.9f + 0.1f * Mathf.Sin(Time.time * 24f));
+        }
+        if (remaining <= 0f) { Explode(); return; }
         if (visualRoot != null) visualRoot.Rotate(0f, 0f, spinSpeed * Time.fixedDeltaTime);
-        if (maxFlightTime > 0f && Time.time - launchedAt >= maxFlightTime) Destroy(gameObject);
     }
 
-    private void OnCollisionEnter2D(Collision2D collision) => TryDetonate(collision.collider);
-    private void OnCollisionStay2D(Collision2D collision) => TryDetonate(collision.collider);
-    private void TryDetonate(Collider2D other)
+    private void TryReleaseFromMorningStar()
     {
-        if (state != BombState.Launched || exploded || other == null) return;
-        int bit = 1 << other.gameObject.layer;
-        if (((playerLayers.value & bit) != 0 && other.GetComponentInParent<PlayerHealth>() != null) ||
-            ((groundLayers.value & bit) != 0 && Time.time - launchedAt >= groundArmDelay)) Explode();
+        Vector2 center = transform.TransformPoint(bombCollider.offset);
+        Vector3 scale = transform.lossyScale;
+        float radius = bombCollider.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+        foreach (Collider2D other in Physics2D.OverlapCircleAll(center, radius, LayerMask.GetMask("morningstar")))
+        {
+            if (other == null || other.isTrigger) continue;
+            Rigidbody2D ball = other.attachedRigidbody;
+            if (!other.CompareTag("morningstar") && (ball == null || ball.GetComponent<MorningStarCollisionReporter>() == null)) continue;
+            var owner = GetComponentInParent<Funkorogashi>();
+            Collider2D ownerCollider = owner != null ? owner.GetComponent<Collider2D>() : null;
+            if (owner != null) owner.OnHeldBombReleased(this);
+            Launch(ball != null ? ball.linearVelocity : Vector2.zero,
+                owner != null ? owner.BombRotationSpeed : 240f, ownerCollider);
+            return;
+        }
     }
 
     public void Explode()
     {
         if (exploded) return;
         exploded = true;
+        bool wasHeld = state == BombState.Held;
         state = BombState.Exploded;
+        Exploded?.Invoke(this);
+        if (wasHeld)
+        {
+            var owner = GetComponentInParent<Funkorogashi>();
+            if (owner != null) owner.OnHeldBombReleased(this);
+        }
         bombCollider.enabled = false;
         body.simulated = false;
-        Vector2 origin = transform.position;
-        Collider2D[] targets = Physics2D.OverlapCircleAll(origin, explosionRadius, playerLayers);
+        Vector2 origin = transform.TransformPoint(bombCollider.offset);
+        Collider2D[] targets = Physics2D.OverlapCircleAll(origin, explosionRadius);
         var damaged = new HashSet<PlayerHealth>();
+        var damagedEnemies = new HashSet<EnemyHealth>();
         foreach (var target in targets)
         {
             PlayerHealth health = target.GetComponentInParent<PlayerHealth>();
-            if (health == null || !damaged.Add(health)) continue;
             Vector2 direction = (Vector2)target.bounds.center - origin;
             if (direction.sqrMagnitude < 0.0001f) direction = Vector2.up;
-            health.TakeEnemyDamage(explosionDamage, direction.normalized * explosionKnockback);
+            Vector2 impulse = direction.normalized * explosionKnockback;
+            if (health != null && PlayerColliderUtility.IsPlayerBody(target) && damaged.Add(health))
+                health.TakeEnemyDamage(explosionDamage, impulse);
+            EnemyHealth enemy = target.GetComponentInParent<EnemyHealth>();
+            if (enemy != null && damagedEnemies.Add(enemy)) enemy.TakeExplosionDamage(explosionDamage, impulse, origin);
         }
-        if (explosionEffectPrefab != null) Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
+        if (explosionEffectPrefab != null) Instantiate(explosionEffectPrefab, origin, Quaternion.identity);
+        var sparks = FindAnyObjectByType<MorningStarImpactSparks>();
+        if (sparks != null) sparks.PlayPressImpact(origin, 32);
+        var camera = Camera.main;
+        var shake = camera != null ? camera.GetComponent<CameraShake2D>() : null;
+        if (shake != null) shake.Shake(0.18f, 0.16f);
         Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1f, 0.4f, 0.1f, 0.8f);
-        Gizmos.DrawWireSphere(transform.position, explosionRadius);
+        var circle = GetComponent<CircleCollider2D>();
+        Vector3 center = circle != null ? transform.TransformPoint(circle.offset) : transform.position;
+        Gizmos.DrawWireSphere(center, explosionRadius);
     }
 }

@@ -104,7 +104,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         // 敵磁力に支配されている鉄球はマグトムシ自身への攻撃にならない。
         if (context.Source != null && context.Source.IsEnemyMagnetPulling
             && GetComponent<Magutomushi>() != null) return;
-        ApplyHit(context, false);
+        ApplyHit(context, false, true);
     }
 
     /// <summary>圧殺は通常攻撃のダメージ上限・被弾無敵と別に、既存の撃破経路へ流す。</summary>
@@ -117,7 +117,14 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         return _deathHandled;
     }
 
-    private void ApplyHit(MorningStarHitContext context, bool crushing)
+    public void TakeExplosionDamage(int damage, Vector2 impulse, Vector2 impactPoint)
+    {
+        if (!isActiveAndEnabled) return;
+        ApplyHit(new MorningStarHitContext(damage, impulse, 0f, impactPoint,
+            impulse.normalized, impulse.magnitude, 1f), false, false);
+    }
+
+    private void ApplyHit(MorningStarHitContext context, bool crushing, bool morningStar = false)
     {
         bool guardDeath = _deathGuard != null && _deathGuard.DeferDeath;
         if (_currentHp <= 0 || IsDeathPending || context.Damage <= 0
@@ -127,7 +134,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         _lastDamageTime = Time.time;
         int damage = crushing ? _currentHp
             : maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
-        if (!crushing && _morningStarDamageModifier != null)
+        if (morningStar && _morningStarDamageModifier != null)
             damage = Mathf.Max(0, _morningStarDamageModifier.ModifyMorningStarDamage(context, damage, _currentHp));
         _currentHp = Mathf.Max(0, _currentHp - damage);
         IsDeathPending = _currentHp == 0 && guardDeath;
@@ -135,7 +142,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         // 無敵・撃破済みの接触では止めず、実際にダメージを受けた時だけ通知する。
         if (context.Source != null)
             context.Source.PlayEnemyHitStop(context.HitStopSeconds, _currentHp <= 0);
-        if (OneShotAudioUtility.Play2D(hitAudioSource, morningStarHitClip, morningStarHitVolume, transform.position))
+        if ((morningStar || crushing) && OneShotAudioUtility.Play2D(hitAudioSource, morningStarHitClip, morningStarHitVolume, transform.position))
             HitSoundPlayCount++;
 
         if (debugLog)
