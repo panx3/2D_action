@@ -4540,6 +4540,18 @@ PrefabInstance:
       propertyPath: launcher
       value: 
       objectReference: {fileID: 625955978}
+    - target: {fileID: 4194173630053262717, guid: e617b2095280196499466fd32ebb369c, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 602eea404ee79024f86d5678ee491d92, type: 3}
+    - target: {fileID: 4194173630053262717, guid: e617b2095280196499466fd32ebb369c, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4194173630053262717, guid: e617b2095280196499466fd32ebb369c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: c759bade8c24b12479457f8c8e1e6d2a, type: 2}
     - target: {fileID: 4499755136263389142, guid: e617b2095280196499466fd32ebb369c, type: 3}
       propertyPath: m_Name
       value: ElectricReceiverCable
