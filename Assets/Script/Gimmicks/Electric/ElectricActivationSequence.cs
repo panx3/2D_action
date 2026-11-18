@@ -1,13 +1,16 @@
 using UnityEngine;
 
-/// <summary>受電の接続から扉全開までの感電演出。受電判定や扉の進捗は既存の所有者に委ねる。</summary>
+/// <summary>受電の接続から仕掛けが開くまでの感電演出。受電判定と仕掛けの進捗は各コンポーネントが所有する。</summary>
 [DefaultExecutionOrder(50), DisallowMultipleComponent]
 public sealed class ElectricActivationSequence : MonoBehaviour
 {
     [SerializeField] private ElectricReceiverCable receiver;
     [SerializeField] private ElectricDoor door;
+    [SerializeField] private ClockTower clockTower;
     [SerializeField] private Player player;
     [SerializeField] private Sprite skeletonSprite;
+    [SerializeField] private Sprite receiverClampSprite;
+    [SerializeField] private Material receiverClampMaterial;
     [SerializeField, Min(0.02f)] private float blinkInterval = 0.08f;
     [Header("Grand gate reveal (Stage2 only)")]
     [SerializeField] private bool showDoorReveal;
@@ -32,7 +35,9 @@ public sealed class ElectricActivationSequence : MonoBehaviour
     private float elapsed;
     public bool IsPresenting => active;
     public bool IsRevealingDoor => revealing;
-    internal bool UsesConnectionLeadIn => showDoorReveal && door != null && door.IsGrandGate;
+    internal bool UsesConnectionLeadIn => clockTower != null || (showDoorReveal && door != null && door.IsGrandGate);
+    private bool MechanismAvailable => door != null ? door.isActiveAndEnabled : clockTower != null && clockTower.isActiveAndEnabled;
+    private bool MechanismOpen => door != null ? door.IsFullyOpen : clockTower != null && clockTower.State == ClockTower.ClockState.Completed;
     public SpriteRenderer EffectSprite => skeleton != null && skeleton.enabled ? skeleton : player != null ? player.BodySprite : null;
 
     private bool CanShowSkeleton => !UsesConnectionLeadIn
@@ -41,7 +46,6 @@ public sealed class ElectricActivationSequence : MonoBehaviour
     private void OnEnable()
     {
         if (receiver == null) receiver = GetComponent<ElectricReceiverCable>();
-        if (player == null && receiver != null && receiver.Launcher != null) player = receiver.Launcher.GetComponent<Player>();
         if (receiver != null)
         {
             receiver.ConductionStarted += Begin;
@@ -49,6 +53,20 @@ public sealed class ElectricActivationSequence : MonoBehaviour
             receiver.PowerStarted += OnPowerStarted;
         }
         if (door != null) door.FullyOpened += OnDoorFullyOpened;
+        BindPlayer();
+    }
+
+    private void Start()
+    {
+        // Auto-resolved launchers are assigned by the receiver's Awake.
+        if (player == null) BindPlayer();
+        if (receiver != null && receiverClampSprite != null && receiverClampMaterial != null)
+            receiver.ApplyClampAppearance(receiverClampSprite, receiverClampMaterial);
+    }
+
+    private void BindPlayer()
+    {
+        if (player == null && receiver != null && receiver.Launcher != null) player = receiver.Launcher.GetComponent<Player>();
         if (player != null)
         {
             player.ElectricStunEnded += Finish;
@@ -59,8 +77,8 @@ public sealed class ElectricActivationSequence : MonoBehaviour
 
     private void Begin()
     {
-        if (active || receiver == null || receiver.IsPowered || door == null || !door.isActiveAndEnabled
-            || door.IsFullyOpen || player == null || skeletonSprite == null || !player.TryBeginElectricStun(this)) return;
+        if (active || receiver == null || receiver.IsPowered || !MechanismAvailable
+            || MechanismOpen || player == null || skeletonSprite == null || !player.TryBeginElectricStun(this)) return;
         body = player.BodySprite;
         if (body == null) { player.EndElectricStun(this); return; }
         if (skeleton == null)
@@ -87,7 +105,7 @@ public sealed class ElectricActivationSequence : MonoBehaviour
             return;
         }
         if (player == null || !player.IsElectricStunned || !player.isActiveAndEnabled || receiver == null || !receiver.isActiveAndEnabled
-            || door == null || !door.isActiveAndEnabled || (health != null && (health.IsDead || health.IsRespawning)))
+            || !MechanismAvailable || (health != null && (health.IsDead || health.IsRespawning)))
         { Finish(); return; }
         if (CanShowSkeleton)
             elapsed += revealing ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -99,7 +117,7 @@ public sealed class ElectricActivationSequence : MonoBehaviour
             { Finish(); return; }
             TickDoorReveal(Time.unscaledDeltaTime);
         }
-        else if (committed && door.IsFullyOpen) Finish();
+        else if (committed && MechanismOpen) Finish();
     }
 
     private void LateUpdate()

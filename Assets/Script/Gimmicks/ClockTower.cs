@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>One powered cycle per scene. The keeper holds the passage while the hands turn without collision.</summary>
+/// <summary>One powered cycle per scene. The hands are solid at rest and form a fixed bridge after turning.</summary>
 [DisallowMultipleComponent]
 public sealed class ClockTower : MonoBehaviour
 {
@@ -12,9 +12,6 @@ public sealed class ClockTower : MonoBehaviour
     [SerializeField] private SpriteRenderer hourHand;
     [SerializeField] private Collider2D minuteBarrier;
     [SerializeField] private Collider2D hourBarrier;
-    [SerializeField] private Collider2D keeperBarrier;
-    [SerializeField] private Transform upperKeeper;
-    [SerializeField] private Transform lowerKeeper;
     [SerializeField] private Collider2D bridge;
     [SerializeField] private Collider2D ballBridge;
 
@@ -34,13 +31,11 @@ public sealed class ClockTower : MonoBehaviour
     [SerializeField] private Transform driveGear;
     [SerializeField] private Transform idlerGear;
     [SerializeField, Min(0f)] private float gearRatio = 0.65f;
-    [SerializeField, Min(0f)] private float keeperRetraction = 0.24f;
     [SerializeField] private SpriteRenderer[] powerLights;
     [SerializeField] private SpriteRenderer[] lockSparks;
     [SerializeField] private bool frameActivation = true;
     [SerializeField] private CameraFollow stageCamera;
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip powerSound;
     [SerializeField] private AudioClip gearSound;
     [SerializeField] private AudioClip spinSound;
     [SerializeField] private AudioClip stepSound;
@@ -55,7 +50,6 @@ public sealed class ClockTower : MonoBehaviour
     private float peakSpeed;
     private float cruiseTime;
     private float gearTravel;
-    private Vector3 upperClosed, lowerClosed;
     private Camera lens;
     private CameraShake2D cameraShake;
     private Player actor;
@@ -63,18 +57,13 @@ public sealed class ClockTower : MonoBehaviour
     private Vector3 startingCameraPosition;
     private float startingLens;
     private float cameraTime;
-    private float upperTravel, lowerTravel;
 
     private float TotalTravel => minuteTurns * 360f + finalMinuteAngle;
 
     private void Awake()
     {
-        upperClosed = upperKeeper.localPosition;
-        lowerClosed = lowerKeeper.localPosition;
-        upperTravel = upperKeeper.GetComponent<SpriteRenderer>().sprite.bounds.size.y;
-        lowerTravel = lowerKeeper.GetComponent<SpriteRenderer>().sprite.bounds.size.y;
         SetHands(0f, 0f);
-        minuteBarrier.enabled = hourBarrier.enabled = keeperBarrier.enabled = true;
+        minuteBarrier.enabled = hourBarrier.enabled = true;
         bridge.enabled = ballBridge.enabled = false;
         SetLight(powerLights, 0f);
         SetLight(lockSparks, 0f);
@@ -105,15 +94,12 @@ public sealed class ClockTower : MonoBehaviour
     {
         if (State != ClockState.Idle) return;
 
-        // The fixed keeper already overlaps the two blades. Removing their contacts
-        // before moving them leaves a continuous wall without a moving crush surface.
+        // Keep the stationary hand colliders until the blades begin to turn.
         State = ClockState.Activating;
         phaseTime = 0f;
-        minuteBarrier.enabled = hourBarrier.enabled = false;
         float rampTime = accelerationTime + decelerationTime;
         peakSpeed = rampTime > 0f ? Mathf.Min(minuteSpeed, 2f * TotalTravel / rampTime) : minuteSpeed;
         cruiseTime = peakSpeed > 0f ? Mathf.Max(0f, TotalTravel / peakSpeed - rampTime * 0.5f) : 0f;
-        Play(powerSound);
         BeginCamera();
     }
 
@@ -131,6 +117,7 @@ public sealed class ClockTower : MonoBehaviour
                 if (phaseTime >= activationTime)
                 {
                     State = ClockState.Rotating;
+                    minuteBarrier.enabled = hourBarrier.enabled = false;
                     phaseTime = 0f;
                     Play(gearSound);
                     Play(spinSound);
@@ -143,16 +130,8 @@ public sealed class ClockTower : MonoBehaviour
                 if (phaseTime >= lockingTime) Complete();
                 break;
             case ClockState.Completed:
-                float open = Mathf.SmoothStep(0f, 1f, phaseTime / Mathf.Max(0.01f, keeperRetraction));
-                upperKeeper.localPosition = upperClosed + Vector3.up * (upperTravel * open);
-                lowerKeeper.localPosition = lowerClosed + Vector3.down * (lowerTravel * open);
                 SetLight(lockSparks, 1f - Mathf.Clamp01(phaseTime / 0.30f));
-                if (open >= 1f && phaseTime >= 0.30f)
-                {
-                    upperKeeper.gameObject.SetActive(false);
-                    lowerKeeper.gameObject.SetActive(false);
-                    enabled = false;
-                }
+                if (phaseTime >= 0.30f) enabled = false;
                 break;
         }
         UpdateCamera(dt);
@@ -213,7 +192,6 @@ public sealed class ClockTower : MonoBehaviour
         // Match the walkable plane exactly, including after long frames.
         SetHands(90f, 90f);
         bridge.enabled = ballBridge.enabled = true;
-        keeperBarrier.enabled = false;
         State = ClockState.Completed;
         phaseTime = 0f;
         SetLight(powerLights, 1f);
