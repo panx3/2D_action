@@ -73,9 +73,9 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
         private const float VerticalSpan = 1.22f;
         private static readonly int SunsetContrastId = Shader.PropertyToID("_SV_SunsetContrast");
         private static readonly Color SteamGold = new Color32(255, 212, 153, 255);
-        private static readonly Color SteamShadow = new Color32(152, 130, 176, 255);
+        private static readonly Color SteamShadow = new Color32(156, 118, 94, 255);
         private static readonly Color Ember = new Color32(255, 185, 108, 255);
-        private static readonly Color Soot = new Color32(171, 151, 162, 255);
+        private static readonly Color Soot = new Color32(164, 141, 124, 255);
 
         private readonly Vector3[] vertices = new Vector3[Capacity * 4];
         private readonly Color32[] colors = new Color32[Capacity * 4];
@@ -131,7 +131,7 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
             used = 0;
             float light = Mathf.Clamp01(settings.sunsetStrength);
             Color gold = Color.Lerp(SteamShadow, SteamGold, 0.3f + 0.7f * light);
-            Color violet = SteamShadow;
+            Color shade = SteamShadow;
             for (int i = 0; i < steamCount && settings.steamOpacity > 0; i++)
             {
                 float seed = Mathf.Repeat(i * 0.618034f + parallax, 1);
@@ -142,10 +142,10 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
                 position.y += wave * 0.019f;
                 float alpha = settings.steamOpacity * Mathf.Lerp(0.8f, 1, seed) * EdgeFade(position);
                 gold.a = alpha * (0.92f + 0.08f * wave);
-                violet.a = gold.a * 0.66f;
+                shade.a = gold.a * 0.66f;
                 var size = new Vector2(view.x * Mathf.Lerp(0.29f, 0.44f, seed),
                     view.y * Mathf.Lerp(0.054f, 0.10f, seed));
-                Quad(position, view, size, -0.11f + wave * 0.06f, (i + (steamCount == 2 ? 2 : 0)) % 4, gold, violet);
+                Quad(position, view, size, -0.11f + wave * 0.06f, (i + (steamCount == 2 ? 2 : 0)) % 4, gold, shade);
             }
             DrawFlecks(Mathf.RoundToInt(sootCount * density), false, view, pixel, clock);
             DrawFlecks(Mathf.RoundToInt(emberCount * density), true, view, pixel, clock);

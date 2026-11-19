@@ -49,7 +49,10 @@ Shader "IronBallGirl/Screen Visual Sprite"
             {
                 fixed4 c=ApplyGroundSeam(SampleSpriteTexture(i.uv), i.world)*i.color;
                 if (_SV_EnvironmentReceiver > 0.5 && _SV_SunsetContrast > 0)
-                    c.rgb = Stage2SunlitSurface(c.rgb, Stage2Sunlight(i.world), _SV_SunsetContrast);
+                {
+                    float sunlight = Stage2Sunlight(floor(i.world * 21) / 21);
+                    c.rgb = Stage2SunlitSurface(c.rgb, smoothstep(0.10, 0.90, sunlight), _SV_SunsetContrast);
+                }
                 float3 lighting=ScreenVisualLight(i.world, _SV_Layer, 1, _SV_EnvironmentReceiver);
                 if (_SV_LightingEnabled > 0.5 && (_SV_WorldTone.a > 0.001 || _SV_WorldSaturation < 0.999))
                 {

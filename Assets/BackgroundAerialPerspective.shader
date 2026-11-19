@@ -15,6 +15,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
         [HideInInspector] _SV_Atmosphere ("Atmosphere", Color) = (0.7,0.83,0.96,1)
         [HideInInspector] _SV_FogColor ("Fog", Color) = (0.7,0.83,0.96,1)
         [HideInInspector] _SV_Sunset ("Sunset strength, sky mask, contrast", Vector) = (0,0,0,0)
+        [HideInInspector] _SV_Sun ("Sun position, radius, opening", Vector) = (0,0,0,0)
         [HideInInspector] _SV_Layer ("Layer", Float) = 0
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
@@ -44,6 +45,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
             float4 _MainTex_TexelSize;
             float _SV_Active, _SV_Layer, _SV_Time;
             float4 _SV_Tint, _SV_Tone, _SV_Blur, _SV_Fog, _SV_Atmosphere, _SV_FogColor, _SV_Sunset;
+            float4 _SV_Sun;
             struct VisualOutput { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float2 world:TEXCOORD1; float4 screen:TEXCOORD2; UNITY_VERTEX_OUTPUT_STEREO };
             VisualOutput VisualVert(appdata_t v)
             {
@@ -62,60 +64,56 @@ Shader "IronBallGirl/Background Aerial Perspective"
             {
                 float strength = _SV_Sunset.x;
                 float contrast = _SV_Sunset.z;
-                float sunlight = contrast > 0 ? Stage2Sunlight(world) : 0;
+                float sunlight = Stage2Sunlight(world);
                 float luminance = SunsetLuminance(color);
-                float horizon = smoothstep(0.07, 0.19, uv.y) * (1 - smoothstep(0.24, 0.66, uv.y));
-                float litCloud = smoothstep(0.1, 0.54, luminance);
+                float horizon = smoothstep(0.06, 0.21, uv.y) * (1 - smoothstep(0.31, 0.75, uv.y));
+                float litCloud = smoothstep(0.055, 0.38, luminance);
                 if (_SV_Sunset.y < 0.5)
                 {
-                    // Scatter warm light into the lighter recesses of the distant factories.
-                    float mist = horizon * lerp(0.55, 1, noise) * litCloud;
-                    color = lerp(color, float3(0.94, 0.57, 0.35), mist * strength * 0.38);
-                    if (contrast <= 0) return color;
-
-                    float3 silhouette = color * float3(0.49, 0.63, 0.91) + float3(0.002, 0.006, 0.021);
-                    float scatter = lerp(0.19, 1, litCloud) * lerp(0.51, 1, horizon) * lerp(0.72, 1, noise);
-                    float3 sunlitMist = color + (1 - color) * float3(0.36, 0.32, 0.07) * scatter;
-                    float layerContrast = contrast * lerp(0.56, 1, saturate(strength * 1.8));
-                    return lerp(color, lerp(silhouette, sunlitMist, sunlight), layerContrast);
+                    // The warm mist picks up roof highlights and leaves the dark profiles readable.
+                    color *= lerp(1, float3(1.07, 0.98, 0.64), strength);
+                    float scatter = lerp(0.20, 1, litCloud) * lerp(0.49, 1, horizon) * lerp(0.76, 1, noise);
+                    float3 shadow = color * float3(0.60, 0.57, 0.50);
+                    float3 glow = color + (1 - color) * SunsetColor(float3(0.89, 0.58, 0.23)) * scatter * 0.33;
+                    return lerp(color, lerp(shadow, glow, sunlight), contrast * lerp(0.62, 1, saturate(strength * 1.8)));
                 }
 
-                float horizonFocus = 1 - smoothstep(0.03, 0.36, abs(uv.x - 0.47));
-                float amber = horizon * lerp(0.65, 1, horizonFocus) * lerp(0.48, 1, litCloud);
-                float upperShadow = smoothstep(0.4, 0.94, uv.y) * (1 - litCloud);
-                color = lerp(color, color * float3(0.9, 0.94, 1.12) + float3(0.008, 0.012, 0.035),
-                    upperShadow * strength);
-                color += float3(0.28, 0.34, 0.13) * amber * strength;
-                if (contrast > 0)
-                {
-                    float skyShadow = smoothstep(0.34, 0.87, uv.y) * lerp(1, 0.48, litCloud);
-                    float3 twilight = color * float3(0.55, 0.70, 0.98) + float3(0.003, 0.007, 0.023);
-                    color = lerp(color, twilight, skyShadow * contrast);
+                float3 copper = SunsetColor(float3(0.55, 0.234, 0.112));
+                float3 orange = SunsetColor(float3(1.0, 0.56, 0.21));
+                float3 warmSky = color * float3(1.18, 1.02, 0.30) + copper * 0.20;
+                warmSky *= 1 - smoothstep(0.47, 0.94, uv.y) * (1 - litCloud) * contrast * 0.27;
+                color = lerp(color, warmSky, strength);
 
-                    float opening = lerp(0.42, 1, sunlight);
-                    float goldenBand = smoothstep(0.068, 0.165, uv.y) * (1 - smoothstep(0.30, 0.66, uv.y));
-                    goldenBand *= lerp(0.58, 1, horizonFocus) * lerp(0.62, 1, litCloud);
-                    // Sample immediately below the edge. The low sun catches the cloud's underside.
-                    float below = SunsetLuminance(SampleSpriteTexture(uv - float2(0, _MainTex_TexelSize.y * 5)).rgb);
-                    float rim = smoothstep(0.013, 0.12, below - sourceLuminance);
-                    rim *= smoothstep(0.12, 0.25, uv.y) * (1 - smoothstep(0.53, 0.78, uv.y));
-                    color += (1 - color) * float3(0.43, 0.49, 0.22) * (goldenBand + rim * 0.42) * contrast * opening;
-                }
+                float radius = max(_SV_Sun.z, 0.01);
+                float2 ray = (world - _SV_Sun.xy) / radius;
+                float band = _SV_Sun.z > 0 ? 1 - smoothstep(0.25, 4.6, abs(ray.y + 0.74)) : horizon;
+                float below = SunsetLuminance(SampleSpriteTexture(uv - float2(0, _MainTex_TexelSize.y * 6)).rgb);
+                float rim = smoothstep(0.009, 0.09, below - sourceLuminance);
+                float litEdge = rim * lerp(0.32, 0.90, sunlight) * (0.19 + 0.36 * band);
+                float horizonFill = (0.09 * horizon + band * lerp(0.11, 0.21, sunlight)) * lerp(0.55, 1, litCloud);
+                color += (1 - color) * orange * (horizonFill + litEdge) * strength;
+                if (_SV_Sun.w <= 0) return saturate(color);
 
-                // A wide shaft and a fine shaft spread from the light already painted into the sky.
-                float2 sky = floor(uv * float2(544, 181)) / float2(544, 181);
-                float rise = max(0, sky.y - 0.12);
-                float spread = 0.012 + rise * 0.092;
-                float wide = lerp(spread, 0.025 + rise * 0.17, contrast);
-                float fine = lerp(spread, 0.007 + rise * 0.04, contrast);
-                float leftRay = 1 - smoothstep(0.002, wide, abs(sky.x - 0.46 + rise * lerp(0.20, -0.28, contrast)));
-                float rightRay = 1 - smoothstep(0.004, fine, abs(sky.x - 0.49 - rise * lerp(0.28, 0.35, contrast)));
-                float reach = smoothstep(0.035, 0.19, rise) *
-                    (1 - smoothstep(lerp(0.36, 0.46, contrast), lerp(0.64, 0.70, contrast), rise));
-                float rays = leftRay * (lerp(0.043, 0.22, contrast) + sin(_SV_Time * 0.63) * 0.010)
-                    + rightRay * (lerp(0.049, 0.115, contrast) + sin(_SV_Time * 0.51 + 2.1) * 0.010);
-                rays *= lerp(1, lerp(0.62, 1, sunlight), contrast);
-                return saturate(color + float3(1, 0.74, 0.42) * rays * reach * strength);
+                float distanceToSun = length(ray);
+                float halo = exp2(-distanceToSun * distanceToSun * 0.26);
+                float wideRay = 1 - smoothstep(0.14, 1.56, abs(ray.x - ray.y * 0.45));
+                float fineRay = 1 - smoothstep(0.06, 0.63, abs(ray.x - ray.y * 0.94));
+                float reach = smoothstep(0.55, 1.5, distanceToSun) * (1 - smoothstep(2.4, 5.7, distanceToSun));
+                float rayBrightness = (wideRay * 0.18 + fineRay * 0.13) * reach * (0.94 + 0.06 * sin(_SV_Time * 0.63));
+                float3 glowingSky = color + (1 - color) * orange * (halo * 0.78 + rayBrightness);
+
+                // A single sun in world space keeps the mirrored copies of the sky in phase.
+                float2 solarPixel = floor(ray * 29 + 0.5) / 29;
+                float diskDistance = length(solarPixel);
+                float disk = 1 - smoothstep(0.98, 1.02, diskDistance);
+                float3 edge = SunsetColor(float3(1.0, 0.71, 0.29));
+                float3 core = SunsetColor(float3(1.0, 0.963, 0.80));
+                float3 sun = lerp(edge, core, 1 - smoothstep(0.43, 1, diskDistance));
+                // Underlit cloud rows can cut a soft band into the outer disk.
+                float cloud = smoothstep(0.012, 0.145, below - sourceLuminance);
+                float sunExposure = _SV_Sun.w * strength;
+                color = lerp(color, glowingSky, sunExposure);
+                return saturate(lerp(color, sun, disk * sunExposure * (1 - 0.27 * cloud)));
             }
             fixed4 _AtmosphereColor;
             half _AtmosphereStrength;

@@ -18,7 +18,7 @@ MonoBehaviour:
     intensity: 0.15
     smoothness: 0.65
     roundness: 0.65
-    color: {r: 0.055, g: 0.07, b: 0.14, a: 1}
+    color: {r: 0.082, g: 0.043, b: 0.024, a: 1}
   blur:
     backgroundBlurEnabled: 1
     blurStrength: 0.18
@@ -28,10 +28,10 @@ MonoBehaviour:
     peripheralBlurRange: 0.6
   atmosphere:
     atmosphereEnabled: 1
-    atmosphereColor: {r: 0.68, g: 0.37, b: 0.28, a: 1}
+    atmosphereColor: {r: 0.76, g: 0.4, b: 0.205, a: 1}
     distanceFade: 0.12
     fogEnabled: 1
-    fogColor: {r: 0.68, g: 0.37, b: 0.28, a: 1}
+    fogColor: {r: 0.76, g: 0.4, b: 0.205, a: 1}
     fogOpacity: 0.04
     fogScrollSpeed: {x: 0.025, y: 0.006}
     fogVariation: 0.55
@@ -46,6 +46,8 @@ MonoBehaviour:
     driftMaterial: {fileID: 2100000, guid: da72df020cf340eba586b8d4653f906b, type: 2}
     sunsetStrength: 0.86
     sunsetContrast: 0.8
+    lensFlare: 0.45
+    lensFlareMaterial: {fileID: 2100000, guid: 7eecbc155682403883d0e361e28273e2, type: 2}
     steamOpacity: 0.37
     particleDensity: 1
   petals:

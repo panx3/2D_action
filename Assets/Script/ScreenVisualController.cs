@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public sealed class ScreenVisualController : MonoBehaviour
 {
     private static readonly int SunsetContrastId = Shader.PropertyToID("_SV_SunsetContrast");
+    private static readonly int SunId = Shader.PropertyToID("_SV_Sun");
     public bool visualsEnabled = true;
     public ScreenVisualProfile profile;
     [SerializeField] private Camera targetCamera;
@@ -18,6 +19,8 @@ public sealed class ScreenVisualController : MonoBehaviour
     [SerializeField] private Material petalMaterial;
     [SerializeField] private Stage2IndustrialFixtures industrialFixtures;
     [SerializeField] private Renderer[] environmentLightReceivers = System.Array.Empty<Renderer>();
+    [SerializeField] private SpriteRenderer sunsetPillar;
+    [SerializeField] private SpriteRenderer sunsetAirship;
 
     private sealed class Binding
     {
@@ -51,6 +54,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     private AmbientPetalField petalField;
     private AmbientPetalField foregroundPetalField;
     private IndustrialAtmosphereField industrialField;
+    private Stage2SunFlare sunFlare;
     private float surfaceSunsetContrast;
 
     public ScreenVisualProfile Settings
@@ -171,6 +175,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         bool active = isActiveAndEnabled && visualsEnabled;
         var air = p.industrialAir;
         bool industrial = active && air != null && air.enabled;
+        Vector4 sun = industrial ? Stage2SunFlare.SunPosition(targetCamera) : Vector4.zero;
         float sunsetContrast = industrial ? Mathf.Clamp01(air.sunsetContrast) * Mathf.Clamp01(air.sunsetStrength) : 0;
         SetSurfaceSunsetContrast(sunsetContrast);
         bool useDrift = industrial && air.driftMaterial != null && air.driftMaterial.shader.isSupported;
@@ -196,12 +201,19 @@ public sealed class ScreenVisualController : MonoBehaviour
             {
                 var layer = FindLayer(p, b.parallax.name);
                 b.parallax.SetVisualScrollFactor(active && p.parallaxEnabled && layer != null && layer.overrideScrollFactor ? (float?)layer.scrollFactor : null);
-                ConfigureBackground(b, p, layer, active, industrial, sunsetContrast);
+                ConfigureBackground(b, p, layer, active, industrial, sunsetContrast, sun);
             }
         }
         ApplyLights(p, active);
         ApplyVignette(p, active);
         ApplyParticles(p, active && !useDrift);
+        if (sun.z > 0 && air.lensFlare > 0 && air.sunsetStrength > 0 &&
+            air.lensFlareMaterial != null && air.lensFlareMaterial.shader.isSupported)
+        {
+            if (sunFlare == null) sunFlare = Stage2SunFlare.Create(transform, sunsetPillar, sunsetAirship);
+            sunFlare.SetView(targetCamera, sun, air.lensFlareMaterial, Mathf.Clamp01(air.lensFlare) * Mathf.Clamp01(air.sunsetStrength));
+        }
+        else if (sunFlare != null) sunFlare.Hide();
         if (useDrift && industrialField == null) industrialField = new IndustrialAtmosphereField(transform);
         if (industrialField != null)
         {
@@ -229,7 +241,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     }
 
     private void ConfigureBackground(Binding b, ScreenVisualProfile p, ScreenVisualProfile.LayerSettings l, bool active,
-        bool industrial, float sunsetContrast)
+        bool industrial, float sunsetContrast, Vector4 sun)
     {
         Material m = b.visual;
         bool known = l != null;
@@ -252,6 +264,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         m.SetVector("_SV_Sunset", industrial && known
             ? new Vector4(p.industrialAir.sunsetStrength * l.sunsetInfluence, l.sunsetSky ? 1 : 0, sunsetContrast, 0)
             : Vector4.zero);
+        if (known && l.sunsetSky) m.SetVector(SunId, sun);
     }
 
     private void ApplyLights(ScreenVisualProfile p, bool active)
@@ -417,6 +430,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         if (petalField != null) petalField.Hide();
         if (foregroundPetalField != null) foregroundPetalField.Hide();
         if (industrialField != null) industrialField.Hide();
+        if (sunFlare != null) sunFlare.Hide();
     }
 
     private void RestoreBindings()
@@ -441,6 +455,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         if (petalField != null) petalField.Dispose();
         if (foregroundPetalField != null) foregroundPetalField.Dispose();
         if (industrialField != null) industrialField.Dispose();
+        if (sunFlare != null) DestroyOwned(sunFlare.gameObject);
     }
     private static void DestroyOwned(Object value)
     {

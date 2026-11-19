@@ -2731,6 +2731,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1c5b3bca83cde6046a46784d590dd70c, type: 3}
+--- !u!212 &460791572 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1232330596791733123, guid: 1c5b3bca83cde6046a46784d590dd70c, type: 3}
+  m_PrefabInstance: {fileID: 460791571}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &461037256
 GameObject:
   m_ObjectHideFlags: 0
@@ -5283,6 +5288,8 @@ MonoBehaviour:
   - {fileID: 1522501484}
   - {fileID: 1057046763}
   - {fileID: 1037852483}
+  sunsetPillar: {fileID: 460791572}
+  sunsetAirship: {fileID: 1487127886}
 --- !u!4 &932229945
 Transform:
   m_ObjectHideFlags: 0
@@ -15977,6 +15984,11 @@ PrefabInstance:
 --- !u!4 &1487127885 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5601121796351732012, guid: d37a19dc85b19cb43b2f36afd09cdd27, type: 3}
+  m_PrefabInstance: {fileID: 1487127884}
+  m_PrefabAsset: {fileID: 0}
+--- !u!212 &1487127886 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 552560642771099930, guid: d37a19dc85b19cb43b2f36afd09cdd27, type: 3}
   m_PrefabInstance: {fileID: 1487127884}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1508206515

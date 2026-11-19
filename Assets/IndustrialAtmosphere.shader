@@ -38,8 +38,8 @@ Shader "IronBallGirl/Industrial Atmosphere"
                 {
                     float sun = Stage2Sunlight(i.world);
                     float underside = 1 - smoothstep(0.30, 0.74, frac(i.uv.y * 4));
-                    float3 shadow = lerp(float3(0.22, 0.16, 0.34), float3(0.36, 0.27, 0.48), underside);
-                    float3 lit = lerp(float3(0.70, 0.33, 0.16), float3(1, 0.71, 0.34), underside);
+                    float3 shadow = lerp(SunsetColor(float3(0.46, 0.32, 0.24)), SunsetColor(float3(0.64, 0.47, 0.35)), underside);
+                    float3 lit = lerp(SunsetColor(float3(0.86, 0.48, 0.24)), SunsetColor(float3(1, 0.83, 0.51)), underside);
                     color.rgb = lerp(color.rgb, lerp(shadow, lit, sun), _SV_SunsetContrast);
                     color.a *= lerp(1, lerp(0.70, 1.19, sun), _SV_SunsetContrast);
                 }
