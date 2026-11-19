@@ -42,7 +42,7 @@ Shader "IronBallGirl/Stage2 Sun Flare"
             {
                 float2 aspect = float2(_Source.w, 1);
                 float2 ray = (i.view - _Source.xy) * aspect;
-                float streak = (1 - smoothstep(0.017, 0.155, abs(ray.x))) * (1 - smoothstep(0.001, 0.009, abs(ray.y)));
+                float streak = (1 - smoothstep(0.017, 0.205, abs(ray.x))) * (1 - smoothstep(0.001, 0.010, abs(ray.y)));
                 float glow = 1 - smoothstep(0.018, 0.115, length(ray));
                 float2 first = lerp(_Source.xy, float2(0.5, 0.5), 0.53);
                 float2 second = lerp(_Source.xy, float2(0.5, 0.5), 1.51);
@@ -50,7 +50,7 @@ Shader "IronBallGirl/Stage2 Sun Flare"
                 float farGhost = Ghost((i.view - second) * aspect, 0.034);
                 float3 gold = SunsetColor(float3(1, 0.84, 0.51));
                 float3 copper = SunsetColor(float3(1, 0.53, 0.18));
-                float3 color = gold * (0.42 * streak + 0.12 * glow) + copper * (0.17 * nearGhost + 0.11 * farGhost);
+                float3 color = gold * (0.48 * streak + 0.15 * glow) + copper * (0.19 * nearGhost + 0.13 * farGhost);
                 return float4(color * _Source.z, 0);
             }
             ENDCG

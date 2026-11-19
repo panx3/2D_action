@@ -27,6 +27,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         public Renderer renderer;
         public Material original, visual;
         public ParallaxBackgroundLayer parallax;
+        public Stage2ChimneySmoke chimneySmoke;
         public bool background;
     }
     private readonly List<Binding> bindings = new List<Binding>();
@@ -162,7 +163,11 @@ public sealed class ScreenVisualController : MonoBehaviour
                         litMaterials.Add(key, visual);
                     }
                 }
-                bindings.Add(new Binding { renderer = r, original = original, visual = visual, parallax = parallax, background = parallax != null });
+                bindings.Add(new Binding
+                {
+                    renderer = r, original = original, visual = visual, parallax = parallax, background = parallax != null,
+                    chimneySmoke = parallax != null ? r.GetComponent<Stage2ChimneySmoke>() : null
+                });
                 registered.Add(r);
             }
         }
@@ -199,6 +204,8 @@ public sealed class ScreenVisualController : MonoBehaviour
             else if (!use && current == b.visual) b.renderer.sharedMaterial = b.original;
             if (b.parallax != null)
             {
+                if (b.chimneySmoke != null)
+                    b.chimneySmoke.SetDrawing(industrial && b.renderer.sharedMaterial == b.visual, b.visual);
                 var layer = FindLayer(p, b.parallax.name);
                 b.parallax.SetVisualScrollFactor(active && p.parallaxEnabled && layer != null && layer.overrideScrollFactor ? (float?)layer.scrollFactor : null);
                 ConfigureBackground(b, p, layer, active, industrial, sunsetContrast, sun);
@@ -439,6 +446,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         {
             if (b.renderer != null && b.renderer.sharedMaterial == b.visual) b.renderer.sharedMaterial = b.original;
             if (b.parallax != null) b.parallax.SetVisualScrollFactor(null);
+            if (b.chimneySmoke != null) b.chimneySmoke.SetDrawing(false);
         }
     }
     private void OnDestroy()

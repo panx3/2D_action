@@ -16,6 +16,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
         [HideInInspector] _SV_FogColor ("Fog", Color) = (0.7,0.83,0.96,1)
         [HideInInspector] _SV_Sunset ("Sunset strength, sky mask, contrast", Vector) = (0,0,0,0)
         [HideInInspector] _SV_Sun ("Sun position, radius, opening", Vector) = (0,0,0,0)
+        [HideInInspector] _SV_PaintedSmoke ("Painted smoke count and brightness threshold", Vector) = (0,0,0,0)
         [HideInInspector] _SV_Layer ("Layer", Float) = 0
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
@@ -46,6 +47,8 @@ Shader "IronBallGirl/Background Aerial Perspective"
             float _SV_Active, _SV_Layer, _SV_Time;
             float4 _SV_Tint, _SV_Tone, _SV_Blur, _SV_Fog, _SV_Atmosphere, _SV_FogColor, _SV_Sunset;
             float4 _SV_Sun;
+            float4 _SV_PaintedSmoke;
+            float4 _SV_PaintedSmokeRects[12];
             struct VisualOutput { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float2 world:TEXCOORD1; float4 screen:TEXCOORD2; UNITY_VERTEX_OUTPUT_STEREO };
             VisualOutput VisualVert(appdata_t v)
             {
@@ -121,6 +124,15 @@ Shader "IronBallGirl/Background Aerial Perspective"
             fixed4 AtmosphereFrag(VisualOutput input) : SV_Target
             {
                 fixed4 c = SampleSpriteTexture(input.uv);
+                // Stage2 cuts out the smoke drawn over the chimneys before drawing its moving plumes.
+                if (_SV_PaintedSmoke.x > 0 && c.a > 0 && c.r >= _SV_PaintedSmoke.y)
+                {
+                    for (int i = 0; i < (int)_SV_PaintedSmoke.x; i++)
+                    {
+                        float4 smoke = _SV_PaintedSmokeRects[i];
+                        if (all(input.uv >= smoke.xy) && all(input.uv <= smoke.zw)) return 0;
+                    }
+                }
                 if (_SV_Active > 0.5)
                 {
                     float2 edge=abs(input.screen.xy/input.screen.w*2-1);

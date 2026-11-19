@@ -46,7 +46,7 @@ MonoBehaviour:
     driftMaterial: {fileID: 2100000, guid: da72df020cf340eba586b8d4653f906b, type: 2}
     sunsetStrength: 0.86
     sunsetContrast: 0.8
-    lensFlare: 0.45
+    lensFlare: 0.64
     lensFlareMaterial: {fileID: 2100000, guid: 7eecbc155682403883d0e361e28273e2, type: 2}
     steamOpacity: 0.37
     particleDensity: 1
