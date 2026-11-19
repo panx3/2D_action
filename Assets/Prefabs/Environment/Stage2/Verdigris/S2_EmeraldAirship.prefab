@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 552560642771099930}
   - component: {fileID: 711722410749047963}
   - component: {fileID: 2351566526140725044}
+  - component: {fileID: 8684151241245715559}
   m_Layer: 0
   m_Name: S2_EmeraldAirship
   m_TagString: Untagged
@@ -130,3 +131,16 @@ MonoBehaviour:
   fadeWhenPlayerCovered: 0
   coveredOpacity: 0.6
   fadeDuration: 0.15
+--- !u!114 &8684151241245715559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3424409292171079096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 853c092f9f221d8408910b4a8de8aeed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackgroundScreenSize
+  targetCamera: {fileID: 0}

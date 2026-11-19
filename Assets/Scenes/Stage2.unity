@@ -1072,6 +1072,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: S2_ClockTower
       objectReference: {fileID: 0}
+    - target: {fileID: 7139904031748416186, guid: e8887f2d09412e64a9011bf4bb30bd03, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e6bd9e36370275c46909ed37ac095a4d, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4169,6 +4173,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4723461788026197972, guid: 070aa98b87d55664ab125dfe9044e718, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 5806738026573044224, guid: 5a98f895e201e03469b11d0cb6c89730, type: 3}
     - target: {fileID: 7387566553141171417, guid: 070aa98b87d55664ab125dfe9044e718, type: 3}
       propertyPath: m_Positions.Array.data[1].x
       value: 12.988311
@@ -4976,6 +4984,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagnetPoint
       objectReference: {fileID: 0}
+    - target: {fileID: 6185193412831197641, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 5806738026573044224, guid: 5a98f895e201e03469b11d0cb6c89730, type: 3}
     - target: {fileID: 8672270983404072537, guid: 5ec31592e40361140b546ffd400ee72b, type: 3}
       propertyPath: snapDistance
       value: 0.8
@@ -14703,6 +14715,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 2.47
       objectReference: {fileID: 0}
+    - target: {fileID: 6974297960333085936, guid: bbac1e032536f7a47b1ae3c45ad1c302, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e6bd9e36370275c46909ed37ac095a4d, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

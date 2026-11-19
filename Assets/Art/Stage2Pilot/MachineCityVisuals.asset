@@ -89,3 +89,23 @@ MonoBehaviour:
     blurStrength: 0.45
     fogInfluence: 1
     lightingInfluence: 0.06
+  - layerName: MachineCityFarFoundries
+    depthFactor: 0.84
+    overrideScrollFactor: 0
+    scrollFactor: 0.058
+    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    contrast: 0.95
+    saturation: 0.87
+    blurStrength: 0.64
+    fogInfluence: 0.92
+    lightingInfluence: 0.02
+  - layerName: MachineCityFoundations
+    depthFactor: 0.36
+    overrideScrollFactor: 0
+    scrollFactor: 0.22
+    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    contrast: 1.03
+    saturation: 0.91
+    blurStrength: 0.25
+    fogInfluence: 0.52
+    lightingInfluence: 0.04
