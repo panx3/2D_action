@@ -45,6 +45,7 @@ MonoBehaviour:
     enabled: 1
     driftMaterial: {fileID: 2100000, guid: da72df020cf340eba586b8d4653f906b, type: 2}
     sunsetStrength: 0.86
+    sunsetContrast: 0.8
     steamOpacity: 0.37
     particleDensity: 1
   petals:

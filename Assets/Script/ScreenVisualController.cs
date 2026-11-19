@@ -7,6 +7,7 @@ using UnityEngine.UI;
 [DisallowMultipleComponent, DefaultExecutionOrder(900)]
 public sealed class ScreenVisualController : MonoBehaviour
 {
+    private static readonly int SunsetContrastId = Shader.PropertyToID("_SV_SunsetContrast");
     public bool visualsEnabled = true;
     public ScreenVisualProfile profile;
     [SerializeField] private Camera targetCamera;
@@ -26,7 +27,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         public bool background;
     }
     private readonly List<Binding> bindings = new List<Binding>();
-    private readonly Dictionary<(Material, int, bool), Material> litMaterials = new Dictionary<(Material, int, bool), Material>();
+    private readonly Dictionary<(Material original, int layer, bool environmentReceiver), Material> litMaterials = new();
     private readonly HashSet<Renderer> registered = new HashSet<Renderer>();
     private readonly List<Renderer> scanBuffer = new List<Renderer>();
     private readonly List<GameObject> roots = new List<GameObject>();
@@ -50,6 +51,7 @@ public sealed class ScreenVisualController : MonoBehaviour
     private AmbientPetalField petalField;
     private AmbientPetalField foregroundPetalField;
     private IndustrialAtmosphereField industrialField;
+    private float surfaceSunsetContrast;
 
     public ScreenVisualProfile Settings
     {
@@ -152,6 +154,7 @@ public sealed class ScreenVisualController : MonoBehaviour
                         visual = new Material(original) { shader = spriteLightingShader, hideFlags = HideFlags.HideAndDontSave, name = original.name + " (Screen Light)" };
                         visual.SetFloat("_SV_Layer", r.gameObject.layer);
                         visual.SetFloat("_SV_EnvironmentReceiver", environmentReceiver ? 1 : 0);
+                        if (environmentReceiver) visual.SetFloat(SunsetContrastId, surfaceSunsetContrast);
                         litMaterials.Add(key, visual);
                     }
                 }
@@ -168,6 +171,8 @@ public sealed class ScreenVisualController : MonoBehaviour
         bool active = isActiveAndEnabled && visualsEnabled;
         var air = p.industrialAir;
         bool industrial = active && air != null && air.enabled;
+        float sunsetContrast = industrial ? Mathf.Clamp01(air.sunsetContrast) * Mathf.Clamp01(air.sunsetStrength) : 0;
+        SetSurfaceSunsetContrast(sunsetContrast);
         bool useDrift = industrial && air.driftMaterial != null && air.driftMaterial.shader.isSupported;
         if (industrialFixtures != null) industrialFixtures.Apply(useDrift, useDrift ? air.driftMaterial : null);
         bool background = active && (p.atmosphere.atmosphereEnabled || p.atmosphere.fogEnabled ||
@@ -191,7 +196,7 @@ public sealed class ScreenVisualController : MonoBehaviour
             {
                 var layer = FindLayer(p, b.parallax.name);
                 b.parallax.SetVisualScrollFactor(active && p.parallaxEnabled && layer != null && layer.overrideScrollFactor ? (float?)layer.scrollFactor : null);
-                ConfigureBackground(b, p, layer, active, industrial);
+                ConfigureBackground(b, p, layer, active, industrial, sunsetContrast);
             }
         }
         ApplyLights(p, active);
@@ -200,7 +205,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         if (useDrift && industrialField == null) industrialField = new IndustrialAtmosphereField(transform);
         if (industrialField != null)
         {
-            if (useDrift) industrialField.Tick(targetCamera, air, p.quality);
+            if (useDrift) industrialField.Tick(targetCamera, air, p.quality, sunsetContrast);
             else industrialField.Hide();
         }
         if (petalField != null) petalField.Tick(targetCamera, p.petals, p.quality, active, Time.deltaTime);
@@ -215,7 +220,16 @@ public sealed class ScreenVisualController : MonoBehaviour
         return null;
     }
 
-    private void ConfigureBackground(Binding b, ScreenVisualProfile p, ScreenVisualProfile.LayerSettings l, bool active, bool industrial)
+    private void SetSurfaceSunsetContrast(float contrast)
+    {
+        if (surfaceSunsetContrast == contrast) return;
+        surfaceSunsetContrast = contrast;
+        foreach (var binding in litMaterials)
+            if (binding.Key.environmentReceiver) binding.Value.SetFloat(SunsetContrastId, contrast);
+    }
+
+    private void ConfigureBackground(Binding b, ScreenVisualProfile p, ScreenVisualProfile.LayerSettings l, bool active,
+        bool industrial, float sunsetContrast)
     {
         Material m = b.visual;
         bool known = l != null;
@@ -236,7 +250,7 @@ public sealed class ScreenVisualController : MonoBehaviour
         m.SetColor("_SV_Atmosphere", a.atmosphereColor);
         m.SetColor("_SV_FogColor", a.fogColor);
         m.SetVector("_SV_Sunset", industrial && known
-            ? new Vector4(p.industrialAir.sunsetStrength * l.sunsetInfluence, l.sunsetSky ? 1 : 0, 0, 0)
+            ? new Vector4(p.industrialAir.sunsetStrength * l.sunsetInfluence, l.sunsetSky ? 1 : 0, sunsetContrast, 0)
             : Vector4.zero);
     }
 

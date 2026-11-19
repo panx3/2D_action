@@ -16,7 +16,8 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
         near = new DriftLayer(owner, "Industrial Air - Back Walls", -74, 2, 3, 1, 0.60f);
     }
 
-    internal void Tick(Camera camera, ScreenVisualProfile.IndustrialAirSettings settings, ScreenVisualProfile.Quality quality)
+    internal void Tick(Camera camera, ScreenVisualProfile.IndustrialAirSettings settings, ScreenVisualProfile.Quality quality,
+        float sunsetContrast)
     {
         if (camera == null || !camera.isActiveAndEnabled || !camera.orthographic)
         {
@@ -48,8 +49,8 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
         if (quality == ScreenVisualProfile.Quality.Low) density *= 0.5f;
         else if (quality == ScreenVisualProfile.Quality.Medium) density *= 0.75f;
         float pixel = height / Mathf.Max(1, camera.pixelHeight);
-        far.Draw(center, size, travel, pixel, clock, settings, density);
-        near.Draw(center, size, travel, pixel, clock, settings, density);
+        far.Draw(center, size, travel, pixel, clock, settings, density, sunsetContrast);
+        near.Draw(center, size, travel, pixel, clock, settings, density, sunsetContrast);
     }
 
     internal void Hide()
@@ -70,6 +71,7 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
         private const int Capacity = 24;
         private const float HorizontalSpan = 1.48f;
         private const float VerticalSpan = 1.22f;
+        private static readonly int SunsetContrastId = Shader.PropertyToID("_SV_SunsetContrast");
         private static readonly Color SteamGold = new Color32(255, 212, 153, 255);
         private static readonly Color SteamShadow = new Color32(152, 130, 176, 255);
         private static readonly Color Ember = new Color32(255, 185, 108, 255);
@@ -80,10 +82,12 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
         private readonly Vector2[] uv = new Vector2[Capacity * 4];
         private readonly Mesh mesh;
         private readonly MeshRenderer renderer;
+        private readonly MaterialPropertyBlock properties = new();
         private readonly int steamCount, sootCount, emberCount;
         private readonly float parallax;
         private Vector2 offset;
         private int used;
+        private float lastSunsetContrast;
 
         internal DriftLayer(Transform owner, string name, int sortingOrder, int steamCount, int sootCount, int emberCount,
             float parallax)
@@ -120,7 +124,7 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
         }
 
         internal void Draw(Vector2 center, Vector2 view, Vector2 travel, float pixel, double clock,
-            ScreenVisualProfile.IndustrialAirSettings settings, float density)
+            ScreenVisualProfile.IndustrialAirSettings settings, float density, float sunsetContrast)
         {
             offset.x = Mathf.Repeat(offset.x - travel.x * parallax, HorizontalSpan);
             offset.y = Mathf.Repeat(offset.y - travel.y * parallax, VerticalSpan);
@@ -151,6 +155,12 @@ internal sealed class IndustrialAtmosphereField : System.IDisposable
             renderer.transform.localScale = new Vector3(1 / Mathf.Max(0.001f, Mathf.Abs(parentScale.x)),
                 1 / Mathf.Max(0.001f, Mathf.Abs(parentScale.y)), 1);
             renderer.sharedMaterial = settings.driftMaterial;
+            if (lastSunsetContrast != sunsetContrast)
+            {
+                properties.SetFloat(SunsetContrastId, sunsetContrast);
+                renderer.SetPropertyBlock(properties);
+                lastSunsetContrast = sunsetContrast;
+            }
             mesh.vertices = vertices;
             mesh.colors32 = colors;
             mesh.uv = uv;

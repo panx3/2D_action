@@ -14,7 +14,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
         [HideInInspector] _SV_Fog ("Opacity, variation, speedX, speedY", Vector) = (0,0,0,0)
         [HideInInspector] _SV_Atmosphere ("Atmosphere", Color) = (0.7,0.83,0.96,1)
         [HideInInspector] _SV_FogColor ("Fog", Color) = (0.7,0.83,0.96,1)
-        [HideInInspector] _SV_Sunset ("Sunset strength, sky mask", Vector) = (0,0,0,0)
+        [HideInInspector] _SV_Sunset ("Sunset strength, sky mask, contrast", Vector) = (0,0,0,0)
         [HideInInspector] _SV_Layer ("Layer", Float) = 0
         [MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
@@ -40,6 +40,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
             #pragma multi_compile _ ETC1_EXTERNAL_ALPHA
             #include "UnitySprites.cginc"
             #include "ScreenVisualLighting.cginc"
+            #include "Stage2Sunset.cginc"
             float4 _MainTex_TexelSize;
             float _SV_Active, _SV_Layer, _SV_Time;
             float4 _SV_Tint, _SV_Tone, _SV_Blur, _SV_Fog, _SV_Atmosphere, _SV_FogColor, _SV_Sunset;
@@ -57,17 +58,26 @@ Shader "IronBallGirl/Background Aerial Perspective"
                 // Smooth periodic waves: no texture edges or repeating sprite seams.
                 return saturate(0.5+0.23*sin(p.x+sin(p.y*0.7))+0.17*sin(p.x*0.63-p.y*1.4));
             }
-            float3 ApplySunset(float3 color, float2 uv, float noise)
+            float3 ApplySunset(float3 color, float2 uv, float2 world, float noise, float sourceLuminance)
             {
                 float strength = _SV_Sunset.x;
-                float luminance = dot(color, float3(0.2126, 0.7152, 0.0722));
+                float contrast = _SV_Sunset.z;
+                float sunlight = contrast > 0 ? Stage2Sunlight(world) : 0;
+                float luminance = SunsetLuminance(color);
                 float horizon = smoothstep(0.07, 0.19, uv.y) * (1 - smoothstep(0.24, 0.66, uv.y));
                 float litCloud = smoothstep(0.1, 0.54, luminance);
                 if (_SV_Sunset.y < 0.5)
                 {
                     // Scatter warm light into the lighter recesses of the distant factories.
                     float mist = horizon * lerp(0.55, 1, noise) * litCloud;
-                    return lerp(color, float3(0.94, 0.57, 0.35), mist * strength * 0.38);
+                    color = lerp(color, float3(0.94, 0.57, 0.35), mist * strength * 0.38);
+                    if (contrast <= 0) return color;
+
+                    float3 silhouette = color * float3(0.49, 0.63, 0.91) + float3(0.002, 0.006, 0.021);
+                    float scatter = lerp(0.19, 1, litCloud) * lerp(0.51, 1, horizon) * lerp(0.72, 1, noise);
+                    float3 sunlitMist = color + (1 - color) * float3(0.36, 0.32, 0.07) * scatter;
+                    float layerContrast = contrast * lerp(0.56, 1, saturate(strength * 1.8));
+                    return lerp(color, lerp(silhouette, sunlitMist, sunlight), layerContrast);
                 }
 
                 float horizonFocus = 1 - smoothstep(0.03, 0.36, abs(uv.x - 0.47));
@@ -76,16 +86,35 @@ Shader "IronBallGirl/Background Aerial Perspective"
                 color = lerp(color, color * float3(0.9, 0.94, 1.12) + float3(0.008, 0.012, 0.035),
                     upperShadow * strength);
                 color += float3(0.28, 0.34, 0.13) * amber * strength;
+                if (contrast > 0)
+                {
+                    float skyShadow = smoothstep(0.34, 0.87, uv.y) * lerp(1, 0.48, litCloud);
+                    float3 twilight = color * float3(0.55, 0.70, 0.98) + float3(0.003, 0.007, 0.023);
+                    color = lerp(color, twilight, skyShadow * contrast);
 
-                // Two broad shafts spread from the light already painted into the sky.
+                    float opening = lerp(0.42, 1, sunlight);
+                    float goldenBand = smoothstep(0.068, 0.165, uv.y) * (1 - smoothstep(0.30, 0.66, uv.y));
+                    goldenBand *= lerp(0.58, 1, horizonFocus) * lerp(0.62, 1, litCloud);
+                    // Sample immediately below the edge. The low sun catches the cloud's underside.
+                    float below = SunsetLuminance(SampleSpriteTexture(uv - float2(0, _MainTex_TexelSize.y * 5)).rgb);
+                    float rim = smoothstep(0.013, 0.12, below - sourceLuminance);
+                    rim *= smoothstep(0.12, 0.25, uv.y) * (1 - smoothstep(0.53, 0.78, uv.y));
+                    color += (1 - color) * float3(0.43, 0.49, 0.22) * (goldenBand + rim * 0.42) * contrast * opening;
+                }
+
+                // A wide shaft and a fine shaft spread from the light already painted into the sky.
                 float2 sky = floor(uv * float2(544, 181)) / float2(544, 181);
                 float rise = max(0, sky.y - 0.12);
                 float spread = 0.012 + rise * 0.092;
-                float leftRay = 1 - smoothstep(0.002, spread, abs(sky.x - 0.46 + rise * 0.20));
-                float rightRay = 1 - smoothstep(0.004, spread, abs(sky.x - 0.49 - rise * 0.28));
-                float reach = smoothstep(0.035, 0.19, rise) * (1 - smoothstep(0.36, 0.64, rise));
-                float rays = leftRay * (0.043 + sin(_SV_Time * 0.63) * 0.010)
-                    + rightRay * (0.049 + sin(_SV_Time * 0.51 + 2.1) * 0.010);
+                float wide = lerp(spread, 0.025 + rise * 0.17, contrast);
+                float fine = lerp(spread, 0.007 + rise * 0.04, contrast);
+                float leftRay = 1 - smoothstep(0.002, wide, abs(sky.x - 0.46 + rise * lerp(0.20, -0.28, contrast)));
+                float rightRay = 1 - smoothstep(0.004, fine, abs(sky.x - 0.49 - rise * lerp(0.28, 0.35, contrast)));
+                float reach = smoothstep(0.035, 0.19, rise) *
+                    (1 - smoothstep(lerp(0.36, 0.46, contrast), lerp(0.64, 0.70, contrast), rise));
+                float rays = leftRay * (lerp(0.043, 0.22, contrast) + sin(_SV_Time * 0.63) * 0.010)
+                    + rightRay * (lerp(0.049, 0.115, contrast) + sin(_SV_Time * 0.51 + 2.1) * 0.010);
+                rays *= lerp(1, lerp(0.62, 1, sunlight), contrast);
                 return saturate(color + float3(1, 0.74, 0.42) * rays * reach * strength);
             }
             fixed4 _AtmosphereColor;
@@ -106,6 +135,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
                         c=lerp(c,soft,amount);
                     }
                 }
+                float sourceLuminance = SunsetLuminance(c.rgb);
                 c *= input.color;
                 half luminance = dot(c.rgb, half3(0.2126, 0.7152, 0.0722));
                 c.rgb = lerp(luminance.xxx, c.rgb, _Saturation);
@@ -119,7 +149,7 @@ Shader "IronBallGirl/Background Aerial Perspective"
                     float n=FogNoise(input.world*float2(0.14,0.35)-_SV_Time*_SV_Fog.zw);
                     float fog=_SV_Fog.x*lerp(0.65,n,_SV_Fog.y);
                     c.rgb=lerp(c.rgb,_SV_FogColor.rgb,fog);
-                    if (_SV_Sunset.x > 0.001) c.rgb = ApplySunset(c.rgb, input.uv, n);
+                    if (_SV_Sunset.x > 0.001) c.rgb = ApplySunset(c.rgb, input.uv, input.world, n, sourceLuminance);
                     c.rgb*=ScreenVisualLight(input.world,_SV_Layer,_SV_Tone.w);
                 }
                 c.rgb *= c.a;

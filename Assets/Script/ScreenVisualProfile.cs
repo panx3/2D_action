@@ -71,6 +71,8 @@ public sealed class ScreenVisualProfile : ScriptableObject
         public bool enabled;
         public Material driftMaterial;
         [Range(0, 1)] public float sunsetStrength = 0.8f;
+        [InspectorName("夕日の明暗"), Range(0, 1), Tooltip("夕日の光が当たる場所と影の強さ。0は従来の夕景。")]
+        public float sunsetContrast;
         [Range(0, 1)] public float steamOpacity = 0.37f;
         [Range(0, 1.5f)] public float particleDensity = 1;
     }
