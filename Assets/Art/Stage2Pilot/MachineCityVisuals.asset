@@ -81,8 +81,8 @@ MonoBehaviour:
   - layerName: MachineCitySky
     depthFactor: 1
     overrideScrollFactor: 0
-    scrollFactor: 0.14
-    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    scrollFactor: 0
+    colorTint: {r: 1, g: 0.995, b: 0.981, a: 1}
     contrast: 1
     saturation: 1
     blurStrength: 1
@@ -94,7 +94,7 @@ MonoBehaviour:
     depthFactor: 0.65
     overrideScrollFactor: 0
     scrollFactor: 0.14
-    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    colorTint: {r: 1, g: 0.991, b: 0.973, a: 1}
     contrast: 1
     saturation: 1
     blurStrength: 0.45
@@ -103,10 +103,10 @@ MonoBehaviour:
     sunsetInfluence: 0.51
     sunsetSky: 0
   - layerName: MachineCityFarFoundries
-    depthFactor: 0.84
+    depthFactor: 0.87
     overrideScrollFactor: 0
     scrollFactor: 0.058
-    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    colorTint: {r: 1, g: 0.978, b: 0.945, a: 1}
     contrast: 0.95
     saturation: 0.87
     blurStrength: 0.64
@@ -118,7 +118,7 @@ MonoBehaviour:
     depthFactor: 0.36
     overrideScrollFactor: 0
     scrollFactor: 0.22
-    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    colorTint: {r: 0.985, g: 0.975, b: 0.956, a: 1}
     contrast: 1.03
     saturation: 0.91
     blurStrength: 0.25

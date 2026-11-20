@@ -5,7 +5,9 @@ using UnityEngine.Rendering;
 [DefaultExecutionOrder(1300)] // Sample the airship after its parallax and lens-size updates.
 internal sealed class Stage2SunFlare : MonoBehaviour
 {
+    private const float SunViewportX = 0.857f;
     private const float SunViewportY = 0.53f;
+    private const float SunRadiusInViewHeight = 0.065f;
     private const float FlareBandHeight = 0.24f;
     private static readonly int SourceId = Shader.PropertyToID("_Source");
     private static readonly int BandId = Shader.PropertyToID("_Band");
@@ -26,16 +28,11 @@ internal sealed class Stage2SunFlare : MonoBehaviour
     internal static Vector4 SunPosition(Camera camera)
     {
         if (camera == null || !camera.isActiveAndEnabled || !camera.orthographic) return Vector4.zero;
-        Vector3 center = camera.transform.position;
-        float viewHeight = camera.orthographicSize * 2;
-        // The light remains distant across the stage while nearer silhouettes slide in front of it.
-        float offset = 8.45f - (center.x + 5.7f) * 0.035f;
-        float limit = viewHeight * camera.aspect * 0.44f;
-        float x = center.x + Mathf.Clamp(offset, -limit, limit);
-        float y = center.y + (SunViewportY - 0.5f) * viewHeight - (center.y - 8) * 0.16f;
-        float exposure = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(5, 16, DistanceToVista(center.x)));
-        exposure *= Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-9, -2, center.y));
-        return new Vector4(x, y, viewHeight * 0.065f, exposure);
+        // The zero-scroll sky anchors the disk. Buildings and props pass in front of it as the camera travels.
+        Vector3 position = camera.ViewportToWorldPoint(new Vector3(SunViewportX, SunViewportY, camera.nearClipPlane));
+        float radius = camera.orthographicSize * 2 * SunRadiusInViewHeight;
+        float exposure = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-9, -2, camera.transform.position.y));
+        return new Vector4(position.x, position.y, radius, exposure);
     }
 
     internal static Stage2SunFlare Create(Transform parent, SpriteRenderer pillar, SpriteRenderer airship)
@@ -46,7 +43,7 @@ internal sealed class Stage2SunFlare : MonoBehaviour
         flare.pillar = pillar;
         flare.airship = airship;
         flare.flareRenderer = root.AddComponent<MeshRenderer>();
-        flare.flareRenderer.sortingOrder = -830; // In front of the distant city, behind the back walls and gameplay.
+        flare.flareRenderer.sortingOrder = -980; // Draw in the sky, so the city silhouettes also cover the flare.
         flare.flareRenderer.shadowCastingMode = ShadowCastingMode.Off;
         flare.flareRenderer.receiveShadows = false;
         flare.flareRenderer.lightProbeUsage = LightProbeUsage.Off;
@@ -80,9 +77,7 @@ internal sealed class Stage2SunFlare : MonoBehaviour
 
         Vector3 position = new Vector3(sun.x, sun.y, transform.position.z);
         Vector3 source = targetCamera.WorldToViewportPoint(position);
-        float opening = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(3.25f, 11, DistanceToVista(targetCamera.transform.position.x)));
-        float edge = Mathf.Min(Mathf.Min(source.x, 1 - source.x), Mathf.Min(source.y, 1 - source.y));
-        float strength = sun.w * intensity * opening * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-0.055f, 0.08f, edge));
+        float strength = sun.w * intensity;
         if (source.z <= 0 || strength <= 0.001f)
         {
             flareRenderer.enabled = false;
@@ -130,8 +125,6 @@ internal sealed class Stage2SunFlare : MonoBehaviour
     {
         if (mesh != null) Destroy(mesh);
     }
-
-    private static float DistanceToVista(float x) => Mathf.Min(Mathf.Abs(x + 4), Mathf.Abs(x - 118));
 
     private static float Transmission(Vector2 point, in Silhouette stone, in Silhouette ship) =>
         (1 - stone.Coverage(point)) * (1 - ship.Coverage(point));
