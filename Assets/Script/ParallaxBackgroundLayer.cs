@@ -34,6 +34,16 @@ public sealed class ParallaxBackgroundLayer : MonoBehaviour
     public bool LoopsHorizontally => loopHorizontally;
     public void SetVisualScrollFactor(float? factor) => visualScrollFactor = factor;
 
+    internal int GetVisibleTiles(SpriteRenderer[] tiles)
+    {
+        if (spriteRenderer == null || !isActiveAndEnabled || !spriteRenderer.enabled) return 0;
+        tiles[0] = spriteRenderer;
+        int count = 1;
+        if (leftCopy != null && leftCopy.enabled) tiles[count++] = leftCopy;
+        if (rightCopy != null && rightCopy.enabled) tiles[count++] = rightCopy;
+        return count;
+    }
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();

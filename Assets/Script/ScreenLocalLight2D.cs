@@ -15,6 +15,8 @@ public sealed class ScreenLocalLight2D : MonoBehaviour
     [Min(0)] public float flickerSpeed = 1.5f;
     [Range(0, 0.5f)] public float flickerAmount = 0.04f;
     public LayerMask targetLayers = ~0;
+    [Tooltip("シーンの ScreenVisualController に登録した地形・装飾だけに照り返しを適用します。")]
+    public bool environmentOnly;
     [Tooltip("任意。発光元の非表示・破壊に合わせて光も消します。")]
     public SpriteRenderer emissionSource;
     [Tooltip("任意。Tilemapなど発光元の描画を止めた場合も光を消します。")]
@@ -22,6 +24,7 @@ public sealed class ScreenLocalLight2D : MonoBehaviour
     public bool glowEnabled = true;
     [Range(0, 1)] public float glowIntensity = 0.22f;
     [Min(0.01f)] public float glowRadius = 1.5f;
+    public int glowSortingOrder = -710;
     private SpriteRenderer glowRenderer;
 
     internal bool EmitsLight => lightEnabled && (emissionSource == null ||
@@ -40,9 +43,9 @@ public sealed class ScreenLocalLight2D : MonoBehaviour
             var go = new GameObject("Local Light Glow") { hideFlags = HideFlags.DontSave };
             go.transform.SetParent(transform, false);
             glowRenderer = go.AddComponent<SpriteRenderer>();
-            glowRenderer.sortingOrder = -710; // Behind dust, terrain, characters and every UI canvas.
         }
         glowRenderer.gameObject.layer = gameObject.layer;
+        glowRenderer.sortingOrder = glowSortingOrder;
         glowRenderer.sprite = sprite;
         glowRenderer.sharedMaterial = material;
         Vector3 parentScale = transform.lossyScale;

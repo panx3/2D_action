@@ -18,7 +18,7 @@ MonoBehaviour:
     intensity: 0.15
     smoothness: 0.65
     roundness: 0.65
-    color: {r: 0.055, g: 0.07, b: 0.14, a: 1}
+    color: {r: 0.082, g: 0.043, b: 0.024, a: 1}
   blur:
     backgroundBlurEnabled: 1
     blurStrength: 0.18
@@ -28,11 +28,11 @@ MonoBehaviour:
     peripheralBlurRange: 0.6
   atmosphere:
     atmosphereEnabled: 1
-    atmosphereColor: {r: 0.68, g: 0.37, b: 0.28, a: 1}
+    atmosphereColor: {r: 0.76, g: 0.4, b: 0.205, a: 1}
     distanceFade: 0.12
     fogEnabled: 1
-    fogColor: {r: 0.68, g: 0.37, b: 0.28, a: 1}
-    fogOpacity: 0.025
+    fogColor: {r: 0.76, g: 0.4, b: 0.205, a: 1}
+    fogOpacity: 0.04
     fogScrollSpeed: {x: 0.025, y: 0.006}
     fogVariation: 0.55
     particleEnabled: 1
@@ -41,6 +41,15 @@ MonoBehaviour:
     particleOpacity: 0.24
     particleSize: 0.09
     particleColor: {r: 1, g: 0.65, b: 0.25, a: 1}
+  industrialAir:
+    enabled: 1
+    driftMaterial: {fileID: 2100000, guid: da72df020cf340eba586b8d4653f906b, type: 2}
+    sunsetStrength: 0.86
+    sunsetContrast: 0.8
+    lensFlare: 0.64
+    lensFlareMaterial: {fileID: 2100000, guid: 7eecbc155682403883d0e361e28273e2, type: 2}
+    steamOpacity: 0.37
+    particleDensity: 1
   petals:
     enabled: 0
     count: 28
@@ -72,20 +81,48 @@ MonoBehaviour:
   - layerName: MachineCitySky
     depthFactor: 1
     overrideScrollFactor: 0
-    scrollFactor: 0.14
-    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    scrollFactor: 0
+    colorTint: {r: 1, g: 0.995, b: 0.981, a: 1}
     contrast: 1
     saturation: 1
     blurStrength: 1
     fogInfluence: 0.65
     lightingInfluence: 0
+    sunsetInfluence: 1
+    sunsetSky: 1
   - layerName: MachineCityDistrict
     depthFactor: 0.65
     overrideScrollFactor: 0
     scrollFactor: 0.14
-    colorTint: {r: 1, g: 1, b: 1, a: 1}
+    colorTint: {r: 1, g: 0.991, b: 0.973, a: 1}
     contrast: 1
     saturation: 1
     blurStrength: 0.45
     fogInfluence: 1
     lightingInfluence: 0.06
+    sunsetInfluence: 0.51
+    sunsetSky: 0
+  - layerName: MachineCityFarFoundries
+    depthFactor: 0.87
+    overrideScrollFactor: 0
+    scrollFactor: 0.058
+    colorTint: {r: 1, g: 0.978, b: 0.945, a: 1}
+    contrast: 0.95
+    saturation: 0.87
+    blurStrength: 0.64
+    fogInfluence: 0.92
+    lightingInfluence: 0.02
+    sunsetInfluence: 0.66
+    sunsetSky: 0
+  - layerName: MachineCityFoundations
+    depthFactor: 0.36
+    overrideScrollFactor: 0
+    scrollFactor: 0.22
+    colorTint: {r: 0.985, g: 0.975, b: 0.956, a: 1}
+    contrast: 1.03
+    saturation: 0.91
+    blurStrength: 0.25
+    fogInfluence: 0.52
+    lightingInfluence: 0.04
+    sunsetInfluence: 0.24
+    sunsetSky: 0

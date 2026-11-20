@@ -10,6 +10,8 @@ Shader "IronBallGirl/Screen Visual Sprite"
         [PerRendererData] _AlphaTex ("External Alpha", 2D) = "white" {}
         [PerRendererData] _EnableExternalAlpha ("Enable External Alpha", Float) = 0
         [HideInInspector] _SV_Layer ("Layer", Float) = 0
+        [HideInInspector] _SV_EnvironmentReceiver ("Environment light receiver", Float) = 0
+        [HideInInspector] _SV_SunsetContrast ("Sunset contrast", Float) = 0
         [HideInInspector] _GroundSeamEnabled ("Seam correction", Float) = 0
     }
     SubShader
@@ -29,7 +31,8 @@ Shader "IronBallGirl/Screen Visual Sprite"
             #include "UnitySprites.cginc"
             #include "ScreenVisualLighting.cginc"
             #include "GroundTileSeam.cginc"
-            float _SV_Layer;
+            #include "Stage2Sunset.cginc"
+            float _SV_Layer, _SV_EnvironmentReceiver, _SV_SunsetContrast;
             float4 _SV_WorldTone;
             float _SV_WorldSaturation;
             struct SVOutput { float4 vertex:SV_POSITION; fixed4 color:COLOR; float2 uv:TEXCOORD0; float2 world:TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
@@ -45,7 +48,12 @@ Shader "IronBallGirl/Screen Visual Sprite"
             fixed4 frag(SVOutput i):SV_Target
             {
                 fixed4 c=ApplyGroundSeam(SampleSpriteTexture(i.uv), i.world)*i.color;
-                float3 lighting=ScreenVisualLight(i.world, _SV_Layer, 1);
+                if (_SV_EnvironmentReceiver > 0.5 && _SV_SunsetContrast > 0)
+                {
+                    float sunlight = Stage2Sunlight(floor(i.world * 21) / 21);
+                    c.rgb = Stage2SunlitSurface(c.rgb, smoothstep(0.10, 0.90, sunlight), _SV_SunsetContrast);
+                }
+                float3 lighting=ScreenVisualLight(i.world, _SV_Layer, 1, _SV_EnvironmentReceiver);
                 if (_SV_LightingEnabled > 0.5 && (_SV_WorldTone.a > 0.001 || _SV_WorldSaturation < 0.999))
                 {
                     c.rgb*=lighting;
