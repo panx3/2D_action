@@ -21,6 +21,7 @@ public partial class Player
         if (!isActiveAndEnabled || !InputEnabled || _startIntroControlled || _goalInputBlocked || _gimmickInputBlocked
             || IsElectricStunned || IsItemDrinking || (_playerHealth != null && (_playerHealth.IsDead || _playerHealth.IsRespawning))) return;
 
+        EndLadderClimb();
         enemyHitStartedAt = Time.time;
         enemyHitUntil = Time.time + Mathf.Max(0f, enemyHitControlLockDuration);
         enemyHitGrounded = IsGrounded;

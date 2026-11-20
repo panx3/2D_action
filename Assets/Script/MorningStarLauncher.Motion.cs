@@ -239,9 +239,19 @@ public partial class MorningStarLauncher
         // 操作・物理用の保持時間はそのままに、投げ絵の終了後はBase Layerへ戻す。
         bool hurt = player != null && player.IsEnemyHitStunned && !_isChainClimbing && !upperHanging;
         bool drinking = player != null && player.IsItemDrinking;
-        SetMotionLaunchLayerSuppressed(drinking || hurt || (returnToLocomotion && !_isChainClimbing && !upperHanging));
+        bool ladderClimbing = player != null && player.IsLadderClimbing;
+        Sprite ladderPose = ladderClimbing ? playerMotionSet.ladderClimbPose : null;
+        SetMotionLaunchLayerSuppressed(ladderClimbing || drinking || hurt || (returnToLocomotion && !_isChainClimbing && !upperHanging));
 
-        if (drinking && playerMotionSet.drink.IsValid)
+        if (ladderClimbing)
+        {
+            if (ladderPose == null && playerMotionSet.climbing.IsValid)
+            {
+                var frames = playerMotionSet.climbing.frames;
+                selected = frames[player.LadderFrameIndex(frames.Length)];
+            }
+        }
+        else if (drinking && playerMotionSet.drink.IsValid)
         {
             int index = Mathf.Min(playerMotionSet.drink.frames.Length - 1,
                 Mathf.FloorToInt(player.ItemDrinkProgress * playerMotionSet.drink.frames.Length));
@@ -274,14 +284,15 @@ public partial class MorningStarLauncher
             else if (!IsPlayerGrounded() && _playerRb != null && Mathf.Abs(_playerRb.linearVelocity.y) < 0.7f)
                 selected = playerMotionSet.apex.Sample(0f);
         }
-        if (selected == null || selected.sprite == null) return true;
+        Sprite sprite = ladderPose != null ? ladderPose : selected?.sprite;
+        if (sprite == null) return true;
 
         if (suspended)
         {
             EnsureChainClimbSpriteRenderer();
             CopyChainClimbRendererSettings();
             _animatorDrivenSpriteBeforeChainClimb = _playerBodySprite.sprite;
-            _chainClimbSpriteRenderer.sprite = selected.sprite;
+            _chainClimbSpriteRenderer.sprite = sprite;
             bool flip = !_isChainClimbing && player != null && !player.FacingRight;
             _chainClimbSpriteRenderer.flipX = flip;
             Vector2 anchorLocal = selected.chainAnchor;
@@ -299,9 +310,11 @@ public partial class MorningStarLauncher
         else
         {
             motionAnimatorSprite = _playerBodySprite.sprite;
-            motionOverrideSprite = selected.sprite;
+            motionOverrideSprite = sprite;
             motionOverrideActive = true;
-            _playerBodySprite.sprite = selected.sprite;
+            _playerBodySprite.sprite = sprite;
+            if (ladderClimbing)
+                _playerBodySprite.flipX = ladderPose != null && player.LadderFrameIndex(2) == 1;
         }
         return true;
     }
@@ -310,6 +323,12 @@ public partial class MorningStarLauncher
     {
         position = default;
         if (playerMotionSet == null || _playerBodySprite == null) return false;
+        if (player != null && player.IsLadderClimbing)
+        {
+            // 鎖の表示は左右反転に関わらず腰から始まる。
+            position = _playerBodySprite.transform.TransformPoint(Player.LadderChainAnchor);
+            return true;
+        }
         if (motionHangingVisual || _isChainClimbing || IsUpperHanging)
         {
             position = GetUpwardPoseChainAnchorWorld();

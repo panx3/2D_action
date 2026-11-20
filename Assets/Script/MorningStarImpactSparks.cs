@@ -206,6 +206,13 @@ public sealed class MorningStarImpactSparks : MonoBehaviour
         EmitImpact(point, Vector2.up, 0.5f, Vector2.down, false, sparkCount);
     }
 
+    public void PlayMagnetRelease(Vector2 point, Vector2 direction)
+    {
+        if (!isActiveAndEnabled || sparks == null || direction.sqrMagnitude < 0.0001f) return;
+        Vector2 normal = direction.normalized;
+        EmitImpact(point, normal, 1f, -normal, false, 24);
+    }
+
     private void EmitImpact(Vector2 point, Vector2 normal, float strength, Vector2 incomingVelocity, bool hitTerrain, int requestedCount = -1)
     {
         int lowerCount = Mathf.Clamp(minimumSparks, 1, maximumSparks);

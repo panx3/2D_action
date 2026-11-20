@@ -213,6 +213,7 @@ public partial class Player : MonoBehaviour
     /// <summary>入力だけを禁止する。演出中の物理所有権はSetStartIntroControlで切り替える。</summary>
     public void SetInputEnabled(bool enabled)
     {
+        if (!enabled) EndLadderClimb();
         if (!enabled) EndItemDrink();
         if (!enabled) { EndElectricStun(); CancelEnemyHitReaction(); }
         InputEnabled = enabled;
@@ -226,6 +227,7 @@ public partial class Player : MonoBehaviour
 
     public void SetStartIntroControl(bool active)
     {
+        if (active) EndLadderClimb();
         if (active) EndItemDrink();
         _startIntroControlled = active;
         _bjump = false;
@@ -255,6 +257,7 @@ public partial class Player : MonoBehaviour
     public void SetGimmickInputBlocked(bool blocked)
     {
         if (_gimmickInputBlocked == blocked) return;
+        if (blocked) EndLadderClimb();
         if (blocked) EndItemDrink();
         _gimmickInputBlocked = blocked;
         if (_morningStarLauncher == null) _morningStarLauncher = GetComponent<MorningStarLauncher>();
@@ -272,6 +275,7 @@ public partial class Player : MonoBehaviour
     {
         if (_goalInputBlocked == blocked)
             return;
+        if (blocked) EndLadderClimb();
         if (blocked) EndItemDrink();
         _goalInputBlocked = blocked;
         if (_morningStarLauncher == null)
@@ -381,8 +385,10 @@ public partial class Player : MonoBehaviour
     {
 
         if (_playerHealth != null)
-
+        {
             _playerHealth.OnDead += HandlePlayerDead;
+            _playerHealth.OnDamaged += HandleLadderDamage;
+        }
 
     }
 
@@ -391,6 +397,7 @@ public partial class Player : MonoBehaviour
     private void OnDisable()
 
     {
+        EndLadderClimb();
         EndItemDrink();
         EndElectricStun();
         CancelEnemyHitReaction();
@@ -404,8 +411,10 @@ public partial class Player : MonoBehaviour
         ApplyBlinkOpacity();
 
         if (_playerHealth != null)
-
+        {
             _playerHealth.OnDead -= HandlePlayerDead;
+            _playerHealth.OnDamaged -= HandleLadderDamage;
+        }
 
 
 
@@ -463,7 +472,7 @@ public partial class Player : MonoBehaviour
 
         if (_anim != null)
         {
-            _anim.SetBool("Walk", Mathf.Abs(_moveInput.x) > 0.01f);
+            _anim.SetBool("Walk", !IsLadderClimbing && Mathf.Abs(_moveInput.x) > 0.01f);
             _anim.SetBool("Jump", !grounded);
             _anim.SetFloat("VerticalSpeed", _startIntroControlled ? _introVelocity.y : (_rigid != null ? _rigid.linearVelocity.y : 0f));
 
@@ -505,7 +514,7 @@ public partial class Player : MonoBehaviour
 
     {
 
-        if (_startIntroControlled || IsElectricStunned || IsItemDrinking)
+        if (UpdateLadderMovement() || _startIntroControlled || IsElectricStunned || IsItemDrinking)
             return;
 
         RefreshGroundedState();
@@ -827,6 +836,7 @@ public partial class Player : MonoBehaviour
     private void HandlePlayerDead()
 
     {
+        EndLadderClimb();
         EndItemDrink();
         EndElectricStun();
         CancelEnemyHitReaction();
@@ -1100,6 +1110,12 @@ public partial class Player : MonoBehaviour
             _jumpHeld = true;
             _lastJumpPressedAt = Time.time;
 
+            if (IsLadderClimbing)
+            {
+                EndLadderClimb();
+                PerformJump(true);
+                return;
+            }
             if (_morningStarLauncher != null && _morningStarLauncher.TryReleaseMagnetForJump())
             {
                 PerformJump(true);
@@ -1142,7 +1158,7 @@ public partial class Player : MonoBehaviour
     /// <summary>トランポリン接触の前後だけ追加ジャンプを受け付ける。速度の適用はPlayerが所有する。</summary>
     public void BeginTrampolineJumpInput(float window)
     {
-        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking) return;
+        if (!InputEnabled || _goalInputBlocked || _gimmickInputBlocked || _startIntroControlled || IsElectricStunned || IsEnemyHitStunned || IsItemDrinking || IsLadderClimbing) return;
         _trampolineJumpUntil = Time.time + Mathf.Max(0f, window);
         if (Time.time - _lastJumpPressedAt <= window)
             _jumpBufferTimer = Mathf.Max(_jumpBufferTimer, Time.fixedDeltaTime * 2f);
@@ -1156,6 +1172,7 @@ public partial class Player : MonoBehaviour
 
         if (_rigid == null || IsElectricStunned || IsItemDrinking) return;
 
+        EndLadderClimb();
         _rigid.AddForce(worldImpulse, mode);
 
     }
@@ -1168,6 +1185,7 @@ public partial class Player : MonoBehaviour
 
         if (_rigid == null || IsElectricStunned) return;
 
+        EndLadderClimb();
         _rigid.AddForce(Vector2.up * upwardImpulse, ForceMode2D.Impulse);
 
     }
@@ -1268,9 +1286,9 @@ public partial class Player : MonoBehaviour
 
     {
 
-        // Hook/Swing中またはLaunch Pose中にHandAnchorを左右へ瞬間移動させると、
-        // 物理ロープ支点や発射Animationの向きが崩れるため、完了まで向きを固定する。
+        // 通常のHook/SwingとLaunch Poseでは向きを保持。敵磁力中は移動方向へ向き直れる。
         if (_morningStarLauncher != null
+            && !_morningStarLauncher.IsEnemyMagnetPulling
             && (_morningStarLauncher.IsHookedState || _morningStarLauncher.IsLaunchPoseActive))
         {
             ApplyMovementFacingVisual();

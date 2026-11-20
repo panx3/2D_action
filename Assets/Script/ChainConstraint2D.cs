@@ -100,7 +100,7 @@ public class ChainConstraint2D : MonoBehaviour
     public float AirTensionMultiplier => airTensionMultiplier;
     public bool PrioritizesFlyingTrajectory => _prioritizeFlyingTrajectory;
     public bool IsPlayerPullSuppressed => _suppressPlayerPull
-        || (_player != null && (_player.IsElectricStunned || _player.IsItemDrinking));
+        || (_player != null && (_player.IsElectricStunned || _player.IsItemDrinking || _player.IsLadderClimbing));
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
     public bool HasOneWaySupport => _oneWaySupport.IsSupporting;
@@ -276,6 +276,8 @@ public class ChainConstraint2D : MonoBehaviour
             return;
         }
         physicsAnchor = EnforceSafetyLimit(physicsAnchor);
+        if (_player != null && _player.IsLadderClimbing)
+            LimitLadderMovementAtBlockedBall(physicsAnchor);
         UpdateRunJumpMomentumGrace(physicsAnchor, GetRopePathLength());
         ApplyRopeTension(physicsAnchor);
         ClampBallSpeed();
@@ -306,6 +308,8 @@ public class ChainConstraint2D : MonoBehaviour
     private Vector2 UpdatePhysicsAnchorWorld()
     {
         Transform playerTransform = playerRb.transform;
+        if (_player != null && _player.IsLadderClimbing)
+            return playerRb.position + (Vector2)playerTransform.TransformVector(Player.LadderChainAnchor);
         if (_playerClimbActive)
             return playerRb.position + (Vector2)playerTransform.TransformVector(_playerClimbAnchorLocal);
         Vector2 targetLocalPosition = playerTransform.InverseTransformPoint(handAnchor.position);
@@ -327,7 +331,33 @@ public class ChainConstraint2D : MonoBehaviour
         }
 
         // Player本体の移動は即時反映し、Animation/Facing由来の局所Anchor差分だけを補間する。
-        return playerTransform.TransformPoint(_smoothedAnchorLocalPosition);
+        return KeepOnPlayerSideOfClosedDoor(playerTransform.TransformPoint(_smoothedAnchorLocalPosition));
+    }
+
+    internal Vector2 KeepOnPlayerSideOfClosedDoor(Vector2 target)
+        => KeepOnPlayerSideOfClosedDoor(target, _ropeCollisionRadius);
+
+    internal Vector2 KeepOnPlayerSideOfClosedDoor(Vector2 target, float radius)
+    {
+        if (playerRb == null)
+            return target;
+
+        // An animated hand or recall target can cross a closed gate while the body is blocked.
+        Vector2 approach = playerRb.position;
+        Vector2 movement = target - approach;
+        float distance = movement.magnitude;
+        float clearance = radius + _collisionSkin;
+        int hitCount = Physics2D.CircleCast(approach, clearance,
+            distance > MinPathSegmentLength ? movement / distance : Vector2.right,
+            _terrainFilter, _ropeCastHits, distance);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider2D hit = _ropeCastHits[i].collider;
+            if (hit != null && hit.TryGetComponent(out ElectricDoor door))
+                target = door.KeepOnApproachSide(hit, approach, target, clearance);
+        }
+
+        return target;
     }
 
     private void ApplyPlayerClimbMotion(Vector2 anchor)
@@ -1417,6 +1447,26 @@ public class ChainConstraint2D : MonoBehaviour
         }
 
         return direction * distance;
+    }
+
+    private void LimitLadderMovementAtBlockedBall(Vector2 anchor)
+    {
+        if (_ropePathPoints.Count < 2) return;
+        Vector2 step = playerRb.linearVelocity * Time.fixedDeltaTime;
+        if (step.sqrMagnitude < 0.000001f) return;
+        Vector2 nextPoint = _ropePathPoints[1];
+        float currentLength = GetRopePathLength();
+        float increase = Vector2.Distance(anchor + step, nextPoint) - Vector2.Distance(anchor, nextPoint);
+        if (increase <= 0f) return;
+        float excess = currentLength + increase - Mathf.Max(currentLength, maxRopeLength);
+        if (excess <= 0.0001f) return;
+        Vector2 ball = morningStarRb.position;
+        Vector2 lastPoint = _ropePathPoints[_ropePathPoints.Count - 2];
+        if (_ropePathPoints.Count == 2) lastPoint += step;
+        Vector2 correction = GetSafeEndpointCorrection(morningStarRb, ball, lastPoint, excess);
+        float available = Vector2.Distance(ball, lastPoint) - Vector2.Distance(ball + correction, lastPoint);
+        if (available + 0.001f < excess)
+            playerRb.linearVelocity *= Mathf.Clamp01((Mathf.Max(0f, maxRopeLength - currentLength) + available) / increase);
     }
 
     private Vector2 EnforceSafetyLimit(Vector2 handPosition)

@@ -1,0 +1,1196 @@
+fileFormatVersion: 2
+guid: a82d600cdec784f48bb1b19ab980c6d5
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6181721218723032961
+    second: StoneColumnStages_Source_0
+  - first:
+      213: -7598645544347159230
+    second: StoneColumnStages_Source_1
+  - first:
+      213: -156119584428749930
+    second: StoneColumnStages_Source_2
+  - first:
+      213: 4175958209968262009
+    second: StoneColumnStages_Source_3
+  - first:
+      213: 7390254027387053457
+    second: StoneColumnStages_Source_4
+  - first:
+      213: -6826876127385358897
+    second: StoneColumnStages_Source_5
+  - first:
+      213: -797038280591283255
+    second: StoneColumnStages_Source_6
+  - first:
+      213: 3210749375175574930
+    second: StoneColumnStages_Source_7
+  - first:
+      213: 1468161261412945129
+    second: StoneColumnStages_Source_8
+  - first:
+      213: 4600023427151860447
+    second: StoneColumnStages_Source_9
+  - first:
+      213: -731053311871209747
+    second: StoneColumnStages_Source_10
+  - first:
+      213: -6919129185537967438
+    second: StoneColumnStages_Source_11
+  - first:
+      213: 3018497572708318699
+    second: StoneColumnStages_Source_12
+  - first:
+      213: -5313322756519153274
+    second: StoneColumnStages_Source_13
+  - first:
+      213: 1406117047482422377
+    second: StoneColumnStages_Source_14
+  - first:
+      213: 2144768254478133416
+    second: StoneColumnStages_Source_15
+  - first:
+      213: 4030700511944091666
+    second: StoneColumnStages_Source_16
+  - first:
+      213: 6771924585716278281
+    second: StoneColumnStages_Source_17
+  - first:
+      213: -7997320194762044332
+    second: StoneColumnStages_Source_18
+  - first:
+      213: 2347597050283884403
+    second: StoneColumnStages_Source_19
+  - first:
+      213: 593142350063388939
+    second: StoneColumnStages_Source_20
+  - first:
+      213: 5746589387449263412
+    second: StoneColumnStages_Source_21
+  - first:
+      213: -4344921409662070182
+    second: StoneColumnStages_Source_22
+  - first:
+      213: 2992225485971533635
+    second: StoneColumnStages_Source_23
+  - first:
+      213: 3258952807166389130
+    second: StoneColumnStages_Source_24
+  - first:
+      213: -1037835599406315441
+    second: StoneColumnStages_Source_25
+  - first:
+      213: -1895538560437609699
+    second: StoneColumnStages_Source_26
+  - first:
+      213: -5365058388581409066
+    second: StoneColumnStages_Source_27
+  - first:
+      213: 8631214078572549292
+    second: StoneColumnStages_Source_28
+  - first:
+      213: 4500399619636017796
+    second: StoneColumnStages_Source_29
+  - first:
+      213: 2402662126248135613
+    second: StoneColumnStages_Source_30
+  - first:
+      213: 2776551217710856703
+    second: StoneColumnStages_Source_31
+  - first:
+      213: 2494939649691200056
+    second: StoneColumnStages_Source_32
+  - first:
+      213: -3245979810475931457
+    second: StoneColumnStages_Source_33
+  - first:
+      213: 8421835513105597132
+    second: StoneColumnStages_Source_34
+  - first:
+      213: 5572445289126129626
+    second: StoneColumnStages_Source_35
+  - first:
+      213: 6669486385722345478
+    second: StoneColumnStages_Source_36
+  - first:
+      213: 3405198223042498330
+    second: StoneColumnStages_Source_37
+  - first:
+      213: 5321602711501017296
+    second: StoneColumnStages_Source_38
+  - first:
+      213: 884742755552010755
+    second: StoneColumnStages_Source_39
+  - first:
+      213: -7359895807717229872
+    second: StoneColumnStages_Source_40
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_0
+      rect:
+        serializedVersion: 2
+        x: 945
+        y: 1017
+        width: 12
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f70d481cd4d163aa0800000000000000
+      internalID: -6181721218723032961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 398
+        height: 1004
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 245351303203c8690800000000000000
+      internalID: -7598645544347159230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_2
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 853
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69b84aba01a55ddf0800000000000000
+      internalID: -156119584428749930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_3
+      rect:
+        serializedVersion: 2
+        x: 382
+        y: 27
+        width: 419
+        height: 942
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97bc806eddbf3f930800000000000000
+      internalID: 4175958209968262009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_4
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 23
+        width: 397
+        height: 959
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1952e46f1e47f8660800000000000000
+      internalID: 7390254027387053457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_5
+      rect:
+        serializedVersion: 2
+        x: 1216
+        y: 190
+        width: 307
+        height: 781
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fcde99d15501241a0800000000000000
+      internalID: -6826876127385358897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_6
+      rect:
+        serializedVersion: 2
+        x: 734
+        y: 821
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cbe7fc18e950f4f0800000000000000
+      internalID: -797038280591283255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_7
+      rect:
+        serializedVersion: 2
+        x: 760
+        y: 807
+        width: 7
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 295c522ab8fde8c20800000000000000
+      internalID: 3210749375175574930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_8
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 773
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ec028b73e4ff5410800000000000000
+      internalID: 1468161261412945129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_9
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 733
+        width: 27
+        height: 83
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd29cdd5fe096df30800000000000000
+      internalID: 4600023427151860447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_10
+      rect:
+        serializedVersion: 2
+        x: 1105
+        y: 733
+        width: 38
+        height: 73
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dee2b0ad2e6cad5f0800000000000000
+      internalID: -731053311871209747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_11
+      rect:
+        serializedVersion: 2
+        x: 1142
+        y: 779
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2bab8f43aa05aff90800000000000000
+      internalID: -6919129185537967438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_12
+      rect:
+        serializedVersion: 2
+        x: 726
+        y: 736
+        width: 25
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bed78a8bc8bd3e920800000000000000
+      internalID: 3018497572708318699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_13
+      rect:
+        serializedVersion: 2
+        x: 1136
+        y: 735
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6813da8aa194346b0800000000000000
+      internalID: -5313322756519153274
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_14
+      rect:
+        serializedVersion: 2
+        x: 1144
+        y: 738
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9649fc73108838310800000000000000
+      internalID: 1406117047482422377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_15
+      rect:
+        serializedVersion: 2
+        x: 374
+        y: 707
+        width: 13
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a824bd2d5fb3cd10800000000000000
+      internalID: 2144768254478133416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_16
+      rect:
+        serializedVersion: 2
+        x: 1104
+        y: 681
+        width: 39
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 218a96292ccefe730800000000000000
+      internalID: 4030700511944091666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_17
+      rect:
+        serializedVersion: 2
+        x: 1144
+        y: 655
+        width: 7
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9046a511885bafd50800000000000000
+      internalID: 6771924585716278281
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_18
+      rect:
+        serializedVersion: 2
+        x: 1502
+        y: 649
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45c862c87afc30190800000000000000
+      internalID: -7997320194762044332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_19
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 539
+        width: 19
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37ffce14417549020800000000000000
+      internalID: 2347597050283884403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_20
+      rect:
+        serializedVersion: 2
+        x: 713
+        y: 546
+        width: 26
+        height: 42
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b09c4c423d34b3800800000000000000
+      internalID: 593142350063388939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_21
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 519
+        width: 5
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43561f4e99cffbf40800000000000000
+      internalID: 5746589387449263412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_22
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 447
+        width: 46
+        height: 43
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a525a109ffcb3b3c0800000000000000
+      internalID: -4344921409662070182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_23
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 417
+        width: 29
+        height: 49
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34f243bd935868920800000000000000
+      internalID: 2992225485971533635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_24
+      rect:
+        serializedVersion: 2
+        x: 1109
+        y: 457
+        width: 23
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8b2aeabf402a3d20800000000000000
+      internalID: 3258952807166389130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_25
+      rect:
+        serializedVersion: 2
+        x: 1500
+        y: 462
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f48c122650ed891f0800000000000000
+      internalID: -1037835599406315441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_26
+      rect:
+        serializedVersion: 2
+        x: 350
+        y: 419
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1b9f07e8b1b1b5e0800000000000000
+      internalID: -1895538560437609699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_27
+      rect:
+        serializedVersion: 2
+        x: 758
+        y: 411
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6de106522db7b85b0800000000000000
+      internalID: -5365058388581409066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_28
+      rect:
+        serializedVersion: 2
+        x: 1136
+        y: 407
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca4daad697b38c770800000000000000
+      internalID: 8631214078572549292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_29
+      rect:
+        serializedVersion: 2
+        x: 743
+        y: 333
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48a35b32c91a47e30800000000000000
+      internalID: 4500399619636017796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_30
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 319
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbb0e465978f75120800000000000000
+      internalID: 2402662126248135613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_31
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 310
+        width: 9
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff975582f9a488620800000000000000
+      internalID: 2776551217710856703
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_32
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 287
+        width: 35
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83aa1e3846ecf9220800000000000000
+      internalID: 2494939649691200056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_33
+      rect:
+        serializedVersion: 2
+        x: 370
+        y: 247
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb80e707f86f3f2d0800000000000000
+      internalID: -3245979810475931457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_34
+      rect:
+        serializedVersion: 2
+        x: 736
+        y: 247
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc2cd6347ce50e470800000000000000
+      internalID: 8421835513105597132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_35
+      rect:
+        serializedVersion: 2
+        x: 740
+        y: 245
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: adf69a4677d455d40800000000000000
+      internalID: 5572445289126129626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_36
+      rect:
+        serializedVersion: 2
+        x: 1134
+        y: 243
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 608c8470886ce8c50800000000000000
+      internalID: 6669486385722345478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_37
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 207
+        width: 21
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1f4d3a0eb1b14f20800000000000000
+      internalID: 3405198223042498330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_38
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 205
+        width: 36
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d016c698712ad940800000000000000
+      internalID: 5321602711501017296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_39
+      rect:
+        serializedVersion: 2
+        x: 771
+        y: 113
+        width: 12
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 302274e39dc374c00800000000000000
+      internalID: 884742755552010755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StoneColumnStages_Source_40
+      rect:
+        serializedVersion: 2
+        x: 1200
+        y: 25
+        width: 305
+        height: 161
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dab02dd1c56cd990800000000000000
+      internalID: -7359895807717229872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      StoneColumnStages_Source_0: -6181721218723032961
+      StoneColumnStages_Source_1: -7598645544347159230
+      StoneColumnStages_Source_10: -731053311871209747
+      StoneColumnStages_Source_11: -6919129185537967438
+      StoneColumnStages_Source_12: 3018497572708318699
+      StoneColumnStages_Source_13: -5313322756519153274
+      StoneColumnStages_Source_14: 1406117047482422377
+      StoneColumnStages_Source_15: 2144768254478133416
+      StoneColumnStages_Source_16: 4030700511944091666
+      StoneColumnStages_Source_17: 6771924585716278281
+      StoneColumnStages_Source_18: -7997320194762044332
+      StoneColumnStages_Source_19: 2347597050283884403
+      StoneColumnStages_Source_2: -156119584428749930
+      StoneColumnStages_Source_20: 593142350063388939
+      StoneColumnStages_Source_21: 5746589387449263412
+      StoneColumnStages_Source_22: -4344921409662070182
+      StoneColumnStages_Source_23: 2992225485971533635
+      StoneColumnStages_Source_24: 3258952807166389130
+      StoneColumnStages_Source_25: -1037835599406315441
+      StoneColumnStages_Source_26: -1895538560437609699
+      StoneColumnStages_Source_27: -5365058388581409066
+      StoneColumnStages_Source_28: 8631214078572549292
+      StoneColumnStages_Source_29: 4500399619636017796
+      StoneColumnStages_Source_3: 4175958209968262009
+      StoneColumnStages_Source_30: 2402662126248135613
+      StoneColumnStages_Source_31: 2776551217710856703
+      StoneColumnStages_Source_32: 2494939649691200056
+      StoneColumnStages_Source_33: -3245979810475931457
+      StoneColumnStages_Source_34: 8421835513105597132
+      StoneColumnStages_Source_35: 5572445289126129626
+      StoneColumnStages_Source_36: 6669486385722345478
+      StoneColumnStages_Source_37: 3405198223042498330
+      StoneColumnStages_Source_38: 5321602711501017296
+      StoneColumnStages_Source_39: 884742755552010755
+      StoneColumnStages_Source_4: 7390254027387053457
+      StoneColumnStages_Source_40: -7359895807717229872
+      StoneColumnStages_Source_5: -6826876127385358897
+      StoneColumnStages_Source_6: -797038280591283255
+      StoneColumnStages_Source_7: 3210749375175574930
+      StoneColumnStages_Source_8: 1468161261412945129
+      StoneColumnStages_Source_9: 4600023427151860447
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

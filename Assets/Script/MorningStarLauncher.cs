@@ -317,6 +317,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 _hookPoint;
     private bool _isHooked;
     private MagnetPoint _attachedMagnet;
+    private MovementMagnet _movementMagnet;
     private float _rehookLockoutTimer;
     private float _fireBufferTimer;
     private Vector2 _bufferedAimDirection;
@@ -348,6 +349,43 @@ public partial class MorningStarLauncher : MonoBehaviour
     private double _hitStopEndsAt;
     private bool _goalInputBlocked;
     private bool _gimmickInputBlocked;
+    private readonly HashSet<MagnetPoint> _enemyMagnetPulls = new HashSet<MagnetPoint>();
+    public bool IsEnemyMagnetPulling => _enemyMagnetPulls.Count > 0;
+    public bool IsEnemyMagnetPullingFrom(MagnetPoint source) => source != null && _enemyMagnetPulls.Contains(source);
+
+    // 複数の敵に引かれても、最後の磁力が終わるまで入力・重力を戻さない。
+    public bool SetEnemyMagnetPull(MagnetPoint source, bool active)
+    {
+        if (source == null) return false;
+        if (active)
+        {
+            if (!isActiveAndEnabled || morningStarRb == null || _respawnPresentation
+                || _state == MorningStarState.StartIntro || _state == MorningStarState.Respawning)
+                return false;
+            bool first = _enemyMagnetPulls.Count == 0;
+            if (!_enemyMagnetPulls.Add(source)) return true;
+            if (first)
+            {
+                _fireBufferTimer = 0f;
+                _gamepadFirePressedThisFrame = false;
+                _rightStickReady = false;
+                _isFireHolding = _shoulderChargeInput = _hookClickHolding = false;
+                _fireHoldTime = -1f;
+                electricInputNeedsNeutral = true;
+                if (player != null) player.ClearAimFacing();
+            }
+        }
+        else if (!_enemyMagnetPulls.Remove(source)) return false;
+        ApplyBallGravityForState(_state);
+        return true;
+    }
+
+    private void ClearEnemyMagnetPulls()
+    {
+        if (_enemyMagnetPulls.Count == 0) return;
+        _enemyMagnetPulls.Clear();
+        ApplyBallGravityForState(_state);
+    }
 
     public bool IsHitStopping => _hitStopRoutine != null;
 
@@ -434,12 +472,15 @@ public partial class MorningStarLauncher : MonoBehaviour
     private bool _trampolineJumpLeftGround;
     private bool _simulatedBeforeRespawn;
     public Rigidbody2D BallBody => morningStarRb;
+    internal MagnetPoint AttachedMovementMagnet => _movementMagnet != null
+        && IsAttachedToMagnet(_attachedMagnet, morningStarRb) ? _attachedMagnet : null;
     public Transform ChainVisualRoot => chainLineController != null ? chainLineController.transform : null;
 
     /// <summary>位置を変えず中央State経由で停止。見た目はFeedback側で分解する。</summary>
     public void BeginRespawnPresentation()
     {
         if (_respawnPresentation) return;
+        ClearEnemyMagnetPulls();
         CancelHitStop();
         _respawnPresentation = true;
         _simulatedBeforeRespawn = morningStarRb != null && morningStarRb.simulated;
@@ -557,6 +598,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public void ResetForRespawn()
     {
+        ClearEnemyMagnetPulls();
         EndTrampolineJump();
         CancelHitStop();
         CancelMotionLaunchVisual();
@@ -633,6 +675,10 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         BeginHook(anchorPosition);
         _attachedMagnet = magnet;
+        var movementMagnet = magnet.GetComponentInParent<MovementMagnet>();
+        if (movementMagnet != null && movementMagnet.Body != null
+            && movementMagnet.Body.gameObject == magnet.gameObject)
+            _movementMagnet = movementMagnet;
         BeginSwinging();
         GrantMagnetEscapeThrow();
         if (_isHooked && _state == MorningStarState.Swinging)
@@ -801,6 +847,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearEnemyMagnetPulls();
         CancelMotionLaunchVisual();
         RestoreUnifiedMotionSprite();
         RestoreChainClimbVisual();
@@ -834,7 +881,8 @@ public partial class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
+        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || IsPlayerOnLadder
+            || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
         {
             UpdateFallbackLineRenderer();
             return;
@@ -911,6 +959,14 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
 
         float dt = Time.fixedDeltaTime;
+        if (_isHooked && _movementMagnet is not null)
+        {
+            if (_movementMagnet == null || _attachedMagnet == null || !_attachedMagnet.isActiveAndEnabled
+                || _movementMagnet.Body == null || !_movementMagnet.Body.simulated)
+                ReleaseHookAndBeginReturn(false);
+            else
+                _hookPoint = _movementMagnet.AnchorPosition;
+        }
         if (IsElectricStunned)
         {
             UpdateElectricHold();
@@ -926,7 +982,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         {
             case MorningStarState.Dragging:
                 TryRestoreBaseRopeLength();
-                UpdateChainClimb(dt);
+                if (!IsPlayerOnLadder) UpdateChainClimb(dt);
                 break;
 
             case MorningStarState.SpinCharging:
@@ -943,7 +999,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
             case MorningStarState.Dropping:
                 TryRestoreBaseRopeLength();
-                UpdateChainClimb(dt);
+                if (!IsPlayerOnLadder) UpdateChainClimb(dt);
                 break;
 
             case MorningStarState.Returning:
@@ -1071,7 +1127,6 @@ public partial class MorningStarLauncher : MonoBehaviour
         morningStarRb.constraints = _restBallConstraints;
         morningStarRb.collisionDetectionMode = _restBallCollisionDetectionMode;
         morningStarRb.interpolation = _restBallInterpolation;
-        morningStarRb.gravityScale = normalBallGravityScale;
         morningStarRb.linearDamping = ballGroundLinearDamping;
 
         switch (state)
@@ -1084,40 +1139,57 @@ public partial class MorningStarLauncher : MonoBehaviour
                 break;
 
             case MorningStarState.SpinCharging:
-                morningStarRb.gravityScale = spinChargeBallGravityScale;
                 morningStarRb.linearDamping = 0f;
                 break;
 
             case MorningStarState.RecallBeforeThrow:
             case MorningStarState.Returning:
-                morningStarRb.gravityScale = 0f;
                 morningStarRb.linearDamping = 0f;
                 break;
 
             case MorningStarState.Thrown:
-                morningStarRb.gravityScale = thrownBallGravityScale;
                 morningStarRb.linearDamping = ballFlyingLinearDamping;
                 break;
 
             case MorningStarState.Dropping:
                 // 旧Scene/外部コードとの互換用。物理はRestと完全に同じ。
-                morningStarRb.gravityScale = normalBallGravityScale;
                 morningStarRb.linearDamping = ballGroundLinearDamping;
                 break;
 
             case MorningStarState.Hooked:
             case MorningStarState.Swinging:
-                morningStarRb.gravityScale = hookedBallGravityScale;
                 morningStarRb.linearDamping = 0f;
                 break;
         }
+        ApplyBallGravityForState(state);
+    }
+
+    // 状態別の重力を一箇所に集約し、一時的な磁力終了後も現在の状態へ戻す。
+    private void ApplyBallGravityForState(MorningStarState state)
+    {
+        if (morningStarRb == null) return;
+        float gravity = normalBallGravityScale;
+        switch (state)
+        {
+            case MorningStarState.SpinCharging: gravity = spinChargeBallGravityScale; break;
+            case MorningStarState.RecallBeforeThrow:
+            case MorningStarState.Returning: gravity = 0f; break;
+            case MorningStarState.Thrown: gravity = thrownBallGravityScale; break;
+            case MorningStarState.Hooked:
+            case MorningStarState.Swinging: gravity = hookedBallGravityScale; break;
+        }
+        if (IsEnemyMagnetPulling && (state == MorningStarState.Dragging || state == MorningStarState.Dropping
+            || state == MorningStarState.Thrown || state == MorningStarState.Hooked || state == MorningStarState.Swinging))
+            gravity = 0f;
+        morningStarRb.gravityScale = gravity;
     }
 
     /// <summary>トランポリンから着地までPlayerへの牽引を止め、張った鎖で鉄球側を追従させる。</summary>
     public void BeginTrampolineJump()
     {
         if (!isActiveAndEnabled || _playerRb == null || morningStarRb == null
-            || _respawnPresentation || _state == MorningStarState.StartIntro || (player != null && player.IsItemDrinking))
+            || _respawnPresentation || _state == MorningStarState.StartIntro || IsPlayerOnLadder
+            || (player != null && player.IsItemDrinking))
             return;
 
         // 跳躍を既存のHook/Jointで止めない。移動や発射の入力は引き続き受け付ける。
@@ -1225,6 +1297,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         EndLaunchPose();
         _isHooked = false;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
         _recallTimer = 0f;
         _recallHoldTimer = 0f;
@@ -1610,6 +1683,20 @@ public partial class MorningStarLauncher : MonoBehaviour
             || _state == MorningStarState.Thrown || _state == MorningStarState.Returning
             || _state == MorningStarState.SpinCharging);
 
+    private bool IsPlayerOnLadder => player != null && player.IsLadderClimbing;
+
+    internal bool CanUseLadder => isActiveAndEnabled && !_respawnPresentation && !_goalInputBlocked
+        && !_gimmickInputBlocked && !_trampolineJumpActive && !_isChainClimbing && !IsUpperHanging
+        && !IsElectricHeld && !IsEnemyMagnetPulling && morningStarRb != null && morningStarRb.simulated
+        && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping);
+
+    internal void BeginLadderClimb()
+    {
+        ClearPresentationInput();
+        CancelMotionLaunchVisual();
+        if (player != null) player.ClearAimFacing();
+    }
+
     public void BeginItemDrink()
     {
         if (_state == MorningStarState.SpinCharging) CancelShoulderCharge();
@@ -1889,6 +1976,17 @@ public partial class MorningStarLauncher : MonoBehaviour
         return origin != null ? (Vector2)origin.position : GetHandWorld();
     }
 
+    private Vector2 KeepThrowPositionOnPlayerSide(Vector2 position)
+    {
+        if (chainConstraint == null || !morningStarRb.TryGetComponent(out CircleCollider2D shape))
+            return position;
+
+        Vector3 scale = shape.transform.lossyScale;
+        float radius = shape.radius * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y));
+        Vector2 offset = shape.transform.TransformVector(shape.offset);
+        return chainConstraint.KeepOnPlayerSideOfClosedDoor(position + offset, radius) - offset;
+    }
+
     private void TryConsumeBufferedFire()
     {
         if (_state != MorningStarState.Dragging && _state != MorningStarState.Dropping)
@@ -1924,10 +2022,47 @@ public partial class MorningStarLauncher : MonoBehaviour
     /// </summary>
     public bool TryReleaseMagnetForJump()
     {
-        if (_attachedMagnet == null)
+        if (_attachedMagnet == null || IsEnemyMagnetPulling)
             return false;
 
         return ReleaseHookAndBeginReturn(false);
+    }
+
+    // 敵による終了時だけ、対象を確認したうえで入力ロック中も解除できる。
+    public bool ReleaseControlledMagnet(MagnetPoint source, Rigidbody2D targetBody)
+    {
+        return IsAttachedToMagnet(source, targetBody) && ReleaseHookAndBeginReturn(false);
+    }
+
+    public bool ReleaseEnemyMagnetOnEscape(MagnetPoint source, float reboundSpeed)
+    {
+        if (source == null || !_enemyMagnetPulls.Contains(source) || morningStarRb == null) return false;
+        bool attached = IsAttachedToMagnet(source, morningStarRb);
+        SetEnemyMagnetPull(source, false);
+        if (attached)
+        {
+            SetHookRopeJointActive(false);
+            _fireBufferTimer = 0f;
+            EnterDraggingState(false);
+        }
+        if (IsEnemyMagnetPulling || !morningStarRb.simulated || morningStarRb.bodyType != RigidbodyType2D.Dynamic)
+            return false;
+        Vector2 direction = (Vector2)transform.position - morningStarRb.position;
+        if (direction.sqrMagnitude < 0.0001f || reboundSpeed <= 0f) return false;
+        Vector2 reboundDirection = direction.normalized;
+        float currentSpeed = Vector2.Dot(morningStarRb.linearVelocity, reboundDirection);
+        float neededSpeed = Mathf.Max(0f, reboundSpeed - currentSpeed);
+        if (neededSpeed > 0f)
+            morningStarRb.AddForce(reboundDirection * (morningStarRb.mass * neededSpeed), ForceMode2D.Impulse);
+        var sparks = morningStarRb.GetComponent<MorningStarImpactSparks>();
+        if (sparks != null) sparks.PlayMagnetRelease(morningStarRb.position, direction.normalized);
+        if (Application.isPlaying)
+        {
+            OneShotAudioUtility.Play2D(sfxAudioSource, chainFullStretchClip, chainFullStretchVolume, morningStarRb.position);
+            if (cameraShake != null) cameraShake.Shake(0.10f, 0.12f);
+            PlayCombatHitStop(0.035f);
+        }
+        return true;
     }
 
     private bool ReleaseHookAndBeginReturn(bool applyReleaseBoost)
@@ -1942,6 +2077,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         _isHooked = false;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
 
         if (morningStarRb != null)
@@ -2407,6 +2543,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         _hookPoint = hookPoint;
         _isHooked = true;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookedAtTime = Time.time;
         _thrownElapsed = 0f;
         _fireBufferTimer = 0f;
@@ -2495,6 +2632,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         _isHooked = false;
         SetHookRopeJointActive(false);
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
         _rehookLockoutTimer = rehookLockoutTime;
         ApplyHookedChainVisual(false);
@@ -2518,6 +2656,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Hooked || !_isHooked)
             return;
 
+        UpdateEnemyMagnetAnchor();
         UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
@@ -2534,6 +2673,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (_state != MorningStarState.Swinging || !_isHooked)
             return;
 
+        UpdateEnemyMagnetAnchor();
         UpdateChainClimb(dt);
         UpdateHookRopeJointForCurrentPose();
         PinBallAtHook();
@@ -2546,6 +2686,20 @@ public partial class MorningStarLauncher : MonoBehaviour
         morningStarRb.position = _hookPoint;
         morningStarRb.linearVelocity = Vector2.zero;
         morningStarRb.angularVelocity = 0f;
+    }
+
+    private void UpdateEnemyMagnetAnchor()
+    {
+        if (_attachedMagnet == null || !_enemyMagnetPulls.Contains(_attachedMagnet)) return;
+        _hookPoint = _attachedMagnet.ControlledPosition;
+        var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
+        if (enemy == null || _playerRb == null) return;
+        Vector2 toMagnet = _hookPoint - GetHandWorld();
+        if (toMagnet.sqrMagnitude < 0.0001f) return;
+        Vector2 direction = toMagnet.normalized;
+        float speedTowardMagnet = Vector2.Dot(_playerRb.linearVelocity, direction);
+        float pull = Mathf.Max(0f, enemy.RopePullSpeed - speedTowardMagnet);
+        _playerRb.AddForce(direction * (pull * _playerRb.mass), ForceMode2D.Force);
     }
 
     private void ApplySwingPullToPlayer()
@@ -2566,6 +2720,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         if (_attachedMagnet != null)
         {
+            if (_enemyMagnetPulls.Contains(_attachedMagnet)) return;
             // 最大距離とRadial方向の解決はDistanceJoint2Dへ任せる。
             // ここでは鎖が張った時だけ、入力を接線方向へ変換して補助する。
             if (!ropeIsTaut)
@@ -2773,7 +2928,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         }
 
         _recallStartPosition = morningStarRb.position;
-        _recallTargetPosition = GetThrowOriginPosition();
+        _recallTargetPosition = KeepThrowPositionOnPlayerSide(GetThrowOriginPosition());
         _recallTimer = 0f;
         _recallHoldTimer = 0f;
         _recallDelayTimer = recallStartDelay;
@@ -2828,7 +2983,8 @@ public partial class MorningStarLauncher : MonoBehaviour
         bool launchedInAir = !IsPlayerGrounded();
         Vector2 d = _pendingLaunchDir.sqrMagnitude > 1e-12f ? _pendingLaunchDir.normalized : Vector2.right;
         FacePlayerForLaunch(d);
-        Vector2 origin = GetThrowOriginPosition();
+        float offset = Mathf.Max(0f, launchStartOffset);
+        Vector2 origin = KeepThrowPositionOnPlayerSide(GetThrowOriginPosition() + d * offset);
 
         morningStarRb.position = origin;
         morningStarRb.linearVelocity = Vector2.zero;
@@ -2844,8 +3000,6 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (speedLimit > 0f)
             speed = Mathf.Min(speed, speedLimit);
 
-        float offset = Mathf.Max(0f, launchStartOffset);
-        morningStarRb.position = origin + d * offset;
         Vector2 launchVelocity = d * speed;
         if (postThrowDownwardBias > 0f)
             launchVelocity += Vector2.down * postThrowDownwardBias;
@@ -2947,6 +3101,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         _isHooked = false;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
         TransitionToState(MorningStarState.Returning);
         _rehookLockoutTimer = Mathf.Max(_rehookLockoutTimer, rehookLockoutTime);
@@ -3061,13 +3216,13 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
         }
 
-        // connectedBody == null の場合、connectedAnchorはworld固定点になる。
-        // MagnetPointは鉄球だけをこの同じ支点へ固定する。
-        hookRopeJoint.connectedBody = null;
+        // 移動式だけ、レールを進む磁石のRigidbody2Dに鎖を接続する。
+        Rigidbody2D movingAnchor = _movementMagnet != null ? _movementMagnet.Body : null;
+        hookRopeJoint.connectedBody = movingAnchor;
         hookRopeJoint.autoConfigureConnectedAnchor = false;
         hookRopeJoint.autoConfigureDistance = false;
         hookRopeJoint.enableCollision = false;
-        hookRopeJoint.connectedAnchor = _hookPoint;
+        hookRopeJoint.connectedAnchor = movingAnchor != null ? Vector2.zero : _hookPoint;
         hookRopeJoint.distance = GetEffectiveRopeLength();
         UpdateHookRopeJointForCurrentPose();
         if (!hookRopeJoint.enabled)
@@ -3085,6 +3240,25 @@ public partial class MorningStarLauncher : MonoBehaviour
             : GetHandWorld();
 
         hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
+
+        // 敵の磁石では、通常の鎖長から脱出距離だけ引くと外れる。
+        if (_attachedMagnet != null && _enemyMagnetPulls.Contains(_attachedMagnet))
+        {
+            // 敵とPlayerの接触ダメージを、Joint接続中も有効にする。
+            if (!hookRopeJoint.enableCollision) hookRopeJoint.enableCollision = true;
+            Rigidbody2D magnetBody = _attachedMagnet.GetComponentInParent<Rigidbody2D>();
+            if (magnetBody != null)
+            {
+                hookRopeJoint.connectedBody = magnetBody;
+                hookRopeJoint.connectedAnchor = magnetBody.transform.InverseTransformPoint(_attachedMagnet.transform.position);
+            }
+            hookRopeJoint.maxDistanceOnly = true;
+            var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
+            hookRopeJoint.distance = GetEffectiveRopeLength() + (enemy != null ? enemy.EscapeStretchDistance : 0f);
+            return;
+        }
+
+        if (hookRopeJoint.enableCollision) hookRopeJoint.enableCollision = false;
 
         if (_isChainClimbing && upperHanging)
         {
@@ -3223,7 +3397,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 GetVisualRopeAnchorWorld()
     {
         if (TryGetMotionVisualAnchor(out Vector2 motionAnchor))
-            return motionAnchor;
+            return KeepVisualRopeAnchorOnPlayerSide(motionAnchor);
         Vector2 targetWorld = ShouldUseUpwardPose()
             ? GetUpwardPoseChainAnchorWorld()
             : GetPlayerRopeAnchorWorld();
@@ -3249,8 +3423,13 @@ public partial class MorningStarLauncher : MonoBehaviour
         }
 
         _visualRopeAnchorUpdatedFrame = Time.frameCount;
-        return playerTransform.TransformPoint(_visualRopeAnchorLocal);
+        return KeepVisualRopeAnchorOnPlayerSide(playerTransform.TransformPoint(_visualRopeAnchorLocal));
     }
+
+    private Vector2 KeepVisualRopeAnchorOnPlayerSide(Vector2 anchor)
+        => chainConstraint != null && chainConstraint.isActiveAndEnabled
+            ? chainConstraint.KeepOnPlayerSideOfClosedDoor(anchor)
+            : anchor;
 
     private void UpdateFallbackLineRenderer()
     {
@@ -3373,7 +3552,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (IsPlayerOnLadder || _goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3385,7 +3564,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
+        if (IsPlayerOnLadder || _goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping
