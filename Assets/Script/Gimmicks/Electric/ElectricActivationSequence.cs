@@ -6,7 +6,6 @@ public sealed class ElectricActivationSequence : MonoBehaviour
 {
     [SerializeField] private ElectricReceiverCable receiver;
     [SerializeField] private ElectricDoor door;
-    [SerializeField] private ClockTower clockTower;
     [SerializeField] private Player player;
     [SerializeField] private Sprite skeletonSprite;
     [SerializeField] private Sprite receiverClampSprite;
@@ -35,9 +34,9 @@ public sealed class ElectricActivationSequence : MonoBehaviour
     private float elapsed;
     public bool IsPresenting => active;
     public bool IsRevealingDoor => revealing;
-    internal bool UsesConnectionLeadIn => clockTower != null || (showDoorReveal && door != null && door.IsGrandGate);
-    private bool MechanismAvailable => door != null ? door.isActiveAndEnabled : clockTower != null && clockTower.isActiveAndEnabled;
-    private bool MechanismOpen => door != null ? door.IsFullyOpen : clockTower != null && clockTower.State == ClockTower.ClockState.Completed;
+    internal bool UsesConnectionLeadIn => showDoorReveal && door != null && door.IsGrandGate;
+    private bool MechanismAvailable => door != null && door.isActiveAndEnabled;
+    private bool MechanismOpen => door != null && door.IsFullyOpen;
     public SpriteRenderer EffectSprite => skeleton != null && skeleton.enabled ? skeleton : player != null ? player.BodySprite : null;
 
     private bool CanShowSkeleton => !UsesConnectionLeadIn
