@@ -1,0 +1,586 @@
+fileFormatVersion: 2
+guid: 153f15889957bf146b6600b44b4c6403
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3801871353702062132
+    second: SlashMantisIai_0
+  - first:
+      213: -1662728001934515483
+    second: SlashMantisIai_1
+  - first:
+      213: 4605267026763170065
+    second: SlashMantisIai_2
+  - first:
+      213: 8955198814464376721
+    second: SlashMantisIai_3
+  - first:
+      213: -7906336787775569156
+    second: SlashMantisIai_4
+  - first:
+      213: -2618581669435586663
+    second: SlashMantisIai_5
+  - first:
+      213: 2765409369483972197
+    second: SlashMantisIai_6
+  - first:
+      213: -3704131893548508033
+    second: SlashMantisIai_7
+  - first:
+      213: 8323359197008750779
+    second: SlashMantisIai_8
+  - first:
+      213: -5502241637956883521
+    second: SlashMantisIai_9
+  - first:
+      213: 5532086256707152066
+    second: SlashMantisIai_10
+  - first:
+      213: 8627328830073437021
+    second: SlashMantisIai_11
+  - first:
+      213: -900361665725600846
+    second: SlashMantisIai_12
+  - first:
+      213: 7380094719204740189
+    second: SlashMantisIai_13
+  - first:
+      213: -5375389718332511579
+    second: SlashMantisIai_14
+  - first:
+      213: 8427861059576308418
+    second: SlashMantisIai_15
+  - first:
+      213: 8644376473421911249
+    second: SlashMantisIai_16
+  - first:
+      213: 4988683945700033774
+    second: SlashMantisIai_17
+  - first:
+      213: -2782321778397108361
+    second: SlashMantisIai_18
+  - first:
+      213: -2896058409284531518
+    second: SlashMantisIai_19
+  - first:
+      213: 1671230322867473222
+    second: SlashMantisIai_20
+  - first:
+      213: -1331649410139967665
+    second: SlashMantisIai_21
+  - first:
+      213: -2477641342638315698
+    second: SlashMantisIai_22
+  - first:
+      213: 303345099056808277
+    second: SlashMantisIai_23
+  - first:
+      213: 8112205145553626300
+    second: SlashMantisIai_24
+  - first:
+      213: -1803880474208923088
+    second: SlashMantisIai_25
+  - first:
+      213: -156610691371418533
+    second: SlashMantisIai_26
+  - first:
+      213: 2087936116432263535
+    second: SlashMantisIai_27
+  - first:
+      213: -6434576805358579056
+    second: SlashMantisIai_28
+  - first:
+      213: 4589684813640033915
+    second: SlashMantisIai_29
+  - first:
+      213: 8935386458670232705
+    second: SlashMantisIai_30
+  - first:
+      213: 1182118420856350122
+    second: SlashMantisIai_31
+  - first:
+      213: 3736616437148090178
+    second: SlashMantisIai_32
+  - first:
+      213: 7381406150105888297
+    second: SlashMantisIai_33
+  - first:
+      213: 5225672511890323716
+    second: SlashMantisIai_34
+  - first:
+      213: 4724122990708432957
+    second: SlashMantisIai_35
+  - first:
+      213: 3567090409502615516
+    second: SlashMantisIai_36
+  - first:
+      213: 3607781699790845716
+    second: SlashMantisIai_37
+  - first:
+      213: -5617284139660115274
+    second: SlashMantisIai_38
+  - first:
+      213: 6145098255523168443
+    second: SlashMantisIai_39
+  - first:
+      213: -2012327068506755890
+    second: SlashMantisIai_40
+  - first:
+      213: -4160551666759969801
+    second: SlashMantisIai_41
+  - first:
+      213: 4114335283057879147
+    second: SlashMantisIai_42
+  - first:
+      213: 6410324409120393480
+    second: SlashMantisIai_43
+  - first:
+      213: -6483745406697353166
+    second: SlashMantisIai_44
+  - first:
+      213: 2582477382764739096
+    second: SlashMantisIai_45
+  - first:
+      213: -8652633736290548089
+    second: SlashMantisIai_46
+  - first:
+      213: 6115355579490079409
+    second: SlashMantisIai_47
+  - first:
+      213: 187282629569939947
+    second: SlashMantisIai_48
+  - first:
+      213: 2264370980500250947
+    second: SlashMantisIai_49
+  - first:
+      213: -5970510628052093335
+    second: SlashMantisIai_50
+  - first:
+      213: 2733915514212841293
+    second: SlashMantisIai_51
+  - first:
+      213: 3376478612619018681
+    second: SlashMantisIai_52
+  - first:
+      213: 6993874694211498010
+    second: SlashMantisIai_53
+  - first:
+      213: 5197842902058386064
+    second: SlashMantisIai_54
+  - first:
+      213: -1501804924591876757
+    second: SlashMantisIai_55
+  - first:
+      213: -6042090000756040497
+    second: SlashMantisIai_56
+  - first:
+      213: -4980818416396373524
+    second: SlashMantisIai_57
+  - first:
+      213: -8038674479588506818
+    second: SlashMantisIai_58
+  - first:
+      213: -8302924358205610864
+    second: SlashMantisIai_59
+  - first:
+      213: 3341422250647361780
+    second: SlashMantisIai_60
+  - first:
+      213: -3083192787294806296
+    second: SlashMantisIai_61
+  - first:
+      213: 9066314622827349794
+    second: SlashMantisIai_62
+  - first:
+      213: -5442593490383756594
+    second: SlashMantisIai_63
+  - first:
+      213: -4315815448519568145
+    second: SlashMantisIai_64
+  - first:
+      213: 7526282036841719926
+    second: SlashMantisIai_65
+  - first:
+      213: 5767784241057096659
+    second: SlashMantisIai_66
+  - first:
+      213: 4156083857091730756
+    second: SlashMantisIai_67
+  - first:
+      213: 8947324685110685119
+    second: SlashMantisIai_68
+  - first:
+      213: -1477867103042074836
+    second: SlashMantisIai_69
+  - first:
+      213: -4396099795285301217
+    second: SlashMantisIai_70
+  - first:
+      213: -8622636406696600081
+    second: SlashMantisIai_71
+  - first:
+      213: 8074260144607955510
+    second: SlashMantisIai_72
+  - first:
+      213: -3145717172213433764
+    second: SlashMantisIai_73
+  - first:
+      213: 7700407472613579140
+    second: SlashMantisIai_74
+  - first:
+      213: 7128451803916798740
+    second: SlashMantisIai_75
+  - first:
+      213: -2031622950047996327
+    second: SlashMantisIai_76
+  - first:
+      213: 3162916402132290176
+    second: SlashMantisIai_77
+  - first:
+      213: 6273376917714560948
+    second: SlashMantisIai_78
+  - first:
+      213: 5583619359983053315
+    second: SlashMantisIai_79
+  - first:
+      213: 7001596895023681180
+    second: SlashMantisIai_80
+  - first:
+      213: 7441739165306169448
+    second: SlashMantisIai_81
+  - first:
+      213: 7568555156793069216
+    second: SlashMantisIai_82
+  - first:
+      213: 406541149910147322
+    second: SlashMantisIai_83
+  - first:
+      213: -3412834394293299296
+    second: SlashMantisIai_84
+  - first:
+      213: -4765281339690742201
+    second: SlashMantisIai_85
+  - first:
+      213: -1122167750723612458
+    second: SlashMantisIai_86
+  - first:
+      213: -6503352867500033837
+    second: SlashMantisIai_87
+  - first:
+      213: -4580920736523903579
+    second: SlashMantisIai_88
+  - first:
+      213: 4101476630156474708
+    second: SlashMantisIai_89
+  - first:
+      213: -9178974773594337137
+    second: SlashMantisIai_90
+  - first:
+      213: 1448933540622420778
+    second: SlashMantisIai_91
+  - first:
+      213: 7152930312226123628
+    second: SlashMantisIai_92
+  - first:
+      213: 183063536649288518
+    second: SlashMantisIai_93
+  - first:
+      213: 3953543563884117901
+    second: SlashMantisIai_94
+  - first:
+      213: -1260447698960749067
+    second: SlashMantisIai_95
+  - first:
+      213: -2248779896352261827
+    second: SlashMantisIai_96
+  - first:
+      213: 142340590782836067
+    second: SlashMantisIai_97
+  - first:
+      213: -6822805327476418240
+    second: SlashMantisIai_98
+  - first:
+      213: 8015961435493992440
+    second: SlashMantisIai_99
+  - first:
+      213: 5954194051951093048
+    second: SlashMantisIai_100
+  - first:
+      213: -2389299601017485188
+    second: SlashMantisIai_101
+  - first:
+      213: 6548321026419989435
+    second: SlashMantisIai_102
+  - first:
+      213: -388328149893002231
+    second: SlashMantisIai_103
+  - first:
+      213: 5418577016884948818
+    second: SlashMantisIai_104
+  - first:
+      213: -1093053264309175333
+    second: SlashMantisIai_105
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 164
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: IaiDraw
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 608
+        width: 325
+        height: 355
+      alignment: 9
+      pivot: {x: 0.50461537, y: 0.008450705}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cec6ff81a1c7ee540837b5953882aa80
+      internalID: 1359592917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IaiLoaded
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 608
+        width: 379
+        height: 301
+      alignment: 9
+      pivot: {x: 0.52506596, y: 0.009966778}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e39070b5c89742c4e852f16d19b854ff
+      internalID: -1092683347
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IaiSlash
+      rect:
+        serializedVersion: 2
+        x: 950
+        y: 608
+        width: 516
+        height: 248
+      alignment: 9
+      pivot: {x: 0.52131784, y: 0.012096774}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c9338d529b806c74f87bef3c84198569
+      internalID: -1675516786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IaiDeflected
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 104
+        width: 390
+        height: 392
+      alignment: 9
+      pivot: {x: 0.55128205, y: 0.0076530613}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b5116350237191e498199b9e01815b19
+      internalID: 52870736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IaiStaggered
+      rect:
+        serializedVersion: 2
+        x: 551
+        y: 102
+        width: 388
+        height: 312
+      alignment: 9
+      pivot: {x: 0.507732, y: 0.009615385}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ec59e423bb740f42be28dedf7e9bda7
+      internalID: -688749994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: IaiCollapse
+      rect:
+        serializedVersion: 2
+        x: 1006
+        y: 89
+        width: 480
+        height: 166
+      alignment: 9
+      pivot: {x: 0.5083333, y: 0.018072288}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a93ed3dbae0243e45bfb78860f73cb6b
+      internalID: -1628055815
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 2b588fde857dd2543a9ded6a43086eed
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      IaiCollapse: -1628055815
+      IaiDeflected: 52870736
+      IaiDraw: 1359592917
+      IaiLoaded: -1092683347
+      IaiSlash: -1675516786
+      IaiStaggered: -688749994
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

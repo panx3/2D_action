@@ -1,0 +1,745 @@
+fileFormatVersion: 2
+guid: 727f62759bf0dd444b8cdc4307bdc89a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4534996390553021528
+    second: FunkorogashiActions_0
+  - first:
+      213: -1660205987035270506
+    second: FunkorogashiActions_1
+  - first:
+      213: 5813276825361625922
+    second: FunkorogashiActions_2
+  - first:
+      213: -2531130605726909946
+    second: FunkorogashiActions_3
+  - first:
+      213: -1088822356270284513
+    second: FunkorogashiActions_4
+  - first:
+      213: 3072780283861982420
+    second: FunkorogashiActions_5
+  - first:
+      213: -3510354564093081501
+    second: FunkorogashiActions_6
+  - first:
+      213: 4243439998620353514
+    second: FunkorogashiActions_7
+  - first:
+      213: 3935087497877014074
+    second: FunkorogashiActions_8
+  - first:
+      213: 5355116523389605168
+    second: FunkorogashiActions_9
+  - first:
+      213: 2176704914755177615
+    second: FunkorogashiActions_10
+  - first:
+      213: 2297830646903121439
+    second: FunkorogashiActions_11
+  - first:
+      213: 1028515060704248710
+    second: FunkorogashiActions_12
+  - first:
+      213: -8313999840958681934
+    second: FunkorogashiActions_13
+  - first:
+      213: -4902066174390016124
+    second: FunkorogashiActions_14
+  - first:
+      213: -699560601499838324
+    second: FunkorogashiActions_15
+  - first:
+      213: 8695223423031351248
+    second: FunkorogashiActions_16
+  - first:
+      213: -4483864713499827756
+    second: FunkorogashiActions_17
+  - first:
+      213: -4759807573550926131
+    second: FunkorogashiActions_18
+  - first:
+      213: -1917622499680343024
+    second: FunkorogashiActions_19
+  - first:
+      213: -9120458579931241209
+    second: FunkorogashiActions_20
+  - first:
+      213: -7747472307981258426
+    second: FunkorogashiActions_21
+  - first:
+      213: 8615534044339323132
+    second: FunkorogashiActions_22
+  - first:
+      213: -4102792862451333584
+    second: FunkorogashiActions_23
+  - first:
+      213: 8426501383216370543
+    second: FunkorogashiActions_24
+  - first:
+      213: 8662014852274409929
+    second: FunkorogashiActions_25
+  - first:
+      213: -1197777745890965018
+    second: FunkorogashiActions_26
+  - first:
+      213: 1647753421586109046
+    second: FunkorogashiActions_27
+  - first:
+      213: 3760338574229446102
+    second: FunkorogashiActions_28
+  - first:
+      213: -6765437949163830920
+    second: FunkorogashiActions_29
+  - first:
+      213: 4594453194760932911
+    second: FunkorogashiActions_30
+  - first:
+      213: 3031226985930623771
+    second: FunkorogashiActions_31
+  - first:
+      213: 7526982506623836047
+    second: FunkorogashiActions_32
+  - first:
+      213: -2852183283740677529
+    second: FunkorogashiActions_33
+  - first:
+      213: -3422658872355635134
+    second: FunkorogashiActions_34
+  - first:
+      213: 7151379105821647948
+    second: FunkorogashiActions_35
+  - first:
+      213: 4961878359161789002
+    second: FunkorogashiActions_36
+  - first:
+      213: -6995930337935569621
+    second: FunkorogashiActions_37
+  - first:
+      213: 4777467612308019752
+    second: FunkorogashiActions_38
+  - first:
+      213: 6819384403326632715
+    second: FunkorogashiActions_39
+  - first:
+      213: 9182251531525891198
+    second: FunkorogashiActions_40
+  - first:
+      213: -4288417596299596591
+    second: FunkorogashiActions_41
+  - first:
+      213: 1502573998133722065
+    second: FunkorogashiActions_42
+  - first:
+      213: 8612436604269555497
+    second: FunkorogashiActions_43
+  - first:
+      213: 5036450204483510084
+    second: FunkorogashiActions_44
+  - first:
+      213: 5201410067514950973
+    second: FunkorogashiActions_45
+  - first:
+      213: -4255674726447022065
+    second: FunkorogashiActions_46
+  - first:
+      213: 639503304010792786
+    second: FunkorogashiActions_47
+  - first:
+      213: -3860850481654776496
+    second: FunkorogashiActions_48
+  - first:
+      213: -1978277868929259665
+    second: FunkorogashiActions_49
+  - first:
+      213: 800991634607002366
+    second: FunkorogashiActions_50
+  - first:
+      213: 1942634226958595510
+    second: FunkorogashiActions_51
+  - first:
+      213: -4790763260833675801
+    second: FunkorogashiActions_52
+  - first:
+      213: 3063279406913274662
+    second: FunkorogashiActions_53
+  - first:
+      213: -7304780128518168490
+    second: FunkorogashiActions_54
+  - first:
+      213: -4789119626889838202
+    second: FunkorogashiActions_55
+  - first:
+      213: 3702160840032298530
+    second: FunkorogashiActions_56
+  - first:
+      213: 366959144605110866
+    second: FunkorogashiActions_57
+  - first:
+      213: 5892949177058218927
+    second: FunkorogashiActions_58
+  - first:
+      213: 5805852212413933543
+    second: FunkorogashiActions_59
+  - first:
+      213: -6627763023439795143
+    second: FunkorogashiActions_60
+  - first:
+      213: 4355256320258248454
+    second: FunkorogashiActions_61
+  - first:
+      213: -7154102146769406420
+    second: FunkorogashiActions_62
+  - first:
+      213: -5410056012978575513
+    second: FunkorogashiActions_63
+  - first:
+      213: 3790655781799628185
+    second: FunkorogashiActions_64
+  - first:
+      213: 4933937899667369199
+    second: FunkorogashiActions_65
+  - first:
+      213: 1350282251340790715
+    second: FunkorogashiActions_66
+  - first:
+      213: 8820350245482960463
+    second: FunkorogashiActions_67
+  - first:
+      213: -2915331322483256617
+    second: FunkorogashiActions_68
+  - first:
+      213: 7471947653110237155
+    second: FunkorogashiActions_69
+  - first:
+      213: -2013980501833633695
+    second: FunkorogashiActions_70
+  - first:
+      213: -1172830623269190670
+    second: FunkorogashiActions_71
+  - first:
+      213: 808653386529370268
+    second: FunkorogashiActions_72
+  - first:
+      213: -1604206497434817415
+    second: FunkorogashiActions_73
+  - first:
+      213: 4416369119189451479
+    second: FunkorogashiActions_74
+  - first:
+      213: -8392884320522201578
+    second: FunkorogashiActions_75
+  - first:
+      213: -5380235532715331432
+    second: FunkorogashiActions_76
+  - first:
+      213: -1096277988456363226
+    second: FunkorogashiActions_77
+  - first:
+      213: 5084206193964423075
+    second: FunkorogashiActions_78
+  - first:
+      213: -7868887218209939092
+    second: FunkorogashiActions_79
+  - first:
+      213: 2568777440613149943
+    second: FunkorogashiActions_80
+  - first:
+      213: 6617091650682342161
+    second: FunkorogashiActions_81
+  - first:
+      213: 1100559302206108518
+    second: FunkorogashiActions_82
+  - first:
+      213: -4940539454459055683
+    second: FunkorogashiActions_83
+  - first:
+      213: -9018100290935828235
+    second: FunkorogashiActions_84
+  - first:
+      213: 4950423449372044024
+    second: FunkorogashiActions_85
+  - first:
+      213: -6631108070043546500
+    second: FunkorogashiActions_86
+  - first:
+      213: 718111194470775014
+    second: FunkorogashiActions_87
+  - first:
+      213: -9136698762713535494
+    second: FunkorogashiActions_88
+  - first:
+      213: 264580951885655429
+    second: FunkorogashiActions_89
+  - first:
+      213: 3896213358794488287
+    second: FunkorogashiActions_90
+  - first:
+      213: -4862594758681012976
+    second: FunkorogashiActions_91
+  - first:
+      213: -1795876995123997525
+    second: FunkorogashiActions_92
+  - first:
+      213: -4512153608607500159
+    second: FunkorogashiActions_93
+  - first:
+      213: -7546631387531045915
+    second: FunkorogashiActions_94
+  - first:
+      213: 6842301144246976631
+    second: FunkorogashiActions_95
+  - first:
+      213: -947934784350703560
+    second: FunkorogashiActions_96
+  - first:
+      213: 1441232582017876657
+    second: FunkorogashiActions_97
+  - first:
+      213: -525619265618293239
+    second: FunkorogashiActions_98
+  - first:
+      213: 7866317157461757636
+    second: FunkorogashiActions_99
+  - first:
+      213: 15147592881399374
+    second: FunkorogashiActions_100
+  - first:
+      213: -1406341181258566814
+    second: FunkorogashiActions_101
+  - first:
+      213: -1321345299362159307
+    second: FunkorogashiActions_102
+  - first:
+      213: 5423045774528853144
+    second: FunkorogashiActions_103
+  - first:
+      213: 2087217851447129349
+    second: FunkorogashiActions_104
+  - first:
+      213: -2656666820167337654
+    second: FunkorogashiActions_105
+  - first:
+      213: 6010817355908174008
+    second: FunkorogashiActions_106
+  - first:
+      213: -1896526546960124864
+    second: FunkorogashiActions_107
+  - first:
+      213: 3536935416145170413
+    second: FunkorogashiActions_108
+  - first:
+      213: 3124807473437308169
+    second: FunkorogashiActions_109
+  - first:
+      213: -2163399679818630082
+    second: FunkorogashiActions_110
+  - first:
+      213: -4477574374853080043
+    second: FunkorogashiActions_111
+  - first:
+      213: 8561512417746223047
+    second: FunkorogashiActions_112
+  - first:
+      213: 2267576509646553363
+    second: FunkorogashiActions_113
+  - first:
+      213: 5537956740460648193
+    second: FunkorogashiActions_114
+  - first:
+      213: -5559875090835471162
+    second: FunkorogashiActions_115
+  - first:
+      213: 8129593718929713063
+    second: FunkorogashiActions_116
+  - first:
+      213: 8990085480910893029
+    second: FunkorogashiActions_117
+  - first:
+      213: -4795038484287480897
+    second: FunkorogashiActions_118
+  - first:
+      213: -4071231673367774508
+    second: FunkorogashiActions_119
+  - first:
+      213: 4804726594601404300
+    second: FunkorogashiActions_120
+  - first:
+      213: -4785426362855302462
+    second: FunkorogashiActions_121
+  - first:
+      213: 8861704007476842165
+    second: FunkorogashiActions_122
+  - first:
+      213: -6708120200944106787
+    second: FunkorogashiActions_123
+  - first:
+      213: 565643723475822379
+    second: FunkorogashiActions_124
+  - first:
+      213: -5802884909280905040
+    second: FunkorogashiActions_125
+  - first:
+      213: -3499181064946258382
+    second: FunkorogashiActions_126
+  - first:
+      213: 4096513861950775259
+    second: FunkorogashiActions_127
+  - first:
+      213: 6497977428258650234
+    second: FunkorogashiActions_128
+  - first:
+      213: -7135583462737265234
+    second: FunkorogashiActions_129
+  - first:
+      213: -8416594981520792046
+    second: FunkorogashiActions_130
+  - first:
+      213: 1852667280862192115
+    second: FunkorogashiActions_131
+  - first:
+      213: 5534593428682108911
+    second: FunkorogashiActions_132
+  - first:
+      213: 8272835460016030612
+    second: FunkorogashiActions_133
+  - first:
+      213: -7033316604456611536
+    second: FunkorogashiActions_134
+  - first:
+      213: 1231868061219122725
+    second: FunkorogashiActions_135
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 245
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Funkorogashi_Brace
+      rect:
+        serializedVersion: 2
+        x: 123
+        y: 736
+        width: 335
+        height: 244
+      alignment: 9
+      pivot: {x: 0.47164178, y: 0.008196721}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64fad9a95d3a5f94a8f9d082decbb5c3
+      internalID: 526268924
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_Load
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 736
+        width: 332
+        height: 199
+      alignment: 9
+      pivot: {x: 0.47289157, y: 0.010050251}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 014e9a11912d32b449b0cebe43634950
+      internalID: -585504999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_Kick
+      rect:
+        serializedVersion: 2
+        x: 1016
+        y: 736
+        width: 476
+        height: 229
+      alignment: 9
+      pivot: {x: 0.41806722, y: 0.008733625}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 94c7994230925ee488e47ff7c3f93879
+      internalID: 2020870018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_Recoil
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 414
+        width: 339
+        height: 213
+      alignment: 9
+      pivot: {x: 0.45722714, y: 0.0093896715}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd361c04cbd24e241a39c4386a101c67
+      internalID: -920065722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_Settle
+      rect:
+        serializedVersion: 2
+        x: 589
+        y: 414
+        width: 338
+        height: 211
+      alignment: 9
+      pivot: {x: 0.47928995, y: 0.009478673}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f2a295449c06d54593d3991bb6e91c5
+      internalID: 1611993201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_RamBrace
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 414
+        width: 335
+        height: 190
+      alignment: 9
+      pivot: {x: 0.45373136, y: 0.010526316}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 12b0616b85c58194d80930b4d50b254a
+      internalID: -839055983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_Ram
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 71
+        width: 401
+        height: 207
+      alignment: 9
+      pivot: {x: 0.5087282, y: 0.009661836}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6dfd77441a863d04783990a531896a0e
+      internalID: 181258487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_DefeatStagger
+      rect:
+        serializedVersion: 2
+        x: 567
+        y: 74
+        width: 362
+        height: 213
+      alignment: 9
+      pivot: {x: 0.4834254, y: 0.0093896715}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7555e51e09a13049a93ddce59b2be37
+      internalID: -221829000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Funkorogashi_DefeatCollapse
+      rect:
+        serializedVersion: 2
+        x: 1033
+        y: 71
+        width: 426
+        height: 141
+      alignment: 9
+      pivot: {x: 0.42488262, y: 0.014184397}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 86f08e27adcba014fb4381ece3000b0e
+      internalID: 825614447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6d9d84adefd080e44ba36f1a0f43b9bc
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Funkorogashi_Brace: 526268924
+      Funkorogashi_DefeatCollapse: 825614447
+      Funkorogashi_DefeatStagger: -221829000
+      Funkorogashi_Kick: 2020870018
+      Funkorogashi_Load: -585504999
+      Funkorogashi_Ram: 181258487
+      Funkorogashi_RamBrace: -839055983
+      Funkorogashi_Recoil: -920065722
+      Funkorogashi_Settle: 1611993201
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
