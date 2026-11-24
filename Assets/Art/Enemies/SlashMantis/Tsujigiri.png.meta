@@ -1,0 +1,539 @@
+fileFormatVersion: 2
+guid: f2970f312698cd5439f0082e3b1c4920
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2447937331480842599
+    second: Tsujigiri_0
+  - first:
+      213: 2485000100425076955
+    second: Tsujigiri_1
+  - first:
+      213: 4671178417488666145
+    second: Tsujigiri_2
+  - first:
+      213: -5372860351543895198
+    second: Tsujigiri_3
+  - first:
+      213: -3977163343952104462
+    second: Tsujigiri_4
+  - first:
+      213: -382692958400406573
+    second: Tsujigiri_5
+  - first:
+      213: -8111096472879804051
+    second: Tsujigiri_6
+  - first:
+      213: 4224405909806432484
+    second: Tsujigiri_7
+  - first:
+      213: -1838134114829891016
+    second: Tsujigiri_8
+  - first:
+      213: 8898544192678395957
+    second: Tsujigiri_9
+  - first:
+      213: -7696149234254439398
+    second: Tsujigiri_10
+  - first:
+      213: -3827018245268313941
+    second: Tsujigiri_11
+  - first:
+      213: -2940841784734149944
+    second: Tsujigiri_12
+  - first:
+      213: -5856902915829033873
+    second: Tsujigiri_13
+  - first:
+      213: 8717222850566280017
+    second: Tsujigiri_14
+  - first:
+      213: -2599630806521362503
+    second: Tsujigiri_15
+  - first:
+      213: 8456653798297761148
+    second: Tsujigiri_16
+  - first:
+      213: -6532151000070434055
+    second: Tsujigiri_17
+  - first:
+      213: -1252698020002677166
+    second: Tsujigiri_18
+  - first:
+      213: -4647331230639112045
+    second: Tsujigiri_19
+  - first:
+      213: 7742157240547640200
+    second: Tsujigiri_20
+  - first:
+      213: -7723054202747913772
+    second: Tsujigiri_21
+  - first:
+      213: -2160441486511167627
+    second: Tsujigiri_22
+  - first:
+      213: 126137109943915976
+    second: Tsujigiri_23
+  - first:
+      213: 8637957276552517429
+    second: Tsujigiri_24
+  - first:
+      213: 4522124232086741387
+    second: Tsujigiri_25
+  - first:
+      213: 5504186713842494863
+    second: Tsujigiri_26
+  - first:
+      213: 3015130040419700903
+    second: Tsujigiri_27
+  - first:
+      213: -8467367479958835166
+    second: Tsujigiri_28
+  - first:
+      213: 7252315148141845136
+    second: Tsujigiri_29
+  - first:
+      213: 5997682135093612195
+    second: Tsujigiri_30
+  - first:
+      213: 9079787037854722408
+    second: Tsujigiri_31
+  - first:
+      213: -1239246031535641443
+    second: Tsujigiri_32
+  - first:
+      213: 4620903094499815318
+    second: Tsujigiri_33
+  - first:
+      213: -1930033758855463492
+    second: Tsujigiri_34
+  - first:
+      213: 8288262625263645154
+    second: Tsujigiri_35
+  - first:
+      213: -1139614879504272559
+    second: Tsujigiri_36
+  - first:
+      213: -6033902614627812975
+    second: Tsujigiri_37
+  - first:
+      213: 4126146988932881671
+    second: Tsujigiri_38
+  - first:
+      213: -8284806947580139888
+    second: Tsujigiri_39
+  - first:
+      213: 2230930947374233243
+    second: Tsujigiri_40
+  - first:
+      213: -7604944759866048393
+    second: Tsujigiri_41
+  - first:
+      213: 752865114658113161
+    second: Tsujigiri_42
+  - first:
+      213: 3980004927933684628
+    second: Tsujigiri_43
+  - first:
+      213: -2689493724983613272
+    second: Tsujigiri_44
+  - first:
+      213: -4087680403683045031
+    second: Tsujigiri_45
+  - first:
+      213: 1301683118427240171
+    second: Tsujigiri_46
+  - first:
+      213: -7108782378502374597
+    second: Tsujigiri_47
+  - first:
+      213: 5830260002075766164
+    second: Tsujigiri_48
+  - first:
+      213: -8906425234521064803
+    second: Tsujigiri_49
+  - first:
+      213: -8489255574955944490
+    second: Tsujigiri_50
+  - first:
+      213: -992925352441342246
+    second: Tsujigiri_51
+  - first:
+      213: 7916333383855900842
+    second: Tsujigiri_52
+  - first:
+      213: -1130593084929503822
+    second: Tsujigiri_53
+  - first:
+      213: -8511580359443104073
+    second: Tsujigiri_54
+  - first:
+      213: -7527668471336767156
+    second: Tsujigiri_55
+  - first:
+      213: -1983892674249758353
+    second: Tsujigiri_56
+  - first:
+      213: 6469641868797367665
+    second: Tsujigiri_57
+  - first:
+      213: -6337071364472111167
+    second: Tsujigiri_58
+  - first:
+      213: -5352549030880776072
+    second: Tsujigiri_59
+  - first:
+      213: -901283334097220737
+    second: Tsujigiri_60
+  - first:
+      213: 2272017028696946185
+    second: Tsujigiri_61
+  - first:
+      213: -8109035228239101480
+    second: Tsujigiri_62
+  - first:
+      213: 509373503979521421
+    second: Tsujigiri_63
+  - first:
+      213: 8159730481920151585
+    second: Tsujigiri_64
+  - first:
+      213: 5773910833600674311
+    second: Tsujigiri_65
+  - first:
+      213: -8991057710071171754
+    second: Tsujigiri_66
+  - first:
+      213: 938515471127676394
+    second: Tsujigiri_67
+  - first:
+      213: 6370645228478754646
+    second: Tsujigiri_68
+  - first:
+      213: -3834978961192857073
+    second: Tsujigiri_69
+  - first:
+      213: -4144707010701537330
+    second: Tsujigiri_70
+  - first:
+      213: 5665795897736473699
+    second: Tsujigiri_71
+  - first:
+      213: -7106879545373494357
+    second: Tsujigiri_72
+  - first:
+      213: -7570098634687388596
+    second: Tsujigiri_73
+  - first:
+      213: 3105684227467596799
+    second: Tsujigiri_74
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 128
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Tsujigiri_00
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 238
+        width: 241
+        height: 274
+      alignment: 9
+      pivot: {x: 0.5715768, y: 0.010948905}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 49a9af009c63d4644b2a6245778df7ff
+      internalID: 902405326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_01
+      rect:
+        serializedVersion: 2
+        x: 299
+        y: 238
+        width: 221
+        height: 254
+      alignment: 9
+      pivot: {x: 0.6119909, y: 0.011811024}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2fb81dd9d62994a43ae813305a3029bd
+      internalID: 1352484701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_02
+      rect:
+        serializedVersion: 2
+        x: 568
+        y: 238
+        width: 207
+        height: 215
+      alignment: 9
+      pivot: {x: 0.6654589, y: 0.013953488}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a6cc2114d63c3045b7e99e263d2f154
+      internalID: 2055180268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_03
+      rect:
+        serializedVersion: 2
+        x: 803
+        y: 238
+        width: 247
+        height: 188
+      alignment: 9
+      pivot: {x: 0.7054656, y: 0.015957447}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2426c865f257af4faf33ff0cd2a3ef7
+      internalID: -924271547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_04
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 238
+        width: 280
+        height: 184
+      alignment: 9
+      pivot: {x: 0.65982145, y: 0.016304348}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ecfec56e0c4d0ed449ee519ba9486202
+      internalID: 1155023160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_05
+      rect:
+        serializedVersion: 2
+        x: 1360
+        y: 238
+        width: 277
+        height: 182
+      alignment: 9
+      pivot: {x: 0.5785199, y: 0.016483517}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b7a656a90b7780a418bc671b141f532b
+      internalID: -1284370277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_06
+      rect:
+        serializedVersion: 2
+        x: 1661
+        y: 238
+        width: 224
+        height: 253
+      alignment: 9
+      pivot: {x: 0.58370537, y: 0.011857707}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 488f73ba0828b6e47a4152b346ed7654
+      internalID: -1006946109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tsujigiri_07
+      rect:
+        serializedVersion: 2
+        x: 1923
+        y: 238
+        width: 226
+        height: 272
+      alignment: 9
+      pivot: {x: 0.62057525, y: 0.011029412}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fae53ee69c172d047837516c7182f545
+      internalID: -1442682506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: e9d2d4882a7cfae4aa22d80e9d3ba860
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Tsujigiri_00: 902405326
+      Tsujigiri_01: 1352484701
+      Tsujigiri_02: 2055180268
+      Tsujigiri_03: -924271547
+      Tsujigiri_04: 1155023160
+      Tsujigiri_05: -1284370277
+      Tsujigiri_06: -1006946109
+      Tsujigiri_07: -1442682506
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
