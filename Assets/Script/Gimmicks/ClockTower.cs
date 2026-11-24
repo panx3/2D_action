@@ -6,7 +6,6 @@ public sealed class ClockTower : MonoBehaviour
 {
     public enum ClockState { Idle, Activating, Rotating, Locking, Completed }
 
-    [SerializeField] private ElectricReceiverCable receiver;
     [SerializeField] private SpriteRenderer face;
     [SerializeField] private SpriteRenderer minuteHand;
     [SerializeField] private SpriteRenderer hourHand;
@@ -77,22 +76,11 @@ public sealed class ClockTower : MonoBehaviour
         }
     }
 
-    private void OnEnable()
-    {
-        if (receiver == null) return;
-        receiver.PowerStarted += BeginActivation;
-        if (receiver.IsPowered) BeginActivation();
-    }
+    private void OnDisable() => ReleaseCamera();
 
-    private void OnDisable()
+    internal bool TryActivate(Player initiator)
     {
-        if (receiver != null) receiver.PowerStarted -= BeginActivation;
-        ReleaseCamera();
-    }
-
-    private void BeginActivation()
-    {
-        if (State != ClockState.Idle) return;
+        if (!isActiveAndEnabled || State != ClockState.Idle) return false;
 
         // Keep the stationary hand colliders until the blades begin to turn.
         State = ClockState.Activating;
@@ -100,7 +88,8 @@ public sealed class ClockTower : MonoBehaviour
         float rampTime = accelerationTime + decelerationTime;
         peakSpeed = rampTime > 0f ? Mathf.Min(minuteSpeed, 2f * TotalTravel / rampTime) : minuteSpeed;
         cruiseTime = peakSpeed > 0f ? Mathf.Max(0f, TotalTravel / peakSpeed - rampTime * 0.5f) : 0f;
-        BeginCamera();
+        BeginCamera(initiator);
+        return true;
     }
 
     private void Update()
@@ -230,13 +219,14 @@ public sealed class ClockTower : MonoBehaviour
         if (clip != null && audioSource != null) audioSource.PlayOneShot(clip);
     }
 
-    private void BeginCamera()
+    private void BeginCamera(Player initiator)
     {
-        actor = receiver.Launcher != null ? receiver.Launcher.GetComponent<Player>() : null;
+        actor = initiator;
+        health = actor != null ? actor.GetComponent<PlayerHealth>() : null;
         if (!frameActivation || actor == null || lens == null || !stageCamera.isActiveAndEnabled ||
-            actor.IsGoalInputBlocked || !stageCamera.BeginEventControl(this))
+            actor.IsGoalInputBlocked || (health != null && (health.IsDead || health.IsRespawning)) ||
+            Mathf.Abs(actor.transform.position.x - transform.position.x) > 18f || !stageCamera.BeginEventControl(this))
             return;
-        health = actor.GetComponent<PlayerHealth>();
         startingCameraPosition = stageCamera.transform.position;
         startingLens = lens.orthographicSize;
         cameraTime = 0f;
