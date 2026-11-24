@@ -317,6 +317,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 _hookPoint;
     private bool _isHooked;
     private MagnetPoint _attachedMagnet;
+    private MovementMagnet _movementMagnet;
     private float _rehookLockoutTimer;
     private float _fireBufferTimer;
     private Vector2 _bufferedAimDirection;
@@ -471,6 +472,8 @@ public partial class MorningStarLauncher : MonoBehaviour
     private bool _trampolineJumpLeftGround;
     private bool _simulatedBeforeRespawn;
     public Rigidbody2D BallBody => morningStarRb;
+    internal MagnetPoint AttachedMovementMagnet => _movementMagnet != null
+        && IsAttachedToMagnet(_attachedMagnet, morningStarRb) ? _attachedMagnet : null;
     public Transform ChainVisualRoot => chainLineController != null ? chainLineController.transform : null;
 
     /// <summary>位置を変えず中央State経由で停止。見た目はFeedback側で分解する。</summary>
@@ -672,6 +675,10 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         BeginHook(anchorPosition);
         _attachedMagnet = magnet;
+        var movementMagnet = magnet.GetComponentInParent<MovementMagnet>();
+        if (movementMagnet != null && movementMagnet.Body != null
+            && movementMagnet.Body.gameObject == magnet.gameObject)
+            _movementMagnet = movementMagnet;
         BeginSwinging();
         GrantMagnetEscapeThrow();
         if (_isHooked && _state == MorningStarState.Swinging)
@@ -874,7 +881,8 @@ public partial class MorningStarLauncher : MonoBehaviour
         UpdateLaunchPose();
         _rehookLockoutTimer = Mathf.Max(0f, _rehookLockoutTimer - Time.deltaTime);
 
-        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
+        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || IsPlayerOnLadder
+            || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)))
         {
             UpdateFallbackLineRenderer();
             return;
@@ -951,6 +959,14 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
 
         float dt = Time.fixedDeltaTime;
+        if (_isHooked && _movementMagnet is not null)
+        {
+            if (_movementMagnet == null || _attachedMagnet == null || !_attachedMagnet.isActiveAndEnabled
+                || _movementMagnet.Body == null || !_movementMagnet.Body.simulated)
+                ReleaseHookAndBeginReturn(false);
+            else
+                _hookPoint = _movementMagnet.AnchorPosition;
+        }
         if (IsElectricStunned)
         {
             UpdateElectricHold();
@@ -966,7 +982,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         {
             case MorningStarState.Dragging:
                 TryRestoreBaseRopeLength();
-                UpdateChainClimb(dt);
+                if (!IsPlayerOnLadder) UpdateChainClimb(dt);
                 break;
 
             case MorningStarState.SpinCharging:
@@ -983,7 +999,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
             case MorningStarState.Dropping:
                 TryRestoreBaseRopeLength();
-                UpdateChainClimb(dt);
+                if (!IsPlayerOnLadder) UpdateChainClimb(dt);
                 break;
 
             case MorningStarState.Returning:
@@ -1172,7 +1188,8 @@ public partial class MorningStarLauncher : MonoBehaviour
     public void BeginTrampolineJump()
     {
         if (!isActiveAndEnabled || _playerRb == null || morningStarRb == null
-            || _respawnPresentation || _state == MorningStarState.StartIntro || (player != null && player.IsItemDrinking))
+            || _respawnPresentation || _state == MorningStarState.StartIntro || IsPlayerOnLadder
+            || (player != null && player.IsItemDrinking))
             return;
 
         // 跳躍を既存のHook/Jointで止めない。移動や発射の入力は引き続き受け付ける。
@@ -1280,6 +1297,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         EndLaunchPose();
         _isHooked = false;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
         _recallTimer = 0f;
         _recallHoldTimer = 0f;
@@ -1665,6 +1683,20 @@ public partial class MorningStarLauncher : MonoBehaviour
             || _state == MorningStarState.Thrown || _state == MorningStarState.Returning
             || _state == MorningStarState.SpinCharging);
 
+    private bool IsPlayerOnLadder => player != null && player.IsLadderClimbing;
+
+    internal bool CanUseLadder => isActiveAndEnabled && !_respawnPresentation && !_goalInputBlocked
+        && !_gimmickInputBlocked && !_trampolineJumpActive && !_isChainClimbing && !IsUpperHanging
+        && !IsElectricHeld && !IsEnemyMagnetPulling && morningStarRb != null && morningStarRb.simulated
+        && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping);
+
+    internal void BeginLadderClimb()
+    {
+        ClearPresentationInput();
+        CancelMotionLaunchVisual();
+        if (player != null) player.ClearAimFacing();
+    }
+
     public void BeginItemDrink()
     {
         if (_state == MorningStarState.SpinCharging) CancelShoulderCharge();
@@ -2045,6 +2077,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         _isHooked = false;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
 
         if (morningStarRb != null)
@@ -2510,6 +2543,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         _hookPoint = hookPoint;
         _isHooked = true;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookedAtTime = Time.time;
         _thrownElapsed = 0f;
         _fireBufferTimer = 0f;
@@ -2598,6 +2632,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         _isHooked = false;
         SetHookRopeJointActive(false);
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
         _rehookLockoutTimer = rehookLockoutTime;
         ApplyHookedChainVisual(false);
@@ -3066,6 +3101,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
         _isHooked = false;
         _attachedMagnet = null;
+        _movementMagnet = null;
         _hookPoint = Vector2.zero;
         TransitionToState(MorningStarState.Returning);
         _rehookLockoutTimer = Mathf.Max(_rehookLockoutTimer, rehookLockoutTime);
@@ -3180,13 +3216,13 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
         }
 
-        // connectedBody == null の場合、connectedAnchorはworld固定点になる。
-        // MagnetPointは鉄球だけをこの同じ支点へ固定する。
-        hookRopeJoint.connectedBody = null;
+        // 移動式だけ、レールを進む磁石のRigidbody2Dに鎖を接続する。
+        Rigidbody2D movingAnchor = _movementMagnet != null ? _movementMagnet.Body : null;
+        hookRopeJoint.connectedBody = movingAnchor;
         hookRopeJoint.autoConfigureConnectedAnchor = false;
         hookRopeJoint.autoConfigureDistance = false;
         hookRopeJoint.enableCollision = false;
-        hookRopeJoint.connectedAnchor = _hookPoint;
+        hookRopeJoint.connectedAnchor = movingAnchor != null ? Vector2.zero : _hookPoint;
         hookRopeJoint.distance = GetEffectiveRopeLength();
         UpdateHookRopeJointForCurrentPose();
         if (!hookRopeJoint.enabled)
@@ -3516,7 +3552,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void ApplyRecallThenLaunch(Vector2 worldDirection)
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
+        if (IsPlayerOnLadder || _goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation || worldDirection.sqrMagnitude < 1e-12f)
             return;
 
         _bufferedAimDirection = worldDirection.normalized;
@@ -3528,7 +3564,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     public void RequestReturn()
     {
-        if (_goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
+        if (IsPlayerOnLadder || _goalInputBlocked || _gimmickInputBlocked || IsEnemyMagnetPulling || IsElectricStunned || (player != null && (player.IsEnemyHitStunned || player.IsItemDrinking)) || _respawnPresentation)
             return;
         if (_state == MorningStarState.Thrown
             || _state == MorningStarState.Dropping

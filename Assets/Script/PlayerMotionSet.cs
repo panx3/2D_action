@@ -50,6 +50,7 @@ public sealed class PlayerMotionSet : ScriptableObject
     public Sequence pulled = new Sequence();
     public Sequence hanging = new Sequence();
     public Sequence climbing = new Sequence();
+    public Sprite ladderClimbPose;
     public Sequence hurtGround = new Sequence();
     public Sequence hurtAir = new Sequence();
     public Sequence drink = new Sequence();

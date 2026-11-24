@@ -9,6 +9,7 @@ public sealed class ScreenVisualProfile : ScriptableObject
     public VignetteSettings vignette = new VignetteSettings();
     public BlurSettings blur = new BlurSettings();
     public AtmosphereSettings atmosphere = new AtmosphereSettings();
+    [InspectorName("工場街の空気")] public IndustrialAirSettings industrialAir = new IndustrialAirSettings();
     [InspectorName("Background Petals")] public PetalSettings petals = new PetalSettings();
     public PetalSettings foregroundPetals = new PetalSettings
     {
@@ -65,6 +66,19 @@ public sealed class ScreenVisualProfile : ScriptableObject
         [Range(0f, 1f), Tooltip("ワールドのSpriteの彩度。1なら元の彩度を維持します。")]
         public float worldSaturation = 1f;
     }
+    [Serializable] public sealed class IndustrialAirSettings
+    {
+        public bool enabled;
+        public Material driftMaterial;
+        [Range(0, 1)] public float sunsetStrength = 0.8f;
+        [InspectorName("夕日の明暗"), Range(0, 1), Tooltip("日向と日陰の明暗差。0でも橙色の夕景は残ります。")]
+        public float sunsetContrast;
+        [InspectorName("レンズフレア"), Range(0, 1), Tooltip("太陽が見えるときの反射光の強さ。0で反射光を消します。")]
+        public float lensFlare;
+        public Material lensFlareMaterial;
+        [Range(0, 1)] public float steamOpacity = 0.37f;
+        [Range(0, 1.5f)] public float particleDensity = 1;
+    }
     [Serializable] public sealed class PetalSettings
     {
         public bool enabled;
@@ -89,5 +103,7 @@ public sealed class ScreenVisualProfile : ScriptableObject
         [Range(0, 1)] public float blurStrength = 1;
         [Range(0, 1)] public float fogInfluence = 1;
         [Range(0, 1)] public float lightingInfluence = 0.1f;
+        [Range(0, 1)] public float sunsetInfluence;
+        public bool sunsetSky;
     }
 }
