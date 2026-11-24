@@ -139,6 +139,8 @@ MonoBehaviour:
   hitAudioSource: {fileID: 0}
   morningStarHitClip: {fileID: 0}
   morningStarHitVolume: 0.9
+  defeatClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
+  defeatVolume: 0.9
   fragmentPrefab: {fileID: 3995165092266263535, guid: 1e71fb6d4622d2b4dba1d6e194e211f7, type: 3}
   fragmentCount: 10
   fragmentSpread: 0.3

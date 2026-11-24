@@ -5,6 +5,9 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public sealed class SlashMantisProjectile : MonoBehaviour
 {
+    [SerializeField] private SpriteRenderer bladeRenderer;
+    [SerializeField] private Sprite hitSparkSprite;
+
     private readonly List<RaycastHit2D> hits = new List<RaycastHit2D>(8);
     private SlashMantis owner;
     private int ownerVersion;
@@ -30,11 +33,16 @@ public sealed class SlashMantisProjectile : MonoBehaviour
         distanceLeft = range;
         timeLeft = lifetime;
         radius = hitRadius;
+        if (bladeRenderer != null && bladeRenderer.sprite != null)
+        {
+            float height = bladeRenderer.sprite.bounds.size.y;
+            bladeRenderer.transform.localScale = Vector3.one *
+                (2f * radius * SlashMantisEffect.SizeMultiplier / height);
+        }
         damage = hitDamage;
         knockback = hitKnockback;
         terrainLayers = terrain;
-        filter = new ContactFilter2D { useTriggers = true };
-        filter.SetLayerMask(terrain.value | player.value);
+        filter = CreateHitFilter(terrain, player);
     }
 
     private void FixedUpdate()
@@ -47,29 +55,11 @@ public sealed class SlashMantisProjectile : MonoBehaviour
 
         float stepTime = Mathf.Min(Time.fixedDeltaTime, timeLeft);
         float step = Mathf.Min(distanceLeft, speed * stepTime);
-        gameObject.scene.GetPhysicsScene2D().CircleCast(transform.position, radius, direction, step, filter, hits);
-        PlayerHealth target = null;
-        float wallDistance = float.PositiveInfinity;
-        float playerDistance = float.PositiveInfinity;
-        foreach (var hit in hits)
+        if (TryGetImpact(gameObject.scene.GetPhysicsScene2D(), transform.position, radius, direction, step,
+            filter, terrainLayers, hits, out var impact, out var target))
         {
-            if (!hit.collider.isTrigger && (terrainLayers.value & (1 << hit.collider.gameObject.layer)) != 0)
-                wallDistance = Mathf.Min(wallDistance, hit.distance);
-            if (hit.distance >= playerDistance || !PlayerColliderUtility.IsPlayerBody(hit.collider)) continue;
-            var candidate = hit.collider.GetComponentInParent<PlayerHealth>();
-            if (candidate == null || !candidate.isActiveAndEnabled || candidate.IsDead || candidate.IsRespawning) continue;
-            target = candidate;
-            playerDistance = hit.distance;
-        }
-        if (target != null && playerDistance < wallDistance)
-        {
-            target.TakeEnemyDamage(damage, direction * knockback);
-            Destroy(gameObject);
-            return;
-        }
-        if (wallDistance <= step)
-        {
-            Destroy(gameObject);
+            if (target != null) target.TakeEnemyDamage(damage, direction * knockback);
+            FinishHit(impact);
             return;
         }
 
@@ -77,5 +67,50 @@ public sealed class SlashMantisProjectile : MonoBehaviour
         distanceLeft -= step;
         timeLeft -= stepTime;
         if (distanceLeft <= 0f || timeLeft <= 0f) Destroy(gameObject);
+    }
+
+    internal static ContactFilter2D CreateHitFilter(LayerMask terrain, LayerMask player)
+    {
+        var hitFilter = new ContactFilter2D { useTriggers = false };
+        hitFilter.SetLayerMask(terrain.value | player.value);
+        return hitFilter;
+    }
+
+    internal static bool TryGetImpact(PhysicsScene2D scene, Vector2 origin, float radius, Vector2 direction,
+        float distance, ContactFilter2D filter, LayerMask terrain, List<RaycastHit2D> hits,
+        out RaycastHit2D impact, out PlayerHealth target)
+    {
+        scene.CircleCast(origin, radius, direction, distance, filter, hits);
+        impact = default;
+        target = null;
+        float closest = float.PositiveInfinity;
+        foreach (var hit in hits)
+        {
+            if (hit.collider == null || hit.distance > closest) continue;
+
+            bool wall = (terrain.value & (1 << hit.collider.gameObject.layer)) != 0;
+            PlayerHealth candidate = null;
+            if (!wall)
+            {
+                if (hit.distance >= closest || !PlayerColliderUtility.IsPlayerBody(hit.collider)) continue;
+                candidate = hit.collider.GetComponentInParent<PlayerHealth>();
+                if (candidate == null || !candidate.isActiveAndEnabled || candidate.IsDead || candidate.IsRespawning)
+                    continue;
+            }
+            impact = hit;
+            target = candidate;
+            closest = hit.distance;
+        }
+        return impact.collider != null;
+    }
+
+    private void FinishHit(RaycastHit2D hit)
+    {
+        enabled = false;
+        Vector2 point = hit.distance > 0f ? hit.point : (Vector2)transform.position;
+        SlashMantisEffect.Play(hitSparkSprite, bladeRenderer, gameObject.scene, point,
+            direction.x > 0f ? 1 : -1, Vector2.one * 0.7f, 0.2f);
+        if (bladeRenderer != null) bladeRenderer.enabled = false;
+        Destroy(gameObject);
     }
 }

@@ -34,6 +34,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField] private AudioSource hitAudioSource;
     [SerializeField] private AudioClip morningStarHitClip;
     [SerializeField, Range(0f, 1f)] private float morningStarHitVolume = 0.9f;
+    [SerializeField] private AudioClip defeatClip;
+    [SerializeField, Range(0f, 1f)] private float defeatVolume = 0.9f;
 
     [Header("Death Fragment")]
     [SerializeField] private GameObject fragmentPrefab;
@@ -238,6 +240,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 
         _deathHandled = true;
         StopHitFlash();
+
+        if (defeatClip != null)
+            OneShotAudioUtility.Play2D(OneShotAudioUtility.FindWorldImpactSource(), defeatClip, defeatVolume, transform.position);
 
         if (debugLog)
             Debug.Log($"[EnemyHealth] HandleDeath on {name}", this);

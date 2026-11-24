@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1467784753173197517}
   - component: {fileID: 6883324679425978378}
   - component: {fileID: 8507565347852909710}
+  - component: {fileID: 6989471882985426356}
   m_Layer: 9
   m_Name: SlashMantis
   m_TagString: Untagged
@@ -30,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4489138594619375887}
@@ -97,7 +98,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.85}
+  m_Offset: {x: 0, y: 1.01}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -107,7 +108,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.2, y: 1.7}
+  m_Size: {x: 1.3, y: 2}
   m_EdgeRadius: 0
 --- !u!114 &6883324679425978378
 MonoBehaviour:
@@ -121,7 +122,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7cad5c721a30444a8a8d436ddd30e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 3
+  maxHp: 5
   maxDamagePerHit: 0
   knockbackResistance: 1
   destroyOnDeath: 1
@@ -139,6 +140,8 @@ MonoBehaviour:
   hitAudioSource: {fileID: 0}
   morningStarHitClip: {fileID: 0}
   morningStarHitVolume: 0.9
+  defeatClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
+  defeatVolume: 0.9
   fragmentPrefab: {fileID: 0}
   fragmentCount: 10
   fragmentSpread: 0.3
@@ -168,42 +171,77 @@ MonoBehaviour:
   playerLayers:
     serializedVersion: 2
     m_Bits: 8
-  meleeRange: 2.1
-  meleeWeight: 3
+  meleeRadiusInPlayerHeights: 1
   meleeCooldown: 0.75
   meleeDamage: 1
   meleeHitTime: 0.5
+  meleeWindupSpeed: 0.55
   meleeAttackOrigin: {fileID: 4957034467972539798}
-  meleeHitSize: {x: 1.8, y: 1.45}
+  meleeSlashSize: {x: 1.8, y: 1.45}
   meleeClip: {fileID: 7400000, guid: 37f6a3e93b58d5049b27fd8d3ea88543, type: 2}
-  rangedMinRange: 1.5
-  rangedRange: 7
-  rangedWeight: 2
   rangedCooldown: 1.1
   rangedDamage: 1
   rangedFireTime: 0.5
+  rangedWindupSpeed: 0.5
+  rangedSweepSpeed: 0.65
   rangedProjectileSpawnPoint: {fileID: 1557196112452116717}
   rangedClip: {fileID: 7400000, guid: 98556c043e1f9154990d426ab0bbc874, type: 2}
   projectilePrefab: {fileID: 4453529496310193206, guid: 7123a6f0b0373074792533ffeca11e45, type: 3}
-  projectileSpeed: 9
+  projectileSpeed: 13.5
   projectileDistance: 8
   projectileLifetime: 1.2
   projectileRadius: 0.35
   knockback: 4
-  tsujigiriMinAttackCount: 2
-  tsujigiriMaxAttackCount: 4
-  tsujigiriDetectionRange: 5
-  tsujigiriDashDistance: 6
+  tsujigiriMaxRangedAttacks: 5
   tsujigiriDashSpeed: 24
   tsujigiriWindupDuration: 0.5
   tsujigiriDisappearDuration: 0.14
   tsujigiriDamageDelay: 0.2
   tsujigiriRecoveryDuration: 0.65
-  tsujigiriCooldown: 3
   tsujigiriDamage: 2
   facingRoot: {fileID: 4489138594619375887}
   spriteRenderer: {fileID: 398961354533212226}
   animator: {fileID: 2234180421606871809}
+  meleeSlashSprite: {fileID: 1103681319, guid: 6ed138dbaa3b8114d9ce90c642764b79, type: 3}
+  dashSlashSprite: {fileID: -2037040352, guid: 6ed138dbaa3b8114d9ce90c642764b79, type: 3}
+  dashImpactFrames:
+  - {fileID: 1078797081, guid: 4ef3cabfd12d7fe49b532800b891ddd1, type: 3}
+  - {fileID: 747267579, guid: 4ef3cabfd12d7fe49b532800b891ddd1, type: 3}
+  - {fileID: -858369379, guid: 4ef3cabfd12d7fe49b532800b891ddd1, type: 3}
+  - {fileID: -1193839527, guid: 4ef3cabfd12d7fe49b532800b891ddd1, type: 3}
+  hitSparkSprite: {fileID: 1994311488, guid: 6ed138dbaa3b8114d9ce90c642764b79, type: 3}
+--- !u!114 &6989471882985426356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2178841023234889683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2d956e02562b6f498a305c756418632, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDamageFeedback
+  gaugeEnabled: 1
+  gaugePrefab: {fileID: 5561037782073791896, guid: 98c15aef5b6eb0c4b84d11e8c97c42e3, type: 3}
+  gaugeDisplayTime: 1.5
+  gaugeOffset: {x: 0, y: 2.6575, z: 0}
+  flashEnabled: 0
+  bodyRenderers:
+  - {fileID: 398961354533212226}
+  flashMaterial: {fileID: 0}
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashDuration: 0.1
+  hitEffectEnabled: 0
+  hitEffectPrefab: {fileID: 0}
+  hitOffset: {x: 0, y: 0, z: 0}
+  criticalEffectEnabled: 0
+  criticalHpThreshold: 1
+  criticalEffectPrefab: {fileID: 0}
+  criticalOffset: {x: 0, y: 1.1, z: 0}
+  defeatEffectEnabled: 0
+  defeatEffectPrefab: {fileID: 0}
+  defeatOffset: {x: 0, y: 1.1, z: 0}
 --- !u!1 &3639287797403165570
 GameObject:
   m_ObjectHideFlags: 0
