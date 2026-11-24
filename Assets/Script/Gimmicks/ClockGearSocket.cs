@@ -8,14 +8,15 @@ public sealed class ClockGearSocket : MonoBehaviour
     [SerializeField] private Rigidbody2D gear;
     [SerializeField] private CircleCollider2D gearCollider;
     [SerializeField] private SpriteRenderer gearSprite;
-    [SerializeField] private Transform mouth;
+    [SerializeField] private BoxCollider2D leftRim;
+    [SerializeField] private Collider2D rightRim;
+    [SerializeField] private BoxCollider2D pocketFloor;
     [SerializeField] private Transform axle;
     [SerializeField] private Transform motor;
     [SerializeField] private SpriteRenderer engagedLamp;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip seatSound;
 
-    [SerializeField, Min(0.1f)] private float openingWidth = 3.5f;
     [SerializeField, Min(0.01f)] private float captureDepth = 0.2f;
     [SerializeField, Min(0.01f)] private float seatingDuration = 0.25f;
     [SerializeField, Min(0.1f)] private float maxRollSpeed = 4.5f;
@@ -34,9 +35,9 @@ public sealed class ClockGearSocket : MonoBehaviour
     private void Awake()
     {
         if (tower == null || gear == null || gearCollider == null || gearSprite == null ||
-            mouth == null || axle == null || motor == null)
+            leftRim == null || rightRim == null || pocketFloor == null || axle == null || motor == null)
         {
-            Debug.LogError("ClockGearSocket: assign the clock, gear, mouth, axle and motor.", this);
+            Debug.LogError("ClockGearSocket: assign the clock, gear, pocket colliders, axle and motor.", this);
             enabled = false;
             return;
         }
@@ -60,9 +61,11 @@ public sealed class ClockGearSocket : MonoBehaviour
         if (state != GearState.Rolling) return;
 
         Vector2 center = gear.position;
-        Vector2 opening = mouth.position;
-        if (center.y < opening.y - 4f || center.x < spawnPosition.x - 3.6f ||
-            center.x > opening.x + openingWidth * 0.5f + radius + 0.2f)
+        Bounds left = leftRim.bounds;
+        Bounds right = rightRim.bounds;
+        Bounds floor = pocketFloor.bounds;
+        if (center.y < floor.min.y - 2f || center.x < spawnPosition.x - 3.6f ||
+            center.x > right.min.x + radius + 0.2f)
         {
             state = GearState.WaitingToReturn;
             gear.simulated = false;
@@ -76,11 +79,14 @@ public sealed class ClockGearSocket : MonoBehaviour
         if (rollSpeed != velocity.x)
             gear.linearVelocity = new Vector2(rollSpeed, velocity.y);
 
-        // The circle has to fit between both rims and fall below the loading deck.
-        float clearance = Mathf.Max(0f, openingWidth * 0.5f - radius) + 2f * Physics2D.defaultContactOffset;
-        if (tower.isActiveAndEnabled && tower.State == ClockTower.ClockState.Idle &&
-            Mathf.Abs(center.x - opening.x) <= clearance && center.y >= opening.y &&
-            center.y - radius <= opening.y - captureDepth && velocity.y <= 0f)
+        // Use the same surfaces that support the player and guide the rolling gear.
+        float tolerance = 2f * Physics2D.defaultContactOffset;
+        float lip = Mathf.Min(left.max.y, right.max.y);
+        float gearBottom = center.y - radius;
+        bool betweenRims = center.x - radius >= left.max.x - tolerance &&
+                           center.x + radius <= right.min.x + tolerance;
+        if (tower.isActiveAndEnabled && tower.State == ClockTower.ClockState.Idle && betweenRims &&
+            gearBottom <= lip - captureDepth && gearBottom >= floor.max.y - tolerance && velocity.y <= 0f)
             BeginSeating();
     }
 
@@ -89,10 +95,13 @@ public sealed class ClockGearSocket : MonoBehaviour
         state = GearState.Seating;
         seatingStart = new Vector3(gear.position.x, gear.position.y, gear.transform.position.z);
         seatingStartAngle = gear.rotation;
-        // Identical 14-tooth gears need a half-tooth phase. Choose the nearest matching tooth.
-        float difference = ToothAngle * 0.5f - motorAngle - seatingStartAngle;
+        // Align the gap with the opposing tooth along the line between the axles.
+        Vector2 centerLine = axle.position - motor.position;
+        float contactAngle = Mathf.Atan2(centerLine.y, centerLine.x) * Mathf.Rad2Deg;
+        float motorHeading = motor.eulerAngles.z;
+        float difference = 2f * contactAngle + ToothAngle * 0.5f - motorHeading - seatingStartAngle;
         float correction = Mathf.Repeat(difference + ToothAngle * 0.5f, ToothAngle) - ToothAngle * 0.5f;
-        meshPhase = seatingStartAngle + correction + motorAngle;
+        meshPhase = seatingStartAngle + correction + motorHeading;
         gear.linearVelocity = Vector2.zero;
         gear.angularVelocity = 0f;
         gear.simulated = false;
@@ -107,7 +116,7 @@ public sealed class ClockGearSocket : MonoBehaviour
         motor.localRotation = Quaternion.Euler(0f, 0f, motorAngle);
         if (state == GearState.Engaged)
         {
-            gear.transform.rotation = Quaternion.Euler(0f, 0f, meshPhase - motorAngle);
+            gear.transform.rotation = Quaternion.Euler(0f, 0f, meshPhase - motor.eulerAngles.z);
             return;
         }
         if (state != GearState.Seating) return;
@@ -115,7 +124,7 @@ public sealed class ClockGearSocket : MonoBehaviour
         seatingTime += dt;
         float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(seatingTime / seatingDuration));
         gear.transform.SetPositionAndRotation(Vector3.Lerp(seatingStart, axle.position, t),
-            Quaternion.Euler(0f, 0f, Mathf.LerpAngle(seatingStartAngle, meshPhase - motorAngle, t)));
+            Quaternion.Euler(0f, 0f, Mathf.LerpAngle(seatingStartAngle, meshPhase - motor.eulerAngles.z, t)));
 
         if (seatingTime < seatingDuration || !tower.isActiveAndEnabled) return;
         if (!tower.TryActivate(FindPlayer())) return;
