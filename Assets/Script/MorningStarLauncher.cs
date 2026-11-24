@@ -2034,6 +2034,19 @@ public partial class MorningStarLauncher : MonoBehaviour
         return IsAttachedToMagnet(source, targetBody) && ReleaseHookAndBeginReturn(false);
     }
 
+    internal void ApplyBladeGuardKnockback(Vector2 velocity)
+    {
+        if (!isActiveAndEnabled || morningStarRb == null || !morningStarRb.simulated || _respawnPresentation
+            || _state == MorningStarState.StartIntro || _gimmickInputBlocked || IsElectricStunned)
+            return;
+
+        // 回収やチャージと速度の書き合いを起こさず、通常の自由な鉄球に戻してから衝撃を渡す。
+        _fireBufferTimer = 0f;
+        if (_state != MorningStarState.Dragging) EnterDraggingState(false);
+        morningStarRb.WakeUp();
+        morningStarRb.linearVelocity = velocity;
+    }
+
     public bool ReleaseEnemyMagnetOnEscape(MagnetPoint source, float reboundSpeed)
     {
         if (source == null || !_enemyMagnetPulls.Contains(source) || morningStarRb == null) return false;
@@ -2177,6 +2190,8 @@ public partial class MorningStarLauncher : MonoBehaviour
             || _state == MorningStarState.Hooked
             || _state == MorningStarState.Swinging;
     }
+
+    internal bool CanDealCombatDamage(float impactSpeed) => CanStateDealCombatDamage() && impactSpeed >= minCombatHitSpeed;
 
     private void ApplyGoalBallRebound(Collision2D collision, float restitution)
     {

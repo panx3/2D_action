@@ -10,6 +10,8 @@ public sealed class GroundProjectedShadow : MonoBehaviour
     [SerializeField, Min(0.1f)] private float width = 1.5f;
     [SerializeField, Tooltip("配置した敵のRootスケールに合わせて影の幅を拡縮する。既存の固定幅の影はOFF。")]
     private bool scaleWithOwner;
+    [SerializeField, Tooltip("保持中の爆弾など、無効なCircleCollider2Dからも形状を読み取って投影する。")]
+    private bool projectDisabledCircle;
     [SerializeField, Range(0f, 1f)] private float opacity = 0.52f;
     [SerializeField, Min(0.1f)] private float probeDistance = 8f;
     [SerializeField] private LayerMask groundLayers = (1 << 0) | (1 << 6) | (1 << 10);
@@ -28,10 +30,18 @@ public sealed class GroundProjectedShadow : MonoBehaviour
     {
         if (groundShadow == null) return;
         groundShadow.enabled = false;
-        if (body == null || !body.enabled || !body.gameObject.activeInHierarchy || groundShadow.sprite == null)
+        if (body == null || !body.gameObject.activeInHierarchy || groundShadow.sprite == null)
             return;
 
         Bounds bounds = body.bounds;
+        if (!body.enabled || bounds.size == Vector3.zero)
+        {
+            if (!projectDisabledCircle || body is not CircleCollider2D circle) return;
+            Vector3 circleScale = circle.transform.lossyScale;
+            float diameter = 2f * circle.radius * Mathf.Max(Mathf.Abs(circleScale.x), Mathf.Abs(circleScale.y));
+            bounds = new Bounds(circle.transform.TransformPoint(circle.offset), new Vector3(diameter, diameter, 0f));
+        }
+
         // 接地時にも床の内側からRayを開始しない。天井や垂直壁の側面は投影先にしない。
         Vector2 origin = new Vector2(bounds.center.x, bounds.min.y + 0.12f);
         int count = Physics2D.Raycast(origin, Vector2.down, filter, hits, probeDistance + 0.12f);

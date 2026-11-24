@@ -120,21 +120,25 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     }
 
     public void TakeExplosionDamage(int damage, Vector2 impulse, Vector2 impactPoint)
+        => TakeExplosionDamage(damage, impulse, impactPoint, false);
+
+    internal void TakeExplosionDamage(int damage, Vector2 impulse, Vector2 impactPoint, bool lethal)
     {
         if (!isActiveAndEnabled) return;
         ApplyHit(new MorningStarHitContext(damage, impulse, 0f, impactPoint,
-            impulse.normalized, impulse.magnitude, 1f), false, false);
+            impulse.normalized, impulse.magnitude, 1f), false, false, lethal);
     }
 
-    private void ApplyHit(MorningStarHitContext context, bool crushing, bool morningStar = false)
+    private void ApplyHit(MorningStarHitContext context, bool crushing, bool morningStar = false, bool lethalExplosion = false)
     {
         bool guardDeath = _deathGuard != null && _deathGuard.DeferDeath;
+        bool bypassInvincibility = lethalExplosion || (crushing && !guardDeath);
         if (_currentHp <= 0 || IsDeathPending || context.Damage <= 0
-            || ((!crushing || guardDeath) && Time.time - _lastDamageTime < HitInvincibleDuration))
+            || (!bypassInvincibility && Time.time - _lastDamageTime < HitInvincibleDuration))
             return;
 
         _lastDamageTime = Time.time;
-        int damage = crushing ? _currentHp
+        int damage = crushing || lethalExplosion ? _currentHp
             : maxDamagePerHit > 0 ? Mathf.Min(context.Damage, maxDamagePerHit) : context.Damage;
         if (morningStar && _morningStarDamageModifier != null)
             damage = Mathf.Max(0, _morningStarDamageModifier.ModifyMorningStarDamage(context, damage, _currentHp));

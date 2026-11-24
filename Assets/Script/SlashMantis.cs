@@ -4,9 +4,9 @@ using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
-public sealed class SlashMantis : MonoBehaviour
+public sealed partial class SlashMantis : MonoBehaviour
 {
-    private enum State { Walking, Melee, Ranged, Recover, DashWindup, Dash, DashRecovery, Stunned, Dead }
+    private enum State { Walking, Melee, Ranged, Recover, DashWindup, Dash, DashRecovery, Stunned, Dead, IaiWindup, IaiRush, IaiRecovery }
 
     [Header("Movement")]
     [SerializeField, Min(0f), Tooltip("地上の移動速度。")] private float walkSpeed = 1.8f;
@@ -134,6 +134,8 @@ public sealed class SlashMantis : MonoBehaviour
 
     private void OnDisable()
     {
+        RestoreIaiGuardContacts(true);
+        CancelIai();
         RestoreDash();
         dashVictim = null;
         ProjectileVersion++;
@@ -141,15 +143,19 @@ public sealed class SlashMantis : MonoBehaviour
 
     private void OnDestroy()
     {
+        DestroyIaiImages();
         health.HitConfirmed -= OnHit;
         health.HealthReset -= ResetAI;
     }
 
     private void ResetAI()
     {
+        RestoreIaiGuardContacts(true);
+        CancelIai();
         RestoreDash();
         ProjectileVersion++;
         RollRangedAttacksUntilDash();
+        ResetIaiSchedule();
         nextPlayerSearch = 0f;
         dashVictim = null;
         terrainFilter = new ContactFilter2D { useTriggers = false };
@@ -167,9 +173,11 @@ public sealed class SlashMantis : MonoBehaviour
 
     private void OnHit(MorningStarHitContext hit, bool lethal)
     {
+        CancelIai();
         RestoreDash();
         dashVictim = null;
         ProjectileVersion++;
+        if (lethal) PlayIaiDefeat();
         Enter(lethal ? State.Dead : State.Stunned);
     }
 
@@ -188,6 +196,9 @@ public sealed class SlashMantis : MonoBehaviour
             case State.DashWindup: StepDashWindup(); break;
             case State.Dash: StepDash(); break;
             case State.DashRecovery: StepDashRecovery(); break;
+            case State.IaiWindup: StepIaiWindup(); break;
+            case State.IaiRush: StepIaiRush(); break;
+            case State.IaiRecovery: StepIaiRecovery(); break;
             case State.Stunned: Enter(State.Walking); break;
         }
     }
@@ -241,6 +252,8 @@ public sealed class SlashMantis : MonoBehaviour
                     return;
                 }
             }
+
+            if (TryBeginIai(toward)) return;
 
             if (CanShoot(toward))
             {
@@ -353,6 +366,7 @@ public sealed class SlashMantis : MonoBehaviour
         }
 
         if (progress < 1f) return;
+        if (actionFired) CountNormalAttackForIai();
         if (!melee && actionFired && rangedAttacksUntilDash > 0)
             rangedAttacksUntilDash--;
         BeginRecovery(melee ? meleeCooldown : rangedCooldown);
@@ -520,10 +534,11 @@ public sealed class SlashMantis : MonoBehaviour
         spriteHidden = false;
     }
 
-    private float SafeDashDistance(float distance)
+    private float SafeDashDistance(float distance) => SafeTravelOnGround(distance, bodyCollider.bounds, GroundProbe);
+
+    private float SafeTravelOnGround(float distance, Bounds bounds, float groundProbe)
     {
-        Bounds bounds = bodyCollider.bounds;
-        if (!HasGround(bounds, 0f)) return 0f;
+        if (!HasGroundAtDepth(bounds, 0f, groundProbe)) return 0f;
         CastTerrain(bounds, facing, distance);
         foreach (var hit in casts)
             distance = Mathf.Min(distance, Mathf.Max(0f, hit.distance - Skin));
@@ -532,7 +547,7 @@ public sealed class SlashMantis : MonoBehaviour
         while (supported < distance)
         {
             float next = Mathf.Min(distance, supported + GroundSampleSpacing);
-            if (!HasGround(bounds, facing * next)) break;
+            if (!HasGroundAtDepth(bounds, facing * next, groundProbe)) break;
             supported = next;
         }
         return supported;
@@ -545,10 +560,12 @@ public sealed class SlashMantis : MonoBehaviour
             distance + Skin, terrainFilter, casts);
     }
 
-    private bool HasGround(Bounds bounds, float offset)
+    private bool HasGround(Bounds bounds, float offset) => HasGroundAtDepth(bounds, offset, GroundProbe);
+
+    private bool HasGroundAtDepth(Bounds bounds, float offset, float depth)
     {
         Vector2 foot = new Vector2(bounds.center.x + offset, bounds.min.y + Skin);
-        PhysicsScene.Raycast(foot, Vector2.down, GroundProbe, terrainFilter, casts);
+        PhysicsScene.Raycast(foot, Vector2.down, depth, terrainFilter, casts);
         foreach (var hit in casts)
             if (hit.normal.y > 0.5f && hit.distance > 0f) return true;
         return false;
