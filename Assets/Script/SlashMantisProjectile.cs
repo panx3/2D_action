@@ -7,7 +7,9 @@ public sealed class SlashMantisProjectile : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer bladeRenderer;
     [SerializeField] private Sprite hitSparkSprite;
+    [SerializeField, Min(0.01f)] private float dissipationDuration = 0.24f;
 
+    private static readonly int Dissolve = Shader.PropertyToID("_Dissolve");
     private readonly List<RaycastHit2D> hits = new List<RaycastHit2D>(8);
     private SlashMantis owner;
     private int ownerVersion;
@@ -20,15 +22,21 @@ public sealed class SlashMantisProjectile : MonoBehaviour
     private float knockback;
     private LayerMask terrainLayers;
     private ContactFilter2D filter;
+    private Vector3 flightScale;
+    private Color flightColor;
+    private MaterialPropertyBlock dissolveProperties;
+    private bool dissipating;
+    private float dissipationElapsed;
 
-    internal void Fire(SlashMantis source, int facing, float flightSpeed, float range, float lifetime,
+    internal void Fire(SlashMantis source, Vector2 flightDirection, float flightSpeed, float range, float lifetime,
         float hitRadius, int hitDamage, float hitKnockback, LayerMask terrain, LayerMask player)
     {
         owner = source;
         ownerVersion = source.ProjectileVersion;
         if (gameObject.scene != source.gameObject.scene)
             SceneManager.MoveGameObjectToScene(gameObject, source.gameObject.scene);
-        direction = Vector2.right * facing;
+        direction = flightDirection.normalized;
+        transform.rotation = Quaternion.AngleAxis(Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg, Vector3.forward);
         speed = flightSpeed;
         distanceLeft = range;
         timeLeft = lifetime;
@@ -36,8 +44,10 @@ public sealed class SlashMantisProjectile : MonoBehaviour
         if (bladeRenderer != null && bladeRenderer.sprite != null)
         {
             float height = bladeRenderer.sprite.bounds.size.y;
-            bladeRenderer.transform.localScale = Vector3.one *
-                (2f * radius * SlashMantisEffect.SizeMultiplier / height);
+            flightScale = Vector3.one * (2f * radius * SlashMantisEffect.SizeMultiplier / height);
+            flightColor = bladeRenderer.color;
+            bladeRenderer.transform.localScale = flightScale;
+            bladeRenderer.flipY = direction.x < 0f;
         }
         damage = hitDamage;
         knockback = hitKnockback;
@@ -52,13 +62,15 @@ public sealed class SlashMantisProjectile : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        if (dissipating) return;
 
         float stepTime = Mathf.Min(Time.fixedDeltaTime, timeLeft);
         float step = Mathf.Min(distanceLeft, speed * stepTime);
         if (TryGetImpact(gameObject.scene.GetPhysicsScene2D(), transform.position, radius, direction, step,
             filter, terrainLayers, hits, out var impact, out var target))
         {
-            if (target != null) target.TakeEnemyDamage(damage, direction * knockback);
+            if (target != null)
+                target.TakeEnemyDamage(damage, Vector2.right * (Mathf.Sign(direction.x) * knockback));
             FinishHit(impact);
             return;
         }
@@ -66,7 +78,34 @@ public sealed class SlashMantisProjectile : MonoBehaviour
         transform.position += (Vector3)(direction * step);
         distanceLeft -= step;
         timeLeft -= stepTime;
-        if (distanceLeft <= 0f || timeLeft <= 0f) Destroy(gameObject);
+        if (distanceLeft <= 0f || timeLeft <= 0f)
+        {
+            if (bladeRenderer == null || bladeRenderer.sprite == null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            dissipating = true;
+            dissolveProperties = new MaterialPropertyBlock();
+            bladeRenderer.GetPropertyBlock(dissolveProperties);
+        }
+    }
+
+    private void Update()
+    {
+        if (!dissipating) return;
+
+        dissipationElapsed += Time.deltaTime;
+        float progress = Mathf.Clamp01(dissipationElapsed / Mathf.Max(0.01f, dissipationDuration));
+        Color color = flightColor;
+        color.a *= 1f - Mathf.SmoothStep(0f, 1f, progress);
+        bladeRenderer.color = color;
+        bladeRenderer.transform.localScale = Vector3.Scale(flightScale,
+            new Vector3(Mathf.Lerp(1f, 1.30f, progress), Mathf.Lerp(1f, 0.22f, progress), 1f));
+        dissolveProperties.SetFloat(Dissolve, progress);
+        bladeRenderer.SetPropertyBlock(dissolveProperties);
+        if (progress >= 1f) Destroy(gameObject);
     }
 
     internal static ContactFilter2D CreateHitFilter(LayerMask terrain, LayerMask player)

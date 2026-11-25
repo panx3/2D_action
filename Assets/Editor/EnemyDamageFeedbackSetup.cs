@@ -3,21 +3,22 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-/// <summary>インポート済みの生成素材から共通Prefabを作り、サソリだけに適用する。</summary>
+/// <summary>サソリの被弾VFXのセットアップと共通HPゲージの参照確認。</summary>
 public static class EnemyDamageFeedbackSetup
 {
     public const string ArtFolder = "Assets/Art/EnemyDamageFeedback";
     public const string PrefabFolder = "Assets/Prefabs/Enemies/DamageFeedback";
+    public const string GaugePrefabPath = "Assets/Resources/Feedback/MiniHealthGauge.prefab";
     public const string FlashMaterialPath = "Assets/Materials/EnemyHitFlash.mat";
 
     [MenuItem("Tools/Enemies/Damage Feedback/Create Assets And Apply To Scorpion")]
     public static void CreateAndApply()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
-        var gauge = Sprites("GaugeAtlas"); var hit = Sprites("HitAtlas");
+        var hit = Sprites("HitAtlas");
         var critical = Sprites("CriticalAtlas"); var defeat = Sprites("DefeatAtlas");
-        if (gauge.Length != 3 || hit.Length != 4 || critical.Length != 8 || defeat.Length != 6)
-            throw new InvalidOperationException("Expected sliced sprites: gauge3, hit4, critical8, defeat6.");
+        if (hit.Length != 4 || critical.Length != 8 || defeat.Length != 6)
+            throw new InvalidOperationException("Expected sliced sprites: hit4, critical8, defeat6.");
         Folder(PrefabFolder);
         if (AssetDatabase.LoadAssetAtPath<Material>(FlashMaterialPath) == null)
         {
@@ -25,7 +26,6 @@ public static class EnemyDamageFeedbackSetup
             if (shader == null) throw new InvalidOperationException("Enemy Hit Flash shader is missing.");
             AssetDatabase.CreateAsset(new Material(shader), FlashMaterialPath);
         }
-        CreateGauge(gauge);
         CreateOneShot("Hit", hit, 14f);
         CreateOneShot("Defeat", defeat, 12f);
         CreateCritical(critical);
@@ -49,7 +49,8 @@ public static class EnemyDamageFeedbackSetup
             data.FindProperty("bodyRenderers").arraySize = 1;
             data.FindProperty("bodyRenderers").GetArrayElementAtIndex(0).objectReferenceValue = root.transform.Find("Visual").GetComponent<SpriteRenderer>();
             Ref(data, "flashMaterial", AssetDatabase.LoadAssetAtPath<Material>(FlashMaterialPath));
-            Ref(data, "gaugePrefab", AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/MiniHealthGauge.prefab").GetComponent<EnemyMiniHealthGauge>());
+            Ref(data, "gaugePrefab", AssetDatabase.LoadAssetAtPath<GameObject>(GaugePrefabPath).GetComponent<EnemyMiniHealthGauge>());
+            data.FindProperty("gaugeStyle").enumValueIndex = (int)EnemyHealthGaugeStyle.Miniboss;
             Ref(data, "hitEffectPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/Hit.prefab"));
             Ref(data, "criticalEffectPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/Critical.prefab"));
             Ref(data, "defeatEffectPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/Defeat.prefab"));
@@ -63,22 +64,34 @@ public static class EnemyDamageFeedbackSetup
     public static void Validate()
     {
         var root = AssetDatabase.LoadAssetAtPath<GameObject>(BeamScorpionSetup.PrefabPath);
-        if (root.GetComponent<EnemyHealth>().MaxHp != 3) throw new InvalidOperationException("Scorpion must have HP3.");
+        if (root.GetComponent<EnemyHealth>().MaxHp < 2) throw new InvalidOperationException("Scorpion gauge requires at least 2 max HP.");
         var feedback = root.GetComponent<EnemyDamageFeedback>();
         if (feedback == null) throw new InvalidOperationException("EnemyDamageFeedback is missing.");
         var data = new SerializedObject(feedback);
-        foreach (string name in new[] { "flashMaterial", "gaugePrefab", "hitEffectPrefab", "criticalEffectPrefab", "defeatEffectPrefab" })
+        foreach (string name in new[] { "flashMaterial", "hitEffectPrefab", "criticalEffectPrefab", "defeatEffectPrefab" })
             if (data.FindProperty(name).objectReferenceValue == null) throw new InvalidOperationException("Missing reference: " + name);
+        var mantis = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemies/SlashMantis.prefab");
+        foreach (var boss in new[] { root, mantis })
+        {
+            var component = boss.GetComponent<EnemyDamageFeedback>();
+            if (component == null || new SerializedObject(component).FindProperty("gaugeStyle").enumValueIndex != (int)EnemyHealthGaugeStyle.Miniboss)
+                throw new InvalidOperationException("Missing miniboss gauge on " + boss.name);
+        }
+        var gaugePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GaugePrefabPath);
+        var gauge = new SerializedObject(gaugePrefab.GetComponent<EnemyMiniHealthGauge>());
+        foreach (string name in new[] { "normal.frame", "miniboss.frame", "backgroundSprite", "fillSprite", "trailSprite", "sparkSprite", "flashMaterial" })
+            if (gauge.FindProperty(name).objectReferenceValue == null) throw new InvalidOperationException("Missing gauge reference: " + name);
         var mat = AssetDatabase.LoadAssetAtPath<Material>(FlashMaterialPath);
         if (mat == null || !mat.shader.isSupported || ShaderUtil.ShaderHasError(mat.shader))
             throw new InvalidOperationException("Flash shader is invalid.");
-        foreach (string name in new[] { "GaugeAtlas", "HitAtlas", "CriticalAtlas", "DefeatAtlas" })
+        foreach (string name in new[] { "GaugeFrame", "GaugeMinibossFrame", "GaugeBackground", "GaugeFill",
+            "GaugeDamageTrail", "GaugeSpark", "HitAtlas", "CriticalAtlas", "DefeatAtlas" })
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(ArtFolder + "/" + name + ".png");
             if (importer.filterMode != FilterMode.Point || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed)
                 throw new InvalidOperationException("Pixel-art import settings are invalid: " + name);
         }
-        Debug.Log("[EnemyDamageFeedback] Assets validated: HP3, three-hit cap, generated sprites, flash and replaceable VFX.");
+        Debug.Log("[EnemyDamageFeedback] HP gauge and hit effect assets validated.");
     }
 
     private static Sprite[] Sprites(string name) => AssetDatabase.LoadAllAssetsAtPath(ArtFolder + "/" + name + ".png")
@@ -89,19 +102,6 @@ public static class EnemyDamageFeedbackSetup
         if (AssetDatabase.IsValidFolder(path)) return;
         string parent = path.Substring(0, path.LastIndexOf('/')); Folder(parent);
         AssetDatabase.CreateFolder(parent, path.Substring(path.LastIndexOf('/') + 1));
-    }
-    private static void CreateGauge(Sprite[] sprites)
-    {
-        string path = PrefabFolder + "/MiniHealthGauge.prefab";
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(path) != null) return;
-        var root = new GameObject("MiniHealthGauge");
-        try
-        {
-            var gauge = root.AddComponent<EnemyMiniHealthGauge>(); var data = new SerializedObject(gauge);
-            Ref(data, "frameSprite", sprites[0]); Ref(data, "litSprite", sprites[1]); Ref(data, "emptySprite", sprites[2]);
-            data.ApplyModifiedPropertiesWithoutUndo(); PrefabUtility.SaveAsPrefabAsset(root, path);
-        }
-        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
     private static void CreateOneShot(string name, Sprite[] sprites, float fps)
     {

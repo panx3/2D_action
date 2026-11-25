@@ -1,40 +1,25 @@
 fileFormatVersion: 2
-guid: 388e73912e2f08f42b7359eeb1be5199
+guid: 7735379fc5a443746ac16e402e498f89
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2122116732572767164
-    second: GaugeAtlas_0
+      213: 9173614661877297658
+    second: CrossGuard_0
   - first:
-      213: -722065018945340676
-    second: GaugeAtlas_1
+      213: -12511999433254601
+    second: CrossGuard_1
   - first:
-      213: 3288528560046248577
-    second: GaugeAtlas_2
+      213: 3299712352249630349
+    second: CrossGuard_2
   - first:
-      213: -4566994834649010771
-    second: GaugeAtlas_3
+      213: -2834041915158211186
+    second: CrossGuard_3
   - first:
-      213: -7410794844094884473
-    second: GaugeAtlas_4
+      213: -8645949798957543276
+    second: CrossGuard_4
   - first:
-      213: -1533122953167959923
-    second: GaugeAtlas_5
-  - first:
-      213: 4882171521287625609
-    second: GaugeAtlas_6
-  - first:
-      213: 8697256643003949643
-    second: GaugeAtlas_7
-  - first:
-      213: 3529972023934545751
-    second: GaugeAtlas_8
-  - first:
-      213: -6553543454377637500
-    second: GaugeAtlas_9
-  - first:
-      213: -1829922279835173981
-    second: GaugeAtlas_10
+      213: 1767309249124711687
+    second: CrossGuard_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -76,14 +61,14 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
-  spriteMeshType: 0
-  alignment: 0
-  spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spriteMeshType: 1
+  alignment: 9
+  spritePivot: {x: 0.5095694, y: 0.14433812}
+  spritePixelsToUnits: 455
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spriteGenerateFallbackPhysicsShape: 1
+  spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -102,10 +87,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 2
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -143,67 +128,133 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: GaugeAtlas_00
+      name: CrossGuard_0
       rect:
         serializedVersion: 2
-        x: 74
-        y: 312
-        width: 629
-        height: 109
+        x: 0
+        y: 17
+        width: 1236
+        height: 1237
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: de00e41d2bfd00e449f37921db238620
-      internalID: 53240530
+      spriteID: af1f28b5ee93f4f70800000000000000
+      internalID: 9173614661877297658
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GaugeAtlas_01
+      name: CrossGuard_1
       rect:
         serializedVersion: 2
-        x: 771
-        y: 312
-        width: 631
-        height: 109
+        x: 94
+        y: 730
+        width: 8
+        height: 10
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f5c787f9edad2f2409b38bdc75430056
-      internalID: 2103594034
+      spriteID: 739d95e176c83dff0800000000000000
+      internalID: -12511999433254601
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: GaugeAtlas_02
+      name: CrossGuard_2
       rect:
         serializedVersion: 2
-        x: 1472
-        y: 312
-        width: 627
-        height: 109
+        x: 1155
+        y: 483
+        width: 8
+        height: 20
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f55a35a71cc8b5f43ba21c7342e0e7b7
-      internalID: -1149800799
+      spriteID: d8ecec8d6eeeacd20800000000000000
+      internalID: 3299712352249630349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrossGuard_3
+      rect:
+        serializedVersion: 2
+        x: 1162
+        y: 485
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e855d60c4e57ba8d0800000000000000
+      internalID: -2834041915158211186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrossGuard_4
+      rect:
+        serializedVersion: 2
+        x: 1131
+        y: 168
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 490964f477a630880800000000000000
+      internalID: -8645949798957543276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrossGuard_5
+      rect:
+        serializedVersion: 2
+        x: 1053
+        y: 112
+        width: 23
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70d3752066eb68810800000000000000
+      internalID: 1767309249124711687
       vertices: []
       indices: 
       edges: []
@@ -212,7 +263,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: b939fd10d1eb4a8479593f5630cc8bfa
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -222,9 +273,12 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      GaugeAtlas_00: 53240530
-      GaugeAtlas_01: 2103594034
-      GaugeAtlas_02: -1149800799
+      CrossGuard_0: 9173614661877297658
+      CrossGuard_1: -12511999433254601
+      CrossGuard_2: 3299712352249630349
+      CrossGuard_3: -2834041915158211186
+      CrossGuard_4: -8645949798957543276
+      CrossGuard_5: 1767309249124711687
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

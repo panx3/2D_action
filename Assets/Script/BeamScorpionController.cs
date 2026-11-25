@@ -4,9 +4,9 @@ using UnityEngine.SceneManagement;
 /// <summary>巡回と方向固定のビーム攻撃。HP・被弾Impulse・撃破はEnemyHealthが所有する。</summary>
 [DisallowMultipleComponent, SelectionBase]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
-public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
+public sealed partial class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
 {
-    public enum ActionState { Patrol, Windup, Firing, Recovery }
+    public enum ActionState { Patrol, Windup, Firing, Recovery, ClawWindup, ClawSwing }
     [Header("Patrol")]
     [SerializeField, Min(0f)] private float moveSpeed = 0.8f;
     [SerializeField, Min(0.1f), Tooltip("初期位置を中心とした片側の巡回幅。Rootの拡縮に追従。")]
@@ -17,14 +17,14 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
     [SerializeField] private LayerMask groundLayer = (1 << 0) | (1 << 6);
     [SerializeField] private Transform groundCheck, edgeCheck, wallCheck;
     [Header("Attack timing")]
-    [SerializeField, Min(0.1f)] private float attackInterval = 1.2f;
+    [SerializeField, Min(0.1f)] private float attackInterval = 0.95f;
     [SerializeField, Min(0.1f)] private float attackCooldown = 0.55f;
     [SerializeField, Min(0.1f)] private float windupTime = 0.5f;
     [SerializeField, Min(0.02f)] private float beamDuration = 0.55f;
-    [SerializeField, Min(0f)] private float detectionRange = 7f;
+    [SerializeField, Min(0f)] private float detectionRange = 9f;
     [Header("Beam")]
     [SerializeField] private Transform beamOrigin;
-    [SerializeField, Min(0.1f)] private float beamLength = 8f;
+    [SerializeField, Min(0.1f)] private float beamLength = 9.5f;
     [SerializeField, Min(0.01f)] private float beamThickness = 0.14f;
     [SerializeField] private Color beamColor = new Color(1f, 0.08f, 0.32f);
     [SerializeField, Min(0)] private int beamDamage = 1;
@@ -61,9 +61,9 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
     private PlayerHealth player;
     private Collider2D playerCollider, lastHitCollider;
     private BeamScorpionBeamVfx beam;
-    private BeamScorpionBurstVfx charge;
+    private BeamScorpionBurstVfx charge, muzzle;
     private Vector2 beamEnd;
-    private bool moving;
+    private bool beamAtContact, moving, clawAvailable;
     private Vector3 originRest;
     private float patrolCenterX;
     private bool firstBeamCompleted;
@@ -87,6 +87,8 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         terrainFilter.SetLayerMask(groundLayer);
         beamFilter = new ContactFilter2D { useTriggers = false };
         beamFilter.SetLayerMask(playerLayer.value | obstacleLayer.value | morningStarLayer.value);
+        clawFilter = new ContactFilter2D { useTriggers = false };
+        clawFilter.SetLayerMask(playerLayer.value | morningStarLayer.value);
         originRest = beamOrigin != null ? beamOrigin.localPosition : Vector3.zero;
         health.HitConfirmed += OnHit;
         health.HealthReset += ResetFirstBeam;
@@ -94,12 +96,10 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
 
     private void OnEnable()
     {
-        firstBeamCompleted = false;
         direction = startFacingRight ? 1 : -1;
-        nextAttack = Time.time + Mathf.Max(0.1f, attackInterval);
         turnUntil = nextDamage = nextImpact = nextPlayerSearch = 0f;
         lastHitCollider = null;
-        SetState(ActionState.Patrol);
+        ResetFirstBeam();
     }
 
     private void OnDisable()
@@ -118,7 +118,12 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         health.HealthReset -= ResetFirstBeam;
     }
 
-    private void ResetFirstBeam() { firstBeamCompleted = false; SetState(ActionState.Patrol); }
+    private void ResetFirstBeam()
+    {
+        firstBeamCompleted = clawAvailable = false;
+        nextAttack = Time.time + Mathf.Max(0.1f, attackInterval);
+        SetState(ActionState.Patrol);
+    }
 
     private void FixedUpdate()
     {
@@ -131,12 +136,8 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         switch (State)
         {
             case ActionState.Patrol:
-                if (grounded && Time.time >= nextAttack && PlayerInRange(out int attackFacing))
-                {
-                    direction = attackFacing;
-                    SetState(ActionState.Windup);
-                }
-                else if (grounded && Time.time >= turnUntil)
+                if (!grounded || TryStartAttack()) break;
+                if (Time.time >= turnUntil)
                 {
                     if (WithinPatrolRange(direction) && CanWalk(direction)) speed = direction * moveSpeed;
                     else { direction = -direction; turnUntil = Time.time + turnDelay; }
@@ -154,6 +155,14 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
             case ActionState.Recovery:
                 if (StateElapsed >= Mathf.Max(0.1f, attackCooldown)) SetState(ActionState.Patrol);
                 break;
+            case ActionState.ClawWindup:
+                if (!grounded) SetState(ActionState.Patrol);
+                else if (StateElapsed >= clawWindupTime) SetState(ActionState.ClawSwing);
+                break;
+            case ActionState.ClawSwing:
+                if (StateElapsed <= ClawSwingTime) TraceClaw();
+                if (StateElapsed >= clawSwingDuration) SetState(ActionState.Patrol);
+                break;
         }
         body.linearVelocity = new Vector2(speed, body.linearVelocity.y);
         moving = Mathf.Abs(speed) > 0.001f;
@@ -165,7 +174,8 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         if (health.CurrentHp <= 0 && !health.IsDeathPending) return;
         UpdateOrigin();
         if (charge != null && beamOrigin != null) charge.transform.position = beamOrigin.position;
-        if (beam != null) beam.SetBeam(Origin, beamEnd, beamThickness, beamColor);
+        if (muzzle != null) muzzle.transform.position = Origin;
+        if (beam != null) beam.SetBeam(Origin, beamEnd, beamThickness, beamColor, beamAtContact);
     }
 
     private Vector2 Origin => beamOrigin != null ? (Vector2)beamOrigin.position : (Vector2)bodyCollider.bounds.center;
@@ -189,9 +199,17 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
     {
         if (visualRenderer != null) visualRenderer.flipX = direction > 0;
         if (visualAnimator == null) return;
-        visualAnimator.speed = State == ActionState.Patrol ? (moving ? 1f : 0f)
-            : State == ActionState.Windup ? 1f / Mathf.Max(0.1f, windupTime)
-            : State == ActionState.Recovery ? 1f / Mathf.Max(0.1f, attackCooldown) : 1f;
+        visualAnimator.speed = State switch
+        {
+            ActionState.Patrol => moving ? 1f : 0f,
+            ActionState.Windup => 1f / Mathf.Max(0.1f, windupTime),
+            ActionState.Recovery => 1f / Mathf.Max(0.1f, attackCooldown),
+            ActionState.ClawWindup => ClawWindupClipLength / Mathf.Max(0.1f, clawWindupTime),
+            // 振り上げと当たり判定を合わせ、Inspectorの変更は戻しの速度に反映する。
+            ActionState.ClawSwing when StateElapsed >= ClawSwingTime =>
+                (ClawSwingClipLength - ClawSwingTime) / Mathf.Max(0.02f, clawSwingDuration - ClawSwingTime),
+            _ => 1f
+        };
     }
 
     private void SetState(ActionState state)
@@ -199,7 +217,7 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         if (State == ActionState.Firing || State == ActionState.Windup) StopEffects(state == ActionState.Recovery);
         if (State == ActionState.Firing && state == ActionState.Recovery)
         {
-            firstBeamCompleted = true;
+            firstBeamCompleted = clawAvailable = true;
             health.CompleteDeferredDeath();
             if (health.IsDeathHandled) return;
         }
@@ -215,39 +233,46 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         UpdateOrigin();
         if (state == ActionState.Windup)
             charge = SpawnBurst(chargeVfxPrefab, Origin, Vector2.right * direction, Mathf.Max(0.1f, windupTime));
+        if (state == ActionState.ClawSwing) BeginClawSwing();
         if (state == ActionState.Firing)
         {
             lastHitCollider = null;
             nextImpact = 0f;
             if (beamVfxPrefab != null) beam = Instantiate(beamVfxPrefab, transform);
-            SpawnBurst(muzzleVfxPrefab, Origin, Vector2.right * direction);
+            muzzle = SpawnBurst(muzzleVfxPrefab, Origin, Vector2.right * direction);
             if (OneShotAudioUtility.Play2D(audioSource, beamFireSE, beamSEVolume, Origin)) FireSoundPlayCount++;
             TraceBeam();
         }
         if (state == ActionState.Recovery) nextAttack = Time.time + Mathf.Max(0.1f, attackCooldown) + Mathf.Max(0.1f, attackInterval);
     }
 
-    private void OnHit(MorningStarHitContext context, bool lethal)
+    private void OnHit(MorningStarHitContext _, bool lethal)
     {
-        moving = false;
-        body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
         if (lethal) { StopEffects(false); return; }
-        if (!firstBeamCompleted)
-        {
-            // ひるみでは構えを巻き戻さず、最初の一射を完了させる。
-            if (State != ActionState.Windup && State != ActionState.Firing)
-            {
-                PlayerInRange(out int facing);
-                direction = facing;
-                SetState(ActionState.Windup);
-            }
-            return;
-        }
-        StopEffects(false);
-        SetState(ActionState.Recovery);
+        // 通常の被弾は攻撃の進行と間隔を変えない。初回撃破保留時も一射を完了する。
+        if (firstBeamCompleted || State == ActionState.Windup || State == ActionState.Firing) return;
+        if (TryGetPlayerFacing(out int facing)) direction = facing;
+        SetState(ActionState.Windup);
     }
 
-    private bool PlayerInRange(out int facing)
+    private bool TryStartAttack()
+    {
+        bool beamReady = Time.time >= nextAttack;
+        if ((!beamReady && !clawAvailable) || !TryGetPlayerFacing(out int facing)) return false;
+        if (clawAvailable && PlayerWithinClawReach(facing))
+        {
+            direction = facing;
+            clawAvailable = false;
+            SetState(ActionState.ClawWindup);
+            return true;
+        }
+        if (!beamReady || !CanSeePlayer(facing)) return false;
+        direction = facing;
+        SetState(ActionState.Windup);
+        return true;
+    }
+
+    private bool TryGetPlayerFacing(out int facing)
     {
         facing = direction;
         if (player == null && Time.time >= nextPlayerSearch)
@@ -258,6 +283,11 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         }
         if (player == null || playerCollider == null || !player.gameObject.activeInHierarchy || player.IsDead || player.IsRespawning) return false;
         facing = playerCollider.bounds.center.x >= bodyCollider.bounds.center.x ? 1 : -1;
+        return true;
+    }
+
+    private bool CanSeePlayer(int facing)
+    {
         Vector2 sightOrigin = beamOrigin != null ? (Vector2)transform.TransformPoint(new Vector3(
             Mathf.Abs(beamOrigin.localPosition.x) * facing, beamOrigin.localPosition.y, beamOrigin.localPosition.z)) : Origin;
         Vector2 delta = playerCollider.ClosestPoint(sightOrigin) - sightOrigin;
@@ -276,7 +306,7 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         {
             var hit = hits[i];
             if (hit.collider == null || hit.collider.attachedRigidbody == body || hit.collider.transform.IsChildOf(transform)) continue;
-            bool isBall = IsMorningStar(hit.collider);
+            bool isBall = FindMorningStar(hit.collider) != null;
             if (isBall && !includeMorningStar) continue;
             if ((morningStarLayer.value & (1 << hit.collider.gameObject.layer)) != 0 && !isBall) continue;
             bool isPlayerLayer = (playerLayer.value & (1 << hit.collider.gameObject.layer)) != 0;
@@ -292,28 +322,32 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
     {
         Vector2 forward = Vector2.right * direction;
         RaycastHit2D hit = FirstHit(Origin, forward, Mathf.Max(0.1f, beamLength));
-        beamEnd = hit.collider != null ? hit.point : Origin + forward * Mathf.Max(0.1f, beamLength);
-        if (beam != null) beam.SetBeam(Origin, beamEnd, beamThickness, beamColor);
-        if (hit.collider == null) { lastHitCollider = null; return; }
-        if (IsMorningStar(hit.collider))
+        beamAtContact = hit.collider != null;
+        beamEnd = beamAtContact ? hit.point : Origin + forward * Mathf.Max(0.1f, beamLength);
+        if (beam != null) beam.SetBeam(Origin, beamEnd, beamThickness, beamColor, beamAtContact);
+        if (!beamAtContact) { lastHitCollider = null; return; }
+        if (FindMorningStar(hit.collider) != null)
         {
             // 鉄球の物理・状態へは介入せず、現在の一射を終了する。
-            SpawnBurst(environmentHitVfxPrefab, hit.point, hit.normal);
+            Color reflected = Color.Lerp(beamColor, new Color(1f, 0.64f, 0.22f), 0.55f);
+            SpawnBurst(environmentHitVfxPrefab, hit.point, hit.normal, tint: reflected, strength: 1.25f);
             OneShotAudioUtility.Play2D(audioSource, beamHitSE, beamSEVolume * 0.45f, hit.point);
             StopEffects(false);
             SetState(ActionState.Recovery);
             return;
         }
         bool playerHit = PlayerColliderUtility.IsPlayerBody(hit.collider);
-        bool impactDue = hit.collider != lastHitCollider || Time.time >= nextImpact;
+        bool newContact = hit.collider != lastHitCollider;
+        bool impactDue = newContact || Time.time >= nextImpact;
         lastHitCollider = hit.collider;
         if (impactDue)
         {
-            nextImpact = Time.time + 0.1f;
-            SpawnBurst(playerHit ? playerHitVfxPrefab : environmentHitVfxPrefab, hit.point, hit.normal);
+            nextImpact = Time.time + 0.13f;
+            SpawnBurst(playerHit ? playerHitVfxPrefab : environmentHitVfxPrefab, hit.point, hit.normal,
+                strength: newContact ? 1f : 0.55f);
             if (playerHit) PlayerImpactCount++; else EnvironmentImpactCount++;
-            // SEはヒット先が変わった時と一定間隔だけ。VFXの連続火花と分離する。
-            if (StateElapsed < Time.fixedDeltaTime * 1.5f || StateElapsed % 0.3f < Time.fixedDeltaTime)
+            // SEは接触した瞬間だけ鳴らし、接触中の連続火花と分離する。
+            if (newContact)
                 OneShotAudioUtility.Play2D(audioSource, beamHitSE, beamSEVolume * 0.45f, hit.point);
         }
         if (playerHit) DamagePlayer(hit.collider, beamDamage);
@@ -330,12 +364,12 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         if (hp.CurrentHp < before) nextDamage = Time.time + Mathf.Max(0.02f, damageInterval);
     }
 
-    private static bool IsMorningStar(Collider2D collider)
+    private static MorningStarLauncher FindMorningStar(Collider2D collider)
     {
         Rigidbody2D ballBody = collider.attachedRigidbody;
-        if (ballBody == null) return false;
+        if (ballBody == null) return null;
         var reporter = ballBody.GetComponent<MorningStarCollisionReporter>();
-        return reporter != null && reporter.Launcher != null && reporter.Launcher.BallBody == ballBody;
+        return reporter != null && reporter.Launcher != null && reporter.Launcher.BallBody == ballBody ? reporter.Launcher : null;
     }
 
     private bool WithinPatrolRange(int facing)
@@ -370,25 +404,27 @@ public sealed class BeamScorpionController : MonoBehaviour, IEnemyDeathGuard
         return false;
     }
 
-    private BeamScorpionBurstVfx SpawnBurst(BeamScorpionBurstVfx prefab, Vector2 point, Vector2 normal, float lifetime = -1f)
+    private BeamScorpionBurstVfx SpawnBurst(BeamScorpionBurstVfx prefab, Vector2 point, Vector2 normal,
+        float lifetime = -1f, Color? tint = null, float strength = 1f)
     {
         if (prefab == null) return null;
         var effect = Instantiate(prefab, point, Quaternion.identity);
         SceneManager.MoveGameObjectToScene(effect.gameObject, gameObject.scene);
-        effect.Play(beamColor, normal, lifetime);
+        effect.Play(tint ?? beamColor, normal, lifetime, strength);
         return effect;
     }
 
     private void StopEffects(bool afterglow)
     {
         if (charge != null) { Destroy(charge.gameObject); charge = null; }
+        muzzle = null;
         if (beam == null) return;
         if (afterglow && afterglowVfxPrefab != null)
         {
             var trail = Instantiate(afterglowVfxPrefab);
             SceneManager.MoveGameObjectToScene(trail.gameObject, gameObject.scene);
-            trail.SetBeam(Origin, beamEnd, beamThickness * 0.65f, beamColor);
-            trail.FadeOut(0.14f);
+            trail.SetBeam(Origin, beamEnd, beamThickness * 0.82f, beamColor, beamAtContact);
+            trail.FadeOut(0.24f);
         }
         beam.gameObject.SetActive(false);
         Destroy(beam.gameObject);

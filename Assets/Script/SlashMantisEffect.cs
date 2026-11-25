@@ -10,11 +10,12 @@ public sealed class SlashMantisEffect : MonoBehaviour
     private SpriteRenderer visual;
     private Sprite[] frames;
     private Vector3 fullScale;
+    private Color tint;
     private float duration;
     private float elapsed;
 
     internal static void Play(Sprite sprite, SpriteRenderer sortReference, Scene scene,
-        Vector2 position, int facing, Vector2 worldSize, float lifetime, Sprite[] animationFrames = null)
+        Vector2 position, int facing, Vector2 worldSize, float lifetime, Sprite[] animationFrames = null, Color? tint = null)
     {
         bool hasAnimation = animationFrames != null && animationFrames.Length > 0 && animationFrames[0] != null;
         if (hasAnimation) sprite = animationFrames[0];
@@ -35,6 +36,7 @@ public sealed class SlashMantisEffect : MonoBehaviour
         Vector2 scaledSize = worldSize * SizeMultiplier;
         effect.fullScale = new Vector3(scaledSize.x / size.x, scaledSize.y / size.y, 1f);
         effect.duration = lifetime;
+        effect.tint = tint ?? Color.white;
         effect.ApplyPose(0f);
     }
 
@@ -57,6 +59,8 @@ public sealed class SlashMantisEffect : MonoBehaviour
             if (frames[frame] != null) visual.sprite = frames[frame];
         }
         transform.localScale = fullScale * Mathf.Lerp(0.9f, 1.06f, progress);
-        visual.color = new Color(1f, 1f, 1f, 1f - Mathf.InverseLerp(0.2f, 1f, progress));
+        Color color = tint;
+        color.a *= 1f - Mathf.InverseLerp(0.2f, 1f, progress);
+        visual.color = color;
     }
 }

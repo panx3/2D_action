@@ -161,7 +161,6 @@ public class DeathRespawnManager : MonoBehaviour
 
     private void FinishRespawn()
     {
-        if (_feedback != null) _feedback.EndPresentation();
         if (_launcher != null) _launcher.EndRespawnPresentation();
         if (_body != null)
         {
@@ -176,6 +175,7 @@ public class DeathRespawnManager : MonoBehaviour
             _player.SetStartIntroControl(false);
             _player.SetInputEnabled(_inputWasEnabled);
         }
+        if (_feedback != null) _feedback.EndPresentation();
         if (_cameraFollow != null) _cameraFollow.EndRespawnTravel();
         IsRespawning = false;
     }

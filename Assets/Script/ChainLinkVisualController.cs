@@ -199,7 +199,7 @@ public class ChainLinkVisualController : MonoBehaviour
         if (launcher != null || wrapPoints.Count == 0)
         {
             int count = avoidGroundPenetration ? Mathf.Max(3, sagSegments) : Mathf.Max(2, sagSegments);
-            float sag = useSag ? CalculateSagAmount(start, end) : 0f;
+            float sag = CalculateSagAmount(start, end);
             for (int i = 0; i < count; i++)
             {
                 float t = i / (float)(count - 1);
@@ -243,7 +243,7 @@ public class ChainLinkVisualController : MonoBehaviour
 
     private float CalculateSagAmount(Vector3 start, Vector3 end)
     {
-        if (!useSag)
+        if (!useSag || (launcher != null && (launcher.IsUpperHanging || launcher.IsChainClimbing)))
             return 0f;
 
         float maxLen = launcher != null ? launcher.MaxRopeLength : fallbackMaxRopeLength;

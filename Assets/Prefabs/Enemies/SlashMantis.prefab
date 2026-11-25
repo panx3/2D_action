@@ -109,7 +109,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -203,7 +203,7 @@ BoxCollider2D:
     m_Bits: 4294967295
   m_ForceReceiveLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294966911
   m_ContactCaptureLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -238,23 +238,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7cad5c721a30444a8a8d436ddd30e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 8
+  maxHp: 12
   maxDamagePerHit: 3
   knockbackResistance: 1
+  suppressMorningStarKnockback: 1
   destroyOnDeath: 1
-  hitStunDuration: 0.18
+  hitStunDuration: 0
   maxKnockbackSpeed: 8
   freezeRotationOnHit: 1
   stopAngularVelocityOnHit: 1
   debugLog: 0
-  hitInvincibleDuration: 0.5
-  hitFlashDuration: 0.24
+  hitInvincibleDuration: 0.2
+  minimumMorningStarHitStop: 0.06
+  hitFlashDuration: 0
   hitFlashInterval: 0.06
   hitFlashRenderer: {fileID: 398961354533212226}
   disableOnDeath:
   - {fileID: 8507565347852909710}
   hitAudioSource: {fileID: 0}
-  morningStarHitClip: {fileID: 0}
+  morningStarHitClip: {fileID: 8300000, guid: e7405afb62b86594f802e23a00fd9487, type: 3}
   morningStarHitVolume: 0.9
   defeatClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
   defeatVolume: 0.9
@@ -278,12 +280,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18646cada88768040a8ca8c2438857e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlashMantis
+  attacksBetweenGuards: 2
+  openingGuardWindup: 0.46
+  guardWindup: 0.24
+  guardDuration: 0.8
+  guardAdvanceSpeed: 3
+  counterGuardWindup: 0.18
+  crossGuardShield: {fileID: 6246403063435291331}
+  guardSlashWindup: 0.68
+  guardComboWindup: 0.86
+  guardSlashStepDistance: 0.95
+  guardSlashReach: 2.25
+  guardSlashHeight: 1.15
+  guardSlashDamage: 2
+  guardSlashRecovery: 0.5
+  guardSlashMissRecovery: 1.15
+  guardSlashLandingClip: {fileID: 8300000, guid: a9caec7e2e75b7e4399f383f49bae014, type: 3}
+  guardCounterDashRange: 7
+  guardDashStrikeHeight: 1.25
   iaiRange: 8.5
   iaiWindupDuration: 0.68
   iaiRushSpeed: 58
   iaiDamageDelay: 0.16
-  iaiRecoveryDuration: 0.6
-  iaiGuardRecoveryDuration: 1.05
+  iaiRecoveryDuration: 0.91
+  iaiGuardRecoveryDuration: 1.45
   iaiDamage: 2
   iaiBallKnockback: {x: 18, y: 5.5}
   iaiVisual: {fileID: 6646439353665548504}
@@ -295,6 +315,21 @@ MonoBehaviour:
   iaiDrawClip: {fileID: 8300000, guid: 3e1540aa21dfd8d48b0255af166ef9e6, type: 3}
   iaiGuardClip: {fileID: 8300000, guid: c0354074d140bb44f938bd131e6e9ff8, type: 3}
   defeatMotionPrefab: {fileID: 58101483935925435, guid: 6c1f2f3339f209d40b4bd383625e8d02, type: 3}
+  rangedCooldown: 0.55
+  rangedDamage: 1
+  rangedFireTime: 0.5
+  rangedWindupSpeed: 0.5
+  rangedSweepSpeed: 0.65
+  rangedPressureDistance: 6.5
+  rangedPressureWindupSpeed: 0.75
+  rangedPressureCooldown: 0.3
+  rangedProjectileSpawnPoint: {fileID: 1557196112452116717}
+  rangedClip: {fileID: 7400000, guid: 98556c043e1f9154990d426ab0bbc874, type: 2}
+  projectilePrefab: {fileID: 4453529496310193206, guid: 7123a6f0b0373074792533ffeca11e45, type: 3}
+  projectileSpeed: 13.5
+  projectileDistance: 13
+  projectileLifetime: 1.2
+  projectileRadius: 0.35
   walkSpeed: 1.8
   detectionRange: 10
   patrolHalfRange: 2
@@ -312,25 +347,14 @@ MonoBehaviour:
   meleeAttackOrigin: {fileID: 4957034467972539798}
   meleeSlashSize: {x: 1.8, y: 1.45}
   meleeClip: {fileID: 7400000, guid: 37f6a3e93b58d5049b27fd8d3ea88543, type: 2}
-  rangedCooldown: 1.1
-  rangedDamage: 1
-  rangedFireTime: 0.5
-  rangedWindupSpeed: 0.5
-  rangedSweepSpeed: 0.65
-  rangedProjectileSpawnPoint: {fileID: 1557196112452116717}
-  rangedClip: {fileID: 7400000, guid: 98556c043e1f9154990d426ab0bbc874, type: 2}
-  projectilePrefab: {fileID: 4453529496310193206, guid: 7123a6f0b0373074792533ffeca11e45, type: 3}
-  projectileSpeed: 13.5
-  projectileDistance: 8
-  projectileLifetime: 1.2
-  projectileRadius: 0.35
   knockback: 4
   tsujigiriMaxRangedAttacks: 5
   tsujigiriDashSpeed: 24
   tsujigiriWindupDuration: 0.5
   tsujigiriDisappearDuration: 0.14
   tsujigiriDamageDelay: 0.2
-  tsujigiriRecoveryDuration: 0.65
+  tsujigiriRecoveryDuration: 0.75
+  tsujigiriHitRecovery: 0.55
   tsujigiriDamage: 2
   facingRoot: {fileID: 4489138594619375887}
   spriteRenderer: {fileID: 398961354533212226}
@@ -356,8 +380,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDamageFeedback
   gaugeEnabled: 1
+  gaugeStyle: 1
   gaugePrefab: {fileID: 5561037782073791896, guid: 98c15aef5b6eb0c4b84d11e8c97c42e3, type: 3}
-  gaugeDisplayTime: 2.4
+  gaugeAboveBody: 0
   gaugeOffset: {x: 0, y: 2.6575, z: 0}
   flashEnabled: 0
   bodyRenderers:
@@ -385,7 +410,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c387780e8a2954e449ae3b7c1d29d6cf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroundProjectedShadow
   body: {fileID: 1467784753173197517}
   groundShadow: {fileID: 3486033714662791549}
@@ -430,6 +455,7 @@ Transform:
   - {fileID: 4957034467972539798}
   - {fileID: 1557196112452116717}
   - {fileID: 4219186043265680235}
+  - {fileID: 4338926860143530211}
   m_Father: {fileID: 1593759779975866442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6083419684737491639
@@ -577,6 +603,96 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &7935965643454488465
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4338926860143530211}
+  - component: {fileID: 7109356875826936378}
+  - component: {fileID: 6246403063435291331}
+  m_Layer: 0
+  m_Name: CrossGuardShield
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4338926860143530211
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7935965643454488465}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.84, y: 1.04, z: -0.025}
+  m_LocalScale: {x: 0.9, y: 1.64, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4489138594619375887}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &7109356875826936378
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7935965643454488465}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &6246403063435291331
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7935965643454488465}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 3f5fb53df3822d74b907f117b569af4d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &7982858835277558073
 GameObject:
   m_ObjectHideFlags: 0

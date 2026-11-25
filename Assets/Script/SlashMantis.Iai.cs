@@ -10,7 +10,6 @@ public sealed partial class SlashMantis
     private const float IaiAfterimageLifetime = 0.16f;
     private const int IaiAfterimageCount = 7;
     private const float IaiWindupCue = 0.65f;
-    private const float IaiFloorClearance = 0.17f;
     private static readonly int IaiDraw = Animator.StringToHash("Base Layer.IaiDraw");
 
     [Header("Iai")]
@@ -18,8 +17,8 @@ public sealed partial class SlashMantis
     [SerializeField, Min(0.1f)] private float iaiWindupDuration = 0.68f;
     [SerializeField, Min(0.1f)] private float iaiRushSpeed = 58f;
     [SerializeField, Min(0f)] private float iaiDamageDelay = 0.16f;
-    [SerializeField, Min(0.1f)] private float iaiRecoveryDuration = 0.60f;
-    [SerializeField, Min(0.1f)] private float iaiGuardRecoveryDuration = 1.05f;
+    [SerializeField, Min(0.1f)] private float iaiRecoveryDuration = 0.91f;
+    [SerializeField, Min(0.1f)] private float iaiGuardRecoveryDuration = 1.45f;
     [SerializeField, Min(0)] private int iaiDamage = 2;
     [SerializeField] private Vector2 iaiBallKnockback = new Vector2(18f, 5.5f);
 
@@ -72,7 +71,7 @@ public sealed partial class SlashMantis
 
         Face(direction);
         float finishDistance = ahead + hull.extents.x + target.extents.x + 0.50f;
-        if (SafeIaiDistance(finishDistance, IaiFloorClearance) + 0.001f < finishDistance) return false;
+        if (SafeRaisedDashDistance(finishDistance, DashFloorClearance) + 0.001f < finishDistance) return false;
 
         // 構えた瞬間の方向と着地点を固定し、ジャンプと鉄球の設置で対処できるようにする。
         iaiDistanceRemaining = finishDistance;
@@ -100,7 +99,7 @@ public sealed partial class SlashMantis
         if (!IsLive(player))
         {
             CancelIai();
-            BeginRecovery(0.2f);
+            BeginRecovery(0.2f, exposed: true);
             return;
         }
 
@@ -113,11 +112,12 @@ public sealed partial class SlashMantis
         }
 
         if (progress < 1f) return;
-        iaiDistanceRemaining = SafeIaiDistance(iaiDistanceRemaining, IaiFloorClearance);
+        iaiDistanceRemaining = SafeRaisedDashDistance(iaiDistanceRemaining, DashFloorClearance);
         if (iaiDistanceRemaining <= Skin)
         {
             CancelIai();
-            BeginRecovery(0.2f);
+            ShowPose(Melee, BladesDownPose);
+            BeginRecovery(meleeCooldown, exposed: true);
             return;
         }
         savedGravity = body.gravityScale;
@@ -135,7 +135,7 @@ public sealed partial class SlashMantis
         }
 
         // 足元に小さな床の継ぎ目があっても、胴体の通り道と着地点の接地は検査する。
-        body.position += Vector2.up * IaiFloorClearance;
+        body.position += Vector2.up * DashFloorClearance;
         Enter(State.IaiRush);
         EmitIaiImage();
     }
@@ -143,7 +143,7 @@ public sealed partial class SlashMantis
     private void StepIaiRush()
     {
         float requested = Mathf.Min(iaiDistanceRemaining, iaiRushSpeed * Time.fixedDeltaTime);
-        float distance = SafeIaiDistance(requested, 0f);
+        float distance = SafeRaisedDashDistance(requested, 0f);
         if (distance <= 0.0001f)
         {
             FinishIaiRush();
@@ -171,13 +171,6 @@ public sealed partial class SlashMantis
         AdvanceIai(distance);
         iaiDistanceRemaining -= distance;
         if (iaiDistanceRemaining <= 0.0001f || distance + 0.001f < requested) FinishIaiRush();
-    }
-
-    private float SafeIaiDistance(float distance, float lift)
-    {
-        Bounds bounds = bodyCollider.bounds;
-        bounds.center += Vector3.up * lift;
-        return SafeTravelOnGround(distance, bounds, GroundProbe + IaiFloorClearance);
     }
 
     private void FindIaiContacts(float distance, out RaycastHit2D playerHit, out RaycastHit2D ballHit)
@@ -361,6 +354,7 @@ public sealed partial class SlashMantis
 
     private void LateUpdate()
     {
+        UpdateGuardPresentation();
         RestoreIaiGuardContacts(false);
         // 既存の被弾点滅が完了したフレームでも、居合の表示は専用Spriteだけが担当する。
         if (iaiPresenting && spriteRenderer != null) spriteRenderer.enabled = false;

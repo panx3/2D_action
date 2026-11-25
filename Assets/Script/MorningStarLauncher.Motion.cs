@@ -293,11 +293,11 @@ public partial class MorningStarLauncher
             CopyChainClimbRendererSettings();
             _animatorDrivenSpriteBeforeChainClimb = _playerBodySprite.sprite;
             _chainClimbSpriteRenderer.sprite = sprite;
-            bool flip = !_isChainClimbing && player != null && !player.FacingRight;
+            bool flip = !_isChainClimbing && !UpperHangFacesRight;
             _chainClimbSpriteRenderer.flipX = flip;
             Vector2 anchorLocal = selected.chainAnchor;
             if (flip) anchorLocal.x = -anchorLocal.x;
-            Vector2 anchor = GetUpwardPoseChainAnchorWorld();
+            Vector2 anchor = KeepVisualRopeAnchorOnPlayerSide(GetUpwardPoseChainAnchorWorld());
             Vector2 direction = (RopeContactPointCount > 0 ? GetRopeContactPoint(0) : GetUpperHangSupportWorld()) - anchor;
             Quaternion rotation = direction.sqrMagnitude > 0.0001f
                 ? Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f)

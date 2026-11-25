@@ -447,6 +447,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     private readonly ContactPoint2D[] _physicalUpperHangContacts = new ContactPoint2D[8];
     private ContactFilter2D _physicalUpperHangContactFilter;
     private bool _physicalUpperHangDetected;
+    private bool _physicalUpperHangFacingRight;
     private float _physicalUpperHangCandidateTime;
     private float _physicalUpperHangGraceRemaining;
     private const float PhysicalUpperHangEnterTime = 0.04f;
@@ -607,6 +608,7 @@ public partial class MorningStarLauncher : MonoBehaviour
             _chargeFeedback.ResetFeedback();
         EndLaunchPose();
         SetChainConstraintActive(false);
+        _visualRopeAnchorInitialized = false;
         SetLaunchRopeLengthActive(false);
         _airThrowsUsed = 0;
         _nextLaunchTime = 0f;
@@ -847,6 +849,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private void OnDisable()
     {
+        ResetPhysicalUpperHang();
         ClearEnemyMagnetPulls();
         CancelMotionLaunchVisual();
         RestoreUnifiedMotionSprite();
@@ -1073,6 +1076,8 @@ public partial class MorningStarLauncher : MonoBehaviour
             StopAirLaunchAssist();
 
         _state = nextState;
+        if (nextState != MorningStarState.Dragging && nextState != MorningStarState.Dropping)
+            ResetPhysicalUpperHang();
         _throwVelocitySampleTime = double.NegativeInfinity;
 
         bool useLaunchLength = nextState == MorningStarState.Thrown
@@ -2034,17 +2039,18 @@ public partial class MorningStarLauncher : MonoBehaviour
         return IsAttachedToMagnet(source, targetBody) && ReleaseHookAndBeginReturn(false);
     }
 
-    internal void ApplyBladeGuardKnockback(Vector2 velocity)
+    internal bool ApplyBladeGuardKnockback(Vector2 velocity)
     {
         if (!isActiveAndEnabled || morningStarRb == null || !morningStarRb.simulated || _respawnPresentation
             || _state == MorningStarState.StartIntro || _gimmickInputBlocked || IsElectricStunned)
-            return;
+            return false;
 
         // 回収やチャージと速度の書き合いを起こさず、通常の自由な鉄球に戻してから衝撃を渡す。
         _fireBufferTimer = 0f;
         if (_state != MorningStarState.Dragging) EnterDraggingState(false);
         morningStarRb.WakeUp();
         morningStarRb.linearVelocity = velocity;
+        return true;
     }
 
     public bool ReleaseEnemyMagnetOnEscape(MagnetPoint source, float reboundSpeed)
@@ -2144,8 +2150,17 @@ public partial class MorningStarLauncher : MonoBehaviour
         GoalPoint goal = collision.collider.GetComponentInParent<GoalPoint>();
         int groundShakeCountBeforeImpact = GroundImpactShakeCount;
         TryPlayGroundImpactCameraShake(collision);
-        if (IsPowerThrow && !_powerImpactPlayed
-            && Mathf.Max(collision.relativeVelocity.magnitude, morningStarRb.linearVelocity.magnitude) >= minCombatHitSpeed)
+        bool playPowerImpact = IsPowerThrow && !_powerImpactPlayed
+            && Mathf.Max(collision.relativeVelocity.magnitude, morningStarRb.linearVelocity.magnitude) >= minCombatHitSpeed;
+        bool guarded = false;
+        bool combatContact = goal == null && TryProcessCombatHit(collision, collision.collider, true, out guarded);
+        if (guarded)
+        {
+            _powerImpactPlayed |= IsPowerThrow;
+            return;
+        }
+
+        if (playPowerImpact)
         {
             _powerImpactPlayed = true;
             Vector2 point = collision.contactCount > 0 ? collision.GetContact(0).point : morningStarRb.position;
@@ -2174,7 +2189,7 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
         }
 
-        if (TryProcessCombatHit(collision))
+        if (combatContact)
             return;
 
         // 地形への衝突では固定しない。固定支点への移行はMagnet経由だけ。
@@ -2245,11 +2260,6 @@ public partial class MorningStarLauncher : MonoBehaviour
         }
     }
 
-    private bool TryProcessCombatHit(Collision2D collision)
-    {
-        return TryProcessCombatHit(collision, collision.collider, true);
-    }
-
     // 岩側と鉄球側のどちらのCallbackが先でも、同じ命中を一度だけ処理する。
     public bool TryProcessBreakableWallCollision(BreakableWall wall, Collision2D collision)
     {
@@ -2263,12 +2273,13 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (!CanStateDealCombatDamage())
             return false;
 
-        TryProcessCombatHit(collision, wall.GetComponent<Collider2D>(), false);
+        TryProcessCombatHit(collision, wall.GetComponent<Collider2D>(), false, out _);
         return true;
     }
 
-    private bool TryProcessCombatHit(Collision2D collision, Collider2D other, bool collisionOnBall)
+    private bool TryProcessCombatHit(Collision2D collision, Collider2D other, bool collisionOnBall, out bool guarded)
     {
+        guarded = false;
         if (!CanStateDealCombatDamage() || other == null)
             return false;
 
@@ -2318,10 +2329,17 @@ public partial class MorningStarLauncher : MonoBehaviour
             incomingVelocity += other.attachedRigidbody.linearVelocity;
 
         MorningStarHitContext context = BuildHitContext(collision, impactSpeed);
-        receiver.OnMorningStarHit(context);
+        if (receiver is EnemyHealth enemyHealth)
+            guarded = enemyHealth.ReceiveMorningStarHit(context);
+        else
+            receiver.OnMorningStarHit(context);
 
         _lastCombatHitTimeByColliderId[colliderId] = Time.time;
-        if (wall != null && wall.IsBroken && IsPowerThrow)
+        if (guarded)
+        {
+            morningStarRb.linearVelocity = -context.ImpactDirection * Mathf.Clamp(impactSpeed * 0.45f, 5f, 9f);
+        }
+        else if (wall != null && wall.IsBroken && IsPowerThrow)
         {
             // 壊した岩はColliderを無効化済み。解決前の速度を保ち、次の岩へ進む。
             morningStarRb.linearVelocity = incomingVelocity;
@@ -2709,7 +2727,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         _hookPoint = _attachedMagnet.ControlledPosition;
         var enemy = _attachedMagnet.GetComponentInParent<Magutomushi>();
         if (enemy == null || _playerRb == null) return;
-        Vector2 toMagnet = _hookPoint - GetHandWorld();
+        Vector2 toMagnet = _hookPoint - _playerRb.position;
         if (toMagnet.sqrMagnitude < 0.0001f) return;
         Vector2 direction = toMagnet.normalized;
         float speedTowardMagnet = Vector2.Dot(_playerRb.linearVelocity, direction);
@@ -3176,7 +3194,11 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (morningStarRb == null)
             return;
 
-        morningStarRb.position = GetThrowSocketWorld();
+        Vector2 position = GetThrowSocketWorld();
+        // Both the rope renderers and the rebuild effects read the Transform,
+        // which can still show the previous pose until the next physics step.
+        morningStarRb.transform.position = new Vector3(position.x, position.y, morningStarRb.transform.position.z);
+        morningStarRb.position = position;
         if (zeroVelocity)
         {
             morningStarRb.linearVelocity = Vector2.zero;
@@ -3249,16 +3271,11 @@ public partial class MorningStarLauncher : MonoBehaviour
         if (hookRopeJoint == null || _playerRb == null || !_isHooked)
             return;
 
-        bool upperHanging = IsUpperHangingSupport();
-        Vector2 anchorWorld = upperHanging
-            ? GetUpwardPoseChainAnchorWorld()
-            : GetHandWorld();
-
-        hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
-
         // 敵の磁石では、通常の鎖長から脱出距離だけ引くと外れる。
-        if (_attachedMagnet != null && _enemyMagnetPulls.Contains(_attachedMagnet))
+        if (IsEnemyMagnetPullingFrom(_attachedMagnet))
         {
+            // 手の位置や接地判定に追従すると、引きはがし中に支点が跳ねて足が浮く。
+            hookRopeJoint.anchor = Vector2.zero;
             // 敵とPlayerの接触ダメージを、Joint接続中も有効にする。
             if (!hookRopeJoint.enableCollision) hookRopeJoint.enableCollision = true;
             Rigidbody2D magnetBody = _attachedMagnet.GetComponentInParent<Rigidbody2D>();
@@ -3273,6 +3290,9 @@ public partial class MorningStarLauncher : MonoBehaviour
             return;
         }
 
+        bool upperHanging = IsUpperHangingSupport();
+        Vector2 anchorWorld = upperHanging ? GetUpwardPoseChainAnchorWorld() : GetHandWorld();
+        hookRopeJoint.anchor = _playerRb.transform.InverseTransformPoint(anchorWorld);
         if (hookRopeJoint.enableCollision) hookRopeJoint.enableCollision = false;
 
         if (_isChainClimbing && upperHanging)
@@ -3374,7 +3394,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private float GetCurrentRopeSpan()
     {
-        Vector2 anchor = _isChainClimbing && !_isHooked
+        Vector2 anchor = (_isChainClimbing && !_isHooked) || IsPhysicalUpperHangingSupport()
             ? GetUpwardPoseChainAnchorWorld()
             : GetHandWorld();
         float directDistance = morningStarRb != null
@@ -3401,21 +3421,25 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private Vector2 GetPlayerRopeAnchorWorld()
     {
-        // HandAnchorはUpdateで左右反転するため、Physics step間ではJoint anchorと
-        // 1フレームだけ異なることがある。Hook中の物理・表示は実際のJoint支点を正とする。
         if (_isHooked && hookRopeJoint != null && hookRopeJoint.enabled && _playerRb != null)
+        {
+            if (IsEnemyMagnetPullingFrom(_attachedMagnet)) return _playerRb.position;
             return _playerRb.transform.TransformPoint(hookRopeJoint.anchor);
+        }
 
-        return GetHandWorld();
+        return IsPhysicalUpperHangingSupport() ? GetUpwardPoseChainAnchorWorld() : GetHandWorld();
     }
 
     private Vector2 GetVisualRopeAnchorWorld()
     {
         if (TryGetMotionVisualAnchor(out Vector2 motionAnchor))
             return KeepVisualRopeAnchorOnPlayerSide(motionAnchor);
-        Vector2 targetWorld = ShouldUseUpwardPose()
-            ? GetUpwardPoseChainAnchorWorld()
-            : GetPlayerRopeAnchorWorld();
+        // 敵磁石に拘束されている間も、鎖の絵は手から描く。
+        Vector2 targetWorld;
+        if (IsEnemyMagnetPullingFrom(_attachedMagnet))
+            targetWorld = GetHandWorld();
+        else
+            targetWorld = ShouldUseUpwardPose() ? GetUpwardPoseChainAnchorWorld() : GetPlayerRopeAnchorWorld();
         Transform playerTransform = _playerRb != null ? _playerRb.transform : transform;
         Vector3 targetLocal = playerTransform.InverseTransformPoint(targetWorld);
 
@@ -3443,7 +3467,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private Vector2 KeepVisualRopeAnchorOnPlayerSide(Vector2 anchor)
         => chainConstraint != null && chainConstraint.isActiveAndEnabled
-            ? chainConstraint.KeepOnPlayerSideOfClosedDoor(anchor)
+            ? chainConstraint.KeepVisualAnchorOnPlayerSideOfTerrain(anchor)
             : anchor;
 
     private void UpdateFallbackLineRenderer()
@@ -3757,6 +3781,7 @@ public partial class MorningStarLauncher : MonoBehaviour
     {
         return _isHooked
             && (_state == MorningStarState.Hooked || _state == MorningStarState.Swinging)
+            && !IsEnemyMagnetPullingFrom(_attachedMagnet)
             && player != null
             && !IsPlayerGrounded()
             && _hookPoint.y > player.transform.position.y + PhysicalUpperHangMinimumClearance;
@@ -3764,7 +3789,7 @@ public partial class MorningStarLauncher : MonoBehaviour
 
     private bool IsPhysicalUpperHangingSupport()
     {
-        return _physicalUpperHangDetected && CanUsePhysicalUpperHangFallback();
+        return _physicalUpperHangDetected && CanUsePhysicalUpperHangFallback() && HasUpwardHangingRope();
     }
 
     private bool CanUsePhysicalUpperHangFallback()
@@ -3773,17 +3798,17 @@ public partial class MorningStarLauncher : MonoBehaviour
             && (_state == MorningStarState.Dragging || _state == MorningStarState.Dropping)
             && player != null
             && morningStarRb != null
+            && chainConstraint != null
+            && !chainConstraint.IsPlayerPullSuppressed
             && !IsPlayerGrounded()
             && morningStarRb.position.y > player.transform.position.y + PhysicalUpperHangMinimumClearance;
     }
 
     private void UpdatePhysicalUpperHangDetection(float dt)
     {
-        if (!CanUsePhysicalUpperHangFallback())
+        if (!CanUsePhysicalUpperHangFallback() || !HasUpwardHangingRope())
         {
-            _physicalUpperHangDetected = false;
-            _physicalUpperHangCandidateTime = 0f;
-            _physicalUpperHangGraceRemaining = 0f;
+            ResetPhysicalUpperHang();
             return;
         }
 
@@ -3797,7 +3822,7 @@ public partial class MorningStarLauncher : MonoBehaviour
         float tensionStartDistance = expectedLength
             * Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
         bool ropeTaut = currentSpan >= tensionStartDistance + ropeTolerance;
-        bool touchingTerrain = IsMorningStarTouchingTerrain();
+        bool touchingTerrain = IsMorningStarSupportedByTerrain();
 
         float normalRetensionDistance = GetEffectiveRopeLength()
             * Mathf.Clamp(tensionStartRatio, 0.5f, 0.98f);
@@ -3809,17 +3834,21 @@ public partial class MorningStarLauncher : MonoBehaviour
             ropeTaut = true;
         }
 
+        // Once the grip moves up, the rope can be slack until the player settles
+        // at full length. The same support keeps the grip during that descent.
         bool physicallySupported = touchingTerrain
-            && (ropeTaut || _waitingForUpperHangRetension);
+            && (_physicalUpperHangDetected || ropeTaut || _waitingForUpperHangRetension);
         if (physicallySupported)
         {
             _physicalUpperHangCandidateTime += Mathf.Max(0f, dt);
-            if (_physicalUpperHangDetected
-                || _physicalUpperHangCandidateTime >= PhysicalUpperHangEnterTime)
+            if (!_physicalUpperHangDetected && _physicalUpperHangCandidateTime >= PhysicalUpperHangEnterTime)
             {
+                _physicalUpperHangFacingRight = player.FacingRight;
                 _physicalUpperHangDetected = true;
-                _physicalUpperHangGraceRemaining = PhysicalUpperHangGraceTime;
+                chainConstraint.SetSuspendedPlayerAnchor(GetUpwardPoseChainAnchorLocal());
             }
+            if (_physicalUpperHangDetected)
+                _physicalUpperHangGraceRemaining = PhysicalUpperHangGraceTime;
             return;
         }
 
@@ -3827,17 +3856,53 @@ public partial class MorningStarLauncher : MonoBehaviour
         _physicalUpperHangGraceRemaining = Mathf.Max(
             0f,
             _physicalUpperHangGraceRemaining - Mathf.Max(0f, dt));
-        _physicalUpperHangDetected = _physicalUpperHangGraceRemaining > 0f;
+        if (_physicalUpperHangGraceRemaining <= 0f)
+            ResetPhysicalUpperHang();
     }
 
-    private bool IsMorningStarTouchingTerrain()
+    private void ResetPhysicalUpperHang()
+    {
+        if (_physicalUpperHangDetected && chainConstraint != null)
+            chainConstraint.SetSuspendedPlayerAnchor(null);
+        _physicalUpperHangDetected = false;
+        _physicalUpperHangCandidateTime = 0f;
+        _physicalUpperHangGraceRemaining = 0f;
+    }
+
+    private bool HasUpwardHangingRope()
+    {
+        if (chainConstraint == null || !chainConstraint.PullsUpward)
+            return false;
+
+        // The hanging sprite follows the first span, which can point down
+        // toward a ledge even when the ball itself is higher than the player.
+        Vector2 support = RopeContactPointCount > 0 ? GetRopeContactPoint(0) : morningStarRb.position;
+        return support.y > GetUpwardPoseChainAnchorWorld().y + PhysicalUpperHangMinimumClearance;
+    }
+
+    private bool IsMorningStarSupportedByTerrain()
     {
         if (morningStarRb == null)
             return false;
 
         Collider2D ballCollider = morningStarRb.GetComponent<Collider2D>();
-        return ballCollider != null
-            && ballCollider.GetContacts(_physicalUpperHangContactFilter, _physicalUpperHangContacts) > 0;
+        if (ballCollider == null)
+            return false;
+
+        int count = ballCollider.GetContacts(_physicalUpperHangContactFilter, _physicalUpperHangContacts);
+        for (int i = 0; i < count; i++)
+        {
+            ContactPoint2D contact = _physicalUpperHangContacts[i];
+            if (!contact.enabled)
+                continue;
+
+            Vector2 normal = contact.normal;
+            if (Vector2.Dot(normal, morningStarRb.worldCenterOfMass - contact.point) < 0f)
+                normal = -normal;
+            if (normal.y > 0.1f)
+                return true;
+        }
+        return false;
     }
 
     private void RefreshPhysicalUpperHangContactFilter()
@@ -3858,10 +3923,18 @@ public partial class MorningStarLauncher : MonoBehaviour
     private Vector2 GetUpwardPoseChainAnchorWorld()
     {
         Transform playerTransform = player != null ? player.transform : transform;
-        Vector3 localPosition = upwardPoseChainAnchorLocalPosition;
-        if (player != null && !player.FacingRight)
+        return playerTransform.TransformPoint(GetUpwardPoseChainAnchorLocal());
+    }
+
+    private bool UpperHangFacesRight => _physicalUpperHangDetected
+        ? _physicalUpperHangFacingRight : player == null || player.FacingRight;
+
+    private Vector2 GetUpwardPoseChainAnchorLocal()
+    {
+        Vector2 localPosition = upwardPoseChainAnchorLocalPosition;
+        if (!UpperHangFacesRight)
             localPosition.x = -localPosition.x;
-        return playerTransform.TransformPoint(localPosition);
+        return localPosition;
     }
 
     private void ResolvePlayerBodySprite()

@@ -44,8 +44,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 285d6b65be048e5418fd41aac5ce3cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMiniHealthGauge
-  frameSprite: {fileID: 53240530, guid: 388e73912e2f08f42b7359eeb1be5199, type: 3}
-  litSprite: {fileID: 2103594034, guid: 388e73912e2f08f42b7359eeb1be5199, type: 3}
-  emptySprite: {fileID: -1149800799, guid: 388e73912e2f08f42b7359eeb1be5199, type: 3}
-  barSize: {x: 1.6, y: 0.2}
-  fillSize: {x: 1.48, y: 0.12}
+  normal:
+    frame: {fileID: 21300000, guid: d94d18c4095d46b4282bd3e07afbfe54, type: 3}
+    opening:
+      x: 14
+      y: 8
+      width: 53
+      height: 6
+    width: 1.8
+    sparkCount: 4
+    sparkStrength: 1
+    fragmentCount: 10
+    defeatDuration: 0.3
+  miniboss:
+    frame: {fileID: 21300000, guid: 3abac2942034e474c99c68ad4b53c481, type: 3}
+    opening:
+      x: 15
+      y: 9
+      width: 119
+      height: 6
+    width: 3.5
+    sparkCount: 6
+    sparkStrength: 1.15
+    fragmentCount: 16
+    defeatDuration: 0.5
+  backgroundSprite: {fileID: 21300000, guid: 8fbacbec80a023e48a8c7e19ac7e5569, type: 3}
+  fillSprite: {fileID: 21300000, guid: 7a254a640f42c314cba28342331c7705, type: 3}
+  trailSprite: {fileID: 21300000, guid: 386c7f40770db2248a1deb576979974f, type: 3}
+  sparkSprite: {fileID: 21300000, guid: b21e6786dab380f44b0eb8838eb3a9bb, type: 3}
+  flashMaterial: {fileID: 2100000, guid: ba36c3a2f804d414b9e2e0ccd6cf4560, type: 2}
+  displayTime: 3
+  fadeInTime: 0.05
+  fadeOutTime: 0.2
+  fillTime: 0.1
+  trailDelay: 0.15
+  trailTime: 0.25
+  flashTime: 0.06
+  flashStrength: 0.76
+  shakeTime: 0.12
+  shakeStrength: 0.047
+  popStrength: 0.1

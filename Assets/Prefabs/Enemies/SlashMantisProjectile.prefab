@@ -58,7 +58,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 9aa3f326b126fdd4d9489b55ae983a62, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -138,3 +138,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SlashMantisProjectile
   bladeRenderer: {fileID: 2043643870146300025}
   hitSparkSprite: {fileID: 1994311488, guid: 6ed138dbaa3b8114d9ce90c642764b79, type: 3}
+  dissipationDuration: 0.24

@@ -37,7 +37,6 @@ public class ChainConstraint2D : MonoBehaviour
     private const float GroundPullInputThreshold = 0.1f;
     private const int MaxWrapPointCount = 6;
     private const float WrapRouteHysteresis = 0.08f;
-    private const float UnwrapClearanceMargin = 0.01f;
     private const int UnwrapClearFixedSteps = 2;
     private const int MaxBallContactCount = 8;
     private const float MinPathSegmentLength = 0.001f;
@@ -45,11 +44,8 @@ public class ChainConstraint2D : MonoBehaviour
     private struct RopeContact
     {
         public Collider2D Collider;
-        public Vector2 LocalSurfacePoint;
-        public Vector2 LocalNormal;
         public Vector2 LocalPhysicsPoint;
         public Vector2 PhysicsPoint;
-        public int ObstacleId;
         public int ClearFixedSteps;
     }
     private bool _prioritizeFlyingTrajectory;
@@ -64,6 +60,8 @@ public class ChainConstraint2D : MonoBehaviour
     private Vector2 _smoothedAnchorLocalPosition;
     private Vector2 _anchorLocalVelocity;
     private bool _physicsAnchorInitialized;
+    private Vector2? _suspendedPlayerAnchorLocal;
+    private bool _restoringHandAnchor;
     private LayerMask _terrainLayerMask = (1 << 0) | (1 << 6);
     private float _ropeCollisionRadius = 0.14f;
     private float _collisionSkin = 0.01f;
@@ -78,12 +76,12 @@ public class ChainConstraint2D : MonoBehaviour
     private readonly Vector2[] _routeCandidate = new Vector2[4];
     private readonly Vector2[] _bestRoute = new Vector2[4];
     private readonly Vector2[] _cachedRoute = new Vector2[4];
-    private readonly RopeContact[] _refinedRouteContacts = new RopeContact[4];
-    private readonly RopeContact[] _fallbackRouteContacts = new RopeContact[4];
+    private readonly Vector2[] _refinedRoute = new Vector2[4];
     private readonly List<Vector2> _tilePhysicsShape = new List<Vector2>(32);
     private readonly OneWayRopeSupport2D _oneWaySupport = new OneWayRopeSupport2D();
     private float _ropeSagStrength = 0.6f;
     private float _ropeMaxSag = 1.5f;
+    private bool _hasResolvedRopePath;
 
     private Player _player;
     private MorningStarRollingVisual _rollingVisual;
@@ -104,6 +102,22 @@ public class ChainConstraint2D : MonoBehaviour
     public float CurrentRopeLength => GetRopePathLength();
     public int RopeContactPointCount => _ropeContactPoints.Count;
     public bool HasOneWaySupport => _oneWaySupport.IsSupporting;
+    internal bool PullsUpward => _hasResolvedRopePath
+        && _ropePathPoints[1].y > _ropePathPoints[0].y;
+
+    internal void SetSuspendedPlayerAnchor(Vector2? anchorLocal)
+    {
+        if (anchorLocal.HasValue && !_suspendedPlayerAnchorLocal.HasValue)
+        {
+            _smoothedAnchorLocalPosition = anchorLocal.Value;
+            _anchorLocalVelocity = Vector2.zero;
+            _physicsAnchorInitialized = true;
+            _restoringHandAnchor = false;
+        }
+        else if (!anchorLocal.HasValue && _suspendedPlayerAnchorLocal.HasValue)
+            _restoringHandAnchor = true;
+        _suspendedPlayerAnchorLocal = anchorLocal;
+    }
 
     public void ConfigurePlayerClimb(Vector2 anchorLocal, float speed, float minimumLength)
     {
@@ -125,9 +139,15 @@ public class ChainConstraint2D : MonoBehaviour
 
     public Vector2 GetRopeContactPoint(int index)
     {
-        return index >= 0 && index < _ropeContactPoints.Count
-            ? _ropeContactPoints[index]
-            : Vector2.zero;
+        if (index < 0 || index >= _ropeContactPoints.Count)
+            return Vector2.zero;
+        if (_oneWaySupport.IsSupporting)
+            return _ropeContactPoints[index];
+
+        RopeContact contact = _ropeContacts[index];
+        return contact.Collider != null
+            ? (Vector2)contact.Collider.transform.TransformPoint(contact.LocalPhysicsPoint)
+            : contact.PhysicsPoint;
     }
 
     public float MaxBallSpeed
@@ -221,15 +241,19 @@ public class ChainConstraint2D : MonoBehaviour
         _ropePathPoints.Clear();
         _ropeContactPoints.Clear();
         _ropeContacts.Clear();
+        _hasResolvedRopePath = false;
     }
 
     private void OnDisable()
     {
+        _suspendedPlayerAnchorLocal = null;
+        _restoringHandAnchor = false;
         _oneWaySupport.Clear();
         StopPlayerClimb();
         _ropePathPoints.Clear();
         _ropeContactPoints.Clear();
         _ropeContacts.Clear();
+        _hasResolvedRopePath = false;
     }
 
     private void OnValidate()
@@ -267,6 +291,14 @@ public class ChainConstraint2D : MonoBehaviour
 
         Vector2 physicsAnchor = UpdatePhysicsAnchorWorld();
         RebuildRopePath(physicsAnchor, morningStarRb.position);
+        if (!_hasResolvedRopePath)
+        {
+            ResetGroundPullEase();
+            UpdateRunJumpMomentumGrace(physicsAnchor, 0f);
+            ClampBallSpeed();
+            return;
+        }
+
         if (_playerClimbActive)
         {
             ApplyPlayerClimbMotion(physicsAnchor);
@@ -276,10 +308,11 @@ public class ChainConstraint2D : MonoBehaviour
             return;
         }
         physicsAnchor = EnforceSafetyLimit(physicsAnchor);
-        if (_player != null && _player.IsLadderClimbing)
+        if (_hasResolvedRopePath && _player != null && _player.IsLadderClimbing)
             LimitLadderMovementAtBlockedBall(physicsAnchor);
-        UpdateRunJumpMomentumGrace(physicsAnchor, GetRopePathLength());
-        ApplyRopeTension(physicsAnchor);
+        UpdateRunJumpMomentumGrace(physicsAnchor, _hasResolvedRopePath ? GetRopePathLength() : 0f);
+        if (_hasResolvedRopePath)
+            ApplyRopeTension(physicsAnchor);
         ClampBallSpeed();
     }
 
@@ -309,10 +342,11 @@ public class ChainConstraint2D : MonoBehaviour
     {
         Transform playerTransform = playerRb.transform;
         if (_player != null && _player.IsLadderClimbing)
-            return playerRb.position + (Vector2)playerTransform.TransformVector(Player.LadderChainAnchor);
+            return ResolvePhysicsAnchor(Player.LadderChainAnchor);
         if (_playerClimbActive)
-            return playerRb.position + (Vector2)playerTransform.TransformVector(_playerClimbAnchorLocal);
-        Vector2 targetLocalPosition = playerTransform.InverseTransformPoint(handAnchor.position);
+            return ResolvePhysicsAnchor(_playerClimbAnchorLocal);
+        Vector2 targetLocalPosition = _suspendedPlayerAnchorLocal
+            ?? (Vector2)playerTransform.InverseTransformPoint(handAnchor.position);
         if (!_physicsAnchorInitialized)
         {
             _smoothedAnchorLocalPosition = targetLocalPosition;
@@ -321,21 +355,110 @@ public class ChainConstraint2D : MonoBehaviour
         }
         else
         {
-            _smoothedAnchorLocalPosition = Vector2.SmoothDamp(
+            Vector2 nextLocalPosition = Vector2.SmoothDamp(
                 _smoothedAnchorLocalPosition,
                 targetLocalPosition,
                 ref _anchorLocalVelocity,
                 anchorFollowTime,
                 Mathf.Infinity,
                 Time.fixedDeltaTime);
+            if (_restoringHandAnchor && _hasResolvedRopePath && !_prioritizeFlyingTrajectory)
+                nextLocalPosition = LimitHandAnchorChange(nextLocalPosition);
+
+            _smoothedAnchorLocalPosition = nextLocalPosition;
+            if ((targetLocalPosition - nextLocalPosition).sqrMagnitude <= MinPathSegmentLength * MinPathSegmentLength)
+                _restoringHandAnchor = false;
         }
 
         // Player本体の移動は即時反映し、Animation/Facing由来の局所Anchor差分だけを補間する。
-        return KeepOnPlayerSideOfClosedDoor(playerTransform.TransformPoint(_smoothedAnchorLocalPosition));
+        return ResolvePhysicsAnchor(_smoothedAnchorLocalPosition);
     }
 
-    internal Vector2 KeepOnPlayerSideOfClosedDoor(Vector2 target)
-        => KeepOnPlayerSideOfClosedDoor(target, _ropeCollisionRadius);
+    private Vector2 LimitHandAnchorChange(Vector2 nextLocalPosition)
+    {
+        // When the ball rolls off, use the available slack to lower the hand.
+        // The pose change itself shouldn't create a length error at the ball.
+        Vector2 firstPoint = _ropePathPoints.Count == 2 ? morningStarRb.position : _ropePathPoints[1];
+        Vector2 offset = ResolvePhysicsAnchor(_smoothedAnchorLocalPosition) - firstPoint;
+        Vector2 movement = ResolvePhysicsAnchor(nextLocalPosition) - firstPoint - offset;
+        float movementSquared = movement.sqrMagnitude;
+        if (movementSquared <= MinPathSegmentLength * MinPathSegmentLength)
+            return nextLocalPosition;
+
+        float remainingLength = 0f;
+        for (int i = 1; i < _ropePathPoints.Count - 1; i++)
+        {
+            Vector2 next = i == _ropePathPoints.Count - 2 ? morningStarRb.position : _ropePathPoints[i + 1];
+            remainingLength += Vector2.Distance(_ropePathPoints[i], next);
+        }
+        float firstSpanLimit = Mathf.Max(offset.magnitude, maxRopeLength - remainingLength);
+        float limitSquared = firstSpanLimit * firstSpanLimit;
+        if ((offset + movement).sqrMagnitude <= limitSquared)
+            return nextLocalPosition;
+
+        // Intersect the moving hand with the available first span's radius.
+        float along = Vector2.Dot(offset, movement);
+        float room = Mathf.Max(0f, limitSquared - offset.sqrMagnitude);
+        float fraction = (Mathf.Sqrt(along * along + movementSquared * room) - along) / movementSquared;
+        _anchorLocalVelocity = Vector2.zero;
+        return Vector2.Lerp(_smoothedAnchorLocalPosition, nextLocalPosition, fraction);
+    }
+
+    private Vector2 ResolvePhysicsAnchor(Vector2 localAnchor)
+    {
+        Vector2 target = playerRb.position + (Vector2)playerRb.transform.TransformVector(localAnchor);
+        return KeepAnchorOnPlayerSideOfTerrain(playerRb.worldCenterOfMass, target);
+    }
+
+    internal Vector2 KeepVisualAnchorOnPlayerSideOfTerrain(Vector2 target)
+    {
+        if (playerRb == null)
+            return target;
+
+        Vector2 centerOffset = playerRb.worldCenterOfMass - playerRb.position;
+        Vector2 renderedCenter = (Vector2)playerRb.transform.position + centerOffset;
+        target = KeepAnchorOnPlayerSideOfTerrain(renderedCenter, target);
+        if (!_hasResolvedRopePath || _oneWaySupport.IsSupporting)
+            return target;
+
+        Vector2 next = _ropeContacts.Count > 0 ? GetRopeContactPoint(0) : _ropePathPoints[1];
+        if (!TryFindTerrainHit(next, target, _ropeCollisionRadius, out _))
+            return target;
+
+        // The animation can go around the other side of the ledge while the
+        // physical hand is still following its smoothed path. Keep the drawn
+        // hand as close to its sprite as the validated first span allows.
+        Vector2 safe = _ropePathPoints[0];
+        if (TryFindTerrainHit(next, safe, _ropeCollisionRadius, out _))
+            return KeepAnchorOnPlayerSideOfTerrain(next, target);
+
+        for (int i = 0; i < 5; i++)
+        {
+            Vector2 candidate = (safe + target) * 0.5f;
+            if (TryFindTerrainHit(next, candidate, _ropeCollisionRadius, out _))
+                target = candidate;
+            else
+                safe = candidate;
+        }
+        return safe;
+    }
+
+    private Vector2 KeepAnchorOnPlayerSideOfTerrain(Vector2 approach, Vector2 target)
+    {
+        if (!TryFindTerrainHit(approach, target, _ropeCollisionRadius, out RaycastHit2D hit))
+            return target;
+
+        if (hit.collider.TryGetComponent(out ElectricDoor door))
+        {
+            target = door.KeepOnApproachSide(hit.collider, approach, target, GetContactClearance());
+            if (!TryFindTerrainHit(approach, target, _ropeCollisionRadius, out hit))
+                return target;
+        }
+
+        // Hand sprites can reach through a wall even when the body cannot.
+        float safeDistance = Mathf.Max(0f, hit.distance - Mathf.Max(_collisionSkin, 0.001f));
+        return approach + (target - approach).normalized * safeDistance;
+    }
 
     internal Vector2 KeepOnPlayerSideOfClosedDoor(Vector2 target, float radius)
     {
@@ -382,63 +505,25 @@ public class ChainConstraint2D : MonoBehaviour
     {
         RefreshStoredContacts();
         TryRemoveRedundantContact(start, end);
-        RebuildPointLists(start, end);
-
-        int attempts = 0;
-        while (_ropeContacts.Count < MaxWrapPointCount && attempts++ < MaxWrapPointCount * 2)
+        bool hadContacts = _ropeContacts.Count > 0;
+        _hasResolvedRopePath = TryBuildSolidPath(start, end);
+        if (!_hasResolvedRopePath && hadContacts)
         {
-            bool insertedContact = false;
-            for (int segmentIndex = 0; segmentIndex < _ropePathPoints.Count - 1; segmentIndex++)
-            {
-                Vector2 segmentStart = _ropePathPoints[segmentIndex];
-                Vector2 segmentEnd = _ropePathPoints[segmentIndex + 1];
-                Collider2D startCollider = segmentIndex > 0
-                    ? _ropeContacts[segmentIndex - 1].Collider
-                    : null;
-                Collider2D endCollider = segmentIndex < _ropeContacts.Count
-                    ? _ropeContacts[segmentIndex].Collider
-                    : null;
-                if (!TryFindTerrainHit(
-                        segmentStart,
-                        segmentEnd,
-                        _ropeCollisionRadius,
-                        startCollider,
-                        endCollider,
-                        out RaycastHit2D hit))
-                {
-                    continue;
-                }
-
-                Bounds routingBounds = GetRoutingBounds(hit);
-                int obstacleId = GetObstacleId(hit.collider, routingBounds);
-                int availablePointCount = MaxWrapPointCount - _ropeContacts.Count;
-                int routeCount = BuildRouteAroundCollider(
-                    segmentStart,
-                    segmentEnd,
-                    routingBounds,
-                    hit.collider,
-                    obstacleId,
-                    availablePointCount);
-                int insertedCount = InsertRouteContacts(
-                    segmentIndex,
-                    segmentStart,
-                    segmentEnd,
-                    hit,
-                    obstacleId,
-                    routeCount);
-                if (insertedCount <= 0)
-                    continue;
-
-                RebuildPointLists(start, end);
-                insertedContact = true;
-                break;
-            }
-
-            if (!insertedContact)
-                break;
+            // A moving obstacle can invalidate an old route. Retry from the
+            // endpoints before using any of that route for tension.
+            _ropeContacts.Clear();
+            _hasResolvedRopePath = TryBuildSolidPath(start, end);
         }
 
-        RebuildPointLists(start, end);
+        if (!_hasResolvedRopePath)
+        {
+            _ropeContacts.Clear();
+            _oneWaySupport.Clear();
+            _ropePathPoints.Clear();
+            _ropeContactPoints.Clear();
+            return;
+        }
+
         _oneWaySupport.Rebuild(_ropePathPoints, maxRopeLength, _ropeSagStrength,
             _ropeMaxSag, _ropeCollisionRadius, _collisionSkin, _terrainFilter, playerRb, morningStarRb);
         if (_oneWaySupport.IsSupporting)
@@ -447,6 +532,73 @@ public class ChainConstraint2D : MonoBehaviour
             for (int i = 1; i < _ropePathPoints.Count - 1; i++)
                 _ropeContactPoints.Add(_ropePathPoints[i]);
         }
+    }
+
+    private bool TryBuildSolidPath(Vector2 start, Vector2 end)
+    {
+        while (true)
+        {
+            RebuildPointLists(start, end);
+            bool clear = true;
+            bool inserted = false;
+            for (int segmentIndex = 0; segmentIndex < _ropePathPoints.Count - 1; segmentIndex++)
+            {
+                Vector2 segmentStart = _ropePathPoints[segmentIndex];
+                Vector2 segmentEnd = _ropePathPoints[segmentIndex + 1];
+                if (!TryFindTerrainHit(segmentStart, segmentEnd, _ropeCollisionRadius, out RaycastHit2D hit))
+                    continue;
+
+                // A stale contact can leave a blocked span even after both ends come clear.
+                // Use the clear direct span before adding corners that could loop around the obstacle.
+                if (_ropeContacts.Count > 0 && !TryFindTerrainHit(start, end, _ropeCollisionRadius, out _))
+                {
+                    _ropeContacts.Clear();
+                    RebuildPointLists(start, end);
+                    return true;
+                }
+
+                clear = false;
+                int availablePointCount = MaxWrapPointCount - _ropeContacts.Count;
+                if (availablePointCount == 0)
+                    return false;
+
+                int routeCount = FindRouteAroundHit(segmentStart, segmentEnd, hit, availablePointCount);
+                if (routeCount == 0)
+                    continue;
+
+                InsertRouteContacts(segmentIndex, segmentStart, segmentEnd, hit.collider, routeCount);
+                inserted = true;
+                break;
+            }
+
+            // Every insertion consumes at least one of the available points.
+            if (!inserted)
+                return clear;
+        }
+    }
+
+    private int FindRouteAroundHit(Vector2 start, Vector2 end, RaycastHit2D hit, int availablePointCount)
+    {
+        Collider2D collider = hit.collider;
+        Bounds bounds = GetRoutingBounds(hit);
+        int obstacleId = GetObstacleId(collider, bounds);
+        int count = BuildRouteAroundCollider(start, end, bounds, collider, obstacleId, availablePointCount);
+        if (count != 0 || !collider.TryGetComponent(out Tilemap tilemap))
+            return count;
+
+        // A cell edge can be buried in a neighboring tile of the same collider.
+        // Search around both ends of the obstruction before giving up on it.
+        if (TryFindTerrainHit(end, start, _ropeCollisionRadius, out RaycastHit2D reverse, collider))
+        {
+            bounds.Encapsulate(GetRoutingBounds(reverse));
+            count = BuildRouteAroundCollider(start, end, bounds, collider, obstacleId, availablePointCount);
+        }
+        if (count != 0)
+            return count;
+
+        // Allow clearance for a staggered seam between the two hit cells.
+        bounds.Expand(GetWorldCellSize(tilemap) * 2f);
+        return BuildRouteAroundCollider(start, end, bounds, collider, obstacleId, availablePointCount);
     }
 
     private void RefreshStoredContacts()
@@ -463,16 +615,18 @@ public class ChainConstraint2D : MonoBehaviour
                 continue;
             }
 
-            Transform colliderTransform = contact.Collider.transform;
-            Vector2 surfaceNormal = colliderTransform.TransformVector(contact.LocalNormal);
-            if (surfaceNormal.sqrMagnitude <= MinPathSegmentLength * MinPathSegmentLength)
+            Vector2 renderedPoint = contact.Collider.transform.TransformPoint(contact.LocalPhysicsPoint);
+            Rigidbody2D body = contact.Collider.attachedRigidbody;
+            if (body != null)
             {
-                _ropeContacts.RemoveAt(i);
-                continue;
+                Vector2 renderedOffset = renderedPoint - (Vector2)body.transform.position;
+                Vector2 bodyLocalPoint = Quaternion.Inverse(body.transform.rotation) * renderedOffset;
+                contact.PhysicsPoint = body.GetRelativePoint(bodyLocalPoint);
             }
-
-            surfaceNormal.Normalize();
-            contact.PhysicsPoint = colliderTransform.TransformPoint(contact.LocalPhysicsPoint);
+            else
+            {
+                contact.PhysicsPoint = renderedPoint;
+            }
             _ropeContacts[i] = contact;
         }
     }
@@ -485,16 +639,10 @@ public class ChainConstraint2D : MonoBehaviour
             Vector2 next = i == _ropeContacts.Count - 1
                 ? end
                 : _ropeContacts[i + 1].PhysicsPoint;
-            Collider2D previousCollider = i > 0 ? _ropeContacts[i - 1].Collider : null;
-            Collider2D nextCollider = i < _ropeContacts.Count - 1
-                ? _ropeContacts[i + 1].Collider
-                : null;
             bool directPathClear = !TryFindTerrainHit(
                 previous,
                 next,
-                _ropeCollisionRadius + _collisionSkin + UnwrapClearanceMargin,
-                previousCollider,
-                nextCollider,
+                _ropeCollisionRadius + _collisionSkin * 0.5f,
                 out _);
 
             RopeContact contact = _ropeContacts[i];
@@ -524,217 +672,60 @@ public class ChainConstraint2D : MonoBehaviour
         _ropePathPoints.Add(end);
     }
 
-    private int InsertRouteContacts(
-        int insertionIndex,
-        Vector2 segmentStart,
-        Vector2 segmentEnd,
-        RaycastHit2D hit,
-        int obstacleId,
-        int routeCount)
+    private void InsertRouteContacts(
+        int index, Vector2 start, Vector2 end, Collider2D collider, int count)
     {
-        Vector2 fallbackNormal = hit.normal.sqrMagnitude > MinPathSegmentLength * MinPathSegmentLength
-            ? hit.normal.normalized
-            : Vector2.up;
-        if (routeCount <= 0)
+        if (count > 1)
         {
-            _bestRoute[0] = hit.point + fallbackNormal * GetContactClearance();
-            routeCount = 1;
+            ShortenRouteAlongEdge(start, end, collider, count, 0, 1, start);
+            ShortenRouteAlongEdge(start, end, collider, count, count - 1, count - 2, end);
         }
 
-        int candidateCount = BuildContactCandidates(
-            hit.collider,
-            fallbackNormal,
-            obstacleId,
-            routeCount,
-            preserveSafeCandidate: false,
-            _refinedRouteContacts);
-        bool useRefinedContacts = candidateCount > 0
-            && IsRouteClearForCollider(
-                segmentStart,
-                segmentEnd,
-                _refinedRouteContacts,
-                candidateCount,
-                hit.collider);
-        RopeContact[] contacts = _refinedRouteContacts;
-        if (!useRefinedContacts)
+        // Refine the bounds corners onto the actual surface, but keep the
+        // checked outer route if refinement cuts across the collider.
+        for (int i = 0; i < count; i++)
         {
-            candidateCount = BuildContactCandidates(
-                hit.collider,
-                fallbackNormal,
-                obstacleId,
-                routeCount,
-                preserveSafeCandidate: true,
-                _fallbackRouteContacts);
-            if (candidateCount <= 0)
-                return 0;
-            contacts = _fallbackRouteContacts;
+            Vector2 surface = collider.ClosestPoint(_bestRoute[i]);
+            Vector2 offset = _bestRoute[i] - surface;
+            _refinedRoute[i] = offset.sqrMagnitude > MinPathSegmentLength * MinPathSegmentLength
+                ? surface + offset.normalized * GetContactClearance()
+                : _bestRoute[i];
         }
 
-        int insertedCount = 0;
-        for (int routeIndex = 0; routeIndex < candidateCount; routeIndex++)
+        Vector2[] route = IsCandidateRouteClear(start, end, _refinedRoute, count, collider)
+            ? _refinedRoute : _bestRoute;
+        for (int i = 0; i < count; i++)
         {
-            RopeContact contact = contacts[routeIndex];
-            if (IsDuplicateContact(contact))
-                continue;
-
-            _ropeContacts.Insert(insertionIndex + insertedCount, contact);
-            insertedCount++;
-        }
-
-        return insertedCount;
-    }
-
-    private int BuildContactCandidates(
-        Collider2D collider,
-        Vector2 fallbackNormal,
-        int obstacleId,
-        int routeCount,
-        bool preserveSafeCandidate,
-        RopeContact[] output)
-    {
-        int count = 0;
-        for (int routeIndex = 0; routeIndex < routeCount; routeIndex++)
-        {
-            if (!TryCreateContact(
-                    collider,
-                    _bestRoute[routeIndex],
-                    fallbackNormal,
-                    obstacleId,
-                    preserveSafeCandidate,
-                    out RopeContact contact))
+            Vector2 renderedPoint = route[i];
+            Rigidbody2D body = collider.attachedRigidbody;
+            if (body != null)
             {
-                continue;
+                Vector2 bodyLocalPoint = body.GetPoint(route[i]);
+                renderedPoint = body.transform.position + body.transform.rotation * bodyLocalPoint;
             }
-
-            output[count++] = contact;
-        }
-
-        return count;
-    }
-
-    private bool TryCreateContact(
-        Collider2D collider,
-        Vector2 outsideCandidate,
-        Vector2 fallbackNormal,
-        int obstacleId,
-        bool preserveSafeCandidate,
-        out RopeContact contact)
-    {
-        contact = default;
-        if (collider == null)
-            return false;
-
-        Vector2 surfacePoint = collider.ClosestPoint(outsideCandidate);
-        Vector2 surfaceNormal = outsideCandidate - surfacePoint;
-        if (surfaceNormal.sqrMagnitude <= MinPathSegmentLength * MinPathSegmentLength)
-            surfaceNormal = fallbackNormal;
-        if (surfaceNormal.sqrMagnitude <= MinPathSegmentLength * MinPathSegmentLength)
-            return false;
-
-        surfaceNormal.Normalize();
-        Vector2 physicsPoint = preserveSafeCandidate
-            ? outsideCandidate
-            : surfacePoint + surfaceNormal * GetContactClearance();
-        Transform colliderTransform = collider.transform;
-        contact = new RopeContact
-        {
-            Collider = collider,
-            LocalSurfacePoint = colliderTransform.InverseTransformPoint(surfacePoint),
-            LocalNormal = colliderTransform.InverseTransformVector(surfaceNormal).normalized,
-            LocalPhysicsPoint = colliderTransform.InverseTransformPoint(physicsPoint),
-            PhysicsPoint = physicsPoint,
-            ObstacleId = obstacleId,
-            ClearFixedSteps = 0
-        };
-        return true;
-    }
-
-    private bool IsRouteClearForCollider(
-        Vector2 start,
-        Vector2 end,
-        RopeContact[] contacts,
-        int contactCount,
-        Collider2D targetCollider)
-    {
-        for (int segmentIndex = 0; segmentIndex <= contactCount; segmentIndex++)
-        {
-            Vector2 segmentStart = segmentIndex == 0
-                ? start
-                : contacts[segmentIndex - 1].PhysicsPoint;
-            Vector2 segmentEnd = segmentIndex == contactCount
-                ? end
-                : contacts[segmentIndex].PhysicsPoint;
-            Collider2D startCollider = segmentIndex > 0 ? targetCollider : null;
-            Collider2D endCollider = segmentIndex < contactCount ? targetCollider : null;
-            if (SegmentCrossesCollider(
-                    segmentStart,
-                    segmentEnd,
-                    targetCollider,
-                    startCollider,
-                    endCollider))
+            _ropeContacts.Insert(index + i, new RopeContact
             {
-                return false;
-            }
+                Collider = collider,
+                LocalPhysicsPoint = collider.transform.InverseTransformPoint(renderedPoint),
+                PhysicsPoint = route[i]
+            });
         }
-
-        return true;
     }
 
-    private bool SegmentCrossesCollider(
-        Vector2 start,
-        Vector2 end,
-        Collider2D targetCollider,
-        Collider2D startCollider,
-        Collider2D endCollider)
+    private void ShortenRouteAlongEdge(
+        Vector2 start, Vector2 end, Collider2D collider, int count, int index, int neighbor, Vector2 endpoint)
     {
-        Vector2 movement = end - start;
-        float distance = movement.magnitude;
-        if (targetCollider == null || distance <= MinPathSegmentLength)
-            return false;
+        // Next to a stair-stepped cliff, the rope can join a face part way up.
+        // Going all the way to the lower bounds corner would add false length.
+        Vector2 corner = _bestRoute[index];
+        Vector2 edge = _bestRoute[neighbor] - corner;
+        float fraction = Mathf.Clamp01(Vector2.Dot(endpoint - corner, edge) / edge.sqrMagnitude);
+        if (fraction <= 0f || fraction >= 1f)
+            return;
 
-        int hitCount = Physics2D.CircleCast(
-            start,
-            _ropeCollisionRadius,
-            movement / distance,
-            _terrainFilter,
-            _ropeCastHits,
-            distance);
-        float endpointTolerance = Mathf.Max(0.005f, _collisionSkin + 0.002f);
-        for (int i = 0; i < hitCount; i++)
-        {
-            RaycastHit2D hit = _ropeCastHits[i];
-            if (hit.collider != targetCollider)
-                continue;
-            if (hit.collider.GetComponentInParent<OneWayPlatform>() != null)
-                continue;
-            if (hit.collider == startCollider && hit.distance <= endpointTolerance)
-                continue;
-            if (hit.collider == endCollider && distance - hit.distance <= endpointTolerance)
-                continue;
-            return true;
-        }
-
-        return false;
-    }
-
-    private bool IsDuplicateContact(RopeContact candidate)
-    {
-        float mergeDistance = Mathf.Max(0.01f, _ropeCollisionRadius * 0.25f);
-        float mergeDistanceSqr = mergeDistance * mergeDistance;
-        for (int i = 0; i < _ropeContacts.Count; i++)
-        {
-            RopeContact existing = _ropeContacts[i];
-            if (existing.Collider != candidate.Collider
-                || existing.ObstacleId != candidate.ObstacleId)
-            {
-                continue;
-            }
-
-            if ((existing.PhysicsPoint - candidate.PhysicsPoint).sqrMagnitude <= mergeDistanceSqr)
-                return true;
-        }
-
-        return false;
+        _bestRoute[index] = corner + edge * fraction;
+        if (!IsCandidateRouteClear(start, end, _bestRoute, count, collider))
+            _bestRoute[index] = corner;
     }
 
     private float GetContactClearance()
@@ -743,12 +734,8 @@ public class ChainConstraint2D : MonoBehaviour
     }
 
     private bool TryFindTerrainHit(
-        Vector2 start,
-        Vector2 end,
-        float castRadius,
-        Collider2D startCollider,
-        Collider2D endCollider,
-        out RaycastHit2D nearest)
+        Vector2 start, Vector2 end, float castRadius, out RaycastHit2D nearest,
+        Collider2D targetCollider = null)
     {
         nearest = default;
         Vector2 movement = end - start;
@@ -756,31 +743,18 @@ public class ChainConstraint2D : MonoBehaviour
         if (distance <= MinPathSegmentLength || _terrainLayerMask.value == 0)
             return false;
 
-        int hitCount = Physics2D.CircleCast(
-            start,
-            Mathf.Max(0.001f, castRadius),
-            movement / distance,
-            _terrainFilter,
-            _ropeCastHits,
-            distance);
+        int hitCount = Physics2D.CircleCast(start, castRadius, movement / distance,
+            _terrainFilter, _ropeCastHits, distance);
         float nearestDistance = float.PositiveInfinity;
-        float endpointTolerance = Mathf.Max(0.005f, _collisionSkin + 0.002f);
         for (int i = 0; i < hitCount; i++)
         {
             RaycastHit2D hit = _ropeCastHits[i];
-            if (hit.collider == null || hit.collider.isTrigger || hit.distance >= nearestDistance)
-            {
+            if (hit.collider == null || hit.distance >= nearestDistance
+                || (targetCollider != null && hit.collider != targetCollider))
                 continue;
-            }
 
-            // One-way surfaces are resolved with temporal top-support history after
-            // ordinary wrapping. A spatial hand-to-ball cast has no approach time.
+            // The top-support history owns directional one-way collision.
             if (hit.collider.GetComponentInParent<OneWayPlatform>() != null)
-                continue;
-
-            if (hit.collider == startCollider && hit.distance <= endpointTolerance)
-                continue;
-            if (hit.collider == endCollider && distance - hit.distance <= endpointTolerance)
                 continue;
 
             nearest = hit;
@@ -873,16 +847,24 @@ public class ChainConstraint2D : MonoBehaviour
 
     private bool IsCandidateRouteClear(Vector2 start, Vector2 end, Vector2[] points, int count, Collider2D collider)
     {
-        // Tilemapの1セルの下端は、隣接セルと合成された地面の内部にあることがある。
-        // 短い経路でも地面の内部へ回り込む候補は採用しない。
+        float mergeDistance = Mathf.Max(0.01f, _ropeCollisionRadius * 0.25f);
+        float mergeDistanceSquared = mergeDistance * mergeDistance;
+        Vector2 previous = start;
         for (int i = 0; i < count; i++)
-            if (collider.OverlapPoint(points[i]))
+        {
+            Vector2 point = points[i];
+            if (collider.OverlapPoint(point) || (point - previous).sqrMagnitude <= mergeDistanceSquared)
                 return false;
-        for (int i = 0; i <= count; i++)
-            if (SegmentCrossesCollider(i == 0 ? start : points[i - 1], i == count ? end : points[i],
-                collider, i > 0 ? collider : null, i < count ? collider : null))
+            for (int j = 0; j < _ropeContacts.Count; j++)
+                if ((point - _ropeContacts[j].PhysicsPoint).sqrMagnitude <= mergeDistanceSquared)
+                    return false;
+            if (TryFindTerrainHit(previous, point, _ropeCollisionRadius, out _, collider))
                 return false;
-        return true;
+            previous = point;
+        }
+
+        return (end - previous).sqrMagnitude > mergeDistanceSquared
+            && !TryFindTerrainHit(previous, end, _ropeCollisionRadius, out _, collider);
     }
 
     private Bounds GetRoutingBounds(RaycastHit2D hit)
@@ -947,11 +929,15 @@ public class ChainConstraint2D : MonoBehaviour
         }
 
         Vector3 center = tilemap.GetCellCenterWorld(cell);
+        return new Bounds(center, GetWorldCellSize(tilemap));
+    }
+
+    private static Vector3 GetWorldCellSize(Tilemap tilemap)
+    {
         Vector3 scale = tilemap.transform.lossyScale;
-        Vector3 size = Vector3.Scale(
+        return Vector3.Scale(
             tilemap.cellSize,
             new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
-        return new Bounds(center, size);
     }
 
     private static int GetObstacleId(Collider2D collider, Bounds bounds)
@@ -974,18 +960,9 @@ public class ChainConstraint2D : MonoBehaviour
         out float length)
     {
         DecodeRouteKey(routeKey, out int startCorner, out int endCorner, out int step);
-        Vector2 firstCorner = GetBoundsCorner(bounds, startCorner);
-        Vector2 lastCorner = GetBoundsCorner(bounds, endCorner);
-        if (SegmentCrossesBoundsInterior(start, firstCorner, bounds)
-            || SegmentCrossesBoundsInterior(lastCorner, end, bounds))
-        {
-            length = 0f;
-            return 0;
-        }
-
         int count = 0;
         int corner = startCorner;
-        output[count++] = firstCorner;
+        output[count++] = GetBoundsCorner(bounds, corner);
         while (corner != endCorner && count < output.Length)
         {
             corner = (corner + step + 4) % 4;
@@ -1035,55 +1012,6 @@ public class ChainConstraint2D : MonoBehaviour
             destination[i] = source[i];
     }
 
-    private static bool SegmentCrossesBoundsInterior(Vector2 start, Vector2 end, Rect bounds)
-    {
-        const float inset = 0.002f;
-        Rect interior = Rect.MinMaxRect(
-            bounds.xMin + inset,
-            bounds.yMin + inset,
-            bounds.xMax - inset,
-            bounds.yMax - inset);
-        if (interior.width <= 0f || interior.height <= 0f)
-            return false;
-
-        float tMin = 0f;
-        float tMax = 1f;
-        Vector2 delta = end - start;
-        if (!ClipSegment(-delta.x, start.x - interior.xMin, ref tMin, ref tMax)
-            || !ClipSegment(delta.x, interior.xMax - start.x, ref tMin, ref tMax)
-            || !ClipSegment(-delta.y, start.y - interior.yMin, ref tMin, ref tMax)
-            || !ClipSegment(delta.y, interior.yMax - start.y, ref tMin, ref tMax))
-        {
-            return false;
-        }
-
-        return tMax >= tMin && tMax > 0.0001f && tMin < 0.9999f;
-    }
-
-    private static bool ClipSegment(float denominator, float numerator, ref float tMin, ref float tMax)
-    {
-        if (Mathf.Abs(denominator) <= 0.000001f)
-            return numerator >= 0f;
-
-        float t = numerator / denominator;
-        if (denominator < 0f)
-        {
-            if (t > tMax)
-                return false;
-            if (t > tMin)
-                tMin = t;
-        }
-        else
-        {
-            if (t < tMin)
-                return false;
-            if (t < tMax)
-                tMax = t;
-        }
-
-        return true;
-    }
-
     private float GetRopePathLength()
     {
         float length = 0f;
@@ -1117,7 +1045,8 @@ public class ChainConstraint2D : MonoBehaviour
     private void ApplyRopeTension(Vector2 handPosition)
     {
         // トランポリン跳躍中はBall側の長さ補正だけで追従させ、Playerへ力を返さない。
-        if (IsPlayerPullSuppressed)
+        // 吊り下がりの荷重は最大長の制約で支え、弾性の張力で上下に押し戻さない。
+        if (IsPlayerPullSuppressed || _suspendedPlayerAnchorLocal.HasValue)
             return;
 
         float distance = GetRopePathLength();
@@ -1216,6 +1145,8 @@ public class ChainConstraint2D : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             ContactPoint2D contact = _ballContacts[i];
+            if (!contact.enabled)
+                continue;
             Collider2D other = contact.collider != null && contact.collider.attachedRigidbody == morningStarRb
                 ? contact.otherCollider : contact.collider;
             if (other != null && !other.isTrigger
@@ -1389,6 +1320,8 @@ public class ChainConstraint2D : MonoBehaviour
         for (int i = 0; i < contactCount; i++)
         {
             ContactPoint2D contact = _ballContacts[i];
+            if (!contact.enabled)
+                continue;
             Vector2 normal = contact.normal;
             if (normal.sqrMagnitude <= MinPathSegmentLength * MinPathSegmentLength)
                 continue;
@@ -1475,39 +1408,65 @@ public class ChainConstraint2D : MonoBehaviour
         if (distance <= 0.001f)
             return handPosition;
 
+        bool suspended = _suspendedPlayerAnchorLocal.HasValue;
         Vector2 playerPathDirection = GetPlayerPathDirection(handPosition);
         Vector2 ballPathDirection = GetBallPathDirection(handPosition);
 
         if (distance > maxRopeLength)
         {
-            // 衝突を守れる範囲でBall側から超過を解消する。
-            // 両端が阻まれている場合、最大長へ瞬間移動して地形内へ押し込まない。
-            float overshoot = distance - maxRopeLength;
-            Vector2 ballTarget = _ropePathPoints[_ropePathPoints.Count - 2];
-            Vector2 ballCorrection = GetSafeEndpointCorrection(
-                morningStarRb, morningStarRb.position, ballTarget, overshoot);
-            morningStarRb.position += ballCorrection;
+            // A supported ball rolls under the rope's velocity correction.
+            // Spending the length error sideways at its floor contact can move it off the ledge in one step.
+            if (!suspended)
+            {
+                float overshoot = distance - maxRopeLength;
+                Vector2 ballTarget = _ropePathPoints[_ropePathPoints.Count - 2];
+                Vector2 ballCorrection = GetSafeEndpointCorrection(
+                    morningStarRb, morningStarRb.position, ballTarget, overshoot);
+                if (ballCorrection != Vector2.zero)
+                {
+                    morningStarRb.position += ballCorrection;
+                    RebuildRopePath(handPosition, morningStarRb.position);
+                    if (!_hasResolvedRopePath)
+                        return handPosition;
+                }
+            }
 
-            RebuildRopePath(handPosition, morningStarRb.position);
             float blockedRemainder = GetRopePathLength() - maxRopeLength;
             if (!IsPlayerPullSuppressed && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
                 Vector2 playerCorrection = GetSafeEndpointCorrection(
                     playerRb, handPosition, _ropePathPoints[1], blockedRemainder);
-                playerRb.position += playerCorrection;
-                handPosition += playerCorrection;
+                if (playerCorrection != Vector2.zero)
+                {
+                    playerRb.position += playerCorrection;
+                    handPosition = KeepAnchorOnPlayerSideOfTerrain(
+                        playerRb.worldCenterOfMass, handPosition + playerCorrection);
+                    RebuildRopePath(handPosition, morningStarRb.position);
+                    if (!_hasResolvedRopePath)
+                        return handPosition;
+                }
             }
 
-            RebuildRopePath(handPosition, morningStarRb.position);
             distance = GetRopePathLength();
             playerPathDirection = GetPlayerPathDirection(handPosition);
             ballPathDirection = GetBallPathDirection(handPosition);
         }
 
+        float step = Mathf.Max(Time.fixedDeltaTime, 0.0001f);
+        Vector2 playerVelocity = playerRb.linearVelocity;
+        Vector2 projectedPlayerVelocity = playerVelocity;
+        if (suspended)
+        {
+            // Account for the player's queued movement and gravity before enforcing the
+            // limit, so each step doesn't first fall through it and then snap back.
+            projectedPlayerVelocity += (playerRb.totalForce / playerRb.mass
+                + Physics2D.gravity * playerRb.gravityScale) * step;
+        }
+
         float separatingSpeed = Vector2.Dot(morningStarRb.linearVelocity, ballPathDirection)
-            - Vector2.Dot(playerRb.linearVelocity, playerPathDirection);
+            - Vector2.Dot(projectedPlayerVelocity, playerPathDirection);
         float remainingLength = Mathf.Max(0f, maxRopeLength - distance);
-        float allowedSeparatingSpeed = remainingLength / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
+        float allowedSeparatingSpeed = remainingLength / step;
         float excessSeparatingSpeed = separatingSpeed - allowedSeparatingSpeed;
         if (excessSeparatingSpeed > 0f)
         {
@@ -1525,10 +1484,15 @@ public class ChainConstraint2D : MonoBehaviour
             float blockedRemainder = excessSeparatingSpeed - correctedByBall;
             if (!IsPlayerPullSuppressed && blockedRemainder > 0.0001f && playerPathDirection.sqrMagnitude > 0.0001f)
             {
-                // 補正差分でなく最終速度を接触面へ投影する。
-                // 壁から離れる速度の打ち消しまで禁止すると鎖が伸び続けてしまう。
-                Vector2 correctedVelocity = playerRb.linearVelocity + playerPathDirection * blockedRemainder;
-                playerRb.linearVelocity = RemoveBodyCollisionInwardComponent(playerRb, correctedVelocity);
+                // Brake the player's separating motion here. Ordinary tension
+                // supplies acceleration toward the rope, including in the air.
+                float outwardSpeed = -Vector2.Dot(projectedPlayerVelocity, playerPathDirection);
+                if (outwardSpeed > 0f)
+                {
+                    Vector2 correctedVelocity = playerVelocity
+                        + playerPathDirection * Mathf.Min(blockedRemainder, outwardSpeed);
+                    playerRb.linearVelocity = RemoveBodyCollisionInwardComponent(playerRb, correctedVelocity);
+                }
             }
         }
 
