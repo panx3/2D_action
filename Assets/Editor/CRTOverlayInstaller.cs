@@ -164,7 +164,8 @@ public static class CRTOverlayInstaller
             ControlsPanelController controlsPanel = null;
             if (kind < 2)
             {
-                primary = Button(menu, kind == 0 ? "ResumeButton" : "NextButton", "CONTINUE", new Vector2(0, -24), items);
+                primary = Button(menu, kind == 0 ? "ResumeButton" : "NextButton",
+                    kind == 0 ? "CONTINUE" : "STAGE SELECT", new Vector2(0, -24), items);
                 retry = Button(menu, "RetryButton", "RETRY", new Vector2(0, -98), items);
                 titleButton = Button(menu, "TitleButton", "TITLE", new Vector2(0, kind == 0 ? -246 : -172), items);
                 if (kind == 0)

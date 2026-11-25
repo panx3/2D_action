@@ -13,25 +13,31 @@ public static class BeamScorpionSetup
     public const string AnimationFolder = "Assets/Animation/BeamScorpion";
     public const string WalkPath = "Assets/image_/ビームサソリ_wolk.png";
     public const string AttackPath = "Assets/image_/ビームサソリ_attack.png";
+    public const string ClawPath = "Assets/Art/Enemies/BeamScorpionClaw.png";
     public const string FireSoundPath = "Assets/Audio/SFX/BeamScorpionFire.wav";
+    public const int BaseHealth = 8;
+    private const string EnergyMaterialPath = "Assets/Art/Enemies/BeamScorpionEnergy.mat";
 
     [MenuItem("Tools/Beam Scorpion/Create Prefab")]
     public static void CreatePrefab()
     {
         if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
             throw new InvalidOperationException("BeamScorpion already exists. Tune its Inspector; creation does not overwrite it.");
-        Sprite[] walk = Frames(WalkPath), attack = Frames(AttackPath);
-        if (walk.Length != 4 || attack.Length != 6) throw new InvalidOperationException("Expected four walk and six attack sprites.");
+        Sprite[] walk = Frames(WalkPath), attack = Frames(AttackPath), claw = Frames(ClawPath);
+        if (walk.Length != 4 || attack.Length != 6 || claw.Length != 6)
+            throw new InvalidOperationException("Expected four walk sprites and six sprites in each attack sheet.");
         Folder(VfxFolder); Folder(AnimationFolder); Folder("Assets/Generated/BeamScorpion");
         AudioClip fireSound = CreateFireSound();
         Sprite pixel = CreatePixel();
-        var beam = CreateBeam("Beam", pixel);
-        var afterglow = CreateBeam("Afterglow", pixel);
-        var charge = CreateBurst("Charge", pixel, true, 0.65f, 0.15f);
-        var muzzle = CreateBurst("Muzzle", pixel, false, 0.18f, 0.25f);
-        var playerHit = CreateBurst("PlayerHit", pixel, false, 0.22f, 0.4f);
-        var environmentHit = CreateBurst("EnvironmentHit", pixel, false, 0.2f, 0.55f);
-        AnimatorController controller = CreateAnimator(walk, attack);
+        var energy = AssetDatabase.LoadAssetAtPath<Material>(EnergyMaterialPath);
+        if (energy == null) throw new InvalidOperationException("Beam Scorpion energy material is missing.");
+        var beam = CreateBeam("Beam", pixel, energy);
+        var afterglow = CreateBeam("Afterglow", pixel, energy);
+        var charge = CreateBurst("Charge", pixel, energy, BeamScorpionBurstVfx.Style.Charge, 0.65f, 0.61f);
+        var muzzle = CreateBurst("Muzzle", pixel, energy, BeamScorpionBurstVfx.Style.Muzzle, 0.30f, 0.88f);
+        var playerHit = CreateBurst("PlayerHit", pixel, energy, BeamScorpionBurstVfx.Style.Impact, 0.27f, 0.66f);
+        var environmentHit = CreateBurst("EnvironmentHit", pixel, energy, BeamScorpionBurstVfx.Style.Impact, 0.30f, 0.92f);
+        AnimatorController controller = CreateAnimator(walk, attack, claw);
         GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemies/WrenchCrab.prefab");
         if (source == null) throw new InvalidOperationException("WrenchCrab prefab is missing.");
         GameObject root = new GameObject("BeamScorpion");
@@ -47,6 +53,7 @@ public static class BeamScorpionSetup
             collider.sharedMaterial = source.GetComponent<BoxCollider2D>().sharedMaterial;
             collider.size = new Vector2(2.375f, 1.5f);
             collider.offset = new Vector2(0f, 0.7f);
+            collider.forceReceiveLayers = ~LayerMask.GetMask("morningstar", "chain");
             Transform visual = Child(root.transform, "Visual", Vector2.zero);
             visual.localScale = new Vector3(2f, 2f, 1f);
             SpriteRenderer renderer = visual.gameObject.AddComponent<SpriteRenderer>();
@@ -86,8 +93,12 @@ public static class BeamScorpionSetup
             }
             settings.ApplyModifiedPropertiesWithoutUndo();
             var hp = new SerializedObject(health);
-            hp.FindProperty("maxHp").intValue = 3;
+            hp.FindProperty("maxHp").intValue = BaseHealth;
             hp.FindProperty("maxDamagePerHit").intValue = 1;
+            hp.FindProperty("hitStunDuration").floatValue = 0f;
+            hp.FindProperty("suppressMorningStarKnockback").boolValue = true;
+            hp.FindProperty("hitInvincibleDuration").floatValue = 0.75f;
+            hp.FindProperty("minimumMorningStarHitStop").floatValue = 0.045f;
             hp.FindProperty("destroyOnDeath").boolValue = true;
             Ref(hp, "hitFlashRenderer", renderer); Ref(hp, "hitAudioSource", null);
             var disable = hp.FindProperty("disableOnDeath"); disable.arraySize = 1;
@@ -116,24 +127,29 @@ public static class BeamScorpionSetup
     public static void Validate()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-        if (prefab == null || prefab.GetComponent<EnemyHealth>().MaxHp != 3
+        if (prefab == null || prefab.GetComponent<EnemyHealth>().MaxHp != BaseHealth
             || prefab.GetComponent<Enemy>() != null || prefab.GetComponent<WrenchCrab>() != null)
             throw new InvalidOperationException("Invalid BeamScorpion health/controller.");
         var settings = new SerializedObject(prefab.GetComponent<BeamScorpionController>());
         foreach (string field in new[] { "visualRenderer", "visualAnimator", "beamOrigin", "groundCheck", "edgeCheck", "wallCheck",
             "beamVfxPrefab", "chargeVfxPrefab", "muzzleVfxPrefab", "playerHitVfxPrefab", "environmentHitVfxPrefab", "afterglowVfxPrefab", "audioSource", "beamFireSE" })
             if (settings.FindProperty(field).objectReferenceValue == null) throw new InvalidOperationException("Missing reference: " + field);
-        foreach (var path in new[] { WalkPath, AttackPath })
+        foreach (var path in new[] { WalkPath, AttackPath, ClawPath })
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            if (importer.filterMode != FilterMode.Point || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed)
+            if (importer == null || importer.filterMode != FilterMode.Point || importer.mipmapEnabled
+                || importer.textureCompression != TextureImporterCompression.Uncompressed)
                 throw new InvalidOperationException("Sprite import settings: " + path);
         }
+        var animator = (Animator)settings.FindProperty("visualAnimator").objectReferenceValue;
+        var clips = animator.runtimeAnimatorController.animationClips;
+        if (!clips.Any(clip => clip.name == "ClawWindup") || !clips.Any(clip => clip.name == "ClawSwing"))
+            throw new InvalidOperationException("Claw animation clips are missing.");
         var health = new SerializedObject(prefab.GetComponent<EnemyHealth>());
         if (health.FindProperty("disableOnDeath").GetArrayElementAtIndex(0).objectReferenceValue != prefab.GetComponent<BeamScorpionController>())
             throw new InvalidOperationException("Death cleanup must disable BeamScorpionController.");
         if (prefab.GetComponentsInChildren<Component>(true).Any(item => item == null)) throw new InvalidOperationException("Missing script.");
-        Debug.Log("[BeamScorpion] Prefab validation PASS: HP3, Animator, death cleanup, audio and six replaceable VFX references.");
+        Debug.Log($"[BeamScorpion] Prefab validation PASS: HP{BaseHealth}, Animator, death cleanup, audio and six replaceable VFX references.");
     }
 
     private static Sprite[] Frames(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s => s.rect.x).ToArray();
@@ -201,48 +217,48 @@ public static class BeamScorpionSetup
         importer.textureCompression = TextureImporterCompression.Uncompressed; importer.SaveAndReimport();
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
-    private static BeamScorpionBeamVfx CreateBeam(string name, Sprite pixel)
+    private static BeamScorpionBeamVfx CreateBeam(string name, Sprite pixel, Material energy)
     {
         var root = new GameObject(name);
         try
         {
             var effect = root.AddComponent<BeamScorpionBeamVfx>(); var data = new SerializedObject(effect);
-            string[] fields = { "halo", "shell", "core", "upperRail", "lowerRail" };
-            for (int i = 0; i < fields.Length; i++)
-            {
-                var renderer = Child(root.transform, fields[i], Vector2.zero).gameObject.AddComponent<SpriteRenderer>();
-                renderer.sprite = pixel; renderer.sortingOrder = 12 + i;
-                renderer.color = new Color(1f, 0.08f, 0.32f, 0f);
-                Ref(data, fields[i], renderer);
-            }
+            var renderer = Child(root.transform, "core", Vector2.zero).gameObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = pixel;
+            renderer.sortingOrder = 14;
+            renderer.sharedMaterial = energy;
+            renderer.color = Color.clear;
+            Ref(data, "core", renderer);
             data.ApplyModifiedPropertiesWithoutUndo();
             return PrefabUtility.SaveAsPrefabAsset(root, VfxFolder + "/" + name + ".prefab").GetComponent<BeamScorpionBeamVfx>();
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
-    private static BeamScorpionBurstVfx CreateBurst(string name, Sprite pixel, bool charging, float duration, float travel)
+    private static BeamScorpionBurstVfx CreateBurst(string name, Sprite pixel, Material energy,
+        BeamScorpionBurstVfx.Style style, float duration, float travel)
     {
         var root = new GameObject(name);
         try
         {
             var effect = root.AddComponent<BeamScorpionBurstVfx>(); var data = new SerializedObject(effect);
-            data.FindProperty("charge").boolValue = charging; data.FindProperty("lifetime").floatValue = duration;
-            data.FindProperty("sparkTravel").floatValue = travel; data.ApplyModifiedPropertiesWithoutUndo();
-            for (int i = 0; i < 10; i++)
+            data.FindProperty("style").intValue = (int)style;
+            data.FindProperty("lifetime").floatValue = duration;
+            data.FindProperty("sparkTravel").floatValue = travel;
+            for (int i = 0; i < 13; i++)
             {
-                float angle = (i - 2) * 45f * Mathf.Deg2Rad;
-                Vector2 point = i < 2 ? Vector2.zero : new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 0.12f;
-                var child = Child(root.transform, i == 0 ? "Core" : i == 1 ? "Glow" : "Spark" + i, point);
-                child.localRotation = Quaternion.Euler(0f, 0f, i < 2 ? 45f : (i - 2) * 45f);
-                child.localScale = i == 0 ? new Vector3(0.14f, 0.14f, 1f) : i == 1 ? new Vector3(0.32f, 0.32f, 1f) : new Vector3(0.12f, 0.035f, 1f);
+                var child = Child(root.transform, i == 0 ? "Core" : "Spark" + i, Vector2.zero);
                 var renderer = child.gameObject.AddComponent<SpriteRenderer>(); renderer.sprite = pixel;
                 renderer.sortingOrder = i == 0 ? 20 : 19;
+                if (i != 0) continue;
+                renderer.sharedMaterial = energy;
+                Ref(data, "flash", renderer);
             }
+            data.ApplyModifiedPropertiesWithoutUndo();
             return PrefabUtility.SaveAsPrefabAsset(root, VfxFolder + "/" + name + ".prefab").GetComponent<BeamScorpionBurstVfx>();
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
     }
-    private static AnimatorController CreateAnimator(Sprite[] walk, Sprite[] attack)
+    private static AnimatorController CreateAnimator(Sprite[] walk, Sprite[] attack, Sprite[] claw)
     {
         var controller = AnimatorController.CreateAnimatorControllerAtPath(AnimationFolder + "/BeamScorpion.controller");
         var machine = controller.layers[0].stateMachine;
@@ -250,12 +266,24 @@ public static class BeamScorpionSetup
         Clip(controller, machine, "Windup", new[] { attack[0], attack[1] }, new[] { 0f, 0.5f }, 1f, false);
         Clip(controller, machine, "Firing", new[] { attack[2], attack[3] }, new[] { 0f, 0.1f }, 0.2f, true);
         Clip(controller, machine, "Recovery", new[] { attack[4], attack[5] }, new[] { 0f, 0.5f }, 1f, false);
+        AddClawClips(controller, claw, attack[0]);
         EditorUtility.SetDirty(controller); AssetDatabase.SaveAssetIfDirty(controller);
         return controller;
     }
-    private static void Clip(AnimatorController controller, AnimatorStateMachine machine, string name, Sprite[] sprites, float[] times, float length, bool loop)
+
+    private static void AddClawClips(AnimatorController controller, Sprite[] claw, Sprite rest)
     {
-        var clip = new AnimationClip { name = name, frameRate = 10f };
+        var machine = controller.layers[0].stateMachine;
+        Clip(controller, machine, "ClawWindup", new[] { claw[0], claw[1], claw[2] },
+            new[] { 0f, 0.10f, 0.24f }, 0.46f, false, 50f);
+        Clip(controller, machine, "ClawSwing", new[] { claw[2], claw[3], claw[4], claw[5], claw[4], claw[0], rest },
+            new[] { 0f, 0.02f, 0.06f, 0.12f, 0.30f, 0.40f, 0.50f }, 0.60f, false, 50f);
+    }
+
+    private static void Clip(AnimatorController controller, AnimatorStateMachine machine, string name, Sprite[] sprites,
+        float[] times, float length, bool loop, float sampleRate = 10f)
+    {
+        var clip = new AnimationClip { name = name, frameRate = sampleRate };
         var keys = new ObjectReferenceKeyframe[sprites.Length + 1];
         for (int i = 0; i < sprites.Length; i++) keys[i] = new ObjectReferenceKeyframe { time = times[i], value = sprites[i] };
         keys[sprites.Length] = new ObjectReferenceKeyframe { time = length, value = loop ? sprites[0] : sprites[sprites.Length - 1] };

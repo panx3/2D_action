@@ -17,7 +17,8 @@ public static class BeamScorpionPlayModeChecks
     private static GameObject wall;
     private static float started, wallStart;
     private static int stage, checks, runtimeErrors, hpAtDeath;
-    private static bool wasBackground;
+    private static bool wasBackground, hitDuringWindup, hitDuringBeam;
+    private static float nextCadenceHit;
     private sealed class Probe
     {
         public BeamScorpionController Enemy;
@@ -42,6 +43,8 @@ public static class BeamScorpionPlayModeChecks
         if (change == PlayModeStateChange.EnteredPlayMode)
         {
             checks = stage = runtimeErrors = 0; probes.Clear(); states.Clear();
+            hitDuringWindup = hitDuringBeam = false;
+            nextCadenceHit = 0f;
             wasBackground = Application.runInBackground; Application.runInBackground = true;
             Application.logMessageReceived += Log;
             try { CreateWorld(); started = Time.time; EditorApplication.update += Tick; }
@@ -132,6 +135,7 @@ public static class BeamScorpionPlayModeChecks
                 if (attacker.State != BeamScorpionController.ActionState.Patrol)
                     Require(Mathf.Abs(attacker.GetComponent<Rigidbody2D>().linearVelocity.x) < 0.01f, "Attack moved horizontally.");
             }
+            CheckHitsDuringAttack();
             if (stage == 0 && elapsed > 1.1f)
             {
                 Check(target.CurrentHp == target.MaxHp - 1 && target.IsInvincible, "Beam damage/invincibility.");
@@ -161,7 +165,7 @@ public static class BeamScorpionPlayModeChecks
                     "Entering range starts shooting without waiting for a patrol turn.");
                 var health = attacker.GetComponent<EnemyHealth>();
                 Set(health, "destroyOnDeath", false);
-                // HP3の被弾表示は専用チェックで検証。ここは撃破時のビーム停止だけを確認する。
+                // 連続被弾は別に検証し、ここでは撃破時のビーム停止を確認する。
                 Set(health, "maxDamagePerHit", 0);
                 health.OnMorningStarHit(new MorningStarHitContext(health.CurrentHp, Vector2.zero, 0f, attacker.transform.position, Vector2.right, 1f, 1f));
                 Check(health.CurrentHp == 0 && health.IsDeathHandled && !attacker.BeamActive && !attacker.enabled, "Lethal hit cancels beam/controller.");
@@ -176,7 +180,7 @@ public static class BeamScorpionPlayModeChecks
             {
                 Check(target.CurrentHp == hpAtDeath && contactTarget.CurrentHp == contactTarget.MaxHp, "No beam/contact damage after death.");
                 var health = attacker.GetComponent<EnemyHealth>(); health.ResetHealth(); attacker.gameObject.SetActive(true);
-                Check(health.CurrentHp == 3 && attacker.enabled && attacker.State == BeamScorpionController.ActionState.Patrol && !attacker.BeamActive,
+                Check(health.CurrentHp == BeamScorpionSetup.BaseHealth && attacker.enabled && attacker.State == BeamScorpionController.ActionState.Patrol && !attacker.BeamActive,
                     "ResetHealth restores clean patrol.");
                 wall.SetActive(false);
                 // Inspectorの色・長さ・太さを判定と描画へ反映する。
@@ -186,8 +190,12 @@ public static class BeamScorpionPlayModeChecks
                 var origin = (Transform)Get(attacker, "beamOrigin");
                 Check(Mathf.Abs(Vector2.Distance(origin.position, attacker.BeamEnd) - 2f) < 0.02f, "Configurable maximum length.");
                 var beam = (BeamScorpionBeamVfx)Get(attacker, "beam");
-                var shell = (SpriteRenderer)Get(beam, "shell");
-                Check(Mathf.Abs(shell.bounds.size.y - 0.22f) < 0.01f && shell.color.g > 0.9f, "Configurable thickness and color.");
+                var core = (SpriteRenderer)Get(beam, "core");
+                Check(Mathf.Abs(core.bounds.size.y - 0.22f * 6f) < 0.01f && core.color.g > 0.9f, "Configurable thickness and color.");
+                var properties = new MaterialPropertyBlock();
+                core.GetPropertyBlock(properties);
+                Check(Mathf.Abs(properties.GetFloat("_Span") - 2f) < 0.02f && properties.GetFloat("_Contact") == 0f,
+                    "Free beam end uses range taper.");
                 CheckBeamCancellation(attacker);
                 stage = 3;
             }
@@ -200,13 +208,40 @@ public static class BeamScorpionPlayModeChecks
                     if (probe.WideFloor) Check(probe.ReachedPatrolLimit, "Patrol reverses at configured bounds on a wide floor.");
                 }
                 Check(cadenceEnemy.FireSoundPlayCount >= 2, "Faster shooting cadence.");
+                Check(hitDuringWindup && hitDuringBeam, "Subsequent shots continue through accepted iron ball hits.");
                 Check(runtimeErrors == 0, "No new runtime Error/Exception.");
                 Finish("PASS (" + checks + "), runtimeErrors=" + runtimeErrors);
             }
             if (elapsed > 12f) Finish("FAIL: timed out at stage " + stage);
         }
-        catch (Exception e) { Finish("FAIL: " + e.Message); }
+        catch (Exception e) { Finish("FAIL at stage " + stage + ": " + e); }
     }
+
+    private static void CheckHitsDuringAttack()
+    {
+        if (cadenceEnemy.FireSoundPlayCount < 1 || Time.time < nextCadenceHit) return;
+        var state = cadenceEnemy.State;
+        bool windup = state == BeamScorpionController.ActionState.Windup && !hitDuringWindup;
+        bool firing = state == BeamScorpionController.ActionState.Firing && hitDuringWindup && !hitDuringBeam;
+        if (!windup && !firing) return;
+        var health = cadenceEnemy.GetComponent<EnemyHealth>();
+        float elapsed = cadenceEnemy.StateElapsed;
+        float nextAttack = (float)Get(cadenceEnemy, "nextAttack");
+        var body = cadenceEnemy.GetComponent<Rigidbody2D>();
+        Vector2 velocity = body.linearVelocity;
+        int hp = health.CurrentHp;
+        health.OnMorningStarHit(new MorningStarHitContext(2, new Vector2(8f, 6f), 0f,
+            cadenceEnemy.transform.position, Vector2.right, 8f, 1f));
+        Check(health.CurrentHp == hp - 1 && !health.IsHitStunned && body.linearVelocity == velocity,
+            "Iron ball damage respects the cap with no flinch or knockback.");
+        Check(cadenceEnemy.State == state && cadenceEnemy.StateElapsed == elapsed
+            && (float)Get(cadenceEnemy, "nextAttack") == nextAttack && (!firing || cadenceEnemy.BeamActive),
+            "Iron ball contact preserves the attack phase and timer.");
+        hitDuringWindup |= windup;
+        hitDuringBeam |= firing;
+        nextCadenceHit = Time.time + health.HitInvincibleDuration;
+    }
+
     private static void CheckBeamCancellation(BeamScorpionController enemy)
     {
         Scene scene = enemy.gameObject.scene;

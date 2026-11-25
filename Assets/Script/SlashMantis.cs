@@ -4,9 +4,13 @@ using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(EnemyHealth))]
-public sealed partial class SlashMantis : MonoBehaviour
+public sealed partial class SlashMantis : MonoBehaviour, IEnemyMorningStarHitGuard, IEnemyMorningStarDamageModifier
 {
-    private enum State { Walking, Melee, Ranged, Recover, DashWindup, Dash, DashRecovery, Stunned, Dead, IaiWindup, IaiRush, IaiRecovery }
+    private enum State
+    {
+        Walking, Melee, Ranged, RangedFollowUp, Recover, DashWindup, Dash, DashRecovery, IaiWindup, IaiRush, IaiRecovery,
+        GuardWindup, CrossGuard, GuardSlashWindup, GuardSlash, Dead
+    }
 
     [Header("Movement")]
     [SerializeField, Min(0f), Tooltip("地上の移動速度。")] private float walkSpeed = 1.8f;
@@ -30,22 +34,7 @@ public sealed partial class SlashMantis : MonoBehaviour
     private Vector2 meleeSlashSize = new Vector2(1.8f, 1.45f);
     [SerializeField] private AnimationClip meleeClip;
 
-    [Header("Ranged")]
-    [SerializeField, Min(0f)] private float rangedCooldown = 1.1f;
-    [SerializeField, Min(0)] private int rangedDamage = 1;
-    [SerializeField, Range(0f, 1f), Tooltip("横薙ぎのクリップ上で弾を出す位置。")]
-    private float rangedFireTime = 0.5f;
-    [SerializeField, Range(0.1f, 1f), Tooltip("鎌を引いて構える区間の再生速度。")]
-    private float rangedWindupSpeed = 0.5f;
-    [SerializeField, Range(0.1f, 1f), Tooltip("発射後の横薙ぎ区間の再生速度。")]
-    private float rangedSweepSpeed = 0.65f;
-    [SerializeField] private Transform rangedProjectileSpawnPoint;
-    [SerializeField] private AnimationClip rangedClip;
-    [SerializeField] private SlashMantisProjectile projectilePrefab;
-    [SerializeField, Min(0.1f)] private float projectileSpeed = 13.5f;
-    [SerializeField, Min(0.1f)] private float projectileDistance = 8f;
-    [SerializeField, Min(0.01f)] private float projectileLifetime = 1.2f;
-    [SerializeField, Min(0.01f)] private float projectileRadius = 0.35f;
+    [Header("Attack Knockback")]
     [SerializeField, Min(0f)] private float knockback = 4f;
 
     [Header("Tsujigiri")]
@@ -57,7 +46,8 @@ public sealed partial class SlashMantis : MonoBehaviour
     private float tsujigiriDisappearDuration = 0.14f;
     [SerializeField, Min(0f), Tooltip("到着してから命中を確定するまでの秒数。")]
     private float tsujigiriDamageDelay = 0.2f;
-    [SerializeField, Min(0.01f)] private float tsujigiriRecoveryDuration = 0.65f;
+    [SerializeField, Min(0.01f)] private float tsujigiriRecoveryDuration = 0.75f;
+    [SerializeField, Min(0.01f)] private float tsujigiriHitRecovery = 0.55f;
     [SerializeField, Min(0)] private int tsujigiriDamage = 2;
 
     [Header("Visual")]
@@ -75,12 +65,13 @@ public sealed partial class SlashMantis : MonoBehaviour
     private const float GroundProbe = 0.18f;
     private const float GroundSampleSpacing = 0.18f;
     private const float DashExitClearance = 0.18f;
+    private const float DashFloorClearance = 0.17f;
     private const float FallbackScreenWidth = 18f;
     private const float DashPose = 3f / 8f;
     private const float DashStrikePose = 4f / 8f;
+    private const float BladesDownPose = 5.5f / 8f;
     private static readonly int Walking = Animator.StringToHash("Base Layer.Walking");
     private static readonly int Melee = Animator.StringToHash("Base Layer.MeleeAttack");
-    private static readonly int Ranged = Animator.StringToHash("Base Layer.RangedAttack");
     private static readonly int Tsujigiri = Animator.StringToHash("Base Layer.Tsujigiri");
 
     private readonly List<RaycastHit2D> casts = new List<RaycastHit2D>(16);
@@ -92,14 +83,19 @@ public sealed partial class SlashMantis : MonoBehaviour
     private Collider2D playerBody;
     private ContactFilter2D terrainFilter;
     private ContactFilter2D playerFilter;
-    private ContactFilter2D projectileFilter;
     private State state;
     private float elapsed;
     private float homeX;
     private float nextPlayerSearch;
     private int rangedAttacksUntilDash;
     private float recoveryDuration;
+    private bool recoveryExposed;
+    private bool counterOpeningSpent;
+    private bool pullBladesOnRecovery;
     private float dashRemaining;
+    private bool guardCounterDash;
+    private float guardDashDestinationX;
+    private bool dashContactedPlayer;
     private float savedGravity;
     private LayerMask savedExcludedLayers;
     private int facing = -1;
@@ -114,6 +110,14 @@ public sealed partial class SlashMantis : MonoBehaviour
     internal int ProjectileVersion { get; private set; }
 
     private PhysicsScene2D PhysicsScene => gameObject.scene.GetPhysicsScene2D();
+    private bool HasLivePlayerBody => IsLive(player) && playerBody != null && playerBody.isActiveAndEnabled;
+    private bool HasCounterOpening => !counterOpeningSpent && (state switch
+    {
+        State.Recover => recoveryExposed,
+        State.DashRecovery => actionFired && !dashContactedPlayer,
+        State.IaiRecovery => actionFired || iaiStruckBall,
+        _ => false
+    });
 
     private void OnValidate()
     {
@@ -134,10 +138,11 @@ public sealed partial class SlashMantis : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearGuardPresentation();
         RestoreIaiGuardContacts(true);
         CancelIai();
         RestoreDash();
-        dashVictim = null;
+        ClearDashAttack();
         ProjectileVersion++;
     }
 
@@ -150,14 +155,17 @@ public sealed partial class SlashMantis : MonoBehaviour
 
     private void ResetAI()
     {
+        ClearGuardPresentation();
         RestoreIaiGuardContacts(true);
         CancelIai();
         RestoreDash();
         ProjectileVersion++;
         RollRangedAttacksUntilDash();
         ResetIaiSchedule();
+        attacksUntilGuard = 0;
+        hasOpenedWithGuard = false;
         nextPlayerSearch = 0f;
-        dashVictim = null;
+        ClearDashAttack();
         terrainFilter = new ContactFilter2D { useTriggers = false };
         terrainFilter.SetLayerMask(terrainLayers);
         playerFilter = new ContactFilter2D { useTriggers = true };
@@ -173,48 +181,67 @@ public sealed partial class SlashMantis : MonoBehaviour
 
     private void OnHit(MorningStarHitContext hit, bool lethal)
     {
+        if (!lethal)
+        {
+            if (hit.Source != null && HasCounterOpening)
+            {
+                counterOpeningSpent = true;
+                attacksUntilGuard = 0;
+                TryRearmGuard();
+            }
+            return;
+        }
+
+        ClearGuardPresentation();
         CancelIai();
         RestoreDash();
-        dashVictim = null;
+        ClearDashAttack();
         ProjectileVersion++;
-        if (lethal) PlayIaiDefeat();
-        Enter(lethal ? State.Dead : State.Stunned);
+        PlayIaiDefeat();
+        Enter(State.Dead);
     }
 
     private void FixedUpdate()
     {
         if (health.CurrentHp <= 0 || health.IsDeathHandled || health.IsHitStunned) return;
+        if (counterOpeningSpent && TryRearmGuard()) return;
         elapsed += Time.fixedDeltaTime;
         switch (state)
         {
             case State.Walking: StepWalking(); break;
-            case State.Melee: StepNormalAttack(true); break;
-            case State.Ranged: StepNormalAttack(false); break;
-            case State.Recover:
-                if (elapsed >= recoveryDuration) Enter(State.Walking);
-                break;
+            case State.Melee: StepMeleeAttack(); break;
+            case State.Ranged: StepRangedAttack(); break;
+            case State.RangedFollowUp: StepRangedFollowUp(); break;
+            case State.Recover: StepRecovery(); break;
             case State.DashWindup: StepDashWindup(); break;
             case State.Dash: StepDash(); break;
             case State.DashRecovery: StepDashRecovery(); break;
             case State.IaiWindup: StepIaiWindup(); break;
             case State.IaiRush: StepIaiRush(); break;
             case State.IaiRecovery: StepIaiRecovery(); break;
-            case State.Stunned: Enter(State.Walking); break;
+            case State.GuardWindup: StepGuardWindup(); break;
+            case State.CrossGuard: StepCrossGuard(); break;
+            case State.GuardSlashWindup: StepGuardSlashWindup(); break;
+            case State.GuardSlash: StepGuardSlash(); break;
         }
     }
 
     private void Enter(State next)
     {
+        if (!KeepsGuardShield(next)) ClearGuardPresentation();
+        if (attacksUntilGuard > 0 && (next is State.Melee or State.Ranged or State.DashWindup or State.IaiWindup or State.GuardSlashWindup))
+            attacksUntilGuard--;
+
         state = next;
         elapsed = 0f;
+        counterOpeningSpent = false;
         actionFired = false;
         walkingAnimated = false;
         if (next == State.Walking) ShowPose(Walking, 0f);
         if (next == State.Melee) ShowPose(Melee, 0f);
         if (next == State.Ranged) ShowPose(Ranged, 0f);
         if (next == State.DashWindup) ShowPose(Tsujigiri, 0f);
-        if (next == State.Stunned || next == State.Dead)
-            if (animator != null) animator.speed = 0f;
+        if (next == State.Dead && animator != null) animator.speed = 0f;
     }
 
     private void StepWalking()
@@ -231,6 +258,10 @@ public sealed partial class SlashMantis : MonoBehaviour
         {
             Vector2 delta = TargetCenter - (Vector2)bodyCollider.bounds.center;
             int toward = delta.x < 0f ? -1 : 1;
+            bool detected = delta.sqrMagnitude <= detectionRange * detectionRange;
+            bool atDistance = Mathf.Abs(delta.x) >= rangedPressureDistance;
+            if (detected && (!atDistance || !hasOpenedWithGuard) && TryBeginCrossGuard(toward)) return;
+
             bool near = IsInMeleeRange();
             if (near)
             {
@@ -241,7 +272,8 @@ public sealed partial class SlashMantis : MonoBehaviour
                 return;
             }
 
-            bool detected = delta.sqrMagnitude <= detectionRange * detectionRange;
+            if (TryBeginIai(toward)) return;
+
             if (rangedAttacksUntilDash == 0)
             {
                 Face(toward);
@@ -253,15 +285,7 @@ public sealed partial class SlashMantis : MonoBehaviour
                 }
             }
 
-            if (TryBeginIai(toward)) return;
-
-            if (CanShoot(toward))
-            {
-                Face(toward);
-                SetHorizontalSpeed(0f);
-                Enter(State.Ranged);
-                return;
-            }
+            if (TryBeginRangedAttack(toward, atDistance)) return;
 
             if (detected)
             {
@@ -320,62 +344,46 @@ public sealed partial class SlashMantis : MonoBehaviour
         delta.sqrMagnitude < 0.0001f ||
         PhysicsScene.Raycast(origin, delta.normalized, delta.magnitude, terrainFilter, casts) == 0;
 
-    private bool CanShoot(int direction)
+    private void StepMeleeAttack()
     {
-        if (rangedClip == null || projectilePrefab == null || rangedProjectileSpawnPoint == null) return false;
-        Vector2 origin = rangedProjectileSpawnPoint.position;
-        if (direction != facing && facingRoot != null)
-            origin.x = 2f * facingRoot.position.x - origin.x;
-        float distance = Mathf.Min(projectileDistance, projectileSpeed * projectileLifetime);
-        return SlashMantisProjectile.TryGetImpact(PhysicsScene, origin, projectileRadius, Vector2.right * direction,
-            distance, projectileFilter, terrainLayers, casts, out _, out var target) && target == player;
-    }
-
-    private void StepNormalAttack(bool melee)
-    {
-        var clip = melee ? meleeClip : rangedClip;
-        float actionTime = melee ? meleeHitTime : rangedFireTime;
-        float windupSpeed = Mathf.Max(0.1f, melee ? meleeWindupSpeed : rangedWindupSpeed);
-        float time = elapsed / Mathf.Max(Time.fixedDeltaTime, clip.length);
-        float windupLength = actionTime / windupSpeed;
-        float afterWindup = Mathf.Max(0f, time - windupLength);
-        float sweepLength = melee ? 0f : Mathf.Min(0.25f, 1f - actionTime);
-        float sweepSpeed = Mathf.Max(0.1f, rangedSweepSpeed);
-        float sweepTime = sweepLength / sweepSpeed;
-        float progress = Mathf.Min(actionTime, time * windupSpeed);
-        progress += Mathf.Min(afterWindup, sweepTime) * sweepSpeed + Mathf.Max(0f, afterWindup - sweepTime);
-        progress = Mathf.Clamp01(progress);
-        ShowPose(melee ? Melee : Ranged, progress);
-        if (!actionFired)
+        float windupSpeed = Mathf.Max(0.1f, meleeWindupSpeed);
+        float time = elapsed / Mathf.Max(Time.fixedDeltaTime, meleeClip.length);
+        float windupLength = meleeHitTime / windupSpeed;
+        float progress = Mathf.Min(meleeHitTime, time * windupSpeed) + Mathf.Max(0f, time - windupLength);
+        ShowPose(Melee, Mathf.Clamp01(progress));
+        if (!actionFired && time >= windupLength)
         {
-            bool canStrike = IsLive(player) && (!melee ||
-                (playerBody != null && playerBody.isActiveAndEnabled &&
-                (TargetCenter.x - body.position.x) * facing >= 0f && IsInMeleeRange() && HasLineOfSight()));
-            if (!canStrike)
-            {
-                BeginRecovery(melee ? meleeCooldown : rangedCooldown);
-                return;
-            }
-            // The ranged attack commits to its horizontal aim when windup starts.
-            if (time >= windupLength)
-            {
-                actionFired = true;
-                if (melee) HitMelee();
-                else FireProjectile();
-            }
+            actionFired = true;
+            HitMelee();
         }
 
-        if (progress < 1f) return;
+        if (progress < Mathf.Max(0.75f, meleeHitTime)) return;
         if (actionFired) CountNormalAttackForIai();
-        if (!melee && actionFired && rangedAttacksUntilDash > 0)
-            rangedAttacksUntilDash--;
-        BeginRecovery(melee ? meleeCooldown : rangedCooldown);
+        ShowPose(Melee, BladesDownPose);
+        BeginRecovery(meleeCooldown, exposed: true);
     }
 
-    private void BeginRecovery(float duration)
+    private void BeginRecovery(float duration, bool exposed = false, bool pullBladesFree = false)
     {
         recoveryDuration = duration;
+        recoveryExposed = exposed;
+        pullBladesOnRecovery = pullBladesFree;
         Enter(State.Recover);
+    }
+
+    private void StepRecovery()
+    {
+        if (elapsed >= recoveryDuration)
+        {
+            Enter(State.Walking);
+            return;
+        }
+
+        // 最後の数コマで床から鎌を引き抜き、姿勢を戻す。
+        const float pullDuration = 0.28f;
+        if (!pullBladesOnRecovery || recoveryDuration - elapsed >= pullDuration) return;
+        float progress = 1f - (recoveryDuration - elapsed) / pullDuration;
+        ShowPose(Melee, Mathf.Lerp(BladesDownPose, 7.5f / 8f, progress));
     }
 
     private void HitMelee()
@@ -384,16 +392,12 @@ public sealed partial class SlashMantis : MonoBehaviour
         Vector2 center = meleeAttackOrigin.position;
         SlashMantisEffect.Play(meleeSlashSprite, spriteRenderer, gameObject.scene, center, facing,
             meleeSlashSize + new Vector2(0.12f, 0.3f), 0.23f);
+        if (!IsLive(player) || playerBody == null || !playerBody.isActiveAndEnabled ||
+            (TargetCenter.x - body.position.x) * facing < 0f || !IsInMeleeRange() || !HasLineOfSight())
+            return;
+
         if (player.TakeEnemyDamage(meleeDamage, Vector2.right * (facing * knockback)))
             PlayHitSpark(playerBody.ClosestPoint(center));
-    }
-
-    private void FireProjectile()
-    {
-        var projectile = Instantiate(projectilePrefab, rangedProjectileSpawnPoint.position,
-            facing > 0 ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f));
-        projectile.Fire(this, facing, projectileSpeed, projectileDistance, projectileLifetime,
-            projectileRadius, rangedDamage, knockback, terrainLayers, playerLayers);
     }
 
     private bool TryGetDashRange(out float minimum, out float maximum)
@@ -424,13 +428,26 @@ public sealed partial class SlashMantis : MonoBehaviour
         float progress = Mathf.Clamp01(elapsed / tsujigiriWindupDuration);
         ShowPose(Tsujigiri, progress * DashPose);
         if (progress < 1f) return;
-        if (!TryGetDashRange(out float minimum, out float maximum))
+        if (guardCounterDash)
         {
-            BeginRecovery(0.2f);
+            // 構えを見せた位置に着地する。予備動作中に相手を追い直さない。
+            dashRemaining = (guardDashDestinationX - body.position.x) * facing;
+            if (dashRemaining <= Skin || !HasSafeGuardDashPath(dashRemaining))
+            {
+                RecoverFromMissedDash();
+                return;
+            }
+        }
+        else if (TryGetDashRange(out float minimum, out float maximum))
+        {
+            dashRemaining = Random.Range(minimum, maximum);
+        }
+        else
+        {
+            RecoverFromMissedDash();
             return;
         }
 
-        dashRemaining = Random.Range(minimum, maximum);
         savedGravity = body.gravityScale;
         savedExcludedLayers = bodyCollider.excludeLayers;
         body.gravityScale = 0f;
@@ -438,8 +455,7 @@ public sealed partial class SlashMantis : MonoBehaviour
         bodyCollider.excludeLayers = savedExcludedLayers.value | playerLayers.value |
             LayerMask.GetMask("morningstar", "chain");
         dashPhysicsActive = true;
-        dashVictim = null;
-        dashVictimBody = null;
+        if (guardCounterDash) body.position += Vector2.up * DashFloorClearance;
         if (tsujigiriDisappearDuration > 0f && spriteRenderer != null && spriteRenderer.enabled)
         {
             spriteRenderer.enabled = false;
@@ -452,27 +468,35 @@ public sealed partial class SlashMantis : MonoBehaviour
     {
         if (elapsed >= tsujigiriDisappearDuration) Reveal();
         float distance = Mathf.Min(dashRemaining, tsujigiriDashSpeed * Time.fixedDeltaTime);
-        if (SafeDashDistance(distance) < distance)
+        float safeDistance = guardCounterDash ? SafeRaisedDashDistance(distance, 0f) : SafeDashDistance(distance);
+        if (safeDistance + 0.001f < distance)
         {
             RestoreDash();
-            dashVictim = null;
-            BeginRecovery(0.2f);
+            if (dashContactedPlayer) BeginDashRecovery();
+            else RecoverFromMissedDash();
             return;
         }
 
         Bounds bounds = bodyCollider.bounds;
         Vector2 direction = Vector2.right * facing;
         // Query the complete swept rectangle before updating the body's position.
-        if (dashVictim == null)
+        if (!dashContactedPlayer)
         {
             Vector2 size = new Vector2(bounds.size.x + distance, bounds.size.y);
-            PhysicsScene.OverlapBox((Vector2)bounds.center + direction * (distance * 0.5f),
-                size, 0f, playerFilter, overlaps);
+            Vector2 center = (Vector2)bounds.center + direction * (distance * 0.5f);
+            if (guardCounterDash)
+            {
+                // 返しの辻斬りは足元の低い軌道を横切るため、跳べば刃を越えられる。
+                size.y = guardDashStrikeHeight;
+                center.y = bounds.min.y - DashFloorClearance + size.y * 0.5f;
+            }
+            PhysicsScene.OverlapBox(center, size, 0f, playerFilter, overlaps);
             foreach (var collider in overlaps)
             {
                 if (collider.isTrigger || !PlayerColliderUtility.IsPlayerBody(collider)) continue;
                 var target = collider.GetComponentInParent<PlayerHealth>();
                 if (!IsLive(target)) continue;
+                dashContactedPlayer = true;
                 dashVictim = target;
                 dashVictimBody = collider;
                 dashVictimRecoveryVersion = target.RecoveryVersion;
@@ -484,15 +508,21 @@ public sealed partial class SlashMantis : MonoBehaviour
         if (dashRemaining > 0.0001f) return;
 
         RestoreDash();
+        BeginDashRecovery();
+    }
+
+    private void BeginDashRecovery()
+    {
         Enter(State.DashRecovery);
         ShowPose(Tsujigiri, DashStrikePose);
     }
 
     private void StepDashRecovery()
     {
+        float duration = dashContactedPlayer ? tsujigiriHitRecovery : tsujigiriRecoveryDuration;
         float poseTime = Mathf.Max(0f, elapsed - tsujigiriDamageDelay);
         ShowPose(Tsujigiri, Mathf.Lerp(DashStrikePose, 1f,
-            Mathf.Clamp01(poseTime / tsujigiriRecoveryDuration)));
+            Mathf.Clamp01(poseTime / duration)));
         if (!actionFired && elapsed >= tsujigiriDamageDelay)
         {
             actionFired = true;
@@ -506,10 +536,26 @@ public sealed partial class SlashMantis : MonoBehaviour
                     PlayHitSpark(point);
             }
         }
-        if (poseTime < tsujigiriRecoveryDuration) return;
-        dashVictim = null;
+        if (poseTime < duration) return;
+        ClearDashAttack();
         RollRangedAttacksUntilDash();
         Enter(State.Walking);
+    }
+
+    private void RecoverFromMissedDash()
+    {
+        ClearDashAttack();
+        RollRangedAttacksUntilDash();
+        ShowPose(Melee, BladesDownPose);
+        BeginRecovery(tsujigiriRecoveryDuration, exposed: true);
+    }
+
+    private void ClearDashAttack()
+    {
+        guardCounterDash = false;
+        dashContactedPlayer = false;
+        dashVictim = null;
+        dashVictimBody = null;
     }
 
     private void PlayHitSpark(Vector2 point) =>
@@ -535,6 +581,13 @@ public sealed partial class SlashMantis : MonoBehaviour
     }
 
     private float SafeDashDistance(float distance) => SafeTravelOnGround(distance, bodyCollider.bounds, GroundProbe);
+
+    private float SafeRaisedDashDistance(float distance, float lift)
+    {
+        Bounds bounds = bodyCollider.bounds;
+        bounds.center += Vector3.up * lift;
+        return SafeTravelOnGround(distance, bounds, GroundProbe + DashFloorClearance);
+    }
 
     private float SafeTravelOnGround(float distance, Bounds bounds, float groundProbe)
     {

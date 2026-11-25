@@ -6,11 +6,14 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(EnemyHealth))]
 public sealed class EnemyDamageFeedback : MonoBehaviour
 {
-    [Header("Mini HP gauge")]
+    [Header("HP gauge")]
     [SerializeField] private bool gaugeEnabled = true;
+    [SerializeField] private EnemyHealthGaugeStyle gaugeStyle;
+    [Tooltip("空欄の場合は共通の MiniHealthGauge Prefab を使います。")]
     [SerializeField] private EnemyMiniHealthGauge gaugePrefab;
-    [SerializeField, Min(0.05f)] private float gaugeDisplayTime = 1.5f;
-    [SerializeField] private Vector3 gaugeOffset = new Vector3(0f, 2.95f, 0f);
+    [Tooltip("ON は見た目の上端から、OFF は敵ルートからのオフセット。")]
+    [SerializeField] private bool gaugeAboveBody;
+    [SerializeField] private Vector3 gaugeOffset = new Vector3(0f, 0.36f, 0f);
     [Header("Flash (alpha-mask overlays, no source-material changes)")]
     [SerializeField] private bool flashEnabled = true;
     [SerializeField] private SpriteRenderer[] bodyRenderers;
@@ -29,14 +32,24 @@ public sealed class EnemyDamageFeedback : MonoBehaviour
     [SerializeField] private GameObject defeatEffectPrefab;
     [SerializeField] private Vector3 defeatOffset = new Vector3(0f, 1.1f, 0f);
 
+    private static EnemyMiniHealthGauge sharedGaugePrefab;
     private EnemyHealth health;
     private EnemyMiniHealthGauge gauge;
     private SpriteRenderer[] overlays;
     private GameObject critical;
-    private float gaugeUntil, flashUntil;
+    private float flashUntil;
+    private int previousHp;
+    private bool gaugeDefeatStarted;
     public bool GaugeVisible => gauge != null && gauge.gameObject.activeSelf;
     public bool CriticalActive => critical != null;
     public bool FlashActive => flashUntil > Time.time;
+
+    internal static void AddWithAutomaticGaugePosition(GameObject owner)
+    {
+        owner.AddComponent<EnemyDamageFeedback>().gaugeAboveBody = true;
+    }
+
+    private void Reset() => gaugeAboveBody = true;
 
     private void Awake()
     {
@@ -46,7 +59,7 @@ public sealed class EnemyDamageFeedback : MonoBehaviour
             Transform visual = transform.Find("Visual");
             bodyRenderers = (visual != null ? visual : transform).GetComponentsInChildren<SpriteRenderer>(true);
         }
-        overlays = new SpriteRenderer[bodyRenderers.Length];
+        overlays = flashMaterial != null ? new SpriteRenderer[bodyRenderers.Length] : System.Array.Empty<SpriteRenderer>();
         if (flashMaterial != null)
             for (int i = 0; i < bodyRenderers.Length; i++)
             {
@@ -63,17 +76,14 @@ public sealed class EnemyDamageFeedback : MonoBehaviour
     private void OnDestroy()
     {
         if (health != null) { health.HitConfirmed -= OnHit; health.HealthReset -= ResetPresentation; }
-        if (gauge != null) Destroy(gauge.gameObject);
+        if (gauge != null && !gauge.IsDefeating) Destroy(gauge.gameObject);
         if (overlays != null) foreach (var item in overlays) if (item != null) Destroy(item.gameObject);
     }
     private void LateUpdate()
     {
-        if (health.CurrentHp <= 0) { ClearTransient(); return; }
-        if (gauge != null)
-        {
-            gauge.gameObject.SetActive(gaugeEnabled && Time.time < gaugeUntil);
-            gauge.transform.SetPositionAndRotation(WorldPoint(gaugeOffset), Quaternion.identity);
-        }
+        if (GaugeVisible && !gauge.IsDefeating)
+            gauge.transform.position = GaugePosition();
+        if (health.CurrentHp <= 0) { ClearBodyEffects(); return; }
         for (int i = 0; i < overlays.Length; i++)
         {
             var overlay = overlays[i]; var source = bodyRenderers[i];
@@ -87,36 +97,61 @@ public sealed class EnemyDamageFeedback : MonoBehaviour
         }
         RefreshCritical();
     }
-    private int SortingLayer => bodyRenderers.Length > 0 && bodyRenderers[0] != null ? bodyRenderers[0].sortingLayerID : 0;
-    private int SortingOrder => bodyRenderers.Length > 0 && bodyRenderers[0] != null ? bodyRenderers[0].sortingOrder + 20 : 25;
+    private SpriteRenderer Body => bodyRenderers.Length > 0 ? bodyRenderers[0] : null;
+    private int SortingLayer => Body != null ? Body.sortingLayerID : 0;
+    private int SortingOrder => Body != null ? Body.sortingOrder + 20 : 25;
     private Vector3 WorldPoint(Vector3 offset) => transform.position + Vector3.Scale(offset,
         new Vector3(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y), 1f));
+
+    private Vector3 GaugePosition()
+    {
+        if (!gaugeAboveBody) return WorldPoint(gaugeOffset);
+        Vector3 point = transform.position;
+        if (Body != null && Body.sprite != null) point.y = Mathf.Max(point.y, Body.bounds.max.y);
+        return point + gaugeOffset;
+    }
 
     private void OnHit(MorningStarHitContext context, bool lethal)
     {
         if (!isActiveAndEnabled) return;
+        int prior = previousHp;
+        previousHp = health.CurrentHp;
+        if (gaugeEnabled && health.MaxHp >= 2 && (previousHp < prior || lethal))
+            ShowGauge(prior, lethal);
+
         if (hitEffectEnabled) Spawn(hitEffectPrefab, (Vector3)context.ImpactPoint + hitOffset);
         if (lethal)
         {
-            ClearTransient();
-            // HitConfirmedはEnemyHealthの既存死亡処理より先。切り離して最後まで再生する。
+            ClearBodyEffects();
             if (defeatEffectEnabled) Spawn(defeatEffectPrefab, WorldPoint(defeatOffset));
             return;
         }
         flashUntil = Time.time + flashDuration;
-        gaugeUntil = Time.time + gaugeDisplayTime;
-        if (gaugeEnabled && gaugePrefab != null)
-        {
-            if (gauge == null)
-            {
-                gauge = Instantiate(gaugePrefab);
-                SceneManager.MoveGameObjectToScene(gauge.gameObject, gameObject.scene);
-            }
-            gauge.SetHealth(health.CurrentHp, health.MaxHp, SortingLayer, SortingOrder);
-            gauge.transform.SetPositionAndRotation(WorldPoint(gaugeOffset), Quaternion.identity);
-            gauge.gameObject.SetActive(true);
-        }
         RefreshCritical();
+    }
+
+    private void ShowGauge(int prior, bool lethal)
+    {
+        if (gaugeDefeatStarted) return;
+        if (gauge == null)
+        {
+            if (gaugePrefab == null && sharedGaugePrefab == null)
+            {
+                var asset = Resources.Load<GameObject>(EnemyMiniHealthGauge.ResourcePath);
+                if (asset != null) sharedGaugePrefab = asset.GetComponent<EnemyMiniHealthGauge>();
+            }
+            var prefab = gaugePrefab != null ? gaugePrefab : sharedGaugePrefab;
+            if (prefab == null) return;
+            gauge = Instantiate(prefab);
+            SceneManager.MoveGameObjectToScene(gauge.gameObject, gameObject.scene);
+            gauge.Initialize(gaugeStyle, SortingLayer, SortingOrder);
+        }
+
+        gauge.transform.position = GaugePosition();
+        float max = health.MaxHp;
+        // サソリの遅延死亡中は空のバーを表示し、死亡確定時に一度だけ砕く。
+        gaugeDefeatStarted = lethal;
+        gauge.Impact(Mathf.Clamp01(prior / max), Mathf.Clamp01(previousHp / max), lethal);
     }
     private GameObject Spawn(GameObject prefab, Vector3 position)
     {
@@ -137,10 +172,26 @@ public sealed class EnemyDamageFeedback : MonoBehaviour
     }
     private void ClearTransient()
     {
-        gaugeUntil = flashUntil = 0f;
-        if (gauge != null) gauge.gameObject.SetActive(false);
+        if (gauge != null && !gauge.IsDefeating) gauge.Hide();
+        ClearBodyEffects();
+    }
+    private void ClearBodyEffects()
+    {
+        flashUntil = 0f;
         if (critical != null) { critical.SetActive(false); Destroy(critical); critical = null; }
         if (overlays != null) foreach (var item in overlays) if (item != null) item.enabled = false;
     }
-    private void ResetPresentation() { ClearTransient(); if (isActiveAndEnabled) RefreshCritical(); }
+    private void ResetPresentation()
+    {
+        previousHp = health.CurrentHp;
+        gaugeDefeatStarted = false;
+        if (gauge != null && gauge.IsDefeating)
+        {
+            gauge.gameObject.SetActive(false);
+            Destroy(gauge.gameObject);
+            gauge = null;
+        }
+        ClearTransient();
+        if (isActiveAndEnabled) RefreshCritical();
+    }
 }

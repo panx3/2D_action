@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public sealed class StageSelectController : MonoBehaviour
 {
+    public const string SceneName = "StageSelectScene";
+
     public enum SelectPhase { Opening, Ready, Switching, Inserting, Zooming, Loading, Revealing, Returning }
 
     [Header("Cartridges / Input")]
@@ -83,6 +85,7 @@ public sealed class StageSelectController : MonoBehaviour
 
     private static StageSelectController entryOwner;
     private static string lastCartridge;
+    private static string clearedSceneOnReturn;
     private InputActionAsset ownedActions;
     private InputAction navigate, submit, cancel;
     private Vector2 home, consoleHome;
@@ -94,6 +97,7 @@ public sealed class StageSelectController : MonoBehaviour
     private AudioClip[] generatedCues;
     private string normalStatus;
     private bool showingGamepad;
+    private bool waitingForSubmitRelease;
     private UnityEngine.UI.Image[] shardImages;
     private StageSelectCrystalFragment[] shardFragments;
     private UnityEngine.UI.Image[] piledShardImages;
@@ -111,7 +115,9 @@ public sealed class StageSelectController : MonoBehaviour
     public static bool IsEnteringStage => entryOwner != null;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics() { entryOwner = null; lastCartridge = null; }
+    private static void ResetStatics() { entryOwner = null; lastCartridge = null; clearedSceneOnReturn = null; }
+
+    public static void SelectAfterClear(string clearedScene) => clearedSceneOnReturn = clearedScene;
 
     private void Awake()
     {
@@ -130,6 +136,17 @@ public sealed class StageSelectController : MonoBehaviour
         home = cartridge.anchoredPosition;
         consoleHome = console.anchoredPosition;
         selected = Mathf.Max(0, Array.FindIndex(stages, value => value.name == lastCartridge));
+        if (!string.IsNullOrEmpty(clearedSceneOnReturn))
+        {
+            int clearedIndex = Array.FindIndex(stages, value => value.sceneName == clearedSceneOnReturn);
+            if (clearedIndex >= 0)
+            {
+                int next = Array.FindIndex(stages, clearedIndex + 1, value => value.CanLaunch);
+                selected = next >= 0 ? next : clearedIndex;
+            }
+            clearedSceneOnReturn = null;
+            waitingForSubmitRelease = true;
+        }
         int pending = Array.FindIndex(stages, value => value.NeedsReveal);
         if (pending >= 0) selected = pending;
         generatedCues = new AudioClip[8];
@@ -169,6 +186,14 @@ public sealed class StageSelectController : MonoBehaviour
     private void Update()
     {
         if (ownedActions == null) return;
+        if (waitingForSubmitRelease)
+        {
+            // The same press that activated the result button can still be held here.
+            bool held = submit.WasPressedThisFrame();
+            foreach (InputControl control in submit.controls)
+                held |= control.IsPressed();
+            waitingForSubmitRelease = held;
+        }
         if (cancel.WasPressedThisFrame()) Back();
         if (Phase == SelectPhase.Ready || Phase == SelectPhase.Switching)
         {
@@ -219,7 +244,7 @@ public sealed class StageSelectController : MonoBehaviour
 
     public void Confirm()
     {
-        if (Phase != SelectPhase.Ready) return;
+        if (Phase != SelectPhase.Ready || waitingForSubmitRelease) return;
         if (!SelectedStage.CanLaunch)
         {
             Play(deniedClip, 6, .5f);

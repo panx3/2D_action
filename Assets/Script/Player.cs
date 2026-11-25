@@ -298,6 +298,25 @@ public partial class Player : MonoBehaviour
 
     public bool IsGrounded => _startIntroControlled ? _introGrounded : _isGrounded;
 
+    // 現在のジャンプ入力と重力から、指定の床に足が届くまでの目安を返す。
+    internal float EstimateLandingTime(float feetAboveGround)
+    {
+        if (_rigid == null) return 0f;
+
+        float gravity = -Physics2D.gravity.y;
+        float risingGravity = gravity * (_rigid.gravityScale + (_jumpHeld ? 0f : _jumpCutMultiplier - 1f));
+        float fallingGravity = gravity * (_rigid.gravityScale + _fallGravityMultiplier - 1f);
+        if (risingGravity <= 0f || fallingGravity <= 0f) return 0f;
+
+        float verticalSpeed = _rigid.linearVelocity.y;
+        float upSpeed = Mathf.Max(0f, verticalSpeed);
+        float downSpeed = Mathf.Min(0f, verticalSpeed);
+        float riseTime = upSpeed / risingGravity;
+        float drop = Mathf.Max(0f, feetAboveGround) + 0.5f * upSpeed * riseTime;
+        float fallTime = (downSpeed + Mathf.Sqrt(downSpeed * downSpeed + 2f * fallingGravity * drop)) / fallingGravity;
+        return riseTime + fallTime;
+    }
+
     public event System.Action Landed;
 
     public event System.Action Jumped;

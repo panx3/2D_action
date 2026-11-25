@@ -53,6 +53,8 @@ public sealed class Magutomushi : MonoBehaviour
     [SerializeField] private SpriteRenderer visualRenderer;
     [SerializeField] private Texture2D attackTexture;
     [SerializeField, Min(0.01f)] private float chargeAnimationLength = 0.4f;
+    [Header("Magnetic Field VFX")]
+    [SerializeField] private MeshRenderer fieldRenderer;
 
     private readonly RaycastHit2D[] hits = new RaycastHit2D[24];
     private Rigidbody2D body;
@@ -69,10 +71,8 @@ public sealed class Magutomushi : MonoBehaviour
     private Vector3 attractionOffset;
     private MagnetPoint magnet;
     private MaterialPropertyBlock colorProperties;
+    private MaterialPropertyBlock fieldProperties;
     private Texture lastVisualTexture;
-    private ParticleSystem magnetEffect;
-    private Material magnetEffectMaterial;
-    private float nextMagnetEffectTime;
     private float nextContactTime;
     private bool ballCaptured;
     private float escapeHoldElapsed;
@@ -81,6 +81,8 @@ public sealed class Magutomushi : MonoBehaviour
     private static readonly int Walk = Animator.StringToHash("Walk");
     private static readonly int Charge = Animator.StringToHash("Charge");
     private static readonly int PaletteGain = Shader.PropertyToID("_PaletteGain");
+    private static readonly int Field = Shader.PropertyToID("_Field");
+    private static readonly int IronBall = Shader.PropertyToID("_IronBall");
     private static readonly Vector4 AttackPaletteGain = new Vector4(1.28f, 1.50f, 1.75f, 1f);
 
     private void Awake()
@@ -97,7 +99,7 @@ public sealed class Magutomushi : MonoBehaviour
         }
         if (visualRenderer == null && visualRoot != null) visualRenderer = visualRoot.GetComponent<SpriteRenderer>();
         colorProperties = new MaterialPropertyBlock();
-        if (Application.isPlaying) CreateMagnetEffect();
+        if (fieldRenderer != null) fieldProperties = new MaterialPropertyBlock();
         health.HitConfirmed += OnHitConfirmed;
         FindPlayer();
     }
@@ -113,14 +115,13 @@ public sealed class Magutomushi : MonoBehaviour
     {
         StopMagnet();
         UnlockAttractionPosition();
-        if (magnetEffect != null) magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        if (fieldRenderer != null) fieldRenderer.enabled = false;
         lastVisualTexture = null;
         if (visualAnimator != null) visualAnimator.speed = 0f;
     }
     private void OnDestroy()
     {
         if (health != null) health.HitConfirmed -= OnHitConfirmed;
-        if (magnetEffectMaterial != null) Destroy(magnetEffectMaterial);
     }
 
     private void FindPlayer()
@@ -175,7 +176,7 @@ public sealed class Magutomushi : MonoBehaviour
                         launcher.ReleaseEnemyMagnetOnEscape(magnet, escapeReboundSpeed);
                     SetState(ActionState.Cooldown);
                 }
-                else { PullBall(); EmitMagnetEffect(); }
+                else PullBall();
                 break;
             case ActionState.Cooldown:
                 if (stateElapsed >= attackCooldown) SetState(ActionState.Patrol);
@@ -195,8 +196,11 @@ public sealed class Magutomushi : MonoBehaviour
         float away = Mathf.Sign(player.position.x - body.position.x);
         if (playerController == null || launcher == null || magnet == null
             || playerController.MoveInputX * away <= 0.1f) return false;
+        float stretch = EscapeStretchDistance;
+        // 鎖が斜めに張ったときも、Jointの限界ぎりぎりで入力時間が途切れないようにする。
+        float tolerance = Mathf.Min(0.10f, stretch * 0.2f);
         return Vector2.Distance(launcher.RopeAnchorWorld, magnet.ControlledPosition)
-            >= launcher.BaseMaxRopeLength + EscapeStretchDistance - 0.02f;
+            >= launcher.BaseMaxRopeLength + stretch - tolerance;
     }
 
     private bool HasHeldEscapePullLongEnough()
@@ -211,6 +215,12 @@ public sealed class Magutomushi : MonoBehaviour
     }
 
     private void LateUpdate()
+    {
+        UpdateSpritePalette();
+        UpdateMagneticField();
+    }
+
+    private void UpdateSpritePalette()
     {
         if (visualRenderer == null || visualRenderer.sprite == null) return;
         Texture current = visualRenderer.sprite.texture;
@@ -233,20 +243,13 @@ public sealed class Magutomushi : MonoBehaviour
     {
         if (BallAvailable() && magnet != null)
         {
-            Vector2 incoming = magnet.ControlledPosition - launcher.BallBody.position;
-            magnet.AttractControlledBall(launcher.BallBody, launcher, attractionRadius,
+            Rigidbody2D ball = launcher.BallBody;
+            magnet.AttractControlledBall(ball, launcher, attractionRadius,
                 pullStrength * pullStrengthMultiplier, maxPullSpeed, attachDistance);
-            if (!ballCaptured && launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
+            bool captured = launcher.IsAttachedToMagnet(magnet, ball);
+            if (ballCaptured != captured)
             {
-                ballCaptured = true;
-                escapeHoldElapsed = 0f;
-                var sparks = launcher.BallBody.GetComponent<MorningStarImpactSparks>();
-                if (sparks != null) sparks.PlayMagnetRelease(launcher.BallBody.position,
-                    incoming.sqrMagnitude > 0.0001f ? incoming : Vector2.up);
-            }
-            else if (ballCaptured && !launcher.IsAttachedToMagnet(magnet, launcher.BallBody))
-            {
-                ballCaptured = false;
+                ballCaptured = captured;
                 escapeHoldElapsed = 0f;
             }
         }
@@ -269,44 +272,45 @@ public sealed class Magutomushi : MonoBehaviour
         attractionPositionLocked = false;
     }
 
-    private void CreateMagnetEffect()
+    private void UpdateMagneticField()
     {
-        var shader = Shader.Find("Sprites/Default");
-        if (shader == null) return;
-        var effectObject = new GameObject("MagnetEffect");
-        effectObject.transform.SetParent(transform, false);
-        magnetEffect = effectObject.AddComponent<ParticleSystem>();
-        var main = magnetEffect.main;
-        main.playOnAwake = false;
-        main.loop = true;
-        main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.startLifetime = 0.35f;
-        main.startSize = 0.09f;
-        main.startColor = new Color(0.2f, 0.9f, 1f, 0.8f);
-        main.maxParticles = 24;
-        var emission = magnetEffect.emission; emission.enabled = false;
-        var shape = magnetEffect.shape; shape.enabled = false;
-        var renderer = magnetEffect.GetComponent<ParticleSystemRenderer>();
-        magnetEffectMaterial = new Material(shader);
-        renderer.sharedMaterial = magnetEffectMaterial;
-        renderer.sortingOrder = 6;
-        magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-    }
+        if (fieldRenderer == null) return;
+        bool visible = (state == ActionState.Charge || state == ActionState.Attract)
+            && magnet != null && attractionRadius > 0f && pullStrength * pullStrengthMultiplier > 0f;
+        fieldRenderer.enabled = visible;
+        if (!visible) return;
 
-    private void EmitMagnetEffect()
-    {
-        if (magnetEffect == null || magnet == null || !BallAvailable()
-            || !launcher.IsEnemyMagnetPullingFrom(magnet) || Time.time < nextMagnetEffectTime) return;
-        Vector2 start = launcher.BallBody.position;
-        Vector2 delta = magnet.ControlledPosition - start;
-        if (delta.sqrMagnitude < 0.01f) return;
-        var particle = new ParticleSystem.EmitParams
+        // 吸引の判定と同じワールド座標・半径を使い、配置時の拡縮から切り離す。
+        Vector2 center = magnet.ControlledPosition;
+        float halfExtent = attractionRadius + 0.12f;
+        Transform fieldTransform = fieldRenderer.transform;
+        Vector3 parentScale = fieldTransform.parent.lossyScale;
+        fieldTransform.position = new Vector3(center.x, center.y, attractionPoint.position.z);
+        fieldTransform.localScale = new Vector3(2f * halfExtent / Mathf.Max(0.001f, Mathf.Abs(parentScale.x)),
+            2f * halfExtent / Mathf.Max(0.001f, Mathf.Abs(parentScale.y)), 1f);
+
+        float phase = state == ActionState.Attract ? -1f : Mathf.Clamp01(stateElapsed / Mathf.Max(0.01f, chargeDuration));
+        Vector4 ironBall = Vector4.zero;
+        if (state == ActionState.Attract && BallAvailable())
         {
-            position = Vector2.Lerp(start, magnet.ControlledPosition, 0.35f),
-            velocity = delta.normalized * 2f
-        };
-        magnetEffect.Emit(particle, 1);
-        nextMagnetEffectTime = Time.time + 0.12f;
+            Rigidbody2D ball = launcher.BallBody;
+            if (launcher.IsAttachedToMagnet(magnet, ball))
+            {
+                ironBall.w = 1f;
+            }
+            else if (launcher.IsEnemyMagnetPullingFrom(magnet))
+            {
+                Vector2 offset = (Vector2)ball.transform.position - center;
+                float markerRadius = ball.TryGetComponent<CircleCollider2D>(out var ballCollider)
+                    ? Mathf.Max(ballCollider.bounds.extents.x, ballCollider.bounds.extents.y) + 0.35f
+                    : 1.20f;
+                ironBall = new Vector4(offset.x, offset.y, markerRadius, 0f);
+            }
+        }
+
+        fieldProperties.SetVector(Field, new Vector4(attractionRadius, halfExtent, stateElapsed, phase));
+        fieldProperties.SetVector(IronBall, ironBall);
+        fieldRenderer.SetPropertyBlock(fieldProperties);
     }
 
     private void SetState(ActionState next)
@@ -315,7 +319,6 @@ public sealed class Magutomushi : MonoBehaviour
         {
             StopMagnet();
             UnlockAttractionPosition();
-            if (magnetEffect != null) magnetEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
         if (next == ActionState.Attract && state != ActionState.Attract && body != null)
         {
@@ -326,7 +329,6 @@ public sealed class Magutomushi : MonoBehaviour
         }
         state = next;
         stateElapsed = 0f;
-        if (next == ActionState.Attract && magnetEffect != null) magnetEffect.Play();
         if (visualAnimator == null) return;
         if (next == ActionState.Charge)
         {

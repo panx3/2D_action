@@ -185,7 +185,7 @@ BoxCollider2D:
     m_Bits: 4294967295
   m_ForceReceiveLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294966911
   m_ContactCaptureLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -220,16 +220,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7cad5c721a30444a8a8d436ddd30e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  maxHp: 5
+  maxHp: 8
   maxDamagePerHit: 1
   knockbackResistance: 1
+  suppressMorningStarKnockback: 1
   destroyOnDeath: 1
-  hitStunDuration: 0.18
+  hitStunDuration: 0
   maxKnockbackSpeed: 8
   freezeRotationOnHit: 1
   stopAngularVelocityOnHit: 1
   debugLog: 0
   hitInvincibleDuration: 0.75
+  minimumMorningStarHitStop: 0.045
   hitFlashDuration: 0
   hitFlashInterval: 0.06
   hitFlashRenderer: {fileID: 8377431386023412996}
@@ -238,6 +240,8 @@ MonoBehaviour:
   hitAudioSource: {fileID: 0}
   morningStarHitClip: {fileID: 8300000, guid: 3d91aca89f4b04a44933ac571f903b10, type: 3}
   morningStarHitVolume: 0.9
+  defeatClip: {fileID: 0}
+  defeatVolume: 0.9
   fragmentPrefab: {fileID: 308253709908661788, guid: 6c66bdca2958c9e4a9971316dead267a, type: 3}
   fragmentCount: 20
   fragmentSpread: 0.5
@@ -355,6 +359,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75409eccb6c006046b70edd2001cbce9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BeamScorpionController
+  clawWindupTime: 0.46
+  clawSwingDuration: 0.6
+  clawReach: 1.9
+  clawDamage: 1
+  clawPlayerImpulse: {x: 8, y: 9}
+  clawBallVelocity: {x: 14, y: 9}
   moveSpeed: 0.8
   patrolHalfWidth: 2.5
   startFacingRight: 0
@@ -366,13 +376,13 @@ MonoBehaviour:
   groundCheck: {fileID: 1386721652590996279}
   edgeCheck: {fileID: 3546625351904706356}
   wallCheck: {fileID: 546419432186842957}
-  attackInterval: 1.2
+  attackInterval: 0.95
   attackCooldown: 0.55
   windupTime: 0.5
   beamDuration: 0.55
-  detectionRange: 7
+  detectionRange: 9
   beamOrigin: {fileID: 6868470539851955536}
-  beamLength: 8
+  beamLength: 9.5
   beamThickness: 0.14
   beamColor: {r: 1, g: 0.08, b: 0.32, a: 1}
   beamDamage: 1
@@ -429,6 +439,7 @@ MonoBehaviour:
   groundShadow: {fileID: 3947029782315626712}
   width: 2.5
   scaleWithOwner: 1
+  projectDisabledCircle: 0
   opacity: 0.52
   probeDistance: 8
   groundLayers:
@@ -447,9 +458,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDamageFeedback
   gaugeEnabled: 1
+  gaugeStyle: 1
   gaugePrefab: {fileID: 5561037782073791896, guid: 98c15aef5b6eb0c4b84d11e8c97c42e3, type: 3}
-  gaugeDisplayTime: 1.5
-  gaugeOffset: {x: 0, y: 2.95, z: 0}
+  gaugeAboveBody: 1
+  gaugeOffset: {x: 0, y: 0.36, z: 0}
   flashEnabled: 1
   bodyRenderers:
   - {fileID: 8377431386023412996}

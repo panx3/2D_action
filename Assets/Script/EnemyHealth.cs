@@ -12,6 +12,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [SerializeField, Min(0), Tooltip("0は従来どおり。1なら強い鉄球でも確定被弾1回につきHPを1だけ減らす。")]
     private int maxDamagePerHit;
     [SerializeField, Min(0.01f)] private float knockbackResistance = 1f;
+    [SerializeField, Tooltip("鉄球の確定被弾で物理ノックバックを加えない。")]
+    private bool suppressMorningStarKnockback;
     [SerializeField] private bool destroyOnDeath = true;
     [SerializeField] private float hitStunDuration = 0.18f;
     [SerializeField] private float maxKnockbackSpeed = 8f;
@@ -22,6 +24,8 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     [Header("Hit Feedback (Optional)")]
     [SerializeField, Min(0f), Tooltip("受信側の連続被弾防止。最大HPが2以上の敵は、未設定の0でも0.5秒を使用します。")]
     private float hitInvincibleDuration = 0.5f;
+    [SerializeField, Min(0f), Tooltip("鉄球が命中した時の最短ヒットストップ秒数。0は鉄球側の設定を使う。")]
+    private float minimumMorningStarHitStop;
     [SerializeField, Min(0f)] private float hitFlashDuration;
     [SerializeField, Min(0.01f)] private float hitFlashInterval = 0.06f;
     [SerializeField] private SpriteRenderer hitFlashRenderer;
@@ -58,6 +62,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
     private Coroutine _hitFlashRoutine;
     private bool _rendererWasEnabled;
     private IEnemyDeathGuard _deathGuard;
+    private IEnemyMorningStarHitGuard _morningStarHitGuard;
     private IEnemyMorningStarDamageModifier _morningStarDamageModifier;
     private MorningStarHitContext _pendingDeathHit;
     public bool IsDeathPending { get; private set; }
@@ -77,6 +82,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         _currentHp = maxHp;
         _rigidbody2D = GetComponent<Rigidbody2D>();
         _deathGuard = GetComponent<IEnemyDeathGuard>();
+        _morningStarHitGuard = GetComponent<IEnemyMorningStarHitGuard>();
         _morningStarDamageModifier = GetComponent<IEnemyMorningStarDamageModifier>();
         if (hitFlashRenderer == null && hitFlashDuration > 0f)
             hitFlashRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -87,6 +93,9 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _rigidbody2D.freezeRotation = true;
             _rigidbody2D.angularVelocity = 0f;
         }
+        // 旧配置や実行時生成の敵にも、既定のゲージ表示を補う。
+        if (maxHp >= 2 && !TryGetComponent<EnemyDamageFeedback>(out _))
+            EnemyDamageFeedback.AddWithAutomaticGaugePosition(gameObject);
     }
 
     private void FixedUpdate()
@@ -101,12 +110,21 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             _rigidbody2D.angularVelocity = 0f;
     }
 
-    public void OnMorningStarHit(MorningStarHitContext context)
+    public void OnMorningStarHit(MorningStarHitContext context) => ReceiveMorningStarHit(context);
+
+    internal bool ReceiveMorningStarHit(MorningStarHitContext context)
     {
         // 敵磁力に支配されている鉄球はマグトムシ自身への攻撃にならない。
         if (context.Source != null && context.Source.IsEnemyMagnetPulling
-            && GetComponent<Magutomushi>() != null) return;
+            && GetComponent<Magutomushi>() != null) return false;
+
+        // ガードは確定被弾とは別に処理し、正面を弾いた直後でも背後からは攻撃できる。
+        if (_morningStarHitGuard != null && isActiveAndEnabled && _currentHp > 0 && !IsDeathPending
+            && context.Damage > 0 && _morningStarHitGuard.TryGuardMorningStarHit(context))
+            return true;
+
         ApplyHit(context, false, true);
+        return false;
     }
 
     /// <summary>圧殺は通常攻撃のダメージ上限・被弾無敵と別に、既存の撃破経路へ流す。</summary>
@@ -147,7 +165,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
         if (IsDeathPending) _pendingDeathHit = context;
         // 無敵・撃破済みの接触では止めず、実際にダメージを受けた時だけ通知する。
         if (context.Source != null)
-            context.Source.PlayEnemyHitStop(context.HitStopSeconds, _currentHp <= 0);
+        {
+            float hitStop = morningStar ? Mathf.Max(context.HitStopSeconds, minimumMorningStarHitStop)
+                : context.HitStopSeconds;
+            context.Source.PlayEnemyHitStop(hitStop, _currentHp <= 0);
+        }
         if ((morningStar || crushing) && OneShotAudioUtility.Play2D(hitAudioSource, morningStarHitClip, morningStarHitVolume, transform.position))
             HitSoundPlayCount++;
 
@@ -168,7 +190,7 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
             if (stopAngularVelocityOnHit)
                 _rigidbody2D.angularVelocity = 0f;
 
-            if (context.KnockbackImpulse.sqrMagnitude > 0.0001f)
+            if ((!morningStar || !suppressMorningStarKnockback) && context.KnockbackImpulse.sqrMagnitude > 0.0001f)
             {
                 _rigidbody2D.AddForce(context.KnockbackImpulse / knockbackResistance, ForceMode2D.Impulse);
                 ClampKnockbackSpeed();
@@ -355,6 +377,11 @@ public class EnemyHealth : MonoBehaviour, IMorningStarHitReceiver
 public interface IEnemyDeathGuard
 {
     bool DeferDeath { get; }
+}
+
+public interface IEnemyMorningStarHitGuard
+{
+    bool TryGuardMorningStarHit(MorningStarHitContext context);
 }
 
 /// <summary>Changes damage only after EnemyHealth accepts a Morning Star hit.</summary>

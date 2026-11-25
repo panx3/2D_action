@@ -330,8 +330,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDamageFeedback
   gaugeEnabled: 1
+  gaugeStyle: 0
   gaugePrefab: {fileID: 5561037782073791896, guid: 98c15aef5b6eb0c4b84d11e8c97c42e3, type: 3}
-  gaugeDisplayTime: 1.5
+  gaugeAboveBody: 0
   gaugeOffset: {x: 0, y: 0.84535784, z: 0}
   flashEnabled: 1
   bodyRenderers:

@@ -311,7 +311,7 @@ public class ChainLineController : MonoBehaviour
 
         int count = Mathf.Max(2, sagSegments);
         float directDistance = Vector3.Distance(start, end);
-        float resolvedSag = launcher != null && launcher.IsChainClimbing
+        float resolvedSag = launcher != null && (launcher.IsUpperHanging || launcher.IsChainClimbing)
             ? 0f
             : CalculateSagForDistance(directDistance);
 

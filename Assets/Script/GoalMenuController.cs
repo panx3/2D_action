@@ -17,6 +17,8 @@ public sealed class GoalMenuController : MonoBehaviour
     [SerializeField] private TMP_Text clearTimeLabel;
     [Header("Scene Flow")]
     [SerializeField] private string nextSceneName;
+    [SerializeField, Tooltip("ステージセレクトへ戻るとき、このカセットが未クリアなら NEXT STAGE と表示します。")]
+    private StageSelectStage nextStage;
     [SerializeField] private string titleSceneName = "TitleScene";
     [SerializeField] private PauseMenuController pauseMenu;
     [Header("Demo Ending / 体験版終了画面")]
@@ -128,6 +130,13 @@ public sealed class GoalMenuController : MonoBehaviour
             return;
         }
         goalReached = true;
+        if (nextSceneName == StageSelectController.SceneName && nextStage != null)
+        {
+            var label = nextButton.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+                label.text = nextStage.CanLaunch && !StageSelectProgress.IsCleared(nextStage.sceneName)
+                    ? "NEXT STAGE" : "STAGE SELECT";
+        }
         CaptureClearTime();
         if (clearTimeLabel != null)
         {
@@ -213,6 +222,8 @@ public sealed class GoalMenuController : MonoBehaviour
         if (!goalReached || !overlay.IsReady || demoSequenceRunning || transitioning
             || (demoEndingVisible && scene != titleSceneName) || !Application.CanStreamedLevelBeLoaded(scene)) return;
         transitioning = true;
+        if (scene == StageSelectController.SceneName)
+            StageSelectController.SelectAfterClear(gameObject.scene.name);
         overlay.Hide();
         CRTMenuNavigation.ClearSelection();
         Time.timeScale = 1f;
