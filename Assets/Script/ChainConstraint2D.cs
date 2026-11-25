@@ -548,6 +548,15 @@ public class ChainConstraint2D : MonoBehaviour
                 if (!TryFindTerrainHit(segmentStart, segmentEnd, _ropeCollisionRadius, out RaycastHit2D hit))
                     continue;
 
+                // A stale contact can leave a blocked span even after both ends come clear.
+                // Use the clear direct span before adding corners that could loop around the obstacle.
+                if (_ropeContacts.Count > 0 && !TryFindTerrainHit(start, end, _ropeCollisionRadius, out _))
+                {
+                    _ropeContacts.Clear();
+                    RebuildPointLists(start, end);
+                    return true;
+                }
+
                 clear = false;
                 int availablePointCount = MaxWrapPointCount - _ropeContacts.Count;
                 if (availablePointCount == 0)
